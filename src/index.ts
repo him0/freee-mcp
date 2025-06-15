@@ -74,7 +74,7 @@ async function makeApiRequest(
 
   // OAuthトークンを取得、なければ自動認証フローを開始
   let accessToken = await getValidAccessToken();
-  
+
   if (!accessToken) {
     // 自動認証フローを開始
     try {
@@ -118,7 +118,7 @@ async function makeApiRequest(
     try {
       const tokens = await authenticateWithPKCE();
       accessToken = tokens.access_token;
-      
+
       // 再度APIリクエストを実行
       const retryResponse = await fetch(url.toString(), {
         method,
@@ -316,6 +316,55 @@ function generateToolsFromOpenApi(server: McpServer): void {
 
 // 認証関連のMCPツールを追加する関数
 function addAuthenticationTools(server: McpServer): void {
+  // 現在のユーザー情報取得ツール
+  server.tool(
+    'freee_current_user',
+    'freee APIの現在のユーザー情報を取得します。認証状態、会社ID、ユーザー詳細が含まれます。',
+    {},
+    async () => {
+      try {
+        const companyId = process.env.FREEE_COMPANY_ID;
+        if (!companyId) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'FREEE_COMPANY_ID環境変数が設定されていません。',
+              },
+            ],
+          };
+        }
+
+        // get_users_me APIを実行
+        const userInfo = await makeApiRequest('GET', '/api/1/users/me');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `現在のユーザー情報:\n` +
+                    `設定されている会社ID: ${companyId}\n` +
+                    `ユーザー詳細:\n${JSON.stringify(userInfo, null, 2)}`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `ユーザー情報の取得に失敗しました: ${error instanceof Error ? error.message : String(error)}\n\n` +
+                    `以下を確認してください:\n` +
+                    `1. 認証が完了しているか（freee_authenticate ツールを使用）\n` +
+                    `2. FREEE_COMPANY_ID環境変数が正しく設定されているか\n` +
+                    `3. ネットワーク接続が正常か`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
   // OAuth認証ツール
   server.tool(
     'freee_authenticate',
@@ -373,7 +422,7 @@ function addAuthenticationTools(server: McpServer): void {
 
         const isValid = Date.now() < tokens.expires_at;
         const expiryDate = new Date(tokens.expires_at).toLocaleString();
-        
+
         return {
           content: [
             {
@@ -438,11 +487,11 @@ const server = new McpServer({
   version: '1.0.0',
 });
 
+// 認証関連のMCPツールを追加（freee始まりのツールを最初に）
+addAuthenticationTools(server);
+
 // OpenAPI定義からツールを生成
 generateToolsFromOpenApi(server);
-
-// 認証関連のMCPツールを追加
-addAuthenticationTools(server);
 
 const main = async (): Promise<void> => {
   const transport = new StdioServerTransport();
