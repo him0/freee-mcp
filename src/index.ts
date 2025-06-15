@@ -2,7 +2,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import freeeApiSchema from './data/freee-api-schema.json';
-import { getValidAccessToken, authenticateWithPKCE, clearTokens, loadTokens } from './auth.js';
+import { getValidAccessToken, authenticateWithPKCE, clearTokens, loadTokens, generatePKCE, buildAuthUrl } from './auth.js';
+import crypto from 'crypto';
 
 type OpenAPIRequestBodyContentSchema = {
   required?: string[];
@@ -76,20 +77,11 @@ async function makeApiRequest(
   let accessToken = await getValidAccessToken();
 
   if (!accessToken) {
-    // 自動認証フローを開始
-    try {
-      console.error('認証が必要です。ブラウザで認証を開始します...');
-      const tokens = await authenticateWithPKCE();
-      accessToken = tokens.access_token;
-      console.error('認証が完了しました。リクエストを再実行します。');
-    } catch (authError) {
-      throw new Error(
-        `認証が必要です。以下の方法で認証を行ってください:\n` +
-        `1. 'pnpm auth' コマンドを実行してOAuth認証\n` +
-        `2. FREEE_CLIENT_ID環境変数を設定してOAuth認証を有効化\n` +
-        `エラー詳細: ${authError instanceof Error ? authError.message : String(authError)}`
-      );
-    }
+    // MCPツール経由での自動認証は困難なため、適切なメッセージを返す
+    throw new Error(
+      `認証が必要です。freee_authenticate ツールを使用して認証を行ってください。\n` +
+      `または、FREEE_CLIENT_ID環境変数が正しく設定されているか確認してください。`
+    );
   }
 
   const url = new URL(path, baseUrl);
@@ -112,40 +104,17 @@ async function makeApiRequest(
     body: body ? JSON.stringify(body.body) : undefined,
   });
 
-  // 認証エラーの場合は再認証を試行
+  // 認証エラーの場合
   if (response.status === 401 || response.status === 403) {
-    console.error('認証エラーが発生しました。再認証を試行します...');
-    try {
-      const tokens = await authenticateWithPKCE();
-      accessToken = tokens.access_token;
-
-      // 再度APIリクエストを実行
-      const retryResponse = await fetch(url.toString(), {
-        method,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: body ? JSON.stringify(body.body) : undefined,
-      });
-
-      if (!retryResponse.ok) {
-        const errorData = await retryResponse.json().catch(() => ({}));
-        throw new Error(`API request failed after re-authentication: ${retryResponse.status} ${JSON.stringify(errorData)}`);
-      }
-
-      return retryResponse.json();
-    } catch (authError) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `認証に失敗しました。以下を確認してください:\n` +
-        `1. FREEE_CLIENT_ID環境変数が正しく設定されているか\n` +
-        `2. freee側でアプリケーション設定が正しいか（リダイレクトURI等）\n` +
-        `3. OAuth認証が完了しているか\n` +
-        `元のエラー: ${response.status} ${JSON.stringify(errorData)}\n` +
-        `認証エラー: ${authError instanceof Error ? authError.message : String(authError)}`
-      );
-    }
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
+      `エラー詳細: ${response.status} ${JSON.stringify(errorData)}\n\n` +
+      `確認事項:\n` +
+      `1. FREEE_CLIENT_ID環境変数が正しく設定されているか\n` +
+      `2. freee側でアプリケーション設定が正しいか（リダイレクトURI等）\n` +
+      `3. トークンの有効期限が切れていないか`
+    );
   }
 
   if (!response.ok) {
@@ -368,32 +337,76 @@ function addAuthenticationTools(server: McpServer): void {
   // OAuth認証ツール
   server.tool(
     'freee_authenticate',
-    'freee APIのOAuth認証を実行します。ブラウザが開き、認証後にトークンが保存されます。',
+    'freee APIのOAuth認証を実行します。認証URLを表示するので、ブラウザで認証を完了してください。',
     {},
     async () => {
       try {
-        const tokens = await authenticateWithPKCE();
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `認証が完了しました！\n` +
-                    `アクセストークン: ${tokens.access_token.substring(0, 20)}...\n` +
-                    `有効期限: ${new Date(tokens.expires_at).toLocaleString()}\n` +
-                    `トークンは ~/.config/freee-mcp/tokens.json に保存されました。`,
-            },
-          ],
-        };
+        if (!process.env.FREEE_CLIENT_ID) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'FREEE_CLIENT_ID環境変数が設定されていません。\n' +
+                      'OAuth認証を行うには、freee developersでアプリケーションを作成し、\n' +
+                      'クライアントIDを環境変数に設定してください。',
+              },
+            ],
+          };
+        }
+
+        // 認証サーバーをバックグラウンドで起動
+        const authPromise = authenticateWithPKCE();
+
+        // 認証URLを生成して表示（PKCEパラメータは内部で生成される）
+        const { codeChallenge } = generatePKCE();
+        const state = crypto.randomBytes(16).toString('hex');
+        const authUrl = buildAuthUrl(codeChallenge, state, 'http://127.0.0.1:8080/callback');
+
+        // 認証完了を待機（ただし、タイムアウトを短くする）
+        try {
+          const tokens = await Promise.race([
+            authPromise,
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('認証タイムアウト')), 30000) // 30秒でタイムアウト
+            )
+          ]);
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `認証が完了しました！\n` +
+                      `アクセストークン: ${tokens.access_token.substring(0, 20)}...\n` +
+                      `有効期限: ${new Date(tokens.expires_at).toLocaleString()}\n` +
+                      `トークンは ~/.config/freee-mcp/tokens.json に保存されました。`,
+              },
+            ],
+          };
+        } catch (timeoutError) {
+          // タイムアウトの場合は認証URLを表示
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `認証サーバーを起動しました。以下の手順で認証を完了してください:\n\n` +
+                      `1. 以下のURLをブラウザで開いてください:\n` +
+                      `${authUrl}\n\n` +
+                      `2. freeeにログインして認証を許可してください\n\n` +
+                      `3. 認証完了後、freee_auth_status ツールで状態を確認してください\n\n` +
+                      `注意: ローカルサーバー（ポート8080）が5分間待機しています`,
+              },
+            ],
+          };
+        }
       } catch (error) {
         return {
           content: [
             {
               type: 'text',
-              text: `認証に失敗しました: ${error instanceof Error ? error.message : String(error)}\n\n` +
+              text: `認証準備に失敗しました: ${error instanceof Error ? error.message : String(error)}\n\n` +
                     `以下を確認してください:\n` +
                     `1. FREEE_CLIENT_ID環境変数が設定されているか\n` +
-                    `2. freee側でアプリケーション設定が正しいか\n` +
-                    `3. ネットワーク接続が正常か`,
+                    `2. freee側でアプリケーション設定が正しいか`,
             },
           ],
         };

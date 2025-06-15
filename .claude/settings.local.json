@@ -6,7 +6,8 @@
       "Bash(pnpm type-check:*)",
       "Bash(pnpm build:*)",
       "Bash(pnpm lint:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

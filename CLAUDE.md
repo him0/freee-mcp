@@ -26,7 +26,7 @@ This is a Model Context Protocol (MCP) server that exposes freee API endpoints a
 
 1. **OpenAPI Schema Processing**: `src/data/freee-api-schema.json` contains the complete freee API definition
 2. **Dynamic Tool Generation**: `generateToolsFromOpenApi()` in `src/index.ts:151` automatically converts OpenAPI paths to MCP tools
-3. **Tool Naming Convention**: 
+3. **Tool Naming Convention**:
    - GET endpoints become `get_[resource_name]`
    - POST endpoints become `post_[resource_name]`
    - PUT endpoints become `put_[resource_name]_by_id`
@@ -42,6 +42,56 @@ This is a Model Context Protocol (MCP) server that exposes freee API endpoints a
 - Request bodies are currently simplified to `z.any()` due to MCP framework limitations with nested objects
 
 ### Environment Variables
-- `FREEE_ACCESS_TOKEN` (required) - freee API access token
+- `FREEE_CLIENT_ID` (required) - freee OAuth client ID
 - `FREEE_COMPANY_ID` (required) - freee company ID
 - `FREEE_API_URL` (optional) - API base URL, defaults to https://api.freee.co.jp
+
+### Claude Code MCP Configuration
+
+To use this MCP server with Claude Code, add the following configuration:
+
+#### Option 1: Development Mode (with watch)
+```json
+{
+  "mcpServers": {
+    "freee": {
+      "command": "pnpm",
+      "args": ["tsx", "src/index.ts"],
+      "cwd": "/Users/him0/src/freee-mcp",
+      "env": {
+        "FREEE_CLIENT_ID": "your_client_id_here",
+        "FREEE_COMPANY_ID": "your_company_id_here"
+      }
+    }
+  }
+}
+```
+
+#### Option 2: Built Version
+```json
+{
+  "mcpServers": {
+    "freee": {
+      "command": "node",
+      "args": ["/Users/him0/src/freee-mcp/dist/index.cjs"],
+      "env": {
+        "FREEE_CLIENT_ID": "your_client_id_here",
+        "FREEE_COMPANY_ID": "your_company_id_here"
+      }
+    }
+  }
+}
+```
+
+#### Available MCP Tools for Testing
+- `freee_current_user` - Get current user info and company ID
+- `freee_authenticate` - Perform OAuth authentication
+- `freee_auth_status` - Check authentication status
+- `freee_clear_auth` - Clear saved authentication tokens
+- All freee API endpoints as `get_*`, `post_*`, `put_*`, `delete_*` tools
+
+#### Testing Authentication Flow
+1. Use `freee_authenticate` to start OAuth flow
+2. Complete authentication in browser
+3. Use `freee_auth_status` to verify authentication
+4. Test API calls with `freee_current_user` or other tools

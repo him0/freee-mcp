@@ -27,7 +27,7 @@ export interface TokenData {
 }
 
 // PKCE用のcode_verifierとcode_challengeを生成
-function generatePKCE(): { codeVerifier: string; codeChallenge: string } {
+export function generatePKCE(): { codeVerifier: string; codeChallenge: string } {
   const codeVerifier = crypto.randomBytes(32).toString('base64url');
   const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
   return { codeVerifier, codeChallenge };
@@ -43,7 +43,7 @@ function getTokenFilePath(): string {
 export async function saveTokens(tokens: TokenData): Promise<void> {
   const tokenPath = getTokenFilePath();
   const configDir = path.dirname(tokenPath);
-  
+
   try {
     await fs.mkdir(configDir, { recursive: true });
     await fs.writeFile(tokenPath, JSON.stringify(tokens, null, 2), { mode: 0o600 });
@@ -57,7 +57,7 @@ export async function saveTokens(tokens: TokenData): Promise<void> {
 // トークンをファイルから読み込み
 export async function loadTokens(): Promise<TokenData | null> {
   const tokenPath = getTokenFilePath();
-  
+
   try {
     const data = await fs.readFile(tokenPath, 'utf8');
     return JSON.parse(data) as TokenData;
@@ -110,7 +110,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
 // トークンファイルをクリア（認証リセット）
 export async function clearTokens(): Promise<void> {
   const tokenPath = getTokenFilePath();
-  
+
   try {
     await fs.unlink(tokenPath);
     console.error('Tokens cleared successfully');
@@ -182,7 +182,7 @@ async function authenticateWithLocalServer(
 
     server = http.createServer((req, res) => {
       const url = new URL(req.url!, `http://127.0.0.1:${port}`);
-      
+
       if (url.pathname === '/callback') {
         const code = url.searchParams.get('code');
         const returnedState = url.searchParams.get('state');
@@ -247,14 +247,17 @@ async function authenticateWithOOB(
   state: string
 ): Promise<TokenData> {
   const authUrl = buildAuthUrl(codeChallenge, state, OAUTH_CONFIG.oobRedirectUri);
-  
+
+  // MCP環境では対話的な入力ができないため、URLを提供してエラーとして返す
+  const errorMessage =
+    `手動認証が必要です。以下のURLをブラウザで開いて認証を完了してください：\n\n` +
+    `${authUrl}\n\n` +
+    `認証後、freee_authenticate ツールを再度実行してください。\n` +
+    `または、ローカルサーバーのポート8080が使用可能か確認してください。`;
+
   console.error('='.repeat(80));
-  console.error('ローカルサーバーでの認証に失敗しました。手動認証に切り替えます。');
-  console.error('以下のURLをブラウザで開いて認証を完了してください：');
-  console.error('');
-  console.error(authUrl);
-  console.error('');
-  console.error('認証後に表示される認証コードを入力してください：');
+  console.error('ローカルサーバーでの認証に失敗しました。');
+  console.error(errorMessage);
   console.error('='.repeat(80));
 
   // ブラウザを開く試行
@@ -264,34 +267,11 @@ async function authenticateWithOOB(
     console.error('Failed to open browser:', error);
   }
 
-  // ユーザーからの認証コード入力を待機
-  return new Promise((resolve, reject) => {
-    const readline = require('readline');
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stderr
-    });
-
-    rl.question('認証コードを入力してください: ', async (code: string) => {
-      rl.close();
-      
-      if (!code.trim()) {
-        reject(new Error('認証コードが入力されませんでした'));
-        return;
-      }
-
-      try {
-        const tokens = await exchangeCodeForTokens(code.trim(), codeVerifier);
-        resolve(tokens);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  });
+  throw new Error(errorMessage);
 }
 
 // 認証URLを構築
-function buildAuthUrl(codeChallenge: string, state: string, redirectUri: string): string {
+export function buildAuthUrl(codeChallenge: string, state: string, redirectUri: string): string {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: OAUTH_CONFIG.clientId,
