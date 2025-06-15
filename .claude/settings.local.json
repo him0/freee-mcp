@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:developer.freee.co.jp)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm type-check:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(git restore:*)"
+    ],
+    "deny": []
+  }
+}

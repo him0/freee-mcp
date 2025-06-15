@@ -27,13 +27,34 @@ pnpm install
 
 ## 環境設定
 
-以下の環境変数を設定する必要があります:
+### OAuth 2.0 認証
 
-```bash
-FREEE_ACCESS_TOKEN=your_access_token
-FREEE_COMPANY_ID=your_company_id
-FREEE_API_URL=https://api.freee.co.jp # オプション、デフォルトはhttps://api.freee.co.jp
-```
+OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順で設定してください:
+
+1. **freee側でのアプリケーション登録**:
+   - [freee developers](https://developer.freee.co.jp/) にアクセス
+   - 新しいアプリケーションを作成
+   - 以下の設定を行う:
+     - **リダイレクトURI**: `http://127.0.0.1:8080/callback`
+     - **フォールバック用**: `urn:ietf:wg:oauth:2.0:oob`
+     - **スコープ**: `read write`
+
+2. **環境変数の設定**:
+   ```bash
+   FREEE_CLIENT_ID=your_client_id          # 必須: freeeアプリのクライアントID
+   FREEE_COMPANY_ID=your_company_id        # 必須: 会社ID
+   FREEE_API_URL=https://api.freee.co.jp   # オプション、デフォルトはhttps://api.freee.co.jp
+   ```
+
+3. **認証方法**:
+   MCPツールを使用する際に自動的に認証フローが開始されます。
+   または、`freee_authenticate` ツールを使用して手動で認証を行うことも可能です。
+
+### 認証の仕組み
+
+1. **自動認証フロー**: MCPツール実行時に認証が必要な場合、自動的にブラウザで認証ページが開きます
+2. **トークン保存**: 認証後、トークンは `~/.config/freee-mcp/tokens.json` に安全に保存されます
+3. **自動更新**: アクセストークンの有効期限が切れた場合、自動的にリフレッシュされます
 
 ## 開発
 
@@ -73,7 +94,7 @@ Claude デスクトップアプリケーションで使用するには、以下�
       "command": "/usr/local/bin/node",
       "args": ["/path/to/freee-mcp/dist/index.cjs"],
       "env": {
-        "FREEE_ACCESS_TOKEN": "your_access_token",
+        "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_COMPANY_ID": "your_company_id"
       }
     }
@@ -84,6 +105,14 @@ Claude デスクトップアプリケーションで使用するには、以下�
 VSCode拡張機能で使用する場合は、同様の設定を `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` に追加してください。
 
 ## 利用可能なツール
+
+### 認証管理ツール
+
+- **`freee_authenticate`**: OAuth認証を実行します。ブラウザが開き、認証後にトークンが保存されます
+- **`freee_auth_status`**: 認証状態を確認します。保存されているトークンの情報を表示します  
+- **`freee_clear_auth`**: 認証情報をクリアします。次回API使用時に再認証が必要になります
+
+### freee APIツール
 
 freee APIのすべてのエンドポイントがMCPツールとして自動的に公開されます
 

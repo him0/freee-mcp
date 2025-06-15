@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import freeeApiSchema from './data/freee-api-schema.json';
+import { getValidAccessToken, authenticateWithPKCE, clearTokens, loadTokens } from './auth.js';
 
 type OpenAPIRequestBodyContentSchema = {
   required?: string[];
@@ -69,11 +70,26 @@ async function makeApiRequest(
   body?: Record<string, unknown>,
 ): Promise<unknown> {
   const baseUrl = process.env.FREEE_API_URL || 'https://api.freee.co.jp';
-  const accessToken = process.env.FREEE_ACCESS_TOKEN;
   const companyId = process.env.FREEE_COMPANY_ID || 0;
 
+  // OAuthトークンを取得、なければ自動認証フローを開始
+  let accessToken = await getValidAccessToken();
+  
   if (!accessToken) {
-    throw new Error('FREEE_ACCESS_TOKEN is not set');
+    // 自動認証フローを開始
+    try {
+      console.error('認証が必要です。ブラウザで認証を開始します...');
+      const tokens = await authenticateWithPKCE();
+      accessToken = tokens.access_token;
+      console.error('認証が完了しました。リクエストを再実行します。');
+    } catch (authError) {
+      throw new Error(
+        `認証が必要です。以下の方法で認証を行ってください:\n` +
+        `1. 'pnpm auth' コマンドを実行してOAuth認証\n` +
+        `2. FREEE_CLIENT_ID環境変数を設定してOAuth認証を有効化\n` +
+        `エラー詳細: ${authError instanceof Error ? authError.message : String(authError)}`
+      );
+    }
   }
 
   const url = new URL(path, baseUrl);
@@ -95,6 +111,42 @@ async function makeApiRequest(
     },
     body: body ? JSON.stringify(body.body) : undefined,
   });
+
+  // 認証エラーの場合は再認証を試行
+  if (response.status === 401 || response.status === 403) {
+    console.error('認証エラーが発生しました。再認証を試行します...');
+    try {
+      const tokens = await authenticateWithPKCE();
+      accessToken = tokens.access_token;
+      
+      // 再度APIリクエストを実行
+      const retryResponse = await fetch(url.toString(), {
+        method,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: body ? JSON.stringify(body.body) : undefined,
+      });
+
+      if (!retryResponse.ok) {
+        const errorData = await retryResponse.json().catch(() => ({}));
+        throw new Error(`API request failed after re-authentication: ${retryResponse.status} ${JSON.stringify(errorData)}`);
+      }
+
+      return retryResponse.json();
+    } catch (authError) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `認証に失敗しました。以下を確認してください:\n` +
+        `1. FREEE_CLIENT_ID環境変数が正しく設定されているか\n` +
+        `2. freee側でアプリケーション設定が正しいか（リダイレクトURI等）\n` +
+        `3. OAuth認証が完了しているか\n` +
+        `元のエラー: ${response.status} ${JSON.stringify(errorData)}\n` +
+        `認証エラー: ${authError instanceof Error ? authError.message : String(authError)}`
+      );
+    }
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -262,6 +314,124 @@ function generateToolsFromOpenApi(server: McpServer): void {
   });
 }
 
+// 認証関連のMCPツールを追加する関数
+function addAuthenticationTools(server: McpServer): void {
+  // OAuth認証ツール
+  server.tool(
+    'freee_authenticate',
+    'freee APIのOAuth認証を実行します。ブラウザが開き、認証後にトークンが保存されます。',
+    {},
+    async () => {
+      try {
+        const tokens = await authenticateWithPKCE();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `認証が完了しました！\n` +
+                    `アクセストークン: ${tokens.access_token.substring(0, 20)}...\n` +
+                    `有効期限: ${new Date(tokens.expires_at).toLocaleString()}\n` +
+                    `トークンは ~/.config/freee-mcp/tokens.json に保存されました。`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `認証に失敗しました: ${error instanceof Error ? error.message : String(error)}\n\n` +
+                    `以下を確認してください:\n` +
+                    `1. FREEE_CLIENT_ID環境変数が設定されているか\n` +
+                    `2. freee側でアプリケーション設定が正しいか\n` +
+                    `3. ネットワーク接続が正常か`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // 認証状態確認ツール
+  server.tool(
+    'freee_auth_status',
+    'freee APIの認証状態を確認します。保存されているトークンの情報を表示します。',
+    {},
+    async () => {
+      try {
+        const tokens = await loadTokens();
+        if (!tokens) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: '認証されていません。freee_authenticate ツールを使用して認証を行ってください。',
+              },
+            ],
+          };
+        }
+
+        const isValid = Date.now() < tokens.expires_at;
+        const expiryDate = new Date(tokens.expires_at).toLocaleString();
+        
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `認証状態: ${isValid ? '有効' : '期限切れ'}\n` +
+                    `アクセストークン: ${tokens.access_token.substring(0, 20)}...\n` +
+                    `有効期限: ${expiryDate}\n` +
+                    `スコープ: ${tokens.scope}\n` +
+                    `トークンタイプ: ${tokens.token_type}` +
+                    (isValid ? '' : '\n\n次回API使用時に自動更新されます。'),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `認証状態の確認に失敗しました: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // 認証リセットツール
+  server.tool(
+    'freee_clear_auth',
+    'freee APIの認証情報をクリアします。保存されているトークンファイルを削除し、次回API使用時に再認証が必要になります。',
+    {},
+    async () => {
+      try {
+        await clearTokens();
+        return {
+          content: [
+            {
+              type: 'text',
+              text: '認証情報がクリアされました。\n' +
+                    '次回freee API使用時に再認証が必要です。\n' +
+                    '再認証するには freee_authenticate ツールを使用してください。',
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `認証情報のクリアに失敗しました: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+}
+
 // Create an MCP server
 const server = new McpServer({
   name: 'freee',
@@ -270,6 +440,9 @@ const server = new McpServer({
 
 // OpenAPI定義からツールを生成
 generateToolsFromOpenApi(server);
+
+// 認証関連のMCPツールを追加
+addAuthenticationTools(server);
 
 const main = async (): Promise<void> => {
   const transport = new StdioServerTransport();
