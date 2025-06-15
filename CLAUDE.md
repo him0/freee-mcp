@@ -43,6 +43,7 @@ This is a Model Context Protocol (MCP) server that exposes freee API endpoints a
 
 ### Environment Variables
 - `FREEE_CLIENT_ID` (required) - freee OAuth client ID
+- `FREEE_CLIENT_SECRET` (required) - freee OAuth client secret
 - `FREEE_COMPANY_ID` (required) - freee company ID
 - `FREEE_API_URL` (optional) - API base URL, defaults to https://api.freee.co.jp
 
@@ -60,6 +61,7 @@ To use this MCP server with Claude Code, add the following configuration:
       "cwd": "/Users/him0/src/freee-mcp",
       "env": {
         "FREEE_CLIENT_ID": "your_client_id_here",
+        "FREEE_CLIENT_SECRET": "your_client_secret_here",
         "FREEE_COMPANY_ID": "your_company_id_here"
       }
     }
@@ -76,6 +78,7 @@ To use this MCP server with Claude Code, add the following configuration:
       "args": ["/Users/him0/src/freee-mcp/dist/index.cjs"],
       "env": {
         "FREEE_CLIENT_ID": "your_client_id_here",
+        "FREEE_CLIENT_SECRET": "your_client_secret_here",
         "FREEE_COMPANY_ID": "your_company_id_here"
       }
     }

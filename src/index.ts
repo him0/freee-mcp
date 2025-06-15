@@ -361,6 +361,19 @@ function addAuthenticationTools(server: McpServer): void {
           };
         }
 
+        if (!process.env.FREEE_CLIENT_SECRET) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'FREEE_CLIENT_SECRET環境変数が設定されていません。\n' +
+                      'OAuth認証を行うには、freee developersでアプリケーションを作成し、\n' +
+                      'クライアントシークレットを環境変数に設定してください。',
+              },
+            ],
+          };
+        }
+
         // PKCEパラメータを生成
         const { codeVerifier, codeChallenge } = generatePKCE();
         const state = crypto.randomBytes(16).toString('hex');

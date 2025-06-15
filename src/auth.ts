@@ -11,6 +11,7 @@ import net from 'net';
 // OAuth設定
 const OAUTH_CONFIG = {
   clientId: process.env.FREEE_CLIENT_ID || '', // 環境変数から取得
+  clientSecret: process.env.FREEE_CLIENT_SECRET || '', // 環境変数から取得
   redirectUri: 'http://127.0.0.1:8080/callback',
   authorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
   tokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
@@ -72,11 +73,13 @@ export async function saveTokens(tokens: TokenData): Promise<void> {
   const configDir = path.dirname(tokenPath);
 
   try {
+    console.error(`📁 Creating directory: ${configDir}`);
     await fs.mkdir(configDir, { recursive: true });
+    console.error(`💾 Writing tokens to: ${tokenPath}`);
     await fs.writeFile(tokenPath, JSON.stringify(tokens, null, 2), { mode: 0o600 });
-    console.error('Tokens saved successfully');
+    console.error('✅ Tokens saved successfully');
   } catch (error) {
-    console.error('Failed to save tokens:', error);
+    console.error('❌ Failed to save tokens:', error);
     throw error;
   }
 }
@@ -113,6 +116,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
       client_id: OAUTH_CONFIG.clientId,
+      client_secret: OAUTH_CONFIG.clientSecret,
     }),
   });
 
@@ -176,6 +180,9 @@ export async function getValidAccessToken(): Promise<string | null> {
 export async function authenticateWithPKCE(): Promise<TokenData> {
   if (!OAUTH_CONFIG.clientId) {
     throw new Error('FREEE_CLIENT_ID environment variable is not set');
+  }
+  if (!OAUTH_CONFIG.clientSecret) {
+    throw new Error('FREEE_CLIENT_SECRET environment variable is not set');
   }
 
   const { codeVerifier, codeChallenge } = generatePKCE();
@@ -441,23 +448,29 @@ export async function startCallbackServer(): Promise<void> {
 
 // 認証リクエストを永続サーバーに登録（Promiseを返さない）
 export function registerAuthenticationRequest(state: string, codeVerifier: string): void {
+  console.error(`🔐 Registering authentication request with state: ${state.substring(0, 10)}...`);
+  console.error(`🔐 Code verifier: ${codeVerifier.substring(0, 10)}...`);
+  
   // 5分のタイムアウト設定
   const timeout = setTimeout(() => {
     pendingAuthentications.delete(state);
     console.error(`⏰ Authentication timeout for state: ${state.substring(0, 10)}...`);
   }, 5 * 60 * 1000);
 
-  // 認証リクエストを登録（ダミーのresolve/rejectを使用）
+  // 認証リクエストを登録（実際のtoken保存処理を含む）
   pendingAuthentications.set(state, {
     codeVerifier,
     resolve: (tokens: TokenData) => {
       console.error('🎉 Authentication completed successfully!');
+      console.error(`📁 Tokens saved to: ${getTokenFilePath()}`);
     },
     reject: (error: Error) => {
       console.error('❌ Authentication failed:', error);
     },
     timeout
   });
+  
+  console.error(`📝 Registration complete. Total pending: ${pendingAuthentications.size}`);
 }
 
 // コールバックサーバーを停止
@@ -484,12 +497,15 @@ function handleCallback(url: URL, res: http.ServerResponse): void {
   const error = url.searchParams.get('error');
   const errorDescription = url.searchParams.get('error_description');
 
+  console.error(`🔍 Callback received - URL: ${url.toString()}`);
   console.error(`🔍 Callback parameters:`, {
     code: code ? `${code.substring(0, 10)}...` : null,
     state: state ? `${state.substring(0, 10)}...` : null,
     error,
     errorDescription
   });
+  console.error(`🔍 Pending authentications count: ${pendingAuthentications.size}`);
+  console.error(`🔍 Pending authentication states:`, Array.from(pendingAuthentications.keys()).map(s => s.substring(0, 10) + '...'));
 
   if (error) {
     const errorMsg = errorDescription || error;
@@ -518,6 +534,11 @@ function handleCallback(url: URL, res: http.ServerResponse): void {
   const pendingAuth = pendingAuthentications.get(state);
   if (!pendingAuth) {
     console.error(`❌ Unknown state: ${state}`);
+    console.error(`❌ Available states:`, Array.from(pendingAuthentications.keys()));
+    console.error(`❌ Full state comparison:`);
+    for (const [key, value] of pendingAuthentications.entries()) {
+      console.error(`   - ${key} === ${state} ? ${key === state}`);
+    }
     res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end('<h1>認証エラー</h1><p>不明な認証状態です。認証を再開してください。</p>');
     return;
@@ -535,6 +556,7 @@ function handleCallback(url: URL, res: http.ServerResponse): void {
   exchangeCodeForTokens(code, pendingAuth.codeVerifier)
     .then((tokens) => {
       console.error(`🎉 Token exchange successful!`);
+      console.error(`📁 Token file should be saved at: ${getTokenFilePath()}`);
       pendingAuth.resolve(tokens);
     })
     .catch((exchangeError) => {
@@ -553,6 +575,7 @@ async function exchangeCodeForTokens(code: string, codeVerifier: string): Promis
     body: new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: OAUTH_CONFIG.clientId,
+      client_secret: OAUTH_CONFIG.clientSecret,
       code,
       redirect_uri: OAUTH_CONFIG.redirectUri,
       code_verifier: codeVerifier,
