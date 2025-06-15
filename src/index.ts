@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import freeeApiSchema from './data/freee-api-schema.json';
-import { getValidAccessToken, authenticateWithPKCE, clearTokens, loadTokens, generatePKCE, buildAuthUrl } from './auth.js';
+import { getValidAccessToken, authenticateWithPKCE, clearTokens, loadTokens, generatePKCE, buildAuthUrl, startCallbackServer, stopCallbackServer } from './auth.js';
 import crypto from 'crypto';
 
 type OpenAPIRequestBodyContentSchema = {
@@ -162,10 +162,17 @@ function convertParameterToZodSchema(parameter: OpenAPIParameter): z.ZodType {
 
 // OpenAPIのパスをMCPツール名に変換する関数
 function convertPathToToolName(path: string): string {
-  return path
+  let toolName = path
     .replace(/^\/api\/\d+\//, '')
     .replace(/\/{[^}]+}/g, '_by_id')
     .replace(/\//g, '_');
+
+  // 64文字制限を適用
+  if (toolName.length > 50) { // methodプレフィックス分を考慮
+    toolName = toolName.substring(0, 50);
+  }
+
+  return toolName;
 }
 
 // OpenAPIの定義からMCPツールを生成する関数
@@ -337,7 +344,7 @@ function addAuthenticationTools(server: McpServer): void {
   // OAuth認証ツール
   server.tool(
     'freee_authenticate',
-    'freee APIのOAuth認証を実行します。認証URLを表示するので、ブラウザで認証を完了してください。',
+    'freee APIのOAuth認証を開始します。永続的なコールバックサーバーを利用して認証を行います。',
     {},
     async () => {
       try {
@@ -354,59 +361,42 @@ function addAuthenticationTools(server: McpServer): void {
           };
         }
 
-        // 認証サーバーをバックグラウンドで起動
-        const authPromise = authenticateWithPKCE();
-
-        // 認証URLを生成して表示（PKCEパラメータは内部で生成される）
-        const { codeChallenge } = generatePKCE();
+        // PKCEパラメータを生成
+        const { codeVerifier, codeChallenge } = generatePKCE();
         const state = crypto.randomBytes(16).toString('hex');
         const authUrl = buildAuthUrl(codeChallenge, state, 'http://127.0.0.1:8080/callback');
 
-        // 認証完了を待機（ただし、タイムアウトを短くする）
-        try {
-          const tokens = await Promise.race([
-            authPromise,
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error('認証タイムアウト')), 30000) // 30秒でタイムアウト
-            )
-          ]);
+        // 永続サーバーに認証リクエストを登録
+        const { registerAuthenticationRequest } = await import('./auth.js');
+        registerAuthenticationRequest(state, codeVerifier);
 
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `認証が完了しました！\n` +
-                      `アクセストークン: ${tokens.access_token.substring(0, 20)}...\n` +
-                      `有効期限: ${new Date(tokens.expires_at).toLocaleString()}\n` +
-                      `トークンは ~/.config/freee-mcp/tokens.json に保存されました。`,
-              },
-            ],
-          };
-        } catch (timeoutError) {
-          // タイムアウトの場合は認証URLを表示
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `認証サーバーを起動しました。以下の手順で認証を完了してください:\n\n` +
-                      `1. 以下のURLをブラウザで開いてください:\n` +
-                      `${authUrl}\n\n` +
-                      `2. freeeにログインして認証を許可してください\n\n` +
-                      `3. 認証完了後、freee_auth_status ツールで状態を確認してください\n\n` +
-                      `注意: ローカルサーバー（ポート8080）が5分間待機しています`,
-              },
-            ],
-          };
-        }
+        // 即座にレスポンスを返す（ユーザーに認証URLを提供）
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `🚀 OAuth認証を開始しました！\n\n` +
+                    `📱 以下のURLをブラウザで開いて認証を完了してください:\n` +
+                    `${authUrl}\n\n` +
+                    `🔄 認証手順:\n` +
+                    `1. 上記URLをクリックまたはコピーしてブラウザで開く\n` +
+                    `2. freeeにログインして会社を選択\n` +
+                    `3. アプリケーションへのアクセスを許可\n` +
+                    `4. 認証完了後、freee_auth_status で状態を確認\n` +
+                    `⏰ この認証リクエストは5分後にタイムアウトします`
+            },
+          ],
+        };
       } catch (error) {
         return {
           content: [
             {
               type: 'text',
-              text: `認証準備に失敗しました: ${error instanceof Error ? error.message : String(error)}\n\n` +
+              text: `認証開始に失敗しました: ${error instanceof Error ? error.message : String(error)}\n\n` +
                     `以下を確認してください:\n` +
                     `1. FREEE_CLIENT_ID環境変数が設定されているか\n` +
-                    `2. freee側でアプリケーション設定が正しいか`,
+                    `2. freee側でアプリケーション設定が正しいか\n` +
+                    `3. コールバックサーバー（8080ポート）が起動しているか`,
             },
           ],
         };
@@ -507,9 +497,29 @@ addAuthenticationTools(server);
 generateToolsFromOpenApi(server);
 
 const main = async (): Promise<void> => {
+  // コールバック受付サーバーを起動
+  try {
+    await startCallbackServer();
+    console.error('✅ OAuth callback server started on http://127.0.0.1:8080');
+  } catch (error) {
+    console.error('⚠️ Failed to start callback server:', error);
+    console.error('OAuth authentication will fall back to manual mode');
+  }
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('Freee MCP Server running on stdio');
+
+  // プロセス終了時にサーバーを停止
+  process.on('SIGINT', () => {
+    stopCallbackServer();
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', () => {
+    stopCallbackServer();
+    process.exit(0);
+  });
 };
 
 main().catch((error) => {

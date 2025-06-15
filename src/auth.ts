@@ -6,6 +6,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
+import net from 'net';
 
 // OAuth設定
 const OAUTH_CONFIG = {
@@ -16,6 +17,15 @@ const OAUTH_CONFIG = {
   scope: 'read write',
   oobRedirectUri: 'urn:ietf:wg:oauth:2.0:oob',
 };
+
+// グローバルサーバーインスタンスと認証状態
+let globalCallbackServer: http.Server | null = null;
+let pendingAuthentications = new Map<string, {
+  codeVerifier: string;
+  resolve: (tokens: TokenData) => void;
+  reject: (error: Error) => void;
+  timeout: NodeJS.Timeout;
+}>();
 
 // トークンの型定義
 export interface TokenData {
@@ -31,6 +41,23 @@ export function generatePKCE(): { codeVerifier: string; codeChallenge: string } 
   const codeVerifier = crypto.randomBytes(32).toString('base64url');
   const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
   return { codeVerifier, codeChallenge };
+}
+
+// ポートが使用可能かチェック
+async function checkPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    
+    server.listen(port, '127.0.0.1', () => {
+      server.close(() => {
+        resolve(true); // ポートが使用可能
+      });
+    });
+    
+    server.on('error', () => {
+      resolve(false); // ポートが使用中
+    });
+  });
 }
 
 // トークンファイルのパスを取得
@@ -154,13 +181,50 @@ export async function authenticateWithPKCE(): Promise<TokenData> {
   const { codeVerifier, codeChallenge } = generatePKCE();
   const state = crypto.randomBytes(16).toString('hex');
 
-  // まずローカルサーバーでの認証を試行
-  try {
-    return await authenticateWithLocalServer(codeVerifier, codeChallenge, state);
-  } catch (error) {
-    console.error('Local server authentication failed, falling back to OOB:', error);
-    return await authenticateWithOOB(codeVerifier, codeChallenge, state);
+  // グローバルサーバーが起動していれば、それを使用
+  if (globalCallbackServer) {
+    return await authenticateWithGlobalServer(codeVerifier, codeChallenge, state);
+  } else {
+    // フォールバック: 一時的なローカルサーバーを起動
+    try {
+      return await authenticateWithLocalServer(codeVerifier, codeChallenge, state);
+    } catch (error) {
+      console.error('Local server authentication failed, falling back to OOB:', error);
+      return await authenticateWithOOB(codeVerifier, codeChallenge, state);
+    }
   }
+}
+
+// グローバルサーバーを使用した認証
+async function authenticateWithGlobalServer(
+  codeVerifier: string,
+  codeChallenge: string,
+  state: string
+): Promise<TokenData> {
+  return new Promise((resolve, reject) => {
+    // 5分のタイムアウト設定
+    const timeout = setTimeout(() => {
+      pendingAuthentications.delete(state);
+      reject(new Error('Authentication timeout after 5 minutes'));
+    }, 5 * 60 * 1000);
+
+    // 認証リクエストを登録
+    pendingAuthentications.set(state, {
+      codeVerifier,
+      resolve,
+      reject,
+      timeout
+    });
+
+    // 認証URLを生成してブラウザで開く
+    const authUrl = buildAuthUrl(codeChallenge, state, OAUTH_CONFIG.redirectUri);
+    console.error(`🌐 Opening browser for authentication: ${authUrl}`);
+    
+    open(authUrl).catch(() => {
+      console.error('❌ Failed to open browser automatically. Please visit the URL manually:');
+      console.error(authUrl);
+    });
+  });
 }
 
 // ローカルサーバーを使用した認証
@@ -169,9 +233,17 @@ async function authenticateWithLocalServer(
   codeChallenge: string,
   state: string
 ): Promise<TokenData> {
+  const port = 8080;
+  
+  // ポートの使用可能性をチェック
+  const isPortAvailable = await checkPortAvailable(port);
+  if (!isPortAvailable) {
+    console.error(`❌ Port ${port} is already in use`);
+    throw new Error(`Port ${port} is already in use. Please close other applications using this port or wait for them to finish.`);
+  }
+
   return new Promise<TokenData>((resolve, reject) => {
     let server: http.Server | null = null;
-    const port = 8080;
 
     const cleanup = (): void => {
       if (server) {
@@ -181,53 +253,92 @@ async function authenticateWithLocalServer(
     };
 
     server = http.createServer((req, res) => {
+      console.error(`📥 Incoming request: ${req.method} ${req.url}`);
       const url = new URL(req.url!, `http://127.0.0.1:${port}`);
 
       if (url.pathname === '/callback') {
         const code = url.searchParams.get('code');
         const returnedState = url.searchParams.get('state');
         const error = url.searchParams.get('error');
+        const errorDescription = url.searchParams.get('error_description');
+
+        console.error(`🔍 Callback parameters:`, {
+          code: code ? `${code.substring(0, 10)}...` : null,
+          state: returnedState ? `${returnedState.substring(0, 10)}...` : null,
+          expectedState: state ? `${state.substring(0, 10)}...` : null,
+          error,
+          errorDescription
+        });
 
         if (error) {
-          res.writeHead(400, { 'Content-Type': 'text/html' });
-          res.end('<h1>認証エラー</h1><p>認証に失敗しました。</p>');
+          const errorMsg = errorDescription || error;
+          console.error(`❌ OAuth error: ${error} - ${errorDescription}`);
+          res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(`<h1>認証エラー</h1><p>認証に失敗しました: ${errorMsg}</p>`);
           cleanup();
-          reject(new Error(`OAuth error: ${error}`));
+          reject(new Error(`OAuth error: ${error} - ${errorDescription}`));
           return;
         }
 
-        if (!code || returnedState !== state) {
-          res.writeHead(400, { 'Content-Type': 'text/html' });
-          res.end('<h1>認証エラー</h1><p>無効な認証コードまたは状態です。</p>');
+        if (!code) {
+          console.error(`❌ Missing authorization code`);
+          res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end('<h1>認証エラー</h1><p>認証コードが見つかりません。</p>');
           cleanup();
-          reject(new Error('Invalid authorization code or state'));
+          reject(new Error('Missing authorization code'));
           return;
         }
 
-        res.writeHead(200, { 'Content-Type': 'text/html' });
+        if (returnedState !== state) {
+          console.error(`❌ State mismatch: expected ${state}, got ${returnedState}`);
+          res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end('<h1>認証エラー</h1><p>不正な認証状態です。セキュリティのため認証を中止しました。</p>');
+          cleanup();
+          reject(new Error('Invalid state parameter - possible CSRF attack'));
+          return;
+        }
+
+        console.error(`✅ Valid callback received, exchanging code for tokens...`);
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてください。</p>');
         cleanup();
 
         // 認証コードをアクセストークンに交換
         exchangeCodeForTokens(code, codeVerifier)
-          .then(resolve)
-          .catch(reject);
+          .then((tokens) => {
+            console.error(`🎉 Token exchange successful!`);
+            resolve(tokens);
+          })
+          .catch((exchangeError) => {
+            console.error(`❌ Token exchange failed:`, exchangeError);
+            reject(exchangeError);
+          });
       } else {
-        res.writeHead(404);
-        res.end('Not Found');
+        console.error(`❌ Unknown path: ${url.pathname}`);
+        res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('<h1>404 Not Found</h1><p>このパスは存在しません。</p>');
       }
     });
 
     server.on('error', (error) => {
       cleanup();
-      reject(error);
+      console.error(`Local server error on port ${port}:`, error);
+      if ((error as NodeJS.ErrnoException).code === 'EADDRINUSE') {
+        reject(new Error(`Port ${port} is already in use. Please close other applications using this port.`));
+      } else {
+        reject(error);
+      }
     });
 
     server.listen(port, '127.0.0.1', () => {
+      console.error(`✅ Local authentication server started on http://127.0.0.1:${port}`);
+      console.error(`🔗 Callback URL: http://127.0.0.1:${port}/callback`);
+      
       const authUrl = buildAuthUrl(codeChallenge, state, OAUTH_CONFIG.redirectUri);
-      console.error(`Opening browser for authentication: ${authUrl}`);
+      console.error(`🌐 Opening browser for authentication: ${authUrl}`);
+      
       open(authUrl).catch(() => {
-        console.error('Failed to open browser automatically. Please visit the URL manually:');
+        console.error('❌ Failed to open browser automatically. Please visit the URL manually:');
         console.error(authUrl);
       });
     });
@@ -283,6 +394,153 @@ export function buildAuthUrl(codeChallenge: string, state: string, redirectUri: 
   });
 
   return `${OAUTH_CONFIG.authorizationEndpoint}?${params.toString()}`;
+}
+
+// コールバックサーバーを起動
+export async function startCallbackServer(): Promise<void> {
+  if (globalCallbackServer) {
+    return; // 既に起動済み
+  }
+
+  const port = 8080;
+  
+  // ポートの使用可能性をチェック
+  const isPortAvailable = await checkPortAvailable(port);
+  if (!isPortAvailable) {
+    throw new Error(`Port ${port} is already in use. Please close other applications using this port.`);
+  }
+
+  return new Promise((resolve, reject) => {
+    globalCallbackServer = http.createServer((req, res) => {
+      console.error(`📥 Callback request: ${req.method} ${req.url}`);
+      const url = new URL(req.url!, `http://127.0.0.1:${port}`);
+
+      if (url.pathname === '/callback') {
+        handleCallback(url, res);
+      } else if (url.pathname === '/') {
+        // ルートパスでのヘルスチェック
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('<h1>freee MCP OAuth Server</h1><p>コールバックサーバーが稼働中です。</p>');
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end('<h1>404 Not Found</h1><p>このパスは存在しません。</p>');
+      }
+    });
+
+    globalCallbackServer.on('error', (error) => {
+      console.error(`Callback server error:`, error);
+      reject(error);
+    });
+
+    globalCallbackServer.listen(port, '127.0.0.1', () => {
+      console.error(`🔗 OAuth callback server listening on http://127.0.0.1:${port}`);
+      resolve();
+    });
+  });
+}
+
+// 認証リクエストを永続サーバーに登録（Promiseを返さない）
+export function registerAuthenticationRequest(state: string, codeVerifier: string): void {
+  // 5分のタイムアウト設定
+  const timeout = setTimeout(() => {
+    pendingAuthentications.delete(state);
+    console.error(`⏰ Authentication timeout for state: ${state.substring(0, 10)}...`);
+  }, 5 * 60 * 1000);
+
+  // 認証リクエストを登録（ダミーのresolve/rejectを使用）
+  pendingAuthentications.set(state, {
+    codeVerifier,
+    resolve: (tokens: TokenData) => {
+      console.error('🎉 Authentication completed successfully!');
+    },
+    reject: (error: Error) => {
+      console.error('❌ Authentication failed:', error);
+    },
+    timeout
+  });
+}
+
+// コールバックサーバーを停止
+export function stopCallbackServer(): void {
+  if (globalCallbackServer) {
+    // 保留中の認証をすべて拒否
+    for (const [state, auth] of pendingAuthentications) {
+      clearTimeout(auth.timeout);
+      auth.reject(new Error('Server shutdown'));
+    }
+    pendingAuthentications.clear();
+
+    globalCallbackServer.close(() => {
+      console.error('🔴 OAuth callback server stopped');
+    });
+    globalCallbackServer = null;
+  }
+}
+
+// コールバック処理
+function handleCallback(url: URL, res: http.ServerResponse): void {
+  const code = url.searchParams.get('code');
+  const state = url.searchParams.get('state');
+  const error = url.searchParams.get('error');
+  const errorDescription = url.searchParams.get('error_description');
+
+  console.error(`🔍 Callback parameters:`, {
+    code: code ? `${code.substring(0, 10)}...` : null,
+    state: state ? `${state.substring(0, 10)}...` : null,
+    error,
+    errorDescription
+  });
+
+  if (error) {
+    const errorMsg = errorDescription || error;
+    console.error(`❌ OAuth error: ${error} - ${errorDescription}`);
+    res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(`<h1>認証エラー</h1><p>認証に失敗しました: ${errorMsg}</p>`);
+    
+    // 該当する認証リクエストを拒否
+    if (state && pendingAuthentications.has(state)) {
+      const auth = pendingAuthentications.get(state)!;
+      clearTimeout(auth.timeout);
+      auth.reject(new Error(`OAuth error: ${error} - ${errorDescription}`));
+      pendingAuthentications.delete(state);
+    }
+    return;
+  }
+
+  if (!code || !state) {
+    console.error(`❌ Missing code or state`);
+    res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end('<h1>認証エラー</h1><p>認証コードまたは状態パラメータが不足しています。</p>');
+    return;
+  }
+
+  // 保留中の認証を確認
+  const pendingAuth = pendingAuthentications.get(state);
+  if (!pendingAuth) {
+    console.error(`❌ Unknown state: ${state}`);
+    res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end('<h1>認証エラー</h1><p>不明な認証状態です。認証を再開してください。</p>');
+    return;
+  }
+
+  console.error(`✅ Valid callback received, exchanging code for tokens...`);
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてください。</p>');
+
+  // タイムアウトをクリア
+  clearTimeout(pendingAuth.timeout);
+  pendingAuthentications.delete(state);
+
+  // トークン交換を実行
+  exchangeCodeForTokens(code, pendingAuth.codeVerifier)
+    .then((tokens) => {
+      console.error(`🎉 Token exchange successful!`);
+      pendingAuth.resolve(tokens);
+    })
+    .catch((exchangeError) => {
+      console.error(`❌ Token exchange failed:`, exchangeError);
+      pendingAuth.reject(exchangeError);
+    });
 }
 
 // 認証コードをアクセストークンに交換
