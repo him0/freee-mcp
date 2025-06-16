@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import freeeApiSchema from './data/freee-api-schema.json';
-import { getValidAccessToken, authenticateWithPKCE, clearTokens, loadTokens, generatePKCE, buildAuthUrl, startCallbackServer, stopCallbackServer } from './auth.js';
+import { getValidAccessToken, clearTokens, loadTokens, generatePKCE, buildAuthUrl, startCallbackServer, stopCallbackServer } from './auth.js';
 import crypto from 'crypto';
 
 type OpenAPIRequestBodyContentSchema = {
@@ -179,7 +179,6 @@ function convertPathToToolName(path: string): string {
 function generateToolsFromOpenApi(server: McpServer): void {
   const paths = freeeApiSchema.paths;
   const components = freeeApiSchema.components;
-  const componentsSchemas = components.schemas as Record<string, OpenAPIRequestBodyContentSchema>;
 
   // パスの key のアルファベット順でソート
   const orderedPathKeys = Object.keys(paths).sort() as (keyof typeof paths)[];
@@ -377,7 +376,7 @@ function addAuthenticationTools(server: McpServer): void {
         // PKCEパラメータを生成
         const { codeVerifier, codeChallenge } = generatePKCE();
         const state = crypto.randomBytes(16).toString('hex');
-        const authUrl = buildAuthUrl(codeChallenge, state, 'http://127.0.0.1:8080/callback');
+        const authUrl = buildAuthUrl(codeChallenge, state, `http://127.0.0.1:${parseInt(process.env.FREEE_CALLBACK_PORT || '8080', 10)}/callback`);
 
         // 永続サーバーに認証リクエストを登録
         const { registerAuthenticationRequest } = await import('./auth.js');
@@ -409,7 +408,7 @@ function addAuthenticationTools(server: McpServer): void {
                     `以下を確認してください:\n` +
                     `1. FREEE_CLIENT_ID環境変数が設定されているか\n` +
                     `2. freee側でアプリケーション設定が正しいか\n` +
-                    `3. コールバックサーバー（8080ポート）が起動しているか`,
+                    `3. コールバックサーバー（${parseInt(process.env.FREEE_CALLBACK_PORT || '8080', 10)}ポート）が起動しているか`,
             },
           ],
         };
@@ -513,7 +512,7 @@ const main = async (): Promise<void> => {
   // コールバック受付サーバーを起動
   try {
     await startCallbackServer();
-    console.error('✅ OAuth callback server started on http://127.0.0.1:8080');
+    console.error(`✅ OAuth callback server started on http://127.0.0.1:${parseInt(process.env.FREEE_CALLBACK_PORT || '8080', 10)}`);
   } catch (error) {
     console.error('⚠️ Failed to start callback server:', error);
     console.error('OAuth authentication will fall back to manual mode');

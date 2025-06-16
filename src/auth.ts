@@ -5,18 +5,17 @@ import open from 'open';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { fileURLToPath } from 'url';
 import net from 'net';
 
 // OAuth設定
+const CALLBACK_PORT = parseInt(process.env.FREEE_CALLBACK_PORT || '8080', 10);
 const OAUTH_CONFIG = {
   clientId: process.env.FREEE_CLIENT_ID || '', // 環境変数から取得
   clientSecret: process.env.FREEE_CLIENT_SECRET || '', // 環境変数から取得
-  redirectUri: 'http://127.0.0.1:8080/callback',
+  redirectUri: `http://127.0.0.1:${CALLBACK_PORT}/callback`,
   authorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
   tokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
   scope: 'read write',
-  oobRedirectUri: 'urn:ietf:wg:oauth:2.0:oob',
 };
 
 // グローバルサーバーインスタンスと認証状態
@@ -193,12 +192,7 @@ export async function authenticateWithPKCE(): Promise<TokenData> {
     return await authenticateWithGlobalServer(codeVerifier, codeChallenge, state);
   } else {
     // フォールバック: 一時的なローカルサーバーを起動
-    try {
-      return await authenticateWithLocalServer(codeVerifier, codeChallenge, state);
-    } catch (error) {
-      console.error('Local server authentication failed, falling back to OOB:', error);
-      return await authenticateWithOOB(codeVerifier, codeChallenge, state);
-    }
+    return await authenticateWithLocalServer(codeVerifier, codeChallenge, state);
   }
 }
 
@@ -240,7 +234,7 @@ async function authenticateWithLocalServer(
   codeChallenge: string,
   state: string
 ): Promise<TokenData> {
-  const port = 8080;
+  const port = CALLBACK_PORT;
   
   // ポートの使用可能性をチェック
   const isPortAvailable = await checkPortAvailable(port);
@@ -358,35 +352,6 @@ async function authenticateWithLocalServer(
   });
 }
 
-// Out-Of-Band認証（フォールバック）
-async function authenticateWithOOB(
-  codeVerifier: string,
-  codeChallenge: string,
-  state: string
-): Promise<TokenData> {
-  const authUrl = buildAuthUrl(codeChallenge, state, OAUTH_CONFIG.oobRedirectUri);
-
-  // MCP環境では対話的な入力ができないため、URLを提供してエラーとして返す
-  const errorMessage =
-    `手動認証が必要です。以下のURLをブラウザで開いて認証を完了してください：\n\n` +
-    `${authUrl}\n\n` +
-    `認証後、freee_authenticate ツールを再度実行してください。\n` +
-    `または、ローカルサーバーのポート8080が使用可能か確認してください。`;
-
-  console.error('='.repeat(80));
-  console.error('ローカルサーバーでの認証に失敗しました。');
-  console.error(errorMessage);
-  console.error('='.repeat(80));
-
-  // ブラウザを開く試行
-  try {
-    await open(authUrl);
-  } catch (error) {
-    console.error('Failed to open browser:', error);
-  }
-
-  throw new Error(errorMessage);
-}
 
 // 認証URLを構築
 export function buildAuthUrl(codeChallenge: string, state: string, redirectUri: string): string {
@@ -409,7 +374,7 @@ export async function startCallbackServer(): Promise<void> {
     return; // 既に起動済み
   }
 
-  const port = 8080;
+  const port = CALLBACK_PORT;
   
   // ポートの使用可能性をチェック
   const isPortAvailable = await checkPortAvailable(port);
