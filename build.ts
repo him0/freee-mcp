@@ -10,6 +10,7 @@ const shared = {
   logLevel: 'info' as 'info',
   minify: true,
   sourcemap: false,
+  platform: 'node' as 'node',
 };
 
 await build({

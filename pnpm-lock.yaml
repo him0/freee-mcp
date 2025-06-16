@@ -11,6 +11,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.3
         version: 1.12.3
+      open:
+        specifier: ^10.1.0
+        version: 10.1.2
       zod:
         specifier: ^3.25.64
         version: 3.25.64
