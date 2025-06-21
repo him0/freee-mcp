@@ -120,7 +120,7 @@ When working on this MCP server, use these tools for testing and validation:
 #### Important Notes for Claude Code Development
 - Always use the testing tools before making changes to verify functionality
 - The `freee_list_companies` tool now internally calls the `get_companies` API for real-time data
-- Token management is handled automatically with per-company file storage in `~/.config/freee-mcp/`
+- Token management is handled automatically with user-based file storage in `~/.config/freee-mcp/`
 - When debugging authentication issues, use `freee_status` first to get targeted guidance
 
 ### PR Creation Pre-flight Checklist
