@@ -1,17 +1,16 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import crypto from 'crypto';
-import open from 'open';
 import { z } from 'zod';
 import { config } from '../config.js';
 import { makeApiRequest } from '../api/client.js';
 import { loadTokens, clearTokens } from '../auth/tokens.js';
 import { generatePKCE, buildAuthUrl } from '../auth/oauth.js';
 import { registerAuthenticationRequest } from '../auth/server.js';
-import { 
-  getCurrentCompanyId, 
-  setCurrentCompany, 
-  getCompanyList, 
-  getCompanyInfo 
+import {
+  getCurrentCompanyId,
+  setCurrentCompany,
+  getCompanyList,
+  getCompanyInfo
 } from '../config/companies.js';
 
 export function addAuthenticationTools(server: McpServer): void {
@@ -23,7 +22,7 @@ export function addAuthenticationTools(server: McpServer): void {
       try {
         const companyId = await getCurrentCompanyId();
         const companyInfo = await getCompanyInfo(companyId);
-        
+
         if (!companyId) {
           return {
             content: [
@@ -104,23 +103,20 @@ export function addAuthenticationTools(server: McpServer): void {
 
         registerAuthenticationRequest(state, codeVerifier);
 
-        console.error(`🌐 Opening browser for authentication: ${authUrl}`);
-        open(authUrl).catch(() => {
-          console.error('❌ Failed to open browser automatically. Please visit the URL manually:');
-          console.error(authUrl);
-        });
+        console.error(`🌐 Authentication URL: ${authUrl}`);
 
         return {
           content: [
             {
               type: 'text',
               text: `🚀 OAuth認証を開始しました！\n\n` +
-                    `📱 ブラウザが自動で開きます。開かない場合は以下のURLを手動で開いてください:\n` +
+                    `📱 以下のURLをブラウザで開いて認証を完了してください:\n` +
                     `${authUrl}\n\n` +
                     `🔄 認証手順:\n` +
-                    `1. ブラウザでfreeeにログインして会社を選択\n` +
-                    `2. アプリケーションへのアクセスを許可\n` +
-                    `3. 認証完了後、freee_auth_status で状態を確認\n` +
+                    `1. 上記URLをブラウザで開く\n` +
+                    `2. freeeにログインして会社を選択\n` +
+                    `3. アプリケーションへのアクセスを許可\n` +
+                    `4. 認証完了後、freee_auth_status で状態を確認\n` +
                     `⏰ この認証リクエストは5分後にタイムアウトします`
             },
           ],
@@ -232,11 +228,11 @@ export function addAuthenticationTools(server: McpServer): void {
     async (args) => {
       try {
         const { company_id, name, description } = args;
-        
+
         await setCurrentCompany(company_id, name, description);
-        
+
         const companyInfo = await getCompanyInfo(company_id);
-        
+
         return {
           content: [
             {
@@ -270,7 +266,7 @@ export function addAuthenticationTools(server: McpServer): void {
       try {
         const companyId = await getCurrentCompanyId();
         const companyInfo = await getCompanyInfo(companyId);
-        
+
         if (!companyInfo) {
           return {
             content: [
@@ -281,7 +277,7 @@ export function addAuthenticationTools(server: McpServer): void {
             ],
           };
         }
-        
+
         return {
           content: [
             {
@@ -323,11 +319,11 @@ export function addAuthenticationTools(server: McpServer): void {
           }>;
         }
         const apiCompanies = await makeApiRequest('GET', '/api/1/companies') as CompanyResponse;
-        
+
         // 設定ファイルから保存済みの事業所一覧も取得
         const localCompanies = await getCompanyList();
         const currentCompanyId = await getCurrentCompanyId();
-        
+
         if (!apiCompanies || !apiCompanies.companies || apiCompanies.companies.length === 0) {
           return {
             content: [
@@ -338,21 +334,21 @@ export function addAuthenticationTools(server: McpServer): void {
             ],
           };
         }
-        
+
         const companyList = apiCompanies.companies
           .map((company) => {
             const current = company.id === parseInt(currentCompanyId) ? ' (現在選択中)' : '';
             const localInfo = localCompanies.find(c => c.id === company.id.toString());
-            const lastUsed = localInfo?.lastUsed 
+            const lastUsed = localInfo?.lastUsed
               ? `最終使用: ${new Date(localInfo.lastUsed).toLocaleString()}`
               : '未使用';
-            
+
             return `• ${company.name} (ID: ${company.id})${current}\\n` +
                    `  説明: ${company.description || 'なし'}\\n` +
                    `  ${lastUsed}`;
           })
           .join('\\n\\n');
-        
+
         return {
           content: [
             {
@@ -366,7 +362,7 @@ export function addAuthenticationTools(server: McpServer): void {
         try {
           const localCompanies = await getCompanyList();
           const currentCompanyId = await getCurrentCompanyId();
-          
+
           if (localCompanies.length === 0) {
             return {
               content: [
@@ -377,20 +373,20 @@ export function addAuthenticationTools(server: McpServer): void {
               ],
             };
           }
-          
+
           const companyList = localCompanies
             .map((company) => {
               const current = company.id === currentCompanyId ? ' (現在選択中)' : '';
-              const lastUsed = company.lastUsed 
+              const lastUsed = company.lastUsed
                 ? `最終使用: ${new Date(company.lastUsed).toLocaleString()}`
                 : '未使用';
-              
+
               return `• ${company.name} (ID: ${company.id})${current}\\n` +
                      `  説明: ${company.description || 'なし'}\\n` +
                      `  ${lastUsed}`;
             })
             .join('\\n\\n');
-          
+
           return {
             content: [
               {
@@ -490,10 +486,10 @@ freee_current_user
         const currentCompanyId = await getCurrentCompanyId();
         const companyInfo = await getCompanyInfo(currentCompanyId);
         const tokens = await loadTokens(currentCompanyId);
-        
+
         let setupStatus = '';
         let nextSteps = '';
-        
+
         if (!currentCompanyId || currentCompanyId === '0') {
           setupStatus = '❌ 事業所が設定されていません';
           nextSteps = '1. freee_set_company [事業所ID] で事業所を設定してください';
@@ -507,7 +503,7 @@ freee_current_user
           setupStatus = '✅ セットアップ完了';
           nextSteps = '1. freee_current_user でテストしてください\\n2. get_deals などのAPIツールが使用可能です';
         }
-        
+
         return {
           content: [
             {
@@ -522,7 +518,7 @@ ${setupStatus}
 ### 1. 環境変数の確認
 以下の環境変数が設定されている必要があります：
 - \`FREEE_CLIENT_ID\`: freee開発者アプリのクライアントID
-- \`FREEE_CLIENT_SECRET\`: freee開発者アプリのクライアントシークレット  
+- \`FREEE_CLIENT_SECRET\`: freee開発者アプリのクライアントシークレット
 - \`FREEE_COMPANY_ID\`: デフォルト事業所ID
 
 ### 2. 事業所の設定
@@ -601,11 +597,11 @@ freee_set_company [事業所ID]  # 切り替え
         const companyInfo = await getCompanyInfo(currentCompanyId);
         const tokens = await loadTokens(currentCompanyId);
         const companies = await getCompanyList();
-        
+
         let status = '';
         let recommendations = '';
         let warnings = '';
-        
+
         // 事業所設定の確認
         if (!currentCompanyId || currentCompanyId === '0') {
           status += '❌ **事業所**: 未設定\\n';
@@ -616,7 +612,7 @@ freee_set_company [事業所ID]  # 切り替え
         } else {
           status += `✅ **事業所**: ${companyInfo.name} (ID: ${companyInfo.id})\\n`;
         }
-        
+
         // 認証状態の確認
         if (!tokens) {
           status += '❌ **認証**: 未認証\\n';
@@ -624,7 +620,7 @@ freee_set_company [事業所ID]  # 切り替え
         } else {
           const isValid = Date.now() < tokens.expires_at;
           const expiryDate = new Date(tokens.expires_at).toLocaleString();
-          
+
           if (isValid) {
             status += `✅ **認証**: 有効 (期限: ${expiryDate})\\n`;
             recommendations += '• freee_current_user でテスト実行\\n• get_deals, get_companies などのAPIツールが使用可能\\n';
@@ -633,27 +629,27 @@ freee_set_company [事業所ID]  # 切り替え
             recommendations += '• 次回API実行時に自動更新されます\\n• 手動更新: freee_authenticate\\n';
           }
         }
-        
+
         // 複数事業所の状況
         status += `📊 **登録事業所数**: ${companies.length}件\\n`;
-        
+
         if (companies.length > 1) {
           recommendations += '• freee_list_companies で事業所一覧を確認\\n• freee_set_company [ID] で事業所切り替え\\n';
         } else if (companies.length === 1) {
           recommendations += '• freee_set_company [新しいID] で追加事業所を登録可能\\n';
         }
-        
+
         // 環境変数の確認
         if (!config.freee.clientId || !config.freee.clientSecret) {
           warnings += '⚠️ **環境変数**: FREEE_CLIENT_ID または FREEE_CLIENT_SECRET が未設定\\n';
         }
-        
+
         // 推奨アクションの判定
         if (currentCompanyId && companyInfo && tokens && Date.now() < tokens.expires_at) {
           recommendations += '\\n🚀 **すぐに使用可能**: freee APIツールが利用できます\\n';
           recommendations += '**例**: get_deals, get_companies, get_users, など';
         }
-        
+
         return {
           content: [
             {
