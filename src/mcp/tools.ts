@@ -310,29 +310,41 @@ export function addAuthenticationTools(server: McpServer): void {
 
   server.tool(
     'freee_list_companies',
-    '設定済みの事業所一覧を表示します。最近使用した順に並べられます。【事業所切り替え前の確認用】',
+    '設定済みの事業所一覧を表示します。内部的にget_companiesを呼び出してfreee APIから最新の事業所情報を取得します。【事業所切り替え前の確認用】',
     {},
     async () => {
       try {
-        const companies = await getCompanyList();
+        // 内部的にget_companiesを呼び出す
+        interface CompanyResponse {
+          companies?: Array<{
+            id: number;
+            name: string;
+            description?: string;
+          }>;
+        }
+        const apiCompanies = await makeApiRequest('GET', '/api/1/companies') as CompanyResponse;
+        
+        // 設定ファイルから保存済みの事業所一覧も取得
+        const localCompanies = await getCompanyList();
         const currentCompanyId = await getCurrentCompanyId();
         
-        if (companies.length === 0) {
+        if (!apiCompanies || !apiCompanies.companies || apiCompanies.companies.length === 0) {
           return {
             content: [
               {
                 type: 'text',
-                text: '設定済みの事業所がありません。freee_set_company ツールを使用して事業所を追加してください。',
+                text: 'freee APIから事業所情報を取得できませんでした。認証状態を確認してください。\n\n💡 次のステップ:\n1. freee_auth_status - 認証状態を確認\n2. freee_authenticate - 認証を実行',
               },
             ],
           };
         }
         
-        const companyList = companies
+        const companyList = apiCompanies.companies
           .map((company) => {
-            const current = company.id === currentCompanyId ? ' (現在選択中)' : '';
-            const lastUsed = company.lastUsed 
-              ? `最終使用: ${new Date(company.lastUsed).toLocaleString()}`
+            const current = company.id === parseInt(currentCompanyId) ? ' (現在選択中)' : '';
+            const localInfo = localCompanies.find(c => c.id === company.id.toString());
+            const lastUsed = localInfo?.lastUsed 
+              ? `最終使用: ${new Date(localInfo.lastUsed).toLocaleString()}`
               : '未使用';
             
             return `• ${company.name} (ID: ${company.id})${current}\\n` +
@@ -345,19 +357,58 @@ export function addAuthenticationTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `設定済み事業所一覧 (${companies.length}件):\\n\\n${companyList}`,
+              text: `freee API事業所一覧 (${apiCompanies.companies.length}件):\\n\\n${companyList}`,
             },
           ],
         };
       } catch (error) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `事業所一覧の取得に失敗しました: ${error instanceof Error ? error.message : String(error)}`,
-            },
-          ],
-        };
+        // API呼び出しが失敗した場合は、ローカルの設定情報を表示
+        try {
+          const localCompanies = await getCompanyList();
+          const currentCompanyId = await getCurrentCompanyId();
+          
+          if (localCompanies.length === 0) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `API呼び出しに失敗しました: ${error instanceof Error ? error.message : String(error)}\n\n設定済みの事業所もありません。freee_set_company ツールを使用して事業所を追加してください。`,
+                },
+              ],
+            };
+          }
+          
+          const companyList = localCompanies
+            .map((company) => {
+              const current = company.id === currentCompanyId ? ' (現在選択中)' : '';
+              const lastUsed = company.lastUsed 
+                ? `最終使用: ${new Date(company.lastUsed).toLocaleString()}`
+                : '未使用';
+              
+              return `• ${company.name} (ID: ${company.id})${current}\\n` +
+                     `  説明: ${company.description || 'なし'}\\n` +
+                     `  ${lastUsed}`;
+            })
+            .join('\\n\\n');
+          
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `API呼び出しに失敗しました: ${error instanceof Error ? error.message : String(error)}\n\nローカル設定済み事業所一覧 (${localCompanies.length}件):\\n\\n${companyList}\n\n💡 API接続を復旧するには:\n1. freee_auth_status - 認証状態を確認\n2. freee_authenticate - 認証を実行`,
+              },
+            ],
+          };
+        } catch (localError) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `事業所一覧の取得に失敗しました: ${error instanceof Error ? error.message : String(error)}\n\nローカル設定の読み込みも失敗: ${localError instanceof Error ? localError.message : String(localError)}`,
+              },
+            ],
+          };
+        }
       }
     }
   );

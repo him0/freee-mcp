@@ -20,6 +20,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm lint:fix` - Auto-fix ESLint issues
 - `pnpm format` - Format code with Prettier
 
+### Testing & Development Tools
+- `node scripts/test-tools.js` - Quick tool information and availability check
+- `node scripts/test-mcp.js` - Full MCP protocol testing with interactive mode
+- `pnpm inspector` - GUI-based MCP tool testing (opens browser interface)
+
 ## Architecture
 
 This is a Model Context Protocol (MCP) server that exposes freee API endpoints as MCP tools. The core architecture:
@@ -92,6 +97,9 @@ To use this MCP server with Claude Code, add the following configuration:
 - `freee_authenticate` - Perform OAuth authentication
 - `freee_auth_status` - Check authentication status
 - `freee_clear_auth` - Clear saved authentication tokens
+- `freee_list_companies` - List companies (calls get_companies API internally)
+- `freee_status` - Check overall system status with recommendations
+- `freee_help` - Display usage guide and workflows
 - All freee API endpoints as `get_*`, `post_*`, `put_*`, `delete_*` tools
 
 #### Testing Authentication Flow
@@ -99,3 +107,18 @@ To use this MCP server with Claude Code, add the following configuration:
 2. Complete authentication in browser
 3. Use `freee_auth_status` to verify authentication
 4. Test API calls with `freee_current_user` or other tools
+
+#### Development and Testing Workflow
+When working on this MCP server, use these tools for testing and validation:
+
+1. **Quick Status Check**: Use `freee_status` to see current state and get recommendations
+2. **Tool Testing**: Run `node scripts/test-tools.js` for quick tool verification
+3. **Interactive Testing**: Use `pnpm inspector` for GUI-based tool testing
+4. **Protocol Testing**: Run `node scripts/test-mcp.js` for full MCP protocol validation
+5. **Real-world Testing**: Test with actual Claude Code integration using the MCP configuration above
+
+#### Important Notes for Claude Code Development
+- Always use the testing tools before making changes to verify functionality
+- The `freee_list_companies` tool now internally calls the `get_companies` API for real-time data
+- Token management is handled automatically with per-company file storage in `~/.config/freee-mcp/`
+- When debugging authentication issues, use `freee_status` first to get targeted guidance
