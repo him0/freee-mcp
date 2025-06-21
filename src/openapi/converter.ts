@@ -55,7 +55,7 @@ export function generateToolsFromOpenApi(server: McpServer): void {
           });
 
           const bodyParameters =
-            method === 'post' || method === 'put' ? bodySchema.parse(params) : undefined;
+            method === 'post' || method === 'put' ? params.body : undefined;
           const result = await makeApiRequest(
             method.toUpperCase(),
             actualPath,
