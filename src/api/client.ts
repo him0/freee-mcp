@@ -38,7 +38,7 @@ export async function makeApiRequest(
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: body ? JSON.stringify(typeof body === 'string' ? JSON.parse(body) : body) : undefined,
   });
 
   if (response.status === 401 || response.status === 403) {
@@ -57,7 +57,37 @@ export async function makeApiRequest(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(`API request failed: ${response.status} ${JSON.stringify(errorData)}`);
+    
+    // Extract detailed error messages from freee API response
+    let errorMessage = `API request failed: ${response.status}`;
+    
+    if (errorData && errorData.errors && Array.isArray(errorData.errors)) {
+      const allMessages: string[] = [];
+      
+      for (const error of errorData.errors) {
+        if (error.messages && Array.isArray(error.messages)) {
+          allMessages.push(...error.messages);
+        }
+      }
+      
+      if (allMessages.length > 0) {
+        errorMessage += `\n\nエラー詳細:\n${allMessages.join('\n')}`;
+        
+        // Add helpful guidance for bad request errors
+        if (response.status === 400) {
+          errorMessage += `\n\n💡 ヒント: 不正なリクエストエラーが発生しました。`;
+          errorMessage += `\n既存のデータを取得して正しい構造を確認することをお勧めします。`;
+          errorMessage += `\n例: get_items, get_partners, get_account_items などで既存データの構造を確認してください。`;
+        }
+      }
+    }
+    
+    // Fallback to raw error data if no structured errors found
+    if (!errorData?.errors) {
+      errorMessage += `\n\n詳細: ${JSON.stringify(errorData)}`;
+    }
+    
+    throw new Error(errorMessage);
   }
 
   return response.json();
