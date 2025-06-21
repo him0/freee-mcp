@@ -20,6 +20,15 @@ vi.mock('../config.js', () => ({
   }
 }));
 
+vi.mock('../config/companies.js', () => ({
+  getCurrentCompanyId: vi.fn().mockResolvedValue('12345'),
+  getCompanyInfo: vi.fn().mockResolvedValue({
+    id: 12345,
+    name: 'Demo Company',
+    name_kana: 'デモカンパニー'
+  })
+}));
+
 vi.mock('../api/client.js', () => ({
   makeApiRequest: vi.fn()
 }));

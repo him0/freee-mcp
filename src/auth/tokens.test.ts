@@ -11,6 +11,10 @@ import {
   clearTokens, 
   getValidAccessToken 
 } from './tokens.js';
+import { setupTestTempDir } from '../test-utils/temp-dir.js';
+
+// テスト用一時ディレクトリの設定
+const { tempDir, setup: setupTempDir, cleanup: cleanupTempDir } = setupTestTempDir('tokens-test-');
 
 vi.mock('fs/promises');
 vi.mock('../config.js', () => ({
@@ -30,6 +34,15 @@ vi.mock('../config/companies.js', () => ({
   getCurrentCompanyId: vi.fn().mockResolvedValue('12345')
 }));
 
+// osモジュールをモックして、テスト用ディレクトリを返すようにする
+vi.mock('os', () => ({
+  default: {
+    homedir: vi.fn(),
+    tmpdir: vi.fn().mockReturnValue('/tmp')
+  }
+}));
+const mockOs = vi.mocked(os);
+
 const mockFs = vi.mocked(fs);
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -43,13 +56,19 @@ describe('tokens', () => {
     scope: 'read write'
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    
+    // テスト用一時ディレクトリを設定
+    const testTempDir = await setupTempDir();
+    mockOs.homedir.mockReturnValue(testTempDir);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.restoreAllMocks();
+    // テスト用一時ディレクトリをクリーンアップ
+    await cleanupTempDir();
   });
 
   describe('saveTokens', () => {
@@ -59,12 +78,15 @@ describe('tokens', () => {
 
       await saveTokens(mockTokenData);
 
+      const expectedConfigDir = path.join(tempDir.getPath(), '.config', 'freee-mcp');
+      const expectedTokenPath = path.join(expectedConfigDir, 'tokens-12345.json');
+
       expect(mockFs.mkdir).toHaveBeenCalledWith(
-        path.join(os.homedir(), '.config', 'freee-mcp'),
+        expectedConfigDir,
         { recursive: true }
       );
       expect(mockFs.writeFile).toHaveBeenCalledWith(
-        path.join(os.homedir(), '.config', 'freee-mcp', 'tokens-12345.json'),
+        expectedTokenPath,
         JSON.stringify(mockTokenData, null, 2),
         { mode: 0o600 }
       );
@@ -87,7 +109,7 @@ describe('tokens', () => {
 
       expect(result).toEqual(mockTokenData);
       expect(mockFs.readFile).toHaveBeenCalledWith(
-        path.join(os.homedir(), '.config', 'freee-mcp', 'tokens-12345.json'),
+        path.join(tempDir.getPath(), '.config', 'freee-mcp', 'tokens-12345.json'),
         'utf8'
       );
     });
@@ -183,7 +205,7 @@ describe('tokens', () => {
       await clearTokens('12345');
 
       expect(mockFs.unlink).toHaveBeenCalledWith(
-        path.join(os.homedir(), '.config', 'freee-mcp', 'tokens-12345.json')
+        path.join(tempDir.getPath(), '.config', 'freee-mcp', 'tokens-12345.json')
       );
     });
 

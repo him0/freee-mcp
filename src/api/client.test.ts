@@ -10,6 +10,10 @@ vi.mock('../config.js', () => ({
   }
 }));
 
+vi.mock('../config/companies.js', () => ({
+  getCurrentCompanyId: vi.fn().mockResolvedValue('12345')
+}));
+
 vi.mock('../auth/tokens.js', () => ({
   getValidAccessToken: vi.fn()
 }));
