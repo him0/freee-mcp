@@ -26,6 +26,10 @@ vi.mock('../config.js', () => ({
   }
 }));
 
+vi.mock('../config/companies.js', () => ({
+  getCurrentCompanyId: vi.fn().mockResolvedValue('12345')
+}));
+
 const mockFs = vi.mocked(fs);
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -60,7 +64,7 @@ describe('tokens', () => {
         { recursive: true }
       );
       expect(mockFs.writeFile).toHaveBeenCalledWith(
-        path.join(os.homedir(), '.config', 'freee-mcp', 'tokens.json'),
+        path.join(os.homedir(), '.config', 'freee-mcp', 'tokens-12345.json'),
         JSON.stringify(mockTokenData, null, 2),
         { mode: 0o600 }
       );
@@ -79,11 +83,11 @@ describe('tokens', () => {
     it('should load tokens from file', async () => {
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockTokenData));
 
-      const result = await loadTokens();
+      const result = await loadTokens('12345');
 
       expect(result).toEqual(mockTokenData);
       expect(mockFs.readFile).toHaveBeenCalledWith(
-        path.join(os.homedir(), '.config', 'freee-mcp', 'tokens.json'),
+        path.join(os.homedir(), '.config', 'freee-mcp', 'tokens-12345.json'),
         'utf8'
       );
     });
@@ -176,10 +180,10 @@ describe('tokens', () => {
     it('should clear tokens successfully', async () => {
       mockFs.unlink.mockResolvedValue(undefined);
 
-      await clearTokens();
+      await clearTokens('12345');
 
       expect(mockFs.unlink).toHaveBeenCalledWith(
-        path.join(os.homedir(), '.config', 'freee-mcp', 'tokens.json')
+        path.join(os.homedir(), '.config', 'freee-mcp', 'tokens-12345.json')
       );
     });
 

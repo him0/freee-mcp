@@ -62,7 +62,7 @@ describe('tools', () => {
     it('should register authentication tools', () => {
       addAuthenticationTools(mockServer);
 
-      expect(mockTool).toHaveBeenCalledTimes(4);
+      expect(mockTool).toHaveBeenCalledTimes(10);
       expect(mockTool).toHaveBeenCalledWith('freee_current_user', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_authenticate', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_auth_status', expect.any(String), {}, expect.any(Function));
@@ -81,7 +81,7 @@ describe('tools', () => {
         const result = await handler();
 
         expect(result.content[0].text).toContain('現在のユーザー情報');
-        expect(result.content[0].text).toContain('設定されている会社ID: 12345');
+        expect(result.content[0].text).toContain('現在の会社ID: 12345');
         expect(result.content[0].text).toContain(JSON.stringify(mockUserInfo, null, 2));
       });
 

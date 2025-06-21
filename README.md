@@ -11,6 +11,7 @@ freee APIをModel Context Protocol (MCP)サーバーとして提供する実装�
 - freee APIのエンドポイントをMCPツールとして自動公開
 - OAuth 2.0 + PKCE認証による安全なAPI接続
 - 永続コールバックサーバーによる認証フロー
+- **複数事業所対応**: 事業所ごとの認証トークン管理と動的切り替え
 - 自動トークン管理（保存・更新・有効期限チェック）
 - APIリクエストの自動バリデーション（Zod使用）
 - エラーハンドリングとレスポンス整形
@@ -47,18 +48,20 @@ OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順
    ```bash
    FREEE_CLIENT_ID=your_client_id          # 必須: freeeアプリの Client ID
    FREEE_CLIENT_SECRET=your_client_secret  # 必須: freeeアプリの Client Secret
-   FREEE_COMPANY_ID=your_company_id        # 必須: 会社ID
+   FREEE_COMPANY_ID=your_company_id        # 必須: デフォルト事業所ID
    FREEE_CALLBACK_PORT=8080                # オプション: OAuthコールバックポート、デフォルトは 8080
    ```
 
+   **注意**: `FREEE_COMPANY_ID` はデフォルト事業所として使用されます。実行時に `freee_set_company` ツールで他の事業所に切り替えることができます。
+
 3. **認証方法**:
-   初回API使用時またはトークンの有効期限切れ時に、`freee_authenticate` ツールを使用して認証を行います。
+   初回API使用時またはトークンの有効期限切れ時に、`freee_authenticate` ツールを使用して認証を行います。事業所ごとに個別の認証が必要です。
 
 ### 認証の仕組み
 
 1. **永続コールバックサーバー**: MCPサーバー起動時に指定ポート（デフォルト8080）でOAuthコールバック受付サーバーが起動します
 2. **認証フロー**: `freee_authenticate` ツール実行時にブラウザで認証ページが開き、認証後にコールバックを受信します
-3. **トークン保存**: 認証後、トークンは `~/.config/freee-mcp/tokens.json` に安全に保存されます（ファイル権限600）
+3. **トークン保存**: 認証後、トークンは `~/.config/freee-mcp/tokens-{company_id}.json` に事業所ごとに安全に保存されます（ファイル権限600）
 4. **自動更新**: アクセストークンの有効期限が切れた場合、リフレッシュトークンを使用して自動的に更新されます
 5. **タイムアウト**: 認証リクエストは5分でタイムアウトします
 
@@ -114,23 +117,47 @@ VSCode拡張機能で使用する場合は、同様の設定を `~/Library/Appli
 
 ## 利用可能なツール
 
-### 認証管理ツール
+### 主要なMCPツール
 
-- **`freee_current_user`**: 現在のユーザー情報を取得します。認証状態、設定されている会社ID、ユーザー詳細が含まれます
-- **`freee_authenticate`**: OAuth認証を開始します。永続コールバックサーバーを利用してブラウザで認証を行います
-- **`freee_auth_status`**: 認証状態を確認します。保存されているトークンの有効期限やスコープ情報を表示します
-- **`freee_clear_auth`**: 認証情報をクリアします。次回API使用時に再認証が必要になります
+- **認証管理**: `freee_authenticate`, `freee_auth_status`, `freee_clear_auth`, `freee_current_user`
+- **事業所管理**: `freee_set_company`, `freee_get_current_company`, `freee_list_companies`
+- **ガイダンス**: `freee_help`, `freee_getting_started`, `freee_status`
 
 ### freee APIツール
 
-freee APIのすべてのエンドポイントがMCPツールとして自動的に公開されます
-
-各ツールは以下の命名規則に従います:
+freee APIのすべてのエンドポイントがMCPツールとして自動的に公開されます。各ツールは以下の命名規則に従います:
 
 - GET: `get_[resource_name]`
 - POST: `post_[resource_name]`
 - PUT: `put_[resource_name]_by_id`
 - DELETE: `delete_[resource_name]_by_id`
+
+## 使い方
+
+### 初回セットアップ
+
+```bash
+# 1. 使い方ガイドを確認
+freee_help
+
+# 2. 初回セットアップガイド
+freee_getting_started
+
+# 3. 現在の状態確認
+freee_status
+```
+
+### 基本的なワークフロー
+
+1. **事業所設定**: `freee_set_company [事業所ID]`
+2. **認証**: `freee_authenticate`
+3. **API使用**: `get_deals`, `freee_current_user` など
+
+詳細な使用方法、事業所切り替え、トラブルシューティングについては、MCPツール内のガイダンス機能をご利用ください：
+
+- `freee_help` - 全体的な使い方とワークフロー
+- `freee_getting_started` - 初回セットアップの詳細ガイド
+- `freee_status` - 現在の状態と推奨アクション
 
 ## 技術スタック
 
