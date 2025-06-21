@@ -14,6 +14,8 @@ vi.mock('../config/companies.js', () => ({
   getCurrentCompanyId: vi.fn().mockResolvedValue('12345')
 }));
 
+const { getCurrentCompanyId } = await import('../config/companies.js');
+
 vi.mock('../auth/tokens.js', () => ({
   getValidAccessToken: vi.fn()
 }));
@@ -24,6 +26,8 @@ global.fetch = mockFetch;
 describe('client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // getCurrentCompanyIdのモックを確実に設定
+    vi.mocked(getCurrentCompanyId).mockResolvedValue('12345');
   });
 
   afterEach(() => {

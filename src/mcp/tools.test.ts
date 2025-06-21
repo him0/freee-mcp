@@ -29,6 +29,8 @@ vi.mock('../config/companies.js', () => ({
   })
 }));
 
+const { getCurrentCompanyId, getCompanyInfo } = await import('../config/companies.js');
+
 vi.mock('../api/client.js', () => ({
   makeApiRequest: vi.fn()
 }));
@@ -61,6 +63,13 @@ describe('tools', () => {
     } as unknown as McpServer;
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    // モック関数を確実に設定
+    vi.mocked(getCurrentCompanyId).mockResolvedValue('12345');
+    vi.mocked(getCompanyInfo).mockResolvedValue({
+      id: 12345,
+      name: 'Demo Company',
+      name_kana: 'デモカンパニー'
+    });
   });
 
   afterEach(() => {
