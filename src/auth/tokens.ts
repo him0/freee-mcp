@@ -2,7 +2,6 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { config } from '../config.js';
-import { getCurrentCompanyId } from '../config/companies.js';
 
 export interface TokenData {
   access_token: string;
@@ -12,24 +11,24 @@ export interface TokenData {
   scope: string;
 }
 
-function getTokenFilePath(companyId?: string): string {
+function getTokenFilePath(): string {
   const configDir = path.join(os.homedir(), '.config', 'freee-mcp');
-  if (companyId) {
-    return path.join(configDir, `tokens-${companyId}.json`);
-  }
-  // Legacy support for old token file
   return path.join(configDir, 'tokens.json');
 }
 
-export async function saveTokens(tokens: TokenData, companyId?: string): Promise<void> {
-  const currentCompanyId = companyId || await getCurrentCompanyId();
-  const tokenPath = getTokenFilePath(currentCompanyId);
+function getLegacyTokenFilePath(companyId: string): string {
+  const configDir = path.join(os.homedir(), '.config', 'freee-mcp');
+  return path.join(configDir, `tokens-${companyId}.json`);
+}
+
+export async function saveTokens(tokens: TokenData): Promise<void> {
+  const tokenPath = getTokenFilePath();
   const configDir = path.dirname(tokenPath);
 
   try {
     console.error(`📁 Creating directory: ${configDir}`);
     await fs.mkdir(configDir, { recursive: true });
-    console.error(`💾 Writing tokens for company ${currentCompanyId} to: ${tokenPath}`);
+    console.error(`💾 Writing tokens to: ${tokenPath}`);
     await fs.writeFile(tokenPath, JSON.stringify(tokens, null, 2), { mode: 0o600 });
     console.error('✅ Tokens saved successfully');
   } catch (error) {
@@ -38,28 +37,18 @@ export async function saveTokens(tokens: TokenData, companyId?: string): Promise
   }
 }
 
-export async function loadTokens(companyId?: string): Promise<TokenData | null> {
-  const currentCompanyId = companyId || await getCurrentCompanyId();
-  const tokenPath = getTokenFilePath(currentCompanyId);
+export async function loadTokens(): Promise<TokenData | null> {
+  const tokenPath = getTokenFilePath();
 
   try {
     const data = await fs.readFile(tokenPath, 'utf8');
     return JSON.parse(data) as TokenData;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      // Try legacy token file for backward compatibility
-      if (companyId === undefined) {
-        const legacyPath = getTokenFilePath();
-        try {
-          const legacyData = await fs.readFile(legacyPath, 'utf8');
-          const legacyTokens = JSON.parse(legacyData) as TokenData;
-          // Migrate to new format
-          await saveTokens(legacyTokens, currentCompanyId);
-          await fs.unlink(legacyPath); // Remove legacy file
-          return legacyTokens;
-        } catch {
-          // Legacy file doesn't exist, return null
-        }
+      // Try to migrate from legacy company-specific token files
+      const legacyTokens = await tryMigrateLegacyTokens();
+      if (legacyTokens) {
+        return legacyTokens;
       }
       return null;
     }
@@ -72,7 +61,41 @@ export function isTokenValid(tokens: TokenData): boolean {
   return Date.now() < tokens.expires_at;
 }
 
-export async function refreshAccessToken(refreshToken: string, companyId?: string): Promise<TokenData> {
+async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
+  // Try to find and migrate legacy company-specific token files
+  const configDir = path.join(os.homedir(), '.config', 'freee-mcp');
+  
+  try {
+    const files = await fs.readdir(configDir);
+    const tokenFiles = files.filter(file => file.startsWith('tokens-') && file.endsWith('.json'));
+    
+    if (tokenFiles.length > 0) {
+      // Use the most recent token file
+      const tokenFilePath = path.join(configDir, tokenFiles[0]);
+      const data = await fs.readFile(tokenFilePath, 'utf8');
+      const tokens = JSON.parse(data) as TokenData;
+      
+      // Migrate to new format
+      await saveTokens(tokens);
+      
+      // Clean up all legacy token files
+      await Promise.all(
+        tokenFiles.map(file => 
+          fs.unlink(path.join(configDir, file)).catch(() => {}) // Ignore errors
+        )
+      );
+      
+      console.error('✅ Migrated legacy company-specific tokens to user-based tokens');
+      return tokens;
+    }
+  } catch (error) {
+    // Ignore errors during migration attempt
+  }
+  
+  return null;
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<TokenData> {
   const response = await fetch(config.oauth.tokenEndpoint, {
     method: 'POST',
     headers: {
@@ -100,30 +123,52 @@ export async function refreshAccessToken(refreshToken: string, companyId?: strin
     scope: tokenResponse.scope || config.oauth.scope,
   };
 
-  await saveTokens(tokens, companyId);
+  await saveTokens(tokens);
   return tokens;
 }
 
-export async function clearTokens(companyId?: string): Promise<void> {
-  const currentCompanyId = companyId || await getCurrentCompanyId();
-  const tokenPath = getTokenFilePath(currentCompanyId);
+export async function clearTokens(): Promise<void> {
+  const tokenPath = getTokenFilePath();
 
   try {
     await fs.unlink(tokenPath);
-    console.error(`Tokens for company ${currentCompanyId} cleared successfully`);
+    console.error('Tokens cleared successfully');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      console.error(`No tokens to clear for company ${currentCompanyId} (file does not exist)`);
+      console.error('No tokens to clear (file does not exist)');
       return;
     }
     console.error('Failed to clear tokens:', error);
     throw error;
   }
+  
+  // Also try to clear any legacy company-specific token files
+  await clearLegacyTokens();
 }
 
-export async function getValidAccessToken(companyId?: string): Promise<string | null> {
-  const currentCompanyId = companyId || await getCurrentCompanyId();
-  const tokens = await loadTokens(currentCompanyId);
+async function clearLegacyTokens(): Promise<void> {
+  const configDir = path.join(os.homedir(), '.config', 'freee-mcp');
+  
+  try {
+    const files = await fs.readdir(configDir);
+    const tokenFiles = files.filter(file => file.startsWith('tokens-') && file.endsWith('.json'));
+    
+    await Promise.all(
+      tokenFiles.map(file => 
+        fs.unlink(path.join(configDir, file)).catch(() => {}) // Ignore errors
+      )
+    );
+    
+    if (tokenFiles.length > 0) {
+      console.error('✅ Cleared legacy company-specific token files');
+    }
+  } catch (error) {
+    // Ignore errors during cleanup
+  }
+}
+
+export async function getValidAccessToken(): Promise<string | null> {
+  const tokens = await loadTokens();
   if (!tokens) {
     return null;
   }
@@ -133,7 +178,7 @@ export async function getValidAccessToken(companyId?: string): Promise<string | 
   }
 
   try {
-    const newTokens = await refreshAccessToken(tokens.refresh_token, currentCompanyId);
+    const newTokens = await refreshAccessToken(tokens.refresh_token);
     return newTokens.access_token;
   } catch (error) {
     console.error('Failed to refresh token:', error);

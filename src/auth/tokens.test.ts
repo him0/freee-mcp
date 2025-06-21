@@ -30,9 +30,6 @@ vi.mock('../config.js', () => ({
   }
 }));
 
-vi.mock('../config/companies.js', () => ({
-  getCurrentCompanyId: vi.fn().mockResolvedValue('12345')
-}));
 
 // osモジュールをモックして、テスト用ディレクトリを返すようにする
 vi.mock('os', () => ({
@@ -79,7 +76,7 @@ describe('tokens', () => {
       await saveTokens(mockTokenData);
 
       const expectedConfigDir = path.join(tempDir.getPath(), '.config', 'freee-mcp');
-      const expectedTokenPath = path.join(expectedConfigDir, 'tokens-12345.json');
+      const expectedTokenPath = path.join(expectedConfigDir, 'tokens.json');
 
       expect(mockFs.mkdir).toHaveBeenCalledWith(
         expectedConfigDir,
@@ -105,11 +102,11 @@ describe('tokens', () => {
     it('should load tokens from file', async () => {
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockTokenData));
 
-      const result = await loadTokens('12345');
+      const result = await loadTokens();
 
       expect(result).toEqual(mockTokenData);
       expect(mockFs.readFile).toHaveBeenCalledWith(
-        path.join(tempDir.getPath(), '.config', 'freee-mcp', 'tokens-12345.json'),
+        path.join(tempDir.getPath(), '.config', 'freee-mcp', 'tokens.json'),
         'utf8'
       );
     });
@@ -202,10 +199,10 @@ describe('tokens', () => {
     it('should clear tokens successfully', async () => {
       mockFs.unlink.mockResolvedValue(undefined);
 
-      await clearTokens('12345');
+      await clearTokens();
 
       expect(mockFs.unlink).toHaveBeenCalledWith(
-        path.join(tempDir.getPath(), '.config', 'freee-mcp', 'tokens-12345.json')
+        path.join(tempDir.getPath(), '.config', 'freee-mcp', 'tokens.json')
       );
     });
 

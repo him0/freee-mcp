@@ -11,7 +11,7 @@ export async function makeApiRequest(
   const baseUrl = config.freee.apiUrl;
   const companyId = await getCurrentCompanyId();
 
-  const accessToken = await getValidAccessToken(companyId);
+  const accessToken = await getValidAccessToken();
 
   if (!accessToken) {
     throw new Error(
@@ -50,7 +50,7 @@ export async function makeApiRequest(
       `確認事項:\n` +
       `1. FREEE_CLIENT_ID環境変数が正しく設定されているか\n` +
       `2. freee側でアプリケーション設定が正しいか（リダイレクトURI等）\n` +
-      `3. 現在の事業所(${companyId})に対するトークンの有効期限が切れていないか\n` +
+      `3. トークンの有効期限が切れていないか\n` +
       `4. 事業所IDが正しいか（freee_get_current_company で確認）`
     );
   }

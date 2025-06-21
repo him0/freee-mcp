@@ -485,7 +485,7 @@ freee_current_user
       try {
         const currentCompanyId = await getCurrentCompanyId();
         const companyInfo = await getCompanyInfo(currentCompanyId);
-        const tokens = await loadTokens(currentCompanyId);
+        const tokens = await loadTokens();
 
         let setupStatus = '';
         let nextSteps = '';
@@ -595,7 +595,7 @@ freee_set_company [事業所ID]  # 切り替え
       try {
         const currentCompanyId = await getCurrentCompanyId();
         const companyInfo = await getCompanyInfo(currentCompanyId);
-        const tokens = await loadTokens(currentCompanyId);
+        const tokens = await loadTokens();
         const companies = await getCompanyList();
 
         let status = '';
