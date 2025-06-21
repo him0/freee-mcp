@@ -23,9 +23,9 @@ vi.mock('../config.js', () => ({
 vi.mock('../config/companies.js', () => ({
   getCurrentCompanyId: vi.fn().mockResolvedValue('12345'),
   getCompanyInfo: vi.fn().mockResolvedValue({
-    id: 12345,
+    id: '12345',
     name: 'Demo Company',
-    name_kana: 'デモカンパニー'
+    addedAt: Date.now()
   })
 }));
 
@@ -66,9 +66,9 @@ describe('tools', () => {
     // モック関数を確実に設定
     vi.mocked(getCurrentCompanyId).mockResolvedValue('12345');
     vi.mocked(getCompanyInfo).mockResolvedValue({
-      id: 12345,
+      id: '12345',
       name: 'Demo Company',
-      name_kana: 'デモカンパニー'
+      addedAt: Date.now()
     });
   });
 

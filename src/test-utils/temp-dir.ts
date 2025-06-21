@@ -59,7 +59,7 @@ export class TestTempDir {
 /**
  * vitest用のテスト一時ディレクトリ管理ヘルパー
  */
-export function setupTestTempDir(prefix?: string) {
+export function setupTestTempDir(prefix?: string): { tempDir: TestTempDir; setup(): Promise<string>; cleanup(): Promise<void> } {
   const tempDir = new TestTempDir(prefix);
   
   return {

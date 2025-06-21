@@ -122,3 +122,36 @@ When working on this MCP server, use these tools for testing and validation:
 - The `freee_list_companies` tool now internally calls the `get_companies` API for real-time data
 - Token management is handled automatically with per-company file storage in `~/.config/freee-mcp/`
 - When debugging authentication issues, use `freee_status` first to get targeted guidance
+
+### PR Creation Pre-flight Checklist
+
+**IMPORTANT**: Always run these commands locally before creating a PR to prevent CI failures:
+
+```bash
+# 1. Type Check - Verify TypeScript types
+pnpm type-check
+
+# 2. Linting - Check code style and rules
+pnpm lint
+
+# 3. Tests - Ensure all tests pass
+pnpm test:run
+
+# 4. Build - Verify the project builds successfully
+pnpm build
+
+# 5. All-in-one check command
+pnpm type-check && pnpm lint && pnpm test:run && pnpm build
+```
+
+**Only create a PR if ALL checks pass locally.** This prevents:
+- TypeScript compilation errors in CI
+- Linting failures
+- Test failures
+- Build failures
+
+**Common Issues to Watch For**:
+- Mock function return types (ensure `id` fields are strings, not numbers)
+- Missing return type annotations on exported functions
+- Undefined environment variables in tests
+- File path separators on different operating systems
