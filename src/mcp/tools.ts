@@ -315,7 +315,7 @@ export function addAuthenticationTools(server: McpServer): void {
     async () => {
       try {
         // 内部的にget_companiesを呼び出す
-        const apiCompanies = await makeApiRequest('GET', '/api/1/companies');
+        const apiCompanies = await makeApiRequest('GET', '/api/1/companies') as { companies?: any[] };
         
         // 設定ファイルから保存済みの事業所一覧も取得
         const localCompanies = await getCompanyList();
