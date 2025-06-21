@@ -35,19 +35,20 @@ pnpm install
 OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順で設定してください:
 
 1. **freee側でのアプリケーション登録**:
-   - [freee developers](https://developer.freee.co.jp/) にアクセス
-   - 新しいアプリケーションを作成
-   - 以下の設定を行う:
-     - **リダイレクトURI**: `http://127.0.0.1:8080/callback` （デフォルトポート、環境変数で変更可能）
-     - **スコープ**: `read write`
+  - [freee アプリストア](https://app.secure.freee.co.jp/developers) にアクセス
+  - 新しいアプリケーションを作成
+  - 以下の設定を行う:
+    - **リダイレクトURI**: `http://127.0.0.1:8080/callback` （デフォルトポート、環境変数で変更可能）
+    - アプリケーションの **Client ID** と **Client Secret** を取得
+    - **権限設定**: 必要な機能の 参照・更新 にチェックを入れる
+
 
 2. **環境変数の設定**:
    ```bash
-   FREEE_CLIENT_ID=your_client_id          # 必須: freeeアプリのクライアントID
-   FREEE_CLIENT_SECRET=your_client_secret  # 必須: freeeアプリのクライアントシークレット
+   FREEE_CLIENT_ID=your_client_id          # 必須: freeeアプリの Client ID
+   FREEE_CLIENT_SECRET=your_client_secret  # 必須: freeeアプリの Client Secret
    FREEE_COMPANY_ID=your_company_id        # 必須: 会社ID
-   FREEE_CALLBACK_PORT=8080                # オプション: OAuthコールバックポート、デフォルトは8080
-   FREEE_API_URL=https://api.freee.co.jp   # オプション、デフォルトはhttps://api.freee.co.jp
+   FREEE_CALLBACK_PORT=8080                # オプション: OAuthコールバックポート、デフォルトは 8080
    ```
 
 3. **認証方法**:
