@@ -5,7 +5,7 @@ export const config = {
     clientId: process.env.FREEE_CLIENT_ID || '',
     clientSecret: process.env.FREEE_CLIENT_SECRET || '',
     companyId: process.env.FREEE_COMPANY_ID || '0',
-    apiUrl: process.env.FREEE_API_URL || 'https://api.freee.co.jp',
+    apiUrl: 'https://api.freee.co.jp',
   },
   oauth: {
     callbackPort: CALLBACK_PORT,
