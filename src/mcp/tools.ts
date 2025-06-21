@@ -315,7 +315,14 @@ export function addAuthenticationTools(server: McpServer): void {
     async () => {
       try {
         // 内部的にget_companiesを呼び出す
-        const apiCompanies = await makeApiRequest('GET', '/api/1/companies') as { companies?: any[] };
+        interface CompanyResponse {
+          companies?: Array<{
+            id: number;
+            name: string;
+            description?: string;
+          }>;
+        }
+        const apiCompanies = await makeApiRequest('GET', '/api/1/companies') as CompanyResponse;
         
         // 設定ファイルから保存済みの事業所一覧も取得
         const localCompanies = await getCompanyList();
@@ -333,7 +340,7 @@ export function addAuthenticationTools(server: McpServer): void {
         }
         
         const companyList = apiCompanies.companies
-          .map((company: any) => {
+          .map((company) => {
             const current = company.id === parseInt(currentCompanyId) ? ' (現在選択中)' : '';
             const localInfo = localCompanies.find(c => c.id === company.id.toString());
             const lastUsed = localInfo?.lastUsed 
