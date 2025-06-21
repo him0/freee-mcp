@@ -38,7 +38,7 @@ export async function makeApiRequest(
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: body ? JSON.stringify(body.body) : undefined,
+    body: body ? JSON.stringify(body) : undefined,
   });
 
   if (response.status === 401 || response.status === 403) {

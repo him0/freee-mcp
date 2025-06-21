@@ -104,7 +104,7 @@ describe('client', () => {
         json: () => Promise.resolve({})
       });
 
-      const requestBody = { body: { name: 'Test Deal' } };
+      const requestBody = { name: 'Test Deal' };
       await makeApiRequest('POST', '/api/1/deals', undefined, requestBody);
 
       expect(mockFetch).toHaveBeenCalledWith(

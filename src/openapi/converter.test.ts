@@ -172,7 +172,7 @@ describe('converter', () => {
         'PUT',
         '/api/1/deals/123',
         {},
-        { body: requestBody, id: 123 }
+        requestBody
       );
     });
 
