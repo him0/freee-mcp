@@ -36,7 +36,7 @@ export async function loadCompaniesConfig(): Promise<CompaniesConfig> {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       // Create default config with environment variable company ID
-      const defaultCompanyId = config.freee.companyId;
+      const defaultCompanyId = config.freee.companyId || '0';
       const defaultConfig: CompaniesConfig = {
         defaultCompanyId,
         currentCompanyId: defaultCompanyId,
