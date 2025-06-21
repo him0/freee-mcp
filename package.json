@@ -16,26 +16,36 @@
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint --fix 'src/**/*.ts'",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",
-    "inspector": "pnpx @modelcontextprotocol/inspector pnpm run start"
+    "inspector": "pnpx @modelcontextprotocol/inspector pnpm run start",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui"
   },
   "author": "him0",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.14.2",
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^24.0.1",
     "@typescript-eslint/eslint-plugin": "^8.34.0",
     "@typescript-eslint/parser": "^8.34.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
     "esbuild": "^0.25.5",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
+    "jsdom": "^26.1.0",
     "prettier": "^3.5.3",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.3",
-    "zod": "^3.25.64",
-    "open": "^10.1.0"
-  }
+    "open": "^10.1.0",
+    "zod": "^3.25.64"
+  },
+  "packageManager": "pnpm@10.12.1"
 }
