@@ -10,5 +10,16 @@ export default defineConfig({
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: ['node_modules/', 'dist/', 'build.ts', '**/*.test.ts', '**/*.spec.ts'],
     },
+    // テスト実行時の環境変数設定
+    env: {
+      NODE_ENV: 'test',
+      // テスト用のデフォルト値を設定
+      FREEE_CLIENT_ID: 'test-client-id',
+      FREEE_CLIENT_SECRET: 'test-client-secret',
+      FREEE_COMPANY_ID: '12345',
+      FREEE_CALLBACK_PORT: '8080'
+    },
+    // テスト実行時のセットアップ
+    setupFiles: ['src/test-utils/setup.ts'],
   },
 });
