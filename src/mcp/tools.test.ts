@@ -1,11 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import crypto from 'crypto';
-import open from 'open';
 import { addAuthenticationTools } from './tools.js';
 
 vi.mock('crypto');
-vi.mock('open');
 vi.mock('../config.js', () => ({
   config: {
     freee: {
@@ -50,7 +48,6 @@ vi.mock('../auth/server.js', () => ({
 }));
 
 const mockCrypto = vi.mocked(crypto);
-const mockOpen = vi.mocked(open);
 
 describe('tools', () => {
   let mockServer: McpServer;
@@ -131,7 +128,6 @@ describe('tools', () => {
         mockCrypto.randomBytes = vi.fn().mockReturnValue({
           toString: vi.fn().mockReturnValue('test-state-hex')
         });
-        mockOpen.mockResolvedValue({} as never);
 
         addAuthenticationTools(mockServer);
         const handler = mockTool.mock.calls.find(call => call[0] === 'freee_authenticate')?.[3];
@@ -148,8 +144,8 @@ describe('tools', () => {
           'test-state-hex',
           'test-verifier'
         );
-        expect(mockOpen).toHaveBeenCalledWith('https://auth.url');
         expect(result.content[0].text).toContain('OAuth認証を開始しました');
+        expect(result.content[0].text).toContain('https://auth.url');
       });
 
       it('should handle missing client ID', async () => {
@@ -158,27 +154,6 @@ describe('tools', () => {
         expect(true).toBe(true);
       });
 
-      it('should handle browser opening failure gracefully', async () => {
-        const mockGeneratePKCE = await import('../auth/oauth.js');
-        const mockBuildAuthUrl = await import('../auth/oauth.js');
-
-        vi.mocked(mockGeneratePKCE.generatePKCE).mockReturnValue({
-          codeVerifier: 'test-verifier',
-          codeChallenge: 'test-challenge'
-        });
-        vi.mocked(mockBuildAuthUrl.buildAuthUrl).mockReturnValue('https://auth.url');
-        mockCrypto.randomBytes = vi.fn().mockReturnValue({
-          toString: vi.fn().mockReturnValue('test-state-hex')
-        });
-        mockOpen.mockRejectedValue(new Error('Failed to open browser'));
-
-        addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_authenticate')?.[3];
-        
-        const result = await handler();
-
-        expect(result.content[0].text).toContain('OAuth認証を開始しました');
-      });
     });
 
     describe('freee_auth_status', () => {
