@@ -110,10 +110,10 @@ export function addAuthenticationTools(server: McpServer): void {
             {
               type: 'text',
               text: `🚀 OAuth認証を開始しました！\n\n` +
-                    `📱 以下のURLをブラウザで開いて認証を完了してください:\n` +
+                    `📱 認証URLを生成しました。ブラウザで以下のURLを開いて認証を完了してください:\n` +
                     `${authUrl}\n\n` +
                     `🔄 認証手順:\n` +
-                    `1. 上記URLをブラウザで開く\n` +
+                    `1. 認証URLをコピーしてブラウザで開く\n` +
                     `2. freeeにログインして会社を選択\n` +
                     `3. アプリケーションへのアクセスを許可\n` +
                     `4. 認証完了後、freee_auth_status で状態を確認\n` +
