@@ -219,7 +219,7 @@ export function addAuthenticationTools(server: McpServer): void {
   // Company management tools
   server.tool(
     'freee_set_company',
-    '事業所を設定・切り替えます。新しい事業所の場合は自動的に追加されます。【重要】設定後は freee_authenticate で認証が必要です。',
+    '事業所を設定・切り替えます。新しい事業所の場合は自動的に追加されます。認証済みの場合はそのまま使用できます。',
     {
       company_id: z.string().describe('事業所ID（必須）'),
       name: z.string().optional().describe('事業所名（オプション、新規追加時に設定）'),
@@ -241,7 +241,7 @@ export function addAuthenticationTools(server: McpServer): void {
                     `事業所ID: ${company_id}\\n` +
                     `事業所名: ${companyInfo?.name || 'Unknown'}\\n` +
                     `説明: ${companyInfo?.description || 'なし'}\\n\\n` +
-                    `この事業所でAPIを使用するには、freee_authenticate ツールで認証を行ってください。\n\n💡 次のステップ: freee_authenticate → freee_current_user`,
+                    `🚀 この事業所ですぐにAPIを使用できます（認証済みの場合）。\n\n💡 次のステップ:\n・ 認証済みの場合: freee_current_user でテスト\n・ 未認証の場合: freee_authenticate で認証`,
             },
           ],
         };
