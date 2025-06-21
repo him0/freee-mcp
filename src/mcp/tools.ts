@@ -67,7 +67,7 @@ export function addAuthenticationTools(server: McpServer): void {
 
   server.tool(
     'freee_authenticate',
-    'freee APIのOAuth認証を開始します。永続的なコールバックサーバーを利用して認証を行います。【事業所ごとに初回認証が必要】事業所設定後に実行してください。',
+    'freee APIのOAuth認証を開始します。永続的なコールバックサーバーを利用して認証を行います。【ユーザーごとに一度の認証が必要】一度認証すると全事業所にアクセス可能です。',
     {},
     async () => {
       try {
@@ -208,7 +208,7 @@ export function addAuthenticationTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `認証情報のクリアに失敗しました: ${error instanceof Error ? error.message : String(error)}\n\n🔧 代替手順:\n1. freee_status - 状態を確認\n2. 手動でファイル削除: ~/.config/freee-mcp/tokens-*.json`,
+              text: `認証情報のクリアに失敗しました: ${error instanceof Error ? error.message : String(error)}\n\n🔧 代替手順:\n1. freee_status - 状態を確認\n2. 手動でファイル削除: ~/.config/freee-mcp/tokens.json`,
             },
           ],
         };
@@ -432,7 +432,7 @@ export function addAuthenticationTools(server: McpServer): void {
 - \`freee_list_companies\` - 設定済み事業所一覧
 
 ### 3️⃣ 認証
-- \`freee_authenticate\` - OAuth認証（事業所ごとに必要）
+- \`freee_authenticate\` - OAuth認証（ユーザーごとに一度必要）
 - \`freee_auth_status\` - 認証状態を確認
 - \`freee_clear_auth\` - 認証情報をクリア
 
@@ -461,7 +461,7 @@ freee_current_user
 
 ## ⚠️ 重要なポイント
 
-1. **事業所ごとの認証**: 各事業所で初回に認証が必要
+1. **ユーザー認証**: 初回に一度認証が必要（全事業所で共通）
 2. **環境変数**: FREEE_CLIENT_ID, FREEE_CLIENT_SECRET, FREEE_COMPANY_ID（デフォルト用）
 3. **ファイル保存場所**: ~/.config/freee-mcp/
 
@@ -547,7 +547,7 @@ ${nextSteps}
 ### 追加の事業所設定
 \`\`\`
 freee_set_company [別の事業所ID] "[名前]" "[説明]"
-freee_authenticate  # 新しい事業所用の認証
+freee_authenticate  # ユーザー認証（全事業所共通）
 \`\`\`
 
 ### 事業所の切り替え
