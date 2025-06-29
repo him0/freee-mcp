@@ -1,25 +1,29 @@
-# freee MCP Server 動作確認ガイド
+# @him0/freee-mcp 動作確認ガイド
 
-freee MCP Serverの実装したツールの動作確認方法について説明します。
+@him0/freee-mcp パッケージの実装したツールの動作確認方法について説明します。
 
 ## 🚀 動作確認方法
 
-### 1. 簡易ツール情報確認
+### 1. パッケージの動作確認
 
 ```bash
-node scripts/test-tools.js
+# パッケージが正常に実行できるかテスト
+npx @him0/freee-mcp --help
 ```
 
-- 利用可能なツール一覧を表示
-- 主要ツールの存在確認
-- Claude Code設定例の表示
+- パッケージのインストールと実行確認
+- 基本的な動作確認
 
 ### 2. MCP Inspector (推奨)
 
 GUIでツールをテストできる公式ツールです：
 
 ```bash
-pnpm inspector
+# 開発環境の場合
+pnpm dlx @modelcontextprotocol/inspector npx @him0/freee-mcp
+
+# または、一時的にインストールして使用
+npx @modelcontextprotocol/inspector npx @him0/freee-mcp
 ```
 
 これにより：
@@ -28,15 +32,13 @@ pnpm inspector
 - パラメータを入力してツールを実行可能
 - リアルタイムでレスポンスを確認可能
 
-### 3. 本格的なMCPプロトコルテスト
+### 3. Claude Code での実際のテスト
 
-```bash
-node scripts/test-mcp.js
-```
+Claude Code の MCP 設定を使用してテストします。
 
 - MCP JSON-RPC プロトコル経由でツールをテスト
-- インタラクティブモードでツール名を入力してテスト
-- 実際のMCPクライアントと同様の動作
+- 実際のClaude Code環境と同様の動作
+- 認証フローの確認
 
 ## 🔧 主要ツール
 
@@ -65,9 +67,8 @@ node scripts/test-mcp.js
 {
   "mcpServers": {
     "freee": {
-      "command": "pnpm",
-      "args": ["tsx", "src/index.ts"],
-      "cwd": "/Users/him0/src/freee-mcp",
+      "command": "npx",
+      "args": ["@him0/freee-mcp"],
       "env": {
         "FREEE_CLIENT_ID": "your_client_id_here",
         "FREEE_CLIENT_SECRET": "your_client_secret_here",
@@ -118,13 +119,17 @@ export FREEE_CLIENT_SECRET="your_client_secret"
 export FREEE_COMPANY_ID="your_company_id"
 ```
 
-### MCP Inspector が起動しない場合
+### パッケージが見つからない場合
 ```bash
-# パッケージの再インストール
-pnpm install
+# パッケージの存在確認
+npm view @him0/freee-mcp
 
-# 手動でInspectorを起動
-pnpx @modelcontextprotocol/inspector pnpm run start
+# 強制的に最新版を取得
+npx @him0/freee-mcp@latest
+
+# キャッシュクリア
+npm cache clean --force
+npx @him0/freee-mcp
 ```
 
 ## 📈 テスト結果の例
