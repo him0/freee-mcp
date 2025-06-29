@@ -56,14 +56,13 @@ This is a Model Context Protocol (MCP) server that exposes freee API endpoints a
 
 To use this MCP server with Claude Code, add the following configuration:
 
-#### Option 1: Development Mode (with watch)
+#### Option 1: NPM Package (Recommended)
 ```json
 {
   "mcpServers": {
     "freee": {
-      "command": "pnpm",
-      "args": ["tsx", "src/index.ts"],
-      "cwd": "/Users/him0/src/freee-mcp",
+      "command": "npx",
+      "args": ["@him0/freee-mcp"],
       "env": {
         "FREEE_CLIENT_ID": "your_client_id_here",
         "FREEE_CLIENT_SECRET": "your_client_secret_here",
@@ -75,17 +74,19 @@ To use this MCP server with Claude Code, add the following configuration:
 }
 ```
 
-#### Option 2: Built Version
+#### Option 2: Development Mode (for contributors)
 ```json
 {
   "mcpServers": {
     "freee": {
-      "command": "node",
-      "args": ["/Users/him0/src/freee-mcp/dist/index.cjs"],
+      "command": "pnpm",
+      "args": ["tsx", "src/index.ts"],
+      "cwd": "/path/to/your/freee-mcp",
       "env": {
         "FREEE_CLIENT_ID": "your_client_id_here",
         "FREEE_CLIENT_SECRET": "your_client_secret_here",
-        "FREEE_COMPANY_ID": "your_company_id_here"
+        "FREEE_COMPANY_ID": "your_company_id_here",
+        "FREEE_CALLBACK_PORT": "8080"
       }
     }
   }

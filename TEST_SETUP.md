@@ -1,6 +1,6 @@
 # Test Setup Documentation
 
-This document outlines the comprehensive test setup implemented for the freee-mcp project using Vitest.
+This document outlines the comprehensive test setup implemented for the @him0/freee-mcp project using Vitest.
 
 ## Testing Framework
 
@@ -122,4 +122,4 @@ pnpm test:ui
 - **Code Coverage**: High coverage across all modules
 - **CI Status**: ✅ All tests passing in GitHub Actions
 
-This test setup ensures code quality, prevents regressions, and provides confidence in the freee-mcp integration functionality.
+This test setup ensures code quality, prevents regressions, and provides confidence in the @him0/freee-mcp integration functionality.

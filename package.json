@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "freee-mcp",
+  "name": "@him0/freee-mcp",
   "version": "0.2.0",
   "main": "dist/index.js",
   "bin": {
@@ -24,7 +24,7 @@
   },
   "author": "him0",
   "license": "ISC",
-  "description": "",
+  "description": "Model Context Protocol (MCP) server for freee API integration",
   "devDependencies": {
     "@modelcontextprotocol/inspector": "^0.14.2",
     "@types/crypto-js": "^4.2.2",
@@ -47,5 +47,22 @@
     "open": "^10.1.0",
     "zod": "^3.25.64"
   },
-  "packageManager": "pnpm@10.12.1"
+  "packageManager": "pnpm@10.12.1",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "freee",
+    "api",
+    "accounting",
+    "claude"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/him0/freee-mcp.git"
+  },
+  "files": [
+    "dist/",
+    "bin/",
+    "README.md"
+  ]
 }

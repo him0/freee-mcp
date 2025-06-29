@@ -1,4 +1,4 @@
-# freee-mcp
+# @him0/freee-mcp
 
 freee APIをModel Context Protocol (MCP)サーバーとして提供する実装です。OpenAPI定義を使用して、freee APIのエンドポイントを自動的にMCPツールとして公開します。
 
@@ -18,15 +18,20 @@ freee APIをModel Context Protocol (MCP)サーバーとして提供する実装�
 
 ## 必要要件
 
-- Node.js v22
-- pnpm
+- Node.js v22+
 
 ## インストール
 
 ```bash
-git clone [repository-url]
-cd freee-mcp
-pnpm install
+npx @him0/freee-mcp
+```
+
+または、プロジェクトに追加する場合：
+
+```bash
+npm install @him0/freee-mcp
+# または
+pnpm add @him0/freee-mcp
 ```
 
 ## 環境設定
@@ -65,31 +70,23 @@ OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順
 4. **自動更新**: アクセストークンの有効期限が切れた場合、リフレッシュトークンを使用して自動的に更新されます
 5. **タイムアウト**: 認証リクエストは5分でタイムアウトします
 
-## 開発
-
-```bash
-# 開発サーバーの起動(ウォッチモード)
-pnpm dev
-
-# ビルド
-pnpm build
-
-# 型チェック
-pnpm type-check
-
-# リント
-pnpm lint
-
-# フォーマット
-pnpm format
-```
-
 ## 使用方法
 
-ビルド後、以下のコマンドでサーバーを起動できます:
+### 単体実行
 
 ```bash
-pnpm start
+npx @him0/freee-mcp
+```
+
+### インストール後の実行
+
+```bash
+# グローバルインストール
+npm install -g @him0/freee-mcp
+freee-mcp
+
+# または
+npx freee-mcp
 ```
 
 ### MCPサーバーとしての登録
@@ -100,8 +97,8 @@ Claude デスクトップアプリケーションで使用するには、以下�
 {
   "mcpServers": {
     "freee": {
-      "command": "/usr/local/bin/node",
-      "args": ["/path/to/freee-mcp/dist/index.cjs"],
+      "command": "npx",
+      "args": ["@him0/freee-mcp"],
       "env": {
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
@@ -114,6 +111,28 @@ Claude デスクトップアプリケーションで使用するには、以下�
 ```
 
 VSCode拡張機能で使用する場合は、同様の設定を `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` に追加してください。
+
+## 開発者向け
+
+開発に参加する場合は、以下のようにソースからビルドできます：
+
+```bash
+git clone https://github.com/him0/freee-mcp.git
+cd freee-mcp
+pnpm install
+
+# 開発サーバーの起動(ウォッチモード)
+pnpm dev
+
+# ビルド
+pnpm build
+
+# 型チェック
+pnpm type-check
+
+# リント
+pnpm lint
+```
 
 ## 利用可能なツール
 
