@@ -1,9 +1,17 @@
 name: Release and Publish
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version type to bump'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 jobs:
   publish:
@@ -12,6 +20,14 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+      
+    - name: Configure git
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
       
     - name: Install pnpm
       uses: pnpm/action-setup@v4
@@ -25,17 +41,6 @@ jobs:
         
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
-      
-    - name: Check version consistency
-      run: |
-        PACKAGE_VERSION=$(node -e "console.log(require('./package.json').version)")
-        TAG_VERSION=${GITHUB_REF#refs/tags/v}
-        if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-          echo "Error: Package version ($PACKAGE_VERSION) does not match tag version ($TAG_VERSION)"
-          echo "Please ensure package.json version matches the release tag"
-          exit 1
-        fi
-        echo "Version check passed: $PACKAGE_VERSION"
         
     - name: Run type check
       run: pnpm type-check
@@ -57,6 +62,18 @@ jobs:
         test -f dist/index.d.ts
         test -f bin/cli.js
         
+    - name: Bump version
+      id: version
+      run: |
+        # Bump version without creating tag yet
+        npm version ${{ github.event.inputs.version }} --no-git-tag-version
+        NEW_VERSION=$(node -e "console.log(require('./package.json').version)")
+        echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+        
+        # Commit version bump
+        git add package.json
+        git commit -m "chore: bump version to ${NEW_VERSION}"
+        
     - name: Publish to npm (dry run)
       run: npm publish --dry-run --access public
       env:
@@ -67,27 +84,27 @@ jobs:
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         
-    - name: Post-publish verification
+    - name: Create and push tag
       run: |
-        echo "Package published successfully!"
-        echo "Package: @him0/freee-mcp@${GITHUB_REF#refs/tags/v}"
-        echo "View at: https://www.npmjs.com/package/@him0/freee-mcp"
+        git tag v${{ steps.version.outputs.new_version }}
+        git push origin main --follow-tags
         
     - name: Generate release notes
       id: release_notes
       run: |
-        VERSION=${GITHUB_REF#refs/tags/v}
-        PREVIOUS_TAG=$(git describe --abbrev=0 --tags ${GITHUB_REF}^ 2>/dev/null || echo "")
+        VERSION=${{ steps.version.outputs.new_version }}
+        PREVIOUS_TAG=$(git describe --abbrev=0 --tags HEAD^ 2>/dev/null || echo "")
         
         echo "## What's Changed" > release_notes.md
         echo "" >> release_notes.md
         
         if [ -n "$PREVIOUS_TAG" ]; then
-          git log ${PREVIOUS_TAG}..${GITHUB_REF} --pretty=format:"- %s (%h)" >> release_notes.md
+          git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges | grep -v "^- chore: bump version" >> release_notes.md || echo "- Various improvements and fixes" >> release_notes.md
         else
           echo "Initial release" >> release_notes.md
         fi
         
+        echo "" >> release_notes.md
         echo "" >> release_notes.md
         echo "## Package" >> release_notes.md
         echo "- npm: https://www.npmjs.com/package/@him0/freee-mcp/v/${VERSION}" >> release_notes.md
@@ -96,8 +113,9 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: v${{ steps.version.outputs.new_version }}
+        name: v${{ steps.version.outputs.new_version }}
         body_path: release_notes.md
-        name: v${{ steps.release_notes.outputs.VERSION }}
         draft: false
         prerelease: false
       env:

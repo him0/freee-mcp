@@ -20,12 +20,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui",
-    "version:patch": "npm version patch && git push && git push --tags",
-    "version:minor": "npm version minor && git push && git push --tags",
-    "version:major": "npm version major && git push && git push --tags",
-    "preversion": "pnpm run type-check && pnpm run lint && pnpm run test:run && pnpm run build",
-    "postversion": "echo 'Version bumped to' $npm_package_version"
+    "test:ui": "vitest --ui"
   },
   "author": "him0",
   "license": "ISC",
