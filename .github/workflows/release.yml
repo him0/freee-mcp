@@ -1,4 +1,4 @@
-name: Release and Publish
+name: Create Version Bump PR
 
 on:
   workflow_dispatch:
@@ -14,12 +14,11 @@ on:
           - major
 
 jobs:
-  publish:
+  create-version-pr:
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
-      packages: write
     
     steps:
     - name: Checkout code
@@ -41,7 +40,6 @@ jobs:
       with:
         node-version: 20
         cache: 'pnpm'
-        registry-url: 'https://registry.npmjs.org'
         
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
@@ -87,54 +85,8 @@ jobs:
       run: |
         git push origin ${{ steps.branch.outputs.branch_name }}
         
-    - name: Publish to npm (dry run)
-      run: npm publish --dry-run --access public
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        
-    - name: Publish to npm
-      run: npm publish --access public
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        
-    - name: Create tag
-      run: |
-        git tag v${{ steps.version.outputs.new_version }}
-        git push origin v${{ steps.version.outputs.new_version }}
-        
-    - name: Generate release notes
-      id: release_notes
-      run: |
-        VERSION=${{ steps.version.outputs.new_version }}
-        PREVIOUS_TAG=$(git describe --abbrev=0 --tags HEAD^ 2>/dev/null || echo "")
-        
-        echo "## What's Changed" > release_notes.md
-        echo "" >> release_notes.md
-        
-        if [ -n "$PREVIOUS_TAG" ]; then
-          git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges | grep -v "^- chore: bump version" >> release_notes.md || echo "- Various improvements and fixes" >> release_notes.md
-        else
-          echo "Initial release" >> release_notes.md
-        fi
-        
-        echo "" >> release_notes.md
-        echo "" >> release_notes.md
-        echo "## Package" >> release_notes.md
-        echo "- npm: https://www.npmjs.com/package/@him0/freee-mcp/v/${VERSION}" >> release_notes.md
-        echo "- Install: \`npm install @him0/freee-mcp@${VERSION}\`" >> release_notes.md
-        
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v${{ steps.version.outputs.new_version }}
-        name: v${{ steps.version.outputs.new_version }}
-        body_path: release_notes.md
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
     - name: Create Pull Request
+      id: pr
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -144,15 +96,20 @@ jobs:
         body: |
           ## Version Bump
           
-          This PR updates the version to `${{ steps.version.outputs.new_version }}` after successful npm publish.
+          This PR updates the version to `${{ steps.version.outputs.new_version }}`.
           
           ### Changes
-          - Updated version in package.json
-          - Published to npm: https://www.npmjs.com/package/@him0/freee-mcp/v/${{ steps.version.outputs.new_version }}
-          - Created release: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.new_version }}
+          - Updated version in package.json to ${{ steps.version.outputs.new_version }}
           
           ### Next Steps
-          Please merge this PR to update the main branch with the new version.
+          1. Review and merge this PR
+          2. After merge, the npm publish job will automatically run
+          3. A GitHub release will be created
+          
+          ### Pre-publish Checklist
+          - [ ] Version number is correct
+          - [ ] All tests pass
+          - [ ] Build artifacts are generated correctly
         labels: |
           release
           automated
