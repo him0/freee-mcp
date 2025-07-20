@@ -44,7 +44,8 @@ vi.mock('../auth/oauth.js', () => ({
 }));
 
 vi.mock('../auth/server.js', () => ({
-  registerAuthenticationRequest: vi.fn()
+  registerAuthenticationRequest: vi.fn(),
+  getActualRedirectUri: vi.fn()
 }));
 
 const mockCrypto = vi.mocked(crypto);
@@ -125,6 +126,7 @@ describe('tools', () => {
           codeChallenge: 'test-challenge'
         });
         vi.mocked(mockBuildAuthUrl.buildAuthUrl).mockReturnValue('https://auth.url');
+        vi.mocked(mockRegisterAuthenticationRequest.getActualRedirectUri).mockReturnValue('http://127.0.0.1:8080/callback');
         mockCrypto.randomBytes = vi.fn().mockReturnValue({
           toString: vi.fn().mockReturnValue('test-state-hex')
         });
@@ -135,6 +137,7 @@ describe('tools', () => {
         const result = await handler();
 
         expect(mockGeneratePKCE.generatePKCE).toHaveBeenCalled();
+        expect(mockRegisterAuthenticationRequest.getActualRedirectUri).toHaveBeenCalled();
         expect(mockBuildAuthUrl.buildAuthUrl).toHaveBeenCalledWith(
           'test-challenge',
           'test-state-hex',
