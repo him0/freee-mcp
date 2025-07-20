@@ -1,3 +1,30 @@
-/node_modules
+# Source files
 /src
+/scripts
+/tests
+__tests__
+
+# Configuration files
 tsconfig.json
+.eslintrc.*
+.prettierrc.*
+vitest.config.*
+build.ts
+CLAUDE.md
+
+# Development files
+/node_modules
+/.github
+/coverage
+/.vscode
+/.pnpm-debug.log
+*.log
+
+# Test files
+*.test.ts
+*.spec.ts
+
+# Other files
+.env*
+.git*
+.npmignore

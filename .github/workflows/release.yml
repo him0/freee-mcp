@@ -1,0 +1,73 @@
+name: Release and Publish
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'pnpm'
+        registry-url: 'https://registry.npmjs.org'
+        
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      
+    - name: Check version consistency
+      run: |
+        PACKAGE_VERSION=$(node -e "console.log(require('./package.json').version)")
+        TAG_VERSION=${GITHUB_REF#refs/tags/v}
+        if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+          echo "Error: Package version ($PACKAGE_VERSION) does not match tag version ($TAG_VERSION)"
+          echo "Please ensure package.json version matches the release tag"
+          exit 1
+        fi
+        echo "Version check passed: $PACKAGE_VERSION"
+        
+    - name: Run type check
+      run: pnpm type-check
+      
+    - name: Run linter
+      run: pnpm lint
+      
+    - name: Run tests
+      run: pnpm test:run
+      
+    - name: Build project
+      run: pnpm build
+      
+    - name: Check build artifacts
+      run: |
+        ls -la dist/
+        test -f dist/index.esm.js
+        test -f dist/index.cjs
+        test -f dist/index.d.ts
+        test -f bin/cli.js
+        
+    - name: Publish to npm (dry run)
+      run: npm publish --dry-run --access public
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        
+    - name: Publish to npm
+      run: npm publish --access public
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        
+    - name: Post-publish verification
+      run: |
+        echo "Package published successfully!"
+        echo "Package: @him0/freee-mcp@${GITHUB_REF#refs/tags/v}"
+        echo "View at: https://www.npmjs.com/package/@him0/freee-mcp"
