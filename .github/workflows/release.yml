@@ -63,10 +63,11 @@ jobs:
         test -f bin/cli.js
         
     - name: Create release branch
+      id: branch
       run: |
         BRANCH_NAME="release/v${{ github.event.inputs.version }}-$(date +%Y%m%d%H%M%S)"
         git checkout -b $BRANCH_NAME
-        echo "branch_name=${BRANCH_NAME}" >> $GITHUB_ENV
+        echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
         
     - name: Bump version
       id: version
@@ -80,7 +81,7 @@ jobs:
         
     - name: Push release branch
       run: |
-        git push origin ${{ env.branch_name }}
+        git push origin ${{ steps.branch.outputs.branch_name }}
         
     - name: Publish to npm (dry run)
       run: npm publish --dry-run --access public
@@ -133,7 +134,7 @@ jobs:
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ env.branch_name }}
+        branch: ${{ steps.branch.outputs.branch_name }}
         base: main
         title: "chore: bump version to ${{ steps.version.outputs.new_version }}"
         body: |
