@@ -64,13 +64,6 @@ jobs:
         test -f dist/index.d.ts
         test -f bin/cli.js
         
-    - name: Create release branch
-      id: branch
-      run: |
-        BRANCH_NAME="release/v${{ github.event.inputs.version }}-$(date +%Y%m%d%H%M%S)"
-        git checkout -b $BRANCH_NAME
-        echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
-        
     - name: Bump version
       id: version
       run: |
@@ -78,20 +71,16 @@ jobs:
         NEW_VERSION=$(node -e "console.log(require('./package.json').version)")
         echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
         
-        git add package.json
-        git commit -m "chore: bump version to ${NEW_VERSION}"
-        
-    - name: Push release branch
-      run: |
-        git push origin ${{ steps.branch.outputs.branch_name }}
-        
     - name: Create Pull Request
       id: pr
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ steps.branch.outputs.branch_name }}
+        branch: release/v${{ steps.version.outputs.new_version }}-${{ github.run_number }}
         base: main
+        commit-message: "chore: bump version to ${{ steps.version.outputs.new_version }}"
+        add-paths: |
+          package.json
         title: "chore: bump version to ${{ steps.version.outputs.new_version }}"
         body: |
           ## Version Bump
