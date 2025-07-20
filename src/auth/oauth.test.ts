@@ -96,7 +96,7 @@ describe('oauth', () => {
         json: () => Promise.resolve(mockTokenResponse)
       });
 
-      const result = await exchangeCodeForTokens('test-code', 'test-verifier');
+      const result = await exchangeCodeForTokens('test-code', 'test-verifier', 'http://127.0.0.1:8080/callback');
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://accounts.secure.freee.co.jp/public_api/token',
@@ -132,7 +132,7 @@ describe('oauth', () => {
         json: () => Promise.resolve({ error: 'invalid_grant' })
       });
 
-      await expect(exchangeCodeForTokens('invalid-code', 'test-verifier'))
+      await expect(exchangeCodeForTokens('invalid-code', 'test-verifier', 'http://127.0.0.1:8080/callback'))
         .rejects.toThrow('Token exchange failed: 400');
     });
 
@@ -148,7 +148,7 @@ describe('oauth', () => {
         json: () => Promise.resolve(mockTokenResponse)
       });
 
-      const result = await exchangeCodeForTokens('test-code', 'test-verifier');
+      const result = await exchangeCodeForTokens('test-code', 'test-verifier', 'http://127.0.0.1:8080/callback');
 
       expect(result.token_type).toBe('Bearer');
       expect(result.scope).toBe('read write');

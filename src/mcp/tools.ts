@@ -5,7 +5,7 @@ import { config } from '../config.js';
 import { makeApiRequest } from '../api/client.js';
 import { loadTokens, clearTokens } from '../auth/tokens.js';
 import { generatePKCE, buildAuthUrl } from '../auth/oauth.js';
-import { registerAuthenticationRequest } from '../auth/server.js';
+import { registerAuthenticationRequest, getActualRedirectUri } from '../auth/server.js';
 import {
   getCurrentCompanyId,
   setCurrentCompany,
@@ -99,7 +99,7 @@ export function addAuthenticationTools(server: McpServer): void {
 
         const { codeVerifier, codeChallenge } = generatePKCE();
         const state = crypto.randomBytes(16).toString('hex');
-        const authUrl = buildAuthUrl(codeChallenge, state, config.oauth.redirectUri);
+        const authUrl = buildAuthUrl(codeChallenge, state, getActualRedirectUri());
 
         registerAuthenticationRequest(state, codeVerifier);
 

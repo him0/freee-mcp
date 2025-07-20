@@ -22,7 +22,7 @@ export function buildAuthUrl(codeChallenge: string, state: string, redirectUri: 
   return `${config.oauth.authorizationEndpoint}?${params.toString()}`;
 }
 
-export async function exchangeCodeForTokens(code: string, codeVerifier: string): Promise<TokenData> {
+export async function exchangeCodeForTokens(code: string, codeVerifier: string, redirectUri: string): Promise<TokenData> {
   const response = await fetch(config.oauth.tokenEndpoint, {
     method: 'POST',
     headers: {
@@ -33,7 +33,7 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string):
       client_id: config.freee.clientId,
       client_secret: config.freee.clientSecret,
       code,
-      redirect_uri: config.oauth.redirectUri,
+      redirect_uri: redirectUri,
       code_verifier: codeVerifier,
     }),
   });
