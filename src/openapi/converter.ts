@@ -44,13 +44,15 @@ export function generateToolsFromOpenApi(server: McpServer): void {
         try {
           let actualPath = pathKey as string;
           pathParams.forEach((param: OpenAPIParameter) => {
-            actualPath = actualPath.replace(`{${param.name}}`, String(params[param.name]));
+            const sanitizedName = sanitizePropertyName(param.name);
+            actualPath = actualPath.replace(`{${param.name}}`, String(params[sanitizedName]));
           });
 
           const queryParameters: Record<string, unknown> = {};
           queryParams.forEach((param: OpenAPIParameter) => {
-            if (params[param.name] !== undefined) {
-              queryParameters[param.name] = params[param.name];
+            const sanitizedName = sanitizePropertyName(param.name);
+            if (params[sanitizedName] !== undefined) {
+              queryParameters[param.name] = params[sanitizedName];
             }
           });
 

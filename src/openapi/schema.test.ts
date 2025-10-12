@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
-import { convertParameterToZodSchema, convertPathToToolName } from './schema.js';
+import { convertParameterToZodSchema, convertPathToToolName, sanitizePropertyName } from './schema.js';
 import { OpenAPIParameter } from '../api/types.js';
 
 describe('schema', () => {
@@ -173,8 +173,71 @@ describe('schema', () => {
     it('should handle path with trailing slash', () => {
       const path = '/api/1/users/';
       const result = convertPathToToolName(path);
-      
+
       expect(result).toBe('users_');
+    });
+  });
+
+  describe('sanitizePropertyName', () => {
+    it('should keep valid property names unchanged', () => {
+      const validNames = ['company_id', 'user-name', 'item.count', 'param123'];
+
+      validNames.forEach(name => {
+        expect(sanitizePropertyName(name)).toBe(name);
+      });
+    });
+
+    it('should replace square brackets with underscores', () => {
+      expect(sanitizePropertyName('visible_tags[]')).toBe('visible_tags__');
+      expect(sanitizePropertyName('visible_ids[]')).toBe('visible_ids__');
+      expect(sanitizePropertyName('array[0]')).toBe('array_0_');
+    });
+
+    it('should replace invalid characters with underscores', () => {
+      expect(sanitizePropertyName('user@name')).toBe('user_name');
+      expect(sanitizePropertyName('param#1')).toBe('param_1');
+      expect(sanitizePropertyName('key:value')).toBe('key_value');
+      expect(sanitizePropertyName('data/path')).toBe('data_path');
+    });
+
+    it('should handle spaces by replacing with underscores', () => {
+      expect(sanitizePropertyName('company id')).toBe('company_id');
+      expect(sanitizePropertyName('user name')).toBe('user_name');
+    });
+
+    it('should truncate names longer than 64 characters', () => {
+      const longName = 'a'.repeat(100);
+      const result = sanitizePropertyName(longName);
+
+      expect(result.length).toBe(64);
+      expect(result).toBe('a'.repeat(64));
+    });
+
+    it('should handle empty string by returning underscore', () => {
+      expect(sanitizePropertyName('')).toBe('_');
+    });
+
+    it('should handle string with only invalid characters', () => {
+      expect(sanitizePropertyName('###')).toBe('___');
+      expect(sanitizePropertyName('@@@')).toBe('___');
+    });
+
+    it('should ensure result matches MCP pattern', () => {
+      const mcpPattern = /^[a-zA-Z0-9_.-]{1,64}$/;
+      const testCases = [
+        'visible_tags[]',
+        'user@name',
+        'param#1',
+        'company id',
+        'a'.repeat(100),
+        '',
+        '###'
+      ];
+
+      testCases.forEach(testCase => {
+        const result = sanitizePropertyName(testCase);
+        expect(result).toMatch(mcpPattern);
+      });
     });
   });
 });
