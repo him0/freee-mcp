@@ -62,7 +62,8 @@ vi.mock('./schema.js', () => ({
     optional: () => ({ _def: { typeName: 'ZodOptional' } }),
     _def: { typeName: 'ZodNumber' }
   })),
-  convertPathToToolName: vi.fn((path: string): string => path.replace(/[/{}/]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, ''))
+  convertPathToToolName: vi.fn((path: string): string => path.replace(/[/{}/]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')),
+  sanitizePropertyName: vi.fn((name: string): string => name.replace(/[^a-zA-Z0-9_.-]/g, '_').substring(0, 64))
 }));
 
 vi.mock('../api/client.js', () => ({
