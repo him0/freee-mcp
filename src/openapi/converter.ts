@@ -4,16 +4,30 @@ import freeeApiSchema from '../data/freee-api-schema.json';
 import { OpenAPIOperation, OpenAPIPathItem, OpenAPIParameter } from '../api/types.js';
 import { convertParameterToZodSchema, convertPathToToolName, sanitizePropertyName } from './schema.js';
 import { makeApiRequest } from '../api/client.js';
+import { shouldEnableTool, extractResourceName } from '../config/tools.js';
 
 export function generateToolsFromOpenApi(server: McpServer): void {
   const paths = freeeApiSchema.paths;
 
   const orderedPathKeys = Object.keys(paths).sort() as (keyof typeof paths)[];
 
+  let totalTools = 0;
+  let enabledTools = 0;
+
   orderedPathKeys.forEach((pathKey) => {
     const pathItem: OpenAPIPathItem = paths[pathKey];
     Object.entries(pathItem).forEach(([method, operation]: [string, OpenAPIOperation]) => {
+      totalTools++;
       const toolName = `${method}_${convertPathToToolName(pathKey)}`;
+      const resourceName = extractResourceName(pathKey);
+
+      // Check if this tool should be enabled based on configuration
+      if (!shouldEnableTool(toolName, method, resourceName)) {
+        console.error(`⏭️  Skipped tool: ${toolName} (filtered out)`);
+        return;
+      }
+
+      enabledTools++;
       const description = operation.summary || operation.description || '';
 
       const parameterSchema: Record<string, z.ZodType> = {};
@@ -86,4 +100,6 @@ export function generateToolsFromOpenApi(server: McpServer): void {
       });
     });
   });
+
+  console.error(`✅ Enabled ${enabledTools}/${totalTools} OpenAPI tools`);
 }

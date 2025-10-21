@@ -47,10 +47,65 @@ This is a Model Context Protocol (MCP) server that exposes freee API endpoints a
 - Request bodies are currently simplified to `z.any()` due to MCP framework limitations with nested objects
 
 ### Environment Variables
+
+#### Required Variables
 - `FREEE_CLIENT_ID` (required) - freee OAuth client ID
 - `FREEE_CLIENT_SECRET` (required) - freee OAuth client secret
 - `FREEE_COMPANY_ID` (required) - freee company ID
+
+#### Optional Variables
 - `FREEE_CALLBACK_PORT` (optional) - OAuth callback port, defaults to 8080
+
+#### Tool Filtering Variables (Optional)
+Use these to control which tools are enabled:
+
+**Operation Type Filtering:**
+- `FREEE_ENABLE_READ` (default: `true`) - Enable GET operations
+- `FREEE_ENABLE_WRITE` (default: `true`) - Enable POST/PUT operations
+- `FREEE_ENABLE_DELETE` (default: `false`) - Enable DELETE operations
+
+**Resource Filtering:**
+- `FREEE_ENABLED_RESOURCES` - Comma-separated list of resources to enable (e.g., `"deals,companies"`)
+
+**Individual Tool Control:**
+- `FREEE_ENABLED_TOOLS` - Whitelist: only these tools are enabled (e.g., `"get_deals,post_deals"`)
+- `FREEE_DISABLED_TOOLS` - Blacklist: disable specific tools, supports wildcards (e.g., `"delete_*,put_*_by_id"`)
+
+**Priority Order:**
+1. `FREEE_ENABLED_TOOLS` (highest - whitelist)
+2. `FREEE_DISABLED_TOOLS` (blacklist)
+3. `FREEE_ENABLE_READ/WRITE/DELETE` (operation type)
+4. `FREEE_ENABLED_RESOURCES` (resource filter)
+
+**Examples:**
+
+Read-only mode:
+```json
+{
+  "env": {
+    "FREEE_ENABLE_WRITE": "false",
+    "FREEE_ENABLE_DELETE": "false"
+  }
+}
+```
+
+Specific resources only:
+```json
+{
+  "env": {
+    "FREEE_ENABLED_RESOURCES": "deals,companies"
+  }
+}
+```
+
+Disable all delete operations:
+```json
+{
+  "env": {
+    "FREEE_DISABLED_TOOLS": "delete_*"
+  }
+}
+```
 
 ### Claude Code MCP Configuration
 

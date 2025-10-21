@@ -70,6 +70,104 @@ OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順
 4. **自動更新**: アクセストークンの有効期限が切れた場合、リフレッシュトークンを使用して自動的に更新されます
 5. **タイムアウト**: 認証リクエストは5分でタイムアウトします
 
+### ツールフィルタリング (オプション)
+
+デフォルトではすべてのツールが有効化されますが、環境変数を使用して特定のツールのみを有効化・無効化できます。セキュリティ上の理由で書き込み系操作を制限したい場合などに便利です。
+
+#### 操作タイプによるフィルタリング
+
+```bash
+FREEE_ENABLE_READ=true         # GET系ツール (デフォルト: true)
+FREEE_ENABLE_WRITE=true        # POST/PUT系ツール (デフォルト: true)
+FREEE_ENABLE_DELETE=false      # DELETE系ツール (デフォルト: false)
+```
+
+**例: 読み取り専用モード**
+```json
+{
+  "mcpServers": {
+    "freee": {
+      "env": {
+        "FREEE_CLIENT_ID": "your_client_id",
+        "FREEE_CLIENT_SECRET": "your_client_secret",
+        "FREEE_COMPANY_ID": "your_company_id",
+        "FREEE_ENABLE_WRITE": "false",
+        "FREEE_ENABLE_DELETE": "false"
+      }
+    }
+  }
+}
+```
+
+#### リソースカテゴリによるフィルタリング
+
+特定のリソース（deals, companies など）のみを有効化:
+
+```bash
+FREEE_ENABLED_RESOURCES="deals,companies,users"
+```
+
+**例: 取引と事業所のみ**
+```json
+{
+  "env": {
+    "FREEE_ENABLED_RESOURCES": "deals,companies"
+  }
+}
+```
+
+#### 個別ツール制御
+
+##### ホワイトリスト（指定したツールのみ有効化）
+
+```bash
+FREEE_ENABLED_TOOLS="get_deals,post_deals,get_companies"
+```
+
+##### ブラックリスト（指定したツールを無効化）
+
+ワイルドカード `*` もサポート:
+
+```bash
+FREEE_DISABLED_TOOLS="delete_*,put_*_by_id"
+```
+
+**例: 削除系を全て無効化**
+```json
+{
+  "env": {
+    "FREEE_DISABLED_TOOLS": "delete_*"
+  }
+}
+```
+
+#### フィルタの優先順位
+
+設定の優先順位は以下の通りです（上ほど優先度が高い）:
+
+1. `FREEE_ENABLED_TOOLS` (ホワイトリスト) - 最優先
+2. `FREEE_DISABLED_TOOLS` (ブラックリスト)
+3. `FREEE_ENABLE_READ/WRITE/DELETE` (操作タイプフィルタ)
+4. `FREEE_ENABLED_RESOURCES` (リソースフィルタ)
+
+**複合例:**
+```json
+{
+  "env": {
+    "FREEE_ENABLE_WRITE": "true",
+    "FREEE_ENABLE_DELETE": "false",
+    "FREEE_ENABLED_RESOURCES": "deals,companies",
+    "FREEE_DISABLED_TOOLS": "post_deals"
+  }
+}
+```
+
+この設定では:
+- deals と companies のみ有効
+- 書き込み操作は許可
+- 削除操作は禁止
+- ただし post_deals は明示的に無効化
+
 ## 使用方法
 
 ### 単体実行
