@@ -17,9 +17,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 MCP server that exposes freee API endpoints as MCP tools:
 
 - **Schema**: `src/data/freee-api-schema.json` contains OpenAPI definition
-- **Tool Generation**: `generateToolsFromOpenApi()` in [src/index.ts:151](src/index.ts#L151) converts OpenAPI paths to MCP tools
-- **Naming**: GET → `get_*`, POST → `post_*`, PUT → `put_*_by_id`, DELETE → `delete_*_by_id`
-- **Requests**: `makeApiRequest()` in [src/index.ts:65](src/index.ts#L65) handles API calls with auto-auth and company_id injection
+- **Tool Generation**: Two modes available (selected via CLI subcommand):
+  - **Client Mode** (`freee-mcp client`): Sub-command tools per HTTP method
+    - `generateClientModeTool()` in `src/openapi/client-mode.ts` creates method-specific tools
+    - Tools: `freee_api_get`, `freee_api_post`, `freee_api_put`, `freee_api_delete`, `freee_api_patch`, `freee_api_list_paths`
+    - Validates paths against OpenAPI schema before execution
+    - Reduces context window usage significantly (6 tools vs hundreds)
+  - **Individual Mode** (`freee-mcp api` or default): One tool per endpoint
+    - `generateToolsFromOpenApi()` in `src/openapi/converter.ts` converts OpenAPI paths to MCP tools
+    - Naming: GET → `get_*`, POST → `post_*`, PUT → `put_*_by_id`, DELETE → `delete_*_by_id`
+- **Requests**: `makeApiRequest()` in `src/api/client.ts` handles API calls with auto-auth and company_id injection
 
 ### Environment Variables
 
@@ -28,16 +35,22 @@ MCP server that exposes freee API endpoints as MCP tools:
 - `FREEE_DEFAULT_COMPANY_ID` (required) - Company ID
 - `FREEE_CALLBACK_PORT` (optional) - OAuth callback port, defaults to 54321
 
+### CLI Subcommands
+
+- `freee-mcp client` - Start in client mode (HTTP method sub-commands)
+- `freee-mcp api` - Start in API mode (individual tools per endpoint) [default]
+
 ### MCP Configuration
 
 Add to Claude Code config:
 
+**Client Mode (recommended):**
 ```json
 {
   "mcpServers": {
     "freee": {
       "command": "npx",
-      "args": ["@him0/freee-mcp"],
+      "args": ["@him0/freee-mcp", "client"],
       "env": {
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
@@ -49,7 +62,32 @@ Add to Claude Code config:
 }
 ```
 
-Development mode: Use `"command": "pnpm", "args": ["tsx", "src/index.ts"]` with `"cwd": "/path/to/freee-mcp"`
+**API Mode (individual tools):**
+```json
+{
+  "mcpServers": {
+    "freee": {
+      "command": "npx",
+      "args": ["@him0/freee-mcp", "api"],
+      "env": {
+        "FREEE_CLIENT_ID": "your_client_id",
+        "FREEE_CLIENT_SECRET": "your_client_secret",
+        "FREEE_COMPANY_ID": "your_company_id",
+        "FREEE_CALLBACK_PORT": "54321"
+      }
+    }
+  }
+}
+```
+
+**Client Mode vs Individual Mode**:
+- Use `freee-mcp client` for HTTP method sub-command tools (recommended for large APIs)
+  - 6 tools total: freee_api_{get,post,put,delete,patch} + freee_api_list_paths
+  - Significantly reduces context window usage
+- Use `freee-mcp api` for individual tools per endpoint (more granular but uses more context)
+  - Hundreds of tools (one per API endpoint)
+
+Development mode: Use `"command": "pnpm", "args": ["tsx", "src/index.ts", "client"]` with `"cwd": "/path/to/freee-mcp"`
 
 ## PR Creation Pre-flight Checklist
 
