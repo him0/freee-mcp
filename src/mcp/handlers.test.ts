@@ -20,11 +20,9 @@ vi.mock('../config.js', () => ({
     },
     oauth: {
       callbackPort: 54321
-    },
-    mode: {
-      useClientMode: false
     }
-  }))
+  })),
+  getMode: vi.fn(() => false)
 }));
 
 vi.mock('../auth/server.js', () => ({

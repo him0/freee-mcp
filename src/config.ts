@@ -24,9 +24,6 @@ export interface Config {
   auth: {
     timeoutMs: number;
   };
-  mode: {
-    useClientMode: boolean;
-  };
 }
 
 // Cached config
@@ -108,9 +105,6 @@ export async function loadConfig(): Promise<Config> {
     auth: {
       timeoutMs: 5 * 60 * 1000, // 5分
     },
-    mode: {
-      useClientMode: clientMode,
-    },
   };
 
   return cachedConfig;
@@ -145,4 +139,11 @@ export const config = new Proxy({} as Config, {
  */
 export function setMode(useClient: boolean): void {
   clientMode = useClient;
+}
+
+/**
+ * Get current mode (client or individual tools)
+ */
+export function getMode(): boolean {
+  return clientMode;
 }
