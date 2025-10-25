@@ -21,4 +21,8 @@ export const config = {
   auth: {
     timeoutMs: 5 * 60 * 1000, // 5分
   },
+  mode: {
+    // Client mode: true = single generic API client tool, false = individual tools per endpoint
+    useClientMode: process.env.FREEE_CLIENT_MODE === 'true',
+  },
 } as const;

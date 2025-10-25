@@ -20,6 +20,9 @@ vi.mock('../config.js', () => ({
     },
     oauth: {
       callbackPort: 54321
+    },
+    mode: {
+      useClientMode: false
     }
   }
 }));
@@ -35,6 +38,10 @@ vi.mock('./tools.js', () => ({
 
 vi.mock('../openapi/converter.js', () => ({
   generateToolsFromOpenApi: vi.fn()
+}));
+
+vi.mock('../openapi/client-mode.js', () => ({
+  generateClientModeTool: vi.fn()
 }));
 
 describe('handlers', () => {

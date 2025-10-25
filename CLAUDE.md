@@ -17,9 +17,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 MCP server that exposes freee API endpoints as MCP tools:
 
 - **Schema**: `src/data/freee-api-schema.json` contains OpenAPI definition
-- **Tool Generation**: `generateToolsFromOpenApi()` in [src/index.ts:151](src/index.ts#L151) converts OpenAPI paths to MCP tools
-- **Naming**: GET → `get_*`, POST → `post_*`, PUT → `put_*_by_id`, DELETE → `delete_*_by_id`
-- **Requests**: `makeApiRequest()` in [src/index.ts:65](src/index.ts#L65) handles API calls with auto-auth and company_id injection
+- **Tool Generation**: Two modes available:
+  - **Client Mode** (`FREEE_CLIENT_MODE=true`): Single generic tool with path validation
+    - `generateClientModeTool()` in `src/openapi/client-mode.ts` creates generic API client
+    - Validates paths against OpenAPI schema before execution
+    - Reduces context window usage significantly
+  - **Individual Mode** (default): One tool per endpoint
+    - `generateToolsFromOpenApi()` in `src/openapi/converter.ts` converts OpenAPI paths to MCP tools
+    - Naming: GET → `get_*`, POST → `post_*`, PUT → `put_*_by_id`, DELETE → `delete_*_by_id`
+- **Requests**: `makeApiRequest()` in `src/api/client.ts` handles API calls with auto-auth and company_id injection
 
 ### Environment Variables
 
@@ -27,6 +33,7 @@ MCP server that exposes freee API endpoints as MCP tools:
 - `FREEE_CLIENT_SECRET` (required) - OAuth client secret
 - `FREEE_COMPANY_ID` (required) - Company ID
 - `FREEE_CALLBACK_PORT` (optional) - OAuth callback port, defaults to 54321
+- `FREEE_CLIENT_MODE` (optional) - API mode: `true` for client mode, `false` for individual tools (default)
 
 ### MCP Configuration
 
@@ -42,12 +49,17 @@ Add to Claude Code config:
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
         "FREEE_COMPANY_ID": "your_company_id",
-        "FREEE_CALLBACK_PORT": "54321"
+        "FREEE_CALLBACK_PORT": "54321",
+        "FREEE_CLIENT_MODE": "true"
       }
     }
   }
 }
 ```
+
+**Client Mode vs Individual Mode**:
+- Set `FREEE_CLIENT_MODE=true` for single generic API tool (recommended for large APIs)
+- Omit or set `false` for individual tools per endpoint (more granular but uses more context)
 
 Development mode: Use `"command": "pnpm", "args": ["tsx", "src/index.ts"]` with `"cwd": "/path/to/freee-mcp"`
 

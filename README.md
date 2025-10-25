@@ -55,6 +55,7 @@ OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順
    FREEE_CLIENT_SECRET=your_client_secret  # 必須: freeeアプリの Client Secret
    FREEE_COMPANY_ID=your_company_id        # 必須: デフォルト事業所ID
    FREEE_CALLBACK_PORT=54321               # オプション: OAuthコールバックポート、デフォルトは 54321
+   FREEE_CLIENT_MODE=true                  # オプション: APIクライアントモード（true=単一ツール、false=個別ツール）
    ```
 
    **注意**: `FREEE_COMPANY_ID` はデフォルト事業所として使用されます。実行時に `freee_set_company` ツールで他の事業所に切り替えることができます。
@@ -103,7 +104,8 @@ Claude デスクトップアプリケーションで使用するには、以下�
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
         "FREEE_COMPANY_ID": "your_company_id",
-        "FREEE_CALLBACK_PORT": "54321"
+        "FREEE_CALLBACK_PORT": "54321",
+        "FREEE_CLIENT_MODE": "true"
       }
     }
   }
@@ -144,12 +146,39 @@ pnpm lint
 
 ### freee APIツール
 
-freee APIのすべてのエンドポイントがMCPツールとして自動的に公開されます。各ツールは以下の命名規則に従います:
+#### APIクライアントモード（推奨）
+
+`FREEE_CLIENT_MODE=true` を設定すると、単一の汎用クライアントツールでAPIにアクセスできます。この方式はコンテキストウィンドウを節約し、大規模言語モデルとの親和性が高いです。
+
+- **`freee_api_client`**: freee APIへの汎用リクエスト
+  - パラメータ:
+    - `method`: HTTPメソッド（GET, POST, PUT, DELETE, PATCH）
+    - `path`: APIパス（例: `/api/1/deals`, `/api/1/deals/123`）
+    - `query`: クエリパラメータ（オプション）
+    - `body`: リクエストボディ（POST/PUT/PATCHの場合、オプション）
+  - パスはOpenAPIスキーマに対して自動検証されます
+
+- **`freee_api_list_paths`**: 利用可能なすべてのAPIエンドポイント一覧
+
+使用例:
+```json
+{
+  "method": "GET",
+  "path": "/api/1/deals",
+  "query": { "limit": 10 }
+}
+```
+
+#### 個別ツールモード
+
+`FREEE_CLIENT_MODE=false`（またはデフォルト）では、freee APIのすべてのエンドポイントが個別のMCPツールとして公開されます。各ツールは以下の命名規則に従います:
 
 - GET: `get_[resource_name]`
 - POST: `post_[resource_name]`
 - PUT: `put_[resource_name]_by_id`
 - DELETE: `delete_[resource_name]_by_id`
+
+**注意**: 個別ツールモードでは多数のツールが生成されるため、LLMのコンテキストウィンドウを圧迫する可能性があります。大規模なAPIを扱う場合はクライアントモードの使用を推奨します。
 
 ## 使い方
 
