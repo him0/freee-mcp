@@ -28,12 +28,23 @@ MCP server that exposes freee API endpoints as MCP tools:
     - Naming: GET → `get_*`, POST → `post_*`, PUT → `put_*_by_id`, DELETE → `delete_*_by_id`
 - **Requests**: `makeApiRequest()` in `src/api/client.ts` handles API calls with auto-auth and company_id injection
 
-### Environment Variables
+### Configuration
 
-- `FREEE_CLIENT_ID` (required) - OAuth client ID
-- `FREEE_CLIENT_SECRET` (required) - OAuth client secret
-- `FREEE_DEFAULT_COMPANY_ID` (required) - Company ID
-- `FREEE_CALLBACK_PORT` (optional) - OAuth callback port, defaults to 54321
+#### Recommended Setup (Config File)
+
+Run `freee-mcp configure` to set up configuration interactively:
+- Creates `~/.config/freee-mcp/config.json` with OAuth credentials and company settings
+- No environment variables needed
+- More secure (file permissions 0600)
+
+#### Environment Variables (Deprecated)
+
+⚠️ **Environment variables are deprecated and will be removed in a future version.**
+
+- `FREEE_CLIENT_ID` - OAuth client ID (deprecated, use config file)
+- `FREEE_CLIENT_SECRET` - OAuth client secret (deprecated, use config file)
+- `FREEE_DEFAULT_COMPANY_ID` - Company ID (deprecated, use `freee_set_company` tool)
+- `FREEE_CALLBACK_PORT` - OAuth callback port (deprecated, set in config file)
 
 ### CLI Subcommands
 
@@ -42,7 +53,26 @@ MCP server that exposes freee API endpoints as MCP tools:
 
 ### MCP Configuration
 
-Add to Claude Code config:
+#### Using Config File (Recommended)
+
+After running `freee-mcp configure`:
+
+```json
+{
+  "mcpServers": {
+    "freee": {
+      "command": "npx",
+      "args": ["@him0/freee-mcp"]
+    }
+  }
+}
+```
+
+Configuration is automatically loaded from `~/.config/freee-mcp/config.json`.
+
+#### Using Environment Variables (Deprecated)
+
+⚠️ **Deprecated: Will be removed in future versions**
 
 **Client Mode (recommended):**
 ```json
@@ -54,7 +84,6 @@ Add to Claude Code config:
       "env": {
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
-        "FREEE_DEFAULT_COMPANY_ID": "your_company_id",
         "FREEE_CALLBACK_PORT": "54321"
       }
     }

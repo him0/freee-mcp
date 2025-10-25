@@ -1,12 +1,15 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { config } from '../config.js';
+import { loadConfig, getMode } from '../config.js';
 import { startCallbackServer, stopCallbackServer } from '../auth/server.js';
 import { addAuthenticationTools } from './tools.js';
 import { generateToolsFromOpenApi } from '../openapi/converter.js';
 import { generateClientModeTool } from '../openapi/client-mode.js';
 
 export async function createAndStartServer(): Promise<void> {
+  // Load config first
+  const config = await loadConfig();
+
   const server = new McpServer({
     name: config.server.name,
     version: config.server.version,
@@ -14,8 +17,8 @@ export async function createAndStartServer(): Promise<void> {
 
   addAuthenticationTools(server);
 
-  // Use client mode or generate individual tools based on configuration
-  if (config.mode.useClientMode) {
+  // Use client mode or generate individual tools based on mode
+  if (getMode()) {
     console.error('🔧 Using API client mode (single generic tool)');
     generateClientModeTool(server);
   } else {

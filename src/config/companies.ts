@@ -1,7 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { config } from '../config.js';
 
 export interface CompanyConfig {
   id: string;
@@ -11,7 +10,20 @@ export interface CompanyConfig {
   lastUsed?: number;
 }
 
-export interface CompaniesConfig {
+export interface FullConfig {
+  // OAuth credentials
+  clientId?: string;
+  clientSecret?: string;
+  callbackPort?: number;
+
+  // Company settings
+  defaultCompanyId: string;
+  currentCompanyId: string;
+  companies: Record<string, CompanyConfig>;
+}
+
+// Legacy format (for backward compatibility)
+export interface LegacyCompaniesConfig {
   defaultCompanyId: string;
   currentCompanyId: string;
   companies: Record<string, CompanyConfig>;
@@ -27,17 +39,64 @@ async function ensureConfigDir(): Promise<void> {
   await fs.mkdir(configDir, { recursive: true });
 }
 
-export async function loadCompaniesConfig(): Promise<CompaniesConfig> {
+/**
+ * Check if config is legacy format (only has company info)
+ */
+function isLegacyConfig(data: unknown): data is LegacyCompaniesConfig {
+  return (
+    data !== null &&
+    data !== undefined &&
+    typeof data === 'object' &&
+    'defaultCompanyId' in data &&
+    'currentCompanyId' in data &&
+    'companies' in data &&
+    !('clientId' in data)
+  );
+}
+
+/**
+ * Migrate legacy config to new format
+ */
+function migrateLegacyConfig(legacy: LegacyCompaniesConfig): FullConfig {
+  console.error('📦 古い設定形式を検出しました。新しい形式に移行します...');
+  return {
+    // Credentials will be undefined (need to be set via configure)
+    clientId: undefined,
+    clientSecret: undefined,
+    callbackPort: undefined,
+    // Keep company settings
+    defaultCompanyId: legacy.defaultCompanyId,
+    currentCompanyId: legacy.currentCompanyId,
+    companies: legacy.companies,
+  };
+}
+
+/**
+ * Load full config from file
+ */
+export async function loadFullConfig(): Promise<FullConfig> {
   const configPath = getConfigFilePath();
 
   try {
     const data = await fs.readFile(configPath, 'utf8');
-    return JSON.parse(data) as CompaniesConfig;
+    const parsed = JSON.parse(data);
+
+    // Check if legacy format and migrate
+    if (isLegacyConfig(parsed)) {
+      const migrated = migrateLegacyConfig(parsed);
+      await saveFullConfig(migrated);
+      return migrated;
+    }
+
+    return parsed as FullConfig;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      // Create default config with environment variable company ID
-      const defaultCompanyId = config.freee.companyId || '0';
-      const defaultConfig: CompaniesConfig = {
+      // Create default config
+      const defaultCompanyId = process.env.FREEE_DEFAULT_COMPANY_ID || '0';
+      const defaultConfig: FullConfig = {
+        clientId: undefined,
+        clientSecret: undefined,
+        callbackPort: undefined,
         defaultCompanyId,
         currentCompanyId: defaultCompanyId,
         companies: {
@@ -50,31 +109,40 @@ export async function loadCompaniesConfig(): Promise<CompaniesConfig> {
           },
         },
       };
-      await saveCompaniesConfig(defaultConfig);
+      await saveFullConfig(defaultConfig);
       return defaultConfig;
     }
     throw error;
   }
 }
 
-export async function saveCompaniesConfig(config: CompaniesConfig): Promise<void> {
+/**
+ * Save full config to file
+ */
+export async function saveFullConfig(config: FullConfig): Promise<void> {
   await ensureConfigDir();
   const configPath = getConfigFilePath();
   await fs.writeFile(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
 }
 
+/**
+ * Get current company ID
+ */
 export async function getCurrentCompanyId(): Promise<string> {
-  const config = await loadCompaniesConfig();
+  const config = await loadFullConfig();
   return config.currentCompanyId;
 }
 
+/**
+ * Set current company
+ */
 export async function setCurrentCompany(
   companyId: string,
   name?: string,
   description?: string
 ): Promise<void> {
-  const config = await loadCompaniesConfig();
-  
+  const config = await loadFullConfig();
+
   // Add or update company info
   if (!config.companies[companyId]) {
     config.companies[companyId] = {
@@ -91,21 +159,27 @@ export async function setCurrentCompany(
 
   // Update last used timestamp
   config.companies[companyId].lastUsed = Date.now();
-  
+
   // Set as current company
   config.currentCompanyId = companyId;
-  
-  await saveCompaniesConfig(config);
+
+  await saveFullConfig(config);
 }
 
+/**
+ * Get list of all companies
+ */
 export async function getCompanyList(): Promise<CompanyConfig[]> {
-  const config = await loadCompaniesConfig();
-  return Object.values(config.companies).sort((a, b) => 
+  const config = await loadFullConfig();
+  return Object.values(config.companies).sort((a, b) =>
     (b.lastUsed || 0) - (a.lastUsed || 0)
   );
 }
 
+/**
+ * Get company info by ID
+ */
 export async function getCompanyInfo(companyId: string): Promise<CompanyConfig | null> {
-  const config = await loadCompaniesConfig();
+  const config = await loadFullConfig();
   return config.companies[companyId] || null;
 }
