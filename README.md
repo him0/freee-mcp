@@ -148,24 +148,51 @@ pnpm lint
 
 #### APIクライアントモード（推奨）
 
-`FREEE_CLIENT_MODE=true` を設定すると、単一の汎用クライアントツールでAPIにアクセスできます。この方式はコンテキストウィンドウを節約し、大規模言語モデルとの親和性が高いです。
+`FREEE_CLIENT_MODE=true` を設定すると、HTTPメソッドごとのサブコマンドツールでAPIにアクセスできます。この方式はコンテキストウィンドウを節約し、大規模言語モデルとの親和性が高いです。
 
-- **`freee_api_client`**: freee APIへの汎用リクエスト
+APIクライアントモードでは、以下の6つのツールが利用可能です：
+
+- **`freee_api_get`**: GETリクエスト（データ取得）
   - パラメータ:
-    - `method`: HTTPメソッド（GET, POST, PUT, DELETE, PATCH）
     - `path`: APIパス（例: `/api/1/deals`, `/api/1/deals/123`）
     - `query`: クエリパラメータ（オプション）
-    - `body`: リクエストボディ（POST/PUT/PATCHの場合、オプション）
-  - パスはOpenAPIスキーマに対して自動検証されます
+
+- **`freee_api_post`**: POSTリクエスト（新規作成）
+  - パラメータ:
+    - `path`: APIパス（例: `/api/1/deals`）
+    - `body`: リクエストボディ
+    - `query`: クエリパラメータ（オプション）
+
+- **`freee_api_put`**: PUTリクエスト（更新）
+  - パラメータ:
+    - `path`: APIパス（例: `/api/1/deals/123`）
+    - `body`: リクエストボディ
+    - `query`: クエリパラメータ（オプション）
+
+- **`freee_api_delete`**: DELETEリクエスト（削除）
+  - パラメータ:
+    - `path`: APIパス（例: `/api/1/deals/123`）
+    - `query`: クエリパラメータ（オプション）
+
+- **`freee_api_patch`**: PATCHリクエスト（部分更新）
+  - パラメータ:
+    - `path`: APIパス（例: `/api/1/deals/123`）
+    - `body`: リクエストボディ
+    - `query`: クエリパラメータ（オプション）
 
 - **`freee_api_list_paths`**: 利用可能なすべてのAPIエンドポイント一覧
 
+すべてのツールでパスはOpenAPIスキーマに対して自動検証されます。
+
 使用例:
 ```json
-{
-  "method": "GET",
+// GETリクエスト
+freee_api_get { "path": "/api/1/deals", "query": { "limit": 10 } }
+
+// POSTリクエスト
+freee_api_post {
   "path": "/api/1/deals",
-  "query": { "limit": 10 }
+  "body": { "issue_date": "2024-01-01", "type": "income", ... }
 }
 ```
 
@@ -179,6 +206,16 @@ pnpm lint
 - DELETE: `delete_[resource_name]_by_id`
 
 **注意**: 個別ツールモードでは多数のツールが生成されるため、LLMのコンテキストウィンドウを圧迫する可能性があります。大規模なAPIを扱う場合はクライアントモードの使用を推奨します。
+
+#### モード比較
+
+| 項目 | クライアントモード | 個別ツールモード |
+|------|-------------------|-----------------|
+| ツール数 | 6個（GET/POST/PUT/DELETE/PATCH + list_paths） | 数百個（各エンドポイントごと） |
+| コンテキスト使用量 | 低 | 高 |
+| 柔軟性 | 高（任意のパスを指定可能） | 中（定義済みエンドポイントのみ） |
+| パス検証 | あり（OpenAPIスキーマ） | あり（型定義） |
+| 推奨用途 | 大規模API、探索的利用 | 特定エンドポイントの頻繁な利用 |
 
 ## 使い方
 
