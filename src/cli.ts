@@ -65,42 +65,18 @@ async function fetchCompanies(accessToken: string): Promise<Company[]> {
 }
 
 /**
- * Read password input without echoing to console
+ * Read password input and hide it after entry
+ * The input will be visible during typing but cleared immediately after Enter
  */
-function readSecret(prompt: string): Promise<string> {
-  return new Promise((resolve) => {
-    process.stdout.write(prompt);
+async function readSecret(rl: ReturnType<typeof createInterface>, prompt: string): Promise<string> {
+  const secret = await rl.question(prompt);
 
-    const stdin = process.stdin;
-    stdin.setRawMode(true);
-    stdin.resume();
-    stdin.setEncoding('utf8');
+  // Move cursor up one line and clear it
+  process.stdout.write('\x1b[1A'); // Move up one line
+  process.stdout.write('\x1b[2K'); // Clear entire line
+  process.stdout.write(`${prompt}${'*'.repeat(secret.length)}\n`); // Show masked version
 
-    let password = '';
-    const onData = (char: string): void => {
-      const charCode = char.charCodeAt(0);
-
-      if (charCode === 13) { // Enter key
-        stdin.setRawMode(false);
-        stdin.pause();
-        stdin.removeListener('data', onData);
-        process.stdout.write('\n');
-        resolve(password);
-      } else if (charCode === 3) { // Ctrl+C
-        process.exit(0);
-      } else if (charCode === 127) { // Backspace
-        if (password.length > 0) {
-          password = password.slice(0, -1);
-          process.stdout.write('\b \b');
-        }
-      } else {
-        password += char;
-        process.stdout.write('*');
-      }
-    };
-
-    stdin.on('data', onData);
-  });
+  return secret;
 }
 
 export async function configure(): Promise<void> {
@@ -118,7 +94,7 @@ export async function configure(): Promise<void> {
     // Step 1: Collect OAuth credentials
     console.log('ステップ 1/3: OAuth認証情報の入力\n');
     const clientId = await rl.question('FREEE_CLIENT_ID: ');
-    const clientSecret = await readSecret('FREEE_CLIENT_SECRET: ');
+    const clientSecret = await readSecret(rl, 'FREEE_CLIENT_SECRET: ');
     const callbackPort =
       (await rl.question('FREEE_CALLBACK_PORT (default: 54321): ')) || '54321';
 
