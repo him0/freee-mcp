@@ -1,0 +1,2527 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "freee工数管理",
+    "version": "v1.1.0",
+    "x-copyright": "&copy; Since 2013 freee K.K.",
+    "description": "<h1 id=\"freee_api\">freee工数管理</h1> <hr />\n<h2 id=\"start_guide\">スタートガイド</h2> <p>freee API開発がはじめての方は<a href=\"https://developer.freee.co.jp/getting-started\">freee APIスタートガイド</a>を参照してください。</p>\n<hr />\n<h2 id=\"specification\">仕様</h2>\n<h3 id=\"api_endpoint\">APIエンドポイント</h3> <p>https://api.freee.co.jp/pm (httpsのみ)</p>\n<h3 id=\"about_authorize\">認証について</h3> <p>OAuth2.0を利用します。<a href=\"https://developer.freee.co.jp/reference/#%e8%aa%8d%e8%a8%bc\" target=\"_blank\">詳細はリファレンスの認証に関する記載を参照してください。</a></p>\n<h3 id=\"data_format\">データフォーマット</h3> <p>リクエスト、レスポンスともにJSON形式をサポートしていますが、詳細は、API毎の説明欄（application/jsonなど）を確認してください。</p>\n<h3 id=\"compatibility\">後方互換性ありの変更</h3> <p>freeeでは、APIを改善していくために以下のような変更は後方互換性ありとして通知なく変更を入れることがあります。アプリケーション実装者は以下を踏まえて開発を行ってください。</p> <ul>\n  <li>新しいAPIリソース・エンドポイントの追加</li>\n  <li>既存のAPIに対して必須ではない新しいリクエストパラメータの追加</li>\n  <li>既存のAPIレスポンスに対する新しいプロパティの追加</li>\n  <li>既存のAPIレスポンスに対するプロパティの順番の入れ変え</li>\n  <li>keyとなっているidやcodeの長さの変更（長くする）</li>\n  <li>エラーメッセージの変更</li>\n</ul>\n<h3 id=\"common_response_header\">共通レスポンスヘッダー</h3> <p>すべてのAPIのレスポンスには以下のHTTPヘッダーが含まれます。</p> <ul>\n  <li>\n    <p>X-Freee-Request-ID</p>\n    <ul>\n      <li>各リクエスト毎に発行されるID</li>\n    </ul>\n  </li>\n</ul>\n<h3 id=\"common_error_response\">共通エラーレスポンス</h3> <ul>\n  <li>\n    <p>ステータスコードはレスポンス内のJSONに含まれる他、HTTPヘッダにも含まれます</p>\n  </li>\n  <li>\n    <p>\n      一部のエラーレスポンスにはエラーコードが含まれます。<br>\n      詳細は、<a href=\"https://developer.freee.co.jp/tips/faq/40x-checkpoint\">HTTPステータスコード400台エラー時のチェックポイント</a>を参照してください\n    </p>\n  </li>\n  <p>type</p>\n  <ul>\n    <li>status : HTTPステータスコードの説明</li>\n    <li>validation : エラーの詳細の説明（開発者向け）</li>\n  </ul>\n</ul>\n<p>レスポンスの例</p> <pre><code>  {\n    &quot;status_code&quot; : 400,\n    &quot;errors&quot; : [\n      {\n        &quot;type&quot; : &quot;status&quot;,\n        &quot;messages&quot; : [&quot;不正なリクエストです。&quot;]\n      },\n      {\n        &quot;type&quot; : &quot;validation&quot;,\n        &quot;messages&quot; : [&quot;Date は不正な日付フォーマットです。入力例：'2013-01-01'&quot;]\n      }\n    ]\n  }</code></pre>\n\n<h3 id=\"api_rate_limit\">API使用制限</h3> <p>APIリクエストは1時間で5000回を上限としています。API使用ステータスはレスポンスヘッダに付与されます。<br> 各ヘッダの意味は次のとおりです。</p> <table>\n  <thead>\n    <tr><th>ヘッダ名</th><th>説明</th></tr>\n  </thead>\n  <tbody>\n    <tr><td>X-RateLimit-Limit</td><td>使用回数の上限</td></tr>\n    <tr><td>X-RateLimit-Remaining</td><td>残り使用回数</td></tr>\n    <tr><td>X-RateLimit-Reset</td><td>使用回数がリセットされる時刻</td></tr>\n  </tbody>\n</table>\n<p>上記に加え、freeeは一定期間に過度のアクセスを検知した場合、APIアクセスをコントロールする場合があります。<br> その際のhttp status codeは403となります。制限がかかってから10分程度が過ぎると再度使用することができるようになります。</p>\n<h3 id=\"demo_company\">開発用テスト環境</h3> <p>\n  会計・人事労務のAPIはアプリストアから開発用テスト環境を作成することができますが、freee工数管理の環境には対応しておりません。<br>\n  freee工数管理のお試しをご自身で行っていただいくと、テストに使用できる環境としてお使いいただけます。<br>\n  <br>\n  freee工数管理のお試しは以下の手順で行うことができます。<br>\n  <ol>\n    <li>アプリストアから開発用テスト事業所を作成してください。</li>\n    <li>作成した事業所にログインして、freee工数管理にアクセスしてください。</li>\n    <li>『プランを選択する』をクリックして、必要事項を入力してください。</li>\n    <li>プラン選択画面にてお試しプランを選択してください。</li>\n    <li>freee工数管理がテストに使用できる状態になりました。</li>\n  </ol>\n</p>"
+  },
+  "tags": [
+    {
+      "name": "Users",
+      "description": "ログインユーザー"
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://api.freee.co.jp/pm"
+    }
+  ],
+  "security": [
+    {
+      "oauth2": [
+        "write",
+        "read"
+      ]
+    }
+  ],
+  "paths": {
+    "/users/me": {
+      "get": {
+        "operationId": "/users/me/index",
+        "summary": "ログインユーザー情報の取得",
+        "description": "このリクエストの認可セッションにおけるログインユーザーの情報を返します。 freee工数管理では一人のログインユーザーを複数の事業所に関連付けられるため、このユーザーと関連のあるすべての事業所の情報をリストで返します。 他のAPIのパラメータとして company_id が求められる場合は、このAPIで取得した company_id を使用します。",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects": {
+      "post": {
+        "operationId": "/projects/create",
+        "summary": "プロジェクトの登録",
+        "description": "プロジェクトを登録することができます。",
+        "tags": [
+          "Projects"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/create_project_param"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "project": {
+                      "$ref": "#/components/schemas/project_detail"
+                    }
+                  },
+                  "required": [
+                    "project"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1projects/post/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1projects/post/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1projects/post/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1projects/post/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "プロジェクト一覧の取得",
+        "description": "この事業所のプロジェクトの一覧情報を返します。 運用ステータス、マネージャー、発注先、発注元で絞り込みできます。",
+        "tags": [
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "description": "事業所ID",
+            "in": "query",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "運用ステータス",
+            "in": "query",
+            "name": "operational_status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "planning",
+                "awaiting_approval",
+                "in_progress",
+                "rejected",
+                "done"
+              ]
+            }
+          },
+          {
+            "description": "マネージャのユーザID",
+            "explode": true,
+            "in": "query",
+            "name": "manager_ids[]",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "発注元の取引先ID",
+            "explode": true,
+            "in": "query",
+            "name": "orderer_ids[]",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "発注先の取引先ID",
+            "explode": true,
+            "in": "query",
+            "name": "contractor_ids[]",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "description": "取得レコードのオフセット（デフォルト：0）",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854776000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/meta"
+                    },
+                    "projects_counts": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "description": "取得件数合計",
+                          "example": 10
+                        },
+                        "by_status": {
+                          "type": "object",
+                          "properties": {
+                            "planning": {
+                              "type": "integer",
+                              "description": "計画中件数",
+                              "example": 10
+                            },
+                            "awaiting_approval": {
+                              "type": "integer",
+                              "description": "承認待ち件数",
+                              "example": 10
+                            },
+                            "in_progress": {
+                              "type": "integer",
+                              "description": "運用中件数",
+                              "example": 10
+                            },
+                            "rejected": {
+                              "type": "integer",
+                              "description": "差し戻し件数",
+                              "example": 10
+                            },
+                            "done": {
+                              "type": "integer",
+                              "description": "終了件数",
+                              "example": 10
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "projects": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/project"
+                      }
+                    }
+                  },
+                  "required": [
+                    "projects",
+                    "projects_counts",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1projects/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1projects/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "summary": "プロジェクト詳細の取得",
+        "description": "IDに該当するプロジェクトの詳細情報を返します。",
+        "tags": [
+          "Projects"
+        ],
+        "parameters": [
+          {
+            "description": "事業所ID",
+            "in": "query",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "プロジェクトID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "project": {
+                      "$ref": "#/paths/~1projects/post/responses/200/content/application~1json/schema/properties/project"
+                    }
+                  },
+                  "required": [
+                    "project"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1projects~1%7Bid%7D/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1projects~1%7Bid%7D/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/unit_costs": {
+      "get": {
+        "operationId": "/unit_costs/index",
+        "summary": "単価マスタの取得",
+        "description": "従業員の単価マスタを返します。",
+        "tags": [
+          "UnitCosts"
+        ],
+        "parameters": [
+          {
+            "description": "事業所ID",
+            "in": "query",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "description": "取得レコードのオフセット（デフォルト：0）",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854776000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "unit_costs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/unit_cost"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/paths/~1projects/get/responses/200/content/application~1json/schema/properties/meta"
+                    }
+                  },
+                  "required": [
+                    "unit_costs",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1unit_costs/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1unit_costs/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/people": {
+      "get": {
+        "summary": "従業員一覧の取得",
+        "description": "このリクエストで指定したIDの事業所の従業員一覧を返します。 権限・ステータス・従業員IDで取得する情報を絞り込むことができます。",
+        "tags": [
+          "People"
+        ],
+        "parameters": [
+          {
+            "description": "事業所ID",
+            "in": "query",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "役割",
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "ステータス（招待中・利用中・無効）",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sent",
+                "accepted",
+                "inactive"
+              ]
+            }
+          },
+          {
+            "description": "従業員ID",
+            "explode": true,
+            "in": "query",
+            "name": "person_ids[]",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "description": "取得レコードのオフセット（デフォルト：0）",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854776000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/paths/~1projects/get/responses/200/content/application~1json/schema/properties/meta"
+                    },
+                    "people_counts": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "description": "取得件数合計",
+                          "example": 10
+                        },
+                        "by_status": {
+                          "type": "object",
+                          "properties": {
+                            "sent": {
+                              "type": "integer",
+                              "description": "招待済み従業員件数",
+                              "example": 10
+                            },
+                            "accepted": {
+                              "type": "integer",
+                              "description": "利用中従業員件数",
+                              "example": 10
+                            },
+                            "inactive": {
+                              "type": "integer",
+                              "description": "無効従業員件数",
+                              "example": 10
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "people": {
+                      "items": {
+                        "$ref": "#/components/schemas/person"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "people",
+                    "people_counts",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1people/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1people/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners": {
+      "get": {
+        "operationId": "/partners/index",
+        "summary": "取引先の一覧取得",
+        "description": "登録されている取引先の一覧を返します。",
+        "tags": [
+          "Partners"
+        ],
+        "parameters": [
+          {
+            "description": "事業所ID",
+            "in": "query",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "description": "取得レコードのオフセット（デフォルト：0）",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854776000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "partners": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/partner"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/paths/~1projects/get/responses/200/content/application~1json/schema/properties/meta"
+                    }
+                  },
+                  "required": [
+                    "partners",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1partners/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1partners/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workloads": {
+      "post": {
+        "operationId": "/workloads/create",
+        "summary": "工数登録",
+        "description": "工数を登録することが出来ます。",
+        "tags": [
+          "Workloads"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/create_workload_param"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workload": {
+                      "$ref": "#/components/schemas/workload"
+                    }
+                  },
+                  "required": [
+                    "workload"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads/post/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads/post/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads/post/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads/post/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "工数詳細の取得",
+        "description": "取得対象の従業員の工数実績の詳細を返します。 取得対象従業員と年月の取得範囲で絞り込みできます。",
+        "tags": [
+          "Workloads"
+        ],
+        "parameters": [
+          {
+            "description": "事業所ID",
+            "in": "query",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "取得対象従業員の検索スコープです。 <ul> <li> allを指定した場合は全従業員が対象です。 絞り込みを行わない場合にご使用ください。 person_ids, team_idsでの絞り込みはできません。 </li> <li> teamを指定した場合はチーム単位で絞り込みが可能です。 team_idsでの絞り込みができます。 person_idsでの絞り込みはできません。 </li> <li> employeeを指定した場合はperson_idsによる絞り込みができます。 team_idsでの絞り込みは行なえません。 </li> <li> scopeを指定しない場合はログインユーザの情報のみの取得です。 </li> </ul>",
+            "in": "query",
+            "name": "employees_scope",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "team",
+                "employee"
+              ]
+            }
+          },
+          {
+            "description": "取得対象従業員のユーザID",
+            "explode": true,
+            "in": "query",
+            "name": "person_ids[]",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "取得対象のチームID",
+            "explode": true,
+            "in": "query",
+            "name": "team_ids[]",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "取得対象範囲（YYYY-MM）",
+            "in": "query",
+            "name": "year_month",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "description": "取得レコードのオフセット（デフォルト：0）",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854776000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workloads": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/paths/~1workloads/post/responses/200/content/application~1json/schema/properties/workload"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/paths/~1projects/get/responses/200/content/application~1json/schema/properties/meta"
+                    }
+                  },
+                  "required": [
+                    "workloads",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workload_summaries": {
+      "get": {
+        "summary": "工数実績の取得",
+        "description": "取得対象の従業員の工数実績のサマリを返します。 取得対象従業員と年月の取得範囲で絞り込みできます。",
+        "tags": [
+          "Workloads"
+        ],
+        "parameters": [
+          {
+            "description": "事業所ID",
+            "in": "query",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "取得対象従業員の検索スコープです。 <ul> <li> allを指定した場合は全従業員が対象です。 絞り込みを行わない場合にご使用ください。 person_ids, team_idsでの絞り込みはできません。 </li> <li> teamを指定した場合はチーム単位で絞り込みが可能です。 team_idsでの絞り込みができます。 person_idsでの絞り込みはできません。 </li> <li> employeeを指定した場合はperson_idsによる絞り込みができます。 team_idsでの絞り込みは行なえません。 </li> <li> scopeを指定しない場合はログインユーザの情報のみの取得です。 </li> </ul>",
+            "in": "query",
+            "name": "employees_scope",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "team",
+                "employee"
+              ]
+            }
+          },
+          {
+            "description": "取得対象従業員のユーザID",
+            "explode": true,
+            "in": "query",
+            "name": "person_ids[]",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "取得対象のチームID",
+            "explode": true,
+            "in": "query",
+            "name": "team_ids[]",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "取得対象範囲（YYYY-MM）",
+            "in": "query",
+            "name": "year_month",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "description": "取得レコードのオフセット（デフォルト：0）",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854776000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workload_summaries": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/workload_summary"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/paths/~1projects/get/responses/200/content/application~1json/schema/properties/meta"
+                    }
+                  },
+                  "required": [
+                    "workload_summaries",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workload_summaries/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workload_summaries/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/teams": {
+      "get": {
+        "operationId": "/teams/index",
+        "summary": "チームの一覧取得",
+        "description": "登録されているチームの一覧を返します。",
+        "tags": [
+          "Teams"
+        ],
+        "parameters": [
+          {
+            "description": "事業所ID",
+            "in": "query",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "description": "取得レコードのオフセット（デフォルト：0）",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854776000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "teams": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/team"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/paths/~1projects/get/responses/200/content/application~1json/schema/properties/meta"
+                    }
+                  },
+                  "required": [
+                    "teams",
+                    "meta"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1teams/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1teams/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.secure.freee.co.jp/public_api/authorize",
+            "tokenUrl": "https://accounts.secure.freee.co.jp/public_api/token",
+            "scopes": {
+              "write": "データの書き込み",
+              "read": "データの読み取り"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "user": {
+        "type": "object",
+        "description": "ログインユーザー情報",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ユーザーID",
+            "example": 1
+          },
+          "companies": {
+            "type": "array",
+            "description": "ユーザーが属する事業所の一覧",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "事業所ID",
+                  "example": 1
+                },
+                "name": {
+                  "type": "string",
+                  "description": "事業所名",
+                  "example": "フリー株式会社"
+                },
+                "display_name": {
+                  "type": "string",
+                  "description": "事業所に所属する従業員の表示名",
+                  "example": "フリー株式会社"
+                },
+                "role": {
+                  "type": "string",
+                  "description": "事業所におけるロール",
+                  "example": "company_admin"
+                },
+                "external_cid": {
+                  "type": "string",
+                  "description": "事業所番号(半角英数字10桁)",
+                  "example": "1234567890"
+                },
+                "person_me": {
+                  "type": "object",
+                  "description": "ログインユーザー情報",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "従業員ID",
+                      "example": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "氏名",
+                      "example": "“田中太郎”"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "メールアドレス",
+                      "example": "test@example.com"
+                    },
+                    "role": {
+                      "type": "string",
+                      "description": "事業所におけるロール",
+                      "example": "company_admin"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "ステータス",
+                      "example": "accepted"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "project": {
+        "type": "object",
+        "description": "プロジェクト",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "プロジェクトID",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "プロジェクト名",
+            "example": "PJ-AAA"
+          },
+          "code": {
+            "type": "string",
+            "description": "プロジェクトコード",
+            "example": "PJ-AAA"
+          },
+          "description": {
+            "type": "string",
+            "description": "プロジェクト概要",
+            "example": "プロジェクトの概要",
+            "nullable": true
+          },
+          "manager": {
+            "type": "object",
+            "description": "プロジェクトマネージャー",
+            "properties": {
+              "person_id": {
+                "type": "integer",
+                "description": "ユーザID",
+                "example": 1
+              },
+              "person_name": {
+                "type": "string",
+                "description": "氏名",
+                "example": "テスト太郎"
+              }
+            }
+          },
+          "color": {
+            "type": "string",
+            "description": "カラー",
+            "example": "#c8790f"
+          },
+          "from_date": {
+            "type": "string",
+            "description": "期間from",
+            "example": "2021-01-01"
+          },
+          "thru_date": {
+            "type": "string",
+            "description": "期間to",
+            "example": "2021-12-31"
+          },
+          "publish_to_employee": {
+            "type": "boolean",
+            "description": "従業員への公開設定",
+            "example": true
+          },
+          "assignment_url_enabled": {
+            "type": "boolean",
+            "description": "招待リンク",
+            "example": false
+          },
+          "operational_status": {
+            "type": "string",
+            "description": "運用ステータス",
+            "example": "in_progress"
+          },
+          "sales_order_status": {
+            "type": "string",
+            "description": "受注ステータス",
+            "example": "受注済み"
+          },
+          "members": {
+            "type": "array",
+            "description": "プロジェクトメンバー",
+            "items": {
+              "type": "object",
+              "properties": {
+                "person_id": {
+                  "type": "integer",
+                  "description": "ユーザID",
+                  "example": 1
+                },
+                "person_name": {
+                  "type": "string",
+                  "description": "氏名",
+                  "example": "田中太郎"
+                }
+              }
+            }
+          },
+          "orderers": {
+            "type": "array",
+            "description": "発注元",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partner_id": {
+                  "type": "integer",
+                  "description": "取引先ID",
+                  "example": 1
+                },
+                "partner_name": {
+                  "type": "string",
+                  "description": "取引先名",
+                  "example": "XX株式会社"
+                },
+                "partner_code": {
+                  "type": "string",
+                  "description": "取引先コード",
+                  "example": "CORP-XX",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "contractors": {
+            "type": "array",
+            "description": "発注先",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partner_id": {
+                  "type": "integer",
+                  "description": "取引先ID",
+                  "example": 2
+                },
+                "partner_name": {
+                  "type": "string",
+                  "description": "取引先名",
+                  "example": "CORP-YY"
+                },
+                "partner_code": {
+                  "type": "string",
+                  "description": "取引先コード",
+                  "example": "YY株式会社",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "project_tags": {
+            "type": "array",
+            "description": "プロジェクトタグ",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_group_name": {
+                  "type": "string",
+                  "description": "タググループ名",
+                  "example": "タググループA"
+                },
+                "tag_name": {
+                  "type": "string",
+                  "description": "タグ名",
+                  "example": "タグA",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "workload_tag_groups": {
+            "type": "array",
+            "description": "プロジェクトで使える工数タグのグループ",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_group_id": {
+                  "type": "integer",
+                  "description": "タググループID",
+                  "example": 1
+                },
+                "tag_group_name": {
+                  "type": "string",
+                  "description": "タググループ名",
+                  "example": "タググループA"
+                },
+                "required": {
+                  "type": "boolean",
+                  "description": "工数登録時に必須かどうかのフラグ",
+                  "example": true
+                },
+                "tags": {
+                  "type": "array",
+                  "description": "タグ",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "description": "タグID",
+                        "example": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "タグ名",
+                        "example": "タグA"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "create_project_param": {
+        "type": "object",
+        "description": "プロジェクト情報",
+        "properties": {
+          "company_id": {
+            "description": "事業所ID",
+            "format": "int32",
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "description": "プロジェクト名",
+            "type": "string"
+          },
+          "code": {
+            "description": "プロジェクトコード",
+            "type": "string"
+          },
+          "description": {
+            "description": "プロジェクト概要",
+            "type": "string"
+          },
+          "from_date": {
+            "description": "プロジェクト開始日",
+            "type": "string"
+          },
+          "thru_date": {
+            "description": "プロジェクト終了日",
+            "type": "string"
+          },
+          "publish_to_employee": {
+            "description": "従業員への公開設定\n公開するとプロジェクト一覧に表示され、従業員がアサインリクエストを送れるようになります。（詳細画面は閲覧不可）",
+            "type": "boolean"
+          },
+          "assignment_url_enabled": {
+            "description": "プロジェクトの招待リンク機能設定\nプロジェクトの招待リンクを発行できるようにするかどうかを設定します。",
+            "type": "boolean"
+          },
+          "sales_order_status_id": {
+            "description": "受注ステータスID",
+            "format": "int32",
+            "type": "integer",
+            "example": 2
+          },
+          "manager_person_id": {
+            "description": "プロジェクトマネージャーの従業員ID\nこのパラメータはシステム管理者かプロジェクトマネージャーでログインしているときのみ指定可能。\n（デフォルト：指定しない場合はログインユーザ）",
+            "format": "int32",
+            "type": "integer",
+            "example": 10,
+            "nullable": true
+          },
+          "pm_budgets_cost": {
+            "description": "プロジェクトマネージャーのコスト(円)",
+            "format": "int32",
+            "type": "integer",
+            "example": 4000
+          },
+          "color_id": {
+            "description": "プロジェクトの色を指定可能（デフォルト：orange）\n{ orange: 1, blue_green: 2, green: 3, blue: 4, purple: 5, red: 6, yellow: 7 }",
+            "format": "int32",
+            "type": "integer",
+            "example": 3
+          },
+          "members": {
+            "description": "アサインするユーザの配列",
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "person_id": {
+                  "description": "従業員ID",
+                  "format": "int32",
+                  "type": "integer",
+                  "example": 11
+                },
+                "unit_cost_id": {
+                  "description": "このプロジェクトでの実績単価ID",
+                  "format": "int32",
+                  "type": "integer",
+                  "example": 3
+                },
+                "budgets_cost": {
+                  "description": "予算計算用の単価(円)",
+                  "format": "int32",
+                  "type": "integer",
+                  "example": 2000
+                },
+                "use_standard_unit_cost": {
+                  "description": "標準従業員単価の利用（デフォルト：false）",
+                  "type": "boolean",
+                  "example": true
+                }
+              },
+              "required": [
+                "person_id",
+                "unit_cost_id",
+                "budgets_cost"
+              ]
+            }
+          },
+          "orderer_ids": {
+            "description": "発注元として指定する取引先IDの配列",
+            "items": {
+              "type": "integer",
+              "example": 20
+            },
+            "type": "array"
+          },
+          "contractor_ids": {
+            "description": "発注先として指定する取引先IDの配列",
+            "items": {
+              "type": "integer",
+              "example": 10
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "company_id",
+          "name",
+          "code",
+          "from_date",
+          "thru_date",
+          "pm_budgets_cost"
+        ]
+      },
+      "project_detail": {
+        "type": "object",
+        "description": "プロジェクト",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "プロジェクトID",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "プロジェクト名",
+            "example": "PJ-AAA"
+          },
+          "code": {
+            "type": "string",
+            "description": "プロジェクトコード",
+            "example": "PJ-AAA"
+          },
+          "description": {
+            "type": "string",
+            "description": "プロジェクト概要",
+            "example": "プロジェクトの概要",
+            "nullable": true
+          },
+          "manager": {
+            "type": "object",
+            "description": "プロジェクトマネージャー",
+            "properties": {
+              "person_id": {
+                "type": "integer",
+                "description": "ユーザID",
+                "example": 1
+              },
+              "person_name": {
+                "type": "string",
+                "description": "氏名",
+                "example": "テスト太郎"
+              }
+            }
+          },
+          "color": {
+            "type": "string",
+            "description": "カラー",
+            "example": "#c8790f"
+          },
+          "from_date": {
+            "type": "string",
+            "description": "期間from",
+            "example": "2021-01-01"
+          },
+          "thru_date": {
+            "type": "string",
+            "description": "期間to",
+            "example": "2021-12-31"
+          },
+          "publish_to_employee": {
+            "type": "boolean",
+            "description": "従業員への公開設定",
+            "example": true
+          },
+          "assignment_url_enabled": {
+            "type": "boolean",
+            "description": "招待リンク",
+            "example": false
+          },
+          "operational_status": {
+            "type": "string",
+            "description": "運用ステータス",
+            "example": "in_progress"
+          },
+          "sales_order_status": {
+            "type": "string",
+            "description": "受注ステータス",
+            "example": "受注済み"
+          },
+          "members": {
+            "type": "array",
+            "description": "プロジェクトメンバー",
+            "items": {
+              "type": "object",
+              "properties": {
+                "person_id": {
+                  "type": "integer",
+                  "description": "ユーザID",
+                  "example": 1
+                },
+                "person_name": {
+                  "type": "string",
+                  "description": "氏名",
+                  "example": "田中太郎"
+                }
+              }
+            }
+          },
+          "orderers": {
+            "type": "array",
+            "description": "発注元",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partner_id": {
+                  "type": "integer",
+                  "description": "取引先ID",
+                  "example": 1
+                },
+                "partner_name": {
+                  "type": "string",
+                  "description": "取引先名",
+                  "example": "XX株式会社"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "取引先コード",
+                  "example": "CORP-XX",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "contractors": {
+            "type": "array",
+            "description": "発注先",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partner_id": {
+                  "type": "integer",
+                  "description": "取引先ID",
+                  "example": 2
+                },
+                "partner_name": {
+                  "type": "string",
+                  "description": "取引先名",
+                  "example": "CORP-YY"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "取引先コード",
+                  "example": "YY株式会社",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "balance": {
+            "type": "object",
+            "description": "収支管理詳細",
+            "properties": {
+              "labor_costs": {
+                "type": "object",
+                "description": "人件費",
+                "properties": {
+                  "total": {
+                    "type": "object",
+                    "description": "全体",
+                    "properties": {
+                      "budget": {
+                        "type": "integer",
+                        "description": "予算",
+                        "example": 100000
+                      },
+                      "actual_result": {
+                        "type": "integer",
+                        "description": "実績",
+                        "example": 100000
+                      }
+                    }
+                  },
+                  "monthly": {
+                    "type": "array",
+                    "description": "各月",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "year_month": {
+                          "type": "string",
+                          "description": "年月（YYYY-MM）",
+                          "example": "2021-01"
+                        },
+                        "budget": {
+                          "type": "integer",
+                          "description": "予算",
+                          "example": 100000
+                        },
+                        "actual_result": {
+                          "type": "integer",
+                          "description": "実績",
+                          "example": 100000
+                        }
+                      }
+                    }
+                  },
+                  "details": {
+                    "type": "array",
+                    "description": "各メンバーの内訳",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "person_id": {
+                          "type": "integer",
+                          "description": "ユーザーID",
+                          "example": 1
+                        },
+                        "person_name": {
+                          "type": "string",
+                          "description": "ユーザー名",
+                          "example": "テスト太郎"
+                        },
+                        "total": {
+                          "type": "object",
+                          "properties": {
+                            "budget": {
+                              "type": "object",
+                              "description": "予算",
+                              "properties": {
+                                "cost": {
+                                  "type": "integer",
+                                  "description": "金額",
+                                  "example": 100000
+                                },
+                                "minutes": {
+                                  "type": "integer",
+                                  "description": "時間",
+                                  "example": 9600
+                                }
+                              }
+                            },
+                            "actual_result": {
+                              "type": "object",
+                              "description": "実績",
+                              "properties": {
+                                "cost": {
+                                  "type": "integer",
+                                  "description": "金額",
+                                  "example": 100000
+                                },
+                                "minutes": {
+                                  "type": "integer",
+                                  "description": "時間",
+                                  "example": 9600
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "monthly": {
+                          "type": "array",
+                          "description": "各月",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "year_month": {
+                                "type": "string",
+                                "description": "年月（YYYY-MM）",
+                                "example": "2021-01"
+                              },
+                              "budget": {
+                                "type": "object",
+                                "description": "予算",
+                                "properties": {
+                                  "cost": {
+                                    "type": "integer",
+                                    "description": "金額",
+                                    "example": 100000
+                                  },
+                                  "minutes": {
+                                    "type": "integer",
+                                    "description": "時間",
+                                    "example": 9600
+                                  }
+                                }
+                              },
+                              "actual_result": {
+                                "type": "object",
+                                "description": "実績",
+                                "properties": {
+                                  "cost": {
+                                    "type": "integer",
+                                    "description": "金額",
+                                    "example": 100000
+                                  },
+                                  "minutes": {
+                                    "type": "integer",
+                                    "description": "時間",
+                                    "example": 9600
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "unit_cost": {
+        "type": "object",
+        "description": "従業員単価マスタ",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "単価マスタID",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "単価マスタ名",
+            "example": "サンプル単価"
+          },
+          "current_cost": {
+            "type": "integer",
+            "description": "取得時点での適用金額",
+            "example": 2000
+          },
+          "rules": {
+            "type": "array",
+            "description": "期間ごとの適用金額の配列",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from_date": {
+                  "description": "適用開始日",
+                  "type": "string",
+                  "format": "date",
+                  "example": "2020-01-01"
+                },
+                "thru_date": {
+                  "description": "適用日終了日",
+                  "type": "string",
+                  "format": "date",
+                  "example": "2020-12-31"
+                },
+                "cost": {
+                  "type": "integer",
+                  "description": "適用期間の金額",
+                  "example": 3000
+                }
+              }
+            }
+          }
+        }
+      },
+      "person": {
+        "type": "object",
+        "description": "従業員情報",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "従業員ID",
+            "example": 1
+          },
+          "status": {
+            "type": "string",
+            "description": "ステータス",
+            "example": "accepted"
+          },
+          "name": {
+            "type": "string",
+            "description": "氏名",
+            "example": "田中太郎"
+          },
+          "role": {
+            "type": "string",
+            "description": "事業所におけるロール",
+            "example": "company_admin"
+          },
+          "role_display_name": {
+            "type": "string",
+            "description": "事業所におけるロールの表示名",
+            "example": "システム管理者"
+          },
+          "unit_cost": {
+            "type": "object",
+            "description": "標準単価",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "標準単価ID",
+                "example": 1
+              },
+              "name": {
+                "type": "string",
+                "description": "名前",
+                "example": "サンプル単価"
+              }
+            }
+          },
+          "email": {
+            "type": "string",
+            "description": "メールアドレス",
+            "example": "test@example.com"
+          },
+          "payroll_employee_id": {
+            "type": "integer",
+            "description": "人事労務側従業員ID",
+            "example": 1
+          }
+        }
+      },
+      "partner": {
+        "type": "object",
+        "description": "取引先情報",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "取引先ID",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "取引先名前",
+            "example": "〇〇株式会社"
+          },
+          "code": {
+            "type": "string",
+            "description": "取引先code",
+            "example": "001-〇〇株式会社-B",
+            "nullable": true
+          },
+          "projects_as_orderer": {
+            "type": "array",
+            "description": "発注元として登録されているプロジェクト一覧",
+            "items": {
+              "type": "object",
+              "properties": {
+                "project_id": {
+                  "type": "integer",
+                  "description": "プロジェクトID",
+                  "example": 1
+                },
+                "project_name": {
+                  "type": "string",
+                  "description": "プロジェクト名",
+                  "example": "プロジェクトX"
+                }
+              }
+            }
+          },
+          "projects_as_contractor": {
+            "type": "array",
+            "description": "発注先として登録されているプロジェクト一覧",
+            "items": {
+              "type": "object",
+              "properties": {
+                "project_id": {
+                  "type": "integer",
+                  "description": "プロジェクトID",
+                  "example": 1
+                },
+                "project_name": {
+                  "type": "string",
+                  "description": "プロジェクト名",
+                  "example": "プロジェクトX"
+                }
+              }
+            }
+          }
+        }
+      },
+      "workload": {
+        "type": "object",
+        "description": "工数実績詳細",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "工数実績ID",
+            "example": 1
+          },
+          "person_id": {
+            "type": "integer",
+            "description": "対象従業員のユーザーID",
+            "example": 1
+          },
+          "person_name": {
+            "type": "string",
+            "description": "対象従業員氏名",
+            "example": "テスト太郎"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "工数登録日",
+            "example": "2021-01-01"
+          },
+          "project_id": {
+            "description": "対象プロジェクトID",
+            "format": "int32",
+            "type": "integer",
+            "example": 100
+          },
+          "project_name": {
+            "type": "string",
+            "description": "プロジェクト名",
+            "example": "プロジェクトA"
+          },
+          "project_code": {
+            "type": "string",
+            "description": "プロジェクトコード",
+            "example": "PRJ-A"
+          },
+          "memo": {
+            "type": "string",
+            "description": "業務内容",
+            "example": "会議"
+          },
+          "minutes": {
+            "type": "integer",
+            "description": "工数実績（分）",
+            "example": 9600
+          },
+          "workload_tags": {
+            "type": "array",
+            "description": "工数タグ",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_group_id": {
+                  "type": "integer",
+                  "description": "タググループのID",
+                  "example": 11
+                },
+                "tag_group_name": {
+                  "type": "string",
+                  "description": "タググループ名",
+                  "example": "タググループA"
+                },
+                "tag_id": {
+                  "type": "integer",
+                  "description": "タグのID",
+                  "example": 12,
+                  "nullable": true
+                },
+                "tag_name": {
+                  "type": "string",
+                  "description": "タグ名",
+                  "example": "タグA",
+                  "nullable": true
+                }
+              },
+              "required": [
+                "tag_group_id",
+                "tag_group_name"
+              ]
+            }
+          }
+        },
+        "required": [
+          "person_id",
+          "person_name",
+          "project_id",
+          "project_name",
+          "project_code",
+          "date",
+          "minutes"
+        ]
+      },
+      "create_workload_param": {
+        "type": "object",
+        "description": "工数情報",
+        "properties": {
+          "company_id": {
+            "description": "事業所ID",
+            "format": "int32",
+            "type": "integer",
+            "example": 1
+          },
+          "person_id": {
+            "description": "\n対象従業員ID\nこのパラメータは管理者かチームリーダーでログインしているときのみ指定可能。\n指定しない場合はログインユーザに登録",
+            "format": "int32",
+            "type": "integer",
+            "example": 10
+          },
+          "project_id": {
+            "description": "対象プロジェクトID",
+            "format": "int32",
+            "type": "integer",
+            "example": 100
+          },
+          "date": {
+            "description": "対象日",
+            "type": "string",
+            "format": "date",
+            "example": "2020-12-15"
+          },
+          "minutes": {
+            "description": "記録時間（分）",
+            "format": "int32",
+            "type": "integer",
+            "minimum": 1,
+            "example": 120
+          },
+          "memo": {
+            "description": "業務内容",
+            "type": "string",
+            "maxLength": 255,
+            "example": "コーディング"
+          },
+          "workload_tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_group_id": {
+                  "description": "工数タググループID",
+                  "format": "int32",
+                  "type": "integer",
+                  "example": 11
+                },
+                "tag_id": {
+                  "description": "工数タグID",
+                  "format": "int32",
+                  "type": "integer",
+                  "example": 12
+                }
+              },
+              "required": [
+                "tag_group_id",
+                "tag_id"
+              ]
+            }
+          }
+        },
+        "required": [
+          "company_id",
+          "project_id",
+          "date",
+          "minutes"
+        ]
+      },
+      "workload_summary": {
+        "type": "object",
+        "description": "工数実績サマリ",
+        "properties": {
+          "person_id": {
+            "type": "integer",
+            "description": "対象従業員のユーザーid",
+            "example": 1
+          },
+          "person_name": {
+            "type": "string",
+            "description": "対象従業員氏名",
+            "example": "テスト太郎"
+          },
+          "from_date": {
+            "type": "string",
+            "description": "工数登録期間from",
+            "example": "2021-01-01"
+          },
+          "thru_date": {
+            "type": "string",
+            "description": "工数登録期間to",
+            "example": "2021-12-31"
+          },
+          "minutes": {
+            "type": "integer",
+            "description": "工数実績（分）",
+            "example": 9600
+          },
+          "productive_minutes": {
+            "type": "integer",
+            "description": "生産時間実績（分）",
+            "example": 6000
+          }
+        }
+      },
+      "team": {
+        "type": "object",
+        "description": "チーム情報",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "チームID",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "チーム名",
+            "example": "プロジェクトX開発チーム"
+          },
+          "memo": {
+            "type": "string",
+            "description": "memo",
+            "example": "社長室直轄",
+            "nullable": true
+          },
+          "member_count": {
+            "type": "integer",
+            "description": "メンバー数",
+            "example": 10
+          },
+          "members": {
+            "type": "array",
+            "description": "チームに登録されているメンバーの配列",
+            "items": {
+              "type": "object",
+              "properties": {
+                "person_id": {
+                  "type": "integer",
+                  "description": "チームに所属している従業員ID",
+                  "example": 1
+                },
+                "person_name": {
+                  "type": "string",
+                  "description": "チームに所属している従業員名",
+                  "example": "田中太郎"
+                },
+                "is_leader": {
+                  "type": "boolean",
+                  "description": "リーダフラグ、リーダならばtrue",
+                  "example": true
+                }
+              },
+              "required": [
+                "person_id",
+                "person_name",
+                "is_leader"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "member_count"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "status_code": {
+            "type": "integer",
+            "example": 400
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "messages": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "リクエストの形式が不正です。"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "example": "validate",
+                  "enum": [
+                    "status",
+                    "validate",
+                    "error",
+                    "unauthorized",
+                    "record_not_found",
+                    "payment_required"
+                  ]
+                },
+                "codes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "company_not_found"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "meta": {
+        "type": "object",
+        "description": "ページネーションのメタ情報",
+        "properties": {
+          "current_offset": {
+            "type": "integer",
+            "description": "リクエストのオフセット件数",
+            "example": 50
+          },
+          "next_offset": {
+            "type": "integer",
+            "description": "次ページのオフセット件数",
+            "example": 100,
+            "nullable": true
+          },
+          "prev_offset": {
+            "type": "integer",
+            "description": "前ページのオフセット件数",
+            "example": 0,
+            "nullable": true
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "全レコード件数",
+            "example": 200
+          }
+        }
+      }
+    }
+  }
+}

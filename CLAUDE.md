@@ -16,16 +16,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 MCP server that exposes freee API endpoints as MCP tools:
 
-- **Schema**: `src/data/freee-api-schema.json` contains OpenAPI definition
+- **Schema**: Multiple OpenAPI schemas in `openapi/` directory
+  - `accounting-api-schema.json` - 会計API (https://api.freee.co.jp)
+  - `hr-api-schema.json` - 人事労務API (https://api.freee.co.jp/hr)
+  - `invoice-api-schema.json` - 請求書API (https://api.freee.co.jp/iv)
+  - `pm-api-schema.json` - 工数管理API (https://api.freee.co.jp/pm)
+- **Schema Loader**: `src/openapi/schema-loader.ts` loads and manages all API schemas
 - **Tool Generation**: Two modes available (selected via CLI subcommand):
-  - **Client Mode** (`freee-mcp client`): Sub-command tools per HTTP method
+  - **Client Mode** (`freee-mcp client`): Sub-command tools per HTTP method **[RECOMMENDED]**
     - `generateClientModeTool()` in `src/openapi/client-mode.ts` creates method-specific tools
     - Tools: `freee_api_get`, `freee_api_post`, `freee_api_put`, `freee_api_delete`, `freee_api_patch`, `freee_api_list_paths`
-    - Validates paths against OpenAPI schema before execution
+    - Automatically detects API type from path and uses correct base URL
+    - Validates paths against all OpenAPI schemas before execution
     - Reduces context window usage significantly (6 tools vs hundreds)
+    - Supports all 4 freee APIs seamlessly
   - **Individual Mode** (`freee-mcp api` or default): One tool per endpoint
     - `generateToolsFromOpenApi()` in `src/openapi/converter.ts` converts OpenAPI paths to MCP tools
-    - Naming: GET → `get_*`, POST → `post_*`, PUT → `put_*_by_id`, DELETE → `delete_*_by_id`
+    - Naming with API prefix: `accounting_get_deals`, `hr_get_employees`, `invoice_get_delivery_slips`, `pm_get_projects`
+    - Each tool automatically uses the correct base URL for its API
 - **Requests**: `makeApiRequest()` in `src/api/client.ts` handles API calls with auto-auth and company_id injection
 
 ### Configuration

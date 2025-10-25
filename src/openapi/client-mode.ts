@@ -1,104 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import freeeApiSchema from '../data/freee-api-schema.json';
-import { OpenAPIOperation, OpenAPIPathItem } from '../api/types.js';
 import { makeApiRequest } from '../api/client.js';
-
-interface PathValidationResult {
-  isValid: boolean;
-  message: string;
-  operation?: OpenAPIOperation;
-  actualPath?: string;
-}
-
-/**
- * Validates if a given path and method exist in the OpenAPI schema
- * Supports path parameters like /api/1/deals/{id}
- */
-export function validatePath(method: string, path: string): PathValidationResult {
-  const paths = freeeApiSchema.paths;
-  const normalizedMethod = method.toLowerCase();
-
-  // Try exact match first
-  if (path in paths) {
-    const pathItem = paths[path as keyof typeof paths] as OpenAPIPathItem;
-    if (normalizedMethod in pathItem) {
-      return {
-        isValid: true,
-        message: 'Valid path and method',
-        operation: pathItem[normalizedMethod as keyof OpenAPIPathItem] as OpenAPIOperation,
-        actualPath: path,
-      };
-    }
-  }
-
-  // Try pattern matching for paths with parameters
-  const pathKeys = Object.keys(paths);
-  for (const schemaPath of pathKeys) {
-    // Convert OpenAPI path pattern to regex
-    // /api/1/deals/{id} -> /api/1/deals/[^/]+
-    const pattern = schemaPath.replace(/\{[^}]+\}/g, '[^/]+');
-    const regex = new RegExp(`^${pattern}$`);
-
-    if (regex.test(path)) {
-      const pathItem = paths[schemaPath as keyof typeof paths] as OpenAPIPathItem;
-      if (normalizedMethod in pathItem) {
-        return {
-          isValid: true,
-          message: 'Valid path and method',
-          operation: pathItem[normalizedMethod as keyof OpenAPIPathItem] as OpenAPIOperation,
-          actualPath: path,
-        };
-      }
-    }
-  }
-
-  // Path not found, provide helpful error
-  const availableMethods = Object.keys(paths)
-    .filter((p) => {
-      const pattern = p.replace(/\{[^}]+\}/g, '[^/]+');
-      const regex = new RegExp(`^${pattern}$`);
-      return regex.test(path);
-    })
-    .flatMap((p) => {
-      const pathItem = paths[p as keyof typeof paths] as OpenAPIPathItem;
-      return Object.keys(pathItem).filter((m) =>
-        ['get', 'post', 'put', 'delete', 'patch'].includes(m)
-      );
-    });
-
-  if (availableMethods.length > 0) {
-    return {
-      isValid: false,
-      message: `Method '${method}' not found for path '${path}'. Available methods: ${availableMethods.join(', ')}`,
-    };
-  }
-
-  return {
-    isValid: false,
-    message: `Path '${path}' not found in OpenAPI schema. Please check the path format.`,
-  };
-}
-
-/**
- * Lists all available paths in the OpenAPI schema
- */
-export function listAvailablePaths(): string {
-  const paths = freeeApiSchema.paths;
-  const pathList: string[] = [];
-
-  Object.entries(paths).forEach(([path, pathItem]) => {
-    const methods = Object.keys(pathItem as OpenAPIPathItem)
-      .filter((m) => ['get', 'post', 'put', 'delete', 'patch'].includes(m))
-      .map((m) => m.toUpperCase());
-
-    if (methods.length > 0) {
-      pathList.push(`${methods.join('|')} ${path}`);
-    }
-  });
-
-  return pathList.sort().join('\n');
-}
+import { validatePathAcrossApis, listAllAvailablePaths } from './schema-loader.js';
 
 /**
  * Creates a tool handler for a specific HTTP method
@@ -113,8 +16,8 @@ function createMethodTool(method: string): (args: { path: string; query?: Record
     try {
       const { path, query, body } = args;
 
-      // Validate path against OpenAPI schema
-      const validation = validatePath(method, path);
+      // Validate path against all OpenAPI schemas
+      const validation = validatePathAcrossApis(method, path);
       if (!validation.isValid) {
         return {
           content: [
@@ -127,12 +30,13 @@ function createMethodTool(method: string): (args: { path: string; query?: Record
         };
       }
 
-      // Make API request
+      // Make API request with the correct base URL
       const result = await makeApiRequest(
         method,
         validation.actualPath!,
         query,
         body,
+        validation.baseUrl,
       );
 
       return {
@@ -221,15 +125,15 @@ export function generateClientModeTool(server: McpServer): void {
   // Add helper tool to list available paths
   server.tool(
     'freee_api_list_paths',
-    'freee APIで利用可能なすべてのエンドポイントパスとHTTPメソッドの一覧を表示します。',
+    'freee APIで利用可能なすべてのエンドポイントパスとHTTPメソッドの一覧を表示します。会計、人事労務、請求書、工数管理の全APIに対応しています。',
     {},
     async () => {
-      const pathsList = listAvailablePaths();
+      const pathsList = listAllAvailablePaths();
       return {
         content: [
           {
             type: 'text' as const,
-            text: `# freee API 利用可能なエンドポイント一覧\n\n${pathsList}\n\n` +
+            text: `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +
                   `💡 使用例:\n` +
                   `freee_api_get { "path": "/api/1/deals", "query": { "limit": 10 } }\n` +
                   `freee_api_post { "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }`,

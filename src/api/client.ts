@@ -7,8 +7,9 @@ export async function makeApiRequest(
   path: string,
   params?: Record<string, unknown>,
   body?: Record<string, unknown>,
+  baseUrl?: string,
 ): Promise<unknown> {
-  const baseUrl = config.freee.apiUrl;
+  const apiUrl = baseUrl || config.freee.apiUrl;
   const companyId = await getCurrentCompanyId();
 
   const accessToken = await getValidAccessToken();
@@ -21,7 +22,7 @@ export async function makeApiRequest(
     );
   }
 
-  const url = new URL(path, baseUrl);
+  const url = new URL(path, apiUrl);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
