@@ -261,7 +261,7 @@ async function configure(): Promise<void> {
           env: {
             FREEE_CLIENT_ID: configValues.clientId,
             FREEE_CLIENT_SECRET: configValues.clientSecret,
-            FREEE_COMPANY_ID: configValues.companyId,
+            FREEE_DEFAULT_COMPANY_ID: configValues.companyId,
             FREEE_CALLBACK_PORT: configValues.callbackPort,
           },
         },
