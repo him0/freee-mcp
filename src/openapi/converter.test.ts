@@ -66,7 +66,11 @@ vi.mock('./schema.js', () => ({
   sanitizePropertyName: vi.fn((name: string): string => {
     const sanitized = name.replace(/[^a-zA-Z0-9_.-]/g, '_').substring(0, 64);
     return sanitized || '_';
-  })
+  }),
+  convertOpenApiSchemaToZodSchema: vi.fn((schema): { describe: (desc: string) => { _def: { typeName: string } }; _def: { typeName: string } } => ({
+    describe: (desc: string) => ({ _def: { typeName: 'ZodAny' } }),
+    _def: { typeName: 'ZodAny' }
+  }))
 }));
 
 vi.mock('../api/client.js', () => ({

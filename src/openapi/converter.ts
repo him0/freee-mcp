@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import freeeApiSchema from '../data/freee-api-schema.json';
 import { OpenAPIOperation, OpenAPIPathItem, OpenAPIParameter } from '../api/types.js';
-import { convertParameterToZodSchema, convertPathToToolName, sanitizePropertyName } from './schema.js';
+import { convertParameterToZodSchema, convertPathToToolName, sanitizePropertyName, convertOpenApiSchemaToZodSchema } from './schema.js';
 import { makeApiRequest } from '../api/client.js';
 
 export function generateToolsFromOpenApi(server: McpServer): void {
@@ -32,10 +32,10 @@ export function generateToolsFromOpenApi(server: McpServer): void {
         parameterSchema[sanitizePropertyName(param.name)] = schema;
       });
 
-      let bodySchema = z.any();
       if (method === 'post' || method === 'put') {
         const requestBody = operation.requestBody?.content?.['application/json']?.schema;
         if (requestBody) {
+          const bodySchema = convertOpenApiSchemaToZodSchema(requestBody);
           parameterSchema['body'] = bodySchema.describe('Request body');
         }
       }

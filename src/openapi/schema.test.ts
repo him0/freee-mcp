@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
-import { convertParameterToZodSchema, convertPathToToolName, sanitizePropertyName } from './schema.js';
+import { convertParameterToZodSchema, convertPathToToolName, sanitizePropertyName, convertOpenApiSchemaToZodSchema } from './schema.js';
 import { OpenAPIParameter } from '../api/types.js';
 
 describe('schema', () => {
@@ -238,6 +238,134 @@ describe('schema', () => {
         const result = sanitizePropertyName(testCase);
         expect(result).toMatch(mcpPattern);
       });
+    });
+  });
+
+  describe('convertOpenApiSchemaToZodSchema', () => {
+    it('should handle undefined schema', () => {
+      const result = convertOpenApiSchemaToZodSchema(undefined);
+      expect(result).toBeInstanceOf(z.ZodAny);
+    });
+
+    it('should handle $ref schemas', () => {
+      const schema = { $ref: '#/components/schemas/SomeSchema' };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      expect(result).toBeInstanceOf(z.ZodAny);
+    });
+
+    it('should convert string schema', () => {
+      const schema = { type: 'string', description: 'A string field' };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      expect(result).toBeInstanceOf(z.ZodString);
+      expect(result._def.description).toBe('A string field');
+    });
+
+    it('should convert number schema', () => {
+      const schema = { type: 'number' };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      expect(result).toBeInstanceOf(z.ZodNumber);
+    });
+
+    it('should convert integer schema', () => {
+      const schema = { type: 'integer' };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      expect((result._def as unknown as { typeName: string }).typeName).toMatch(/^Zod(Effects|Number)$/);
+    });
+
+    it('should convert boolean schema', () => {
+      const schema = { type: 'boolean' };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      expect(result).toBeInstanceOf(z.ZodBoolean);
+    });
+
+    it('should convert array schema', () => {
+      const schema = {
+        type: 'array',
+        items: { type: 'string' }
+      };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      expect(result).toBeInstanceOf(z.ZodArray);
+    });
+
+    it('should convert object schema with sanitized property names', () => {
+      const schema = {
+        type: 'object',
+        properties: {
+          'user_name': { type: 'string' },
+          'visible_tags[]': { type: 'string' },
+          'item@count': { type: 'number' },
+          'very-long-property-name-that-exceeds-the-sixty-four-character-limit-for-property-names': { type: 'boolean' }
+        },
+        required: ['user_name']
+      };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      
+      expect(result).toBeInstanceOf(z.ZodObject);
+      
+      // Test that we can parse with sanitized property names
+      const testData = {
+        'user_name': 'test',
+        'visible_tags__': 'tag1',
+        'item_count': 42,
+        'very-long-property-name-that-exceeds-the-sixty-four-characte': true
+      };
+      
+      expect(() => result.parse(testData)).not.toThrow();
+    });
+
+    it('should handle required and optional properties correctly', () => {
+      const schema = {
+        type: 'object',
+        properties: {
+          'required_field': { type: 'string' },
+          'optional_field': { type: 'string' }
+        },
+        required: ['required_field']
+      };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      
+      // Should parse with only required field
+      expect(() => result.parse({ 'required_field': 'test' })).not.toThrow();
+      
+      // Should fail without required field
+      expect(() => result.parse({ 'optional_field': 'test' })).toThrow();
+    });
+
+    it('should handle nested object schemas', () => {
+      const schema = {
+        type: 'object',
+        properties: {
+          'user_info': {
+            type: 'object',
+            properties: {
+              'display@name': { type: 'string' },
+              'user_id[]': { type: 'number' }
+            }
+          }
+        }
+      };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      
+      const testData = {
+        'user_info': {
+          'display_name': 'John Doe',
+          'user_id__': 123
+        }
+      };
+      
+      expect(() => result.parse(testData)).not.toThrow();
+    });
+
+    it('should handle object without properties', () => {
+      const schema = { type: 'object' };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      expect(result).toBeInstanceOf(z.ZodAny);
+    });
+
+    it('should handle unknown types', () => {
+      const schema = { type: 'unknown' as string };
+      const result = convertOpenApiSchemaToZodSchema(schema);
+      expect(result).toBeInstanceOf(z.ZodAny);
     });
   });
 });
