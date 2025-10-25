@@ -53,11 +53,11 @@ OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順
    ```bash
    FREEE_CLIENT_ID=your_client_id          # 必須: freeeアプリの Client ID
    FREEE_CLIENT_SECRET=your_client_secret  # 必須: freeeアプリの Client Secret
-   FREEE_COMPANY_ID=your_company_id        # 必須: デフォルト事業所ID
+   FREEE_DEFAULT_COMPANY_ID=your_company_id        # 必須: デフォルト事業所ID
    FREEE_CALLBACK_PORT=54321               # オプション: OAuthコールバックポート、デフォルトは 54321
    ```
 
-   **注意**: `FREEE_COMPANY_ID` はデフォルト事業所として使用されます。実行時に `freee_set_company` ツールで他の事業所に切り替えることができます。
+   **注意**: `FREEE_DEFAULT_COMPANY_ID` はデフォルト事業所として使用されます。実行時に `freee_set_company` ツールで他の事業所に切り替えることができます。
 
 3. **認証方法**:
    初回API使用時またはトークンの有効期限切れ時に、`freee_authenticate` ツールを使用して認証を行います。一度認証すると、同じトークンで複数の事業所にアクセスできます。
@@ -102,7 +102,7 @@ Claude デスクトップアプリケーションで使用するには、以下�
       "env": {
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
-        "FREEE_COMPANY_ID": "your_company_id",
+        "FREEE_DEFAULT_COMPANY_ID": "your_company_id",
         "FREEE_CALLBACK_PORT": "54321"
       }
     }

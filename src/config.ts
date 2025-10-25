@@ -4,7 +4,7 @@ export const config = {
   freee: {
     clientId: process.env.FREEE_CLIENT_ID || '',
     clientSecret: process.env.FREEE_CLIENT_SECRET || '',
-    companyId: process.env.FREEE_COMPANY_ID || '0',
+    companyId: process.env.FREEE_DEFAULT_COMPANY_ID || '0',
     apiUrl: 'https://api.freee.co.jp',
   },
   oauth: {
