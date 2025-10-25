@@ -36,31 +36,45 @@ pnpm add @him0/freee-mcp
 
 ## 環境設定
 
-### OAuth 2.0 認証
+### 初回セットアップ（推奨）
 
-OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順で設定してください:
+**`freee-mcp configure` コマンドで対話式セットアップ**を行うことを推奨します：
 
 1. **freee側でのアプリケーション登録**:
   - [freee アプリストア](https://app.secure.freee.co.jp/developers) にアクセス
   - 新しいアプリケーションを作成
   - 以下の設定を行う:
-    - **リダイレクトURI**: `http://127.0.0.1:54321/callback` （デフォルトポート、環境変数で変更可能）
+    - **リダイレクトURI**: `http://127.0.0.1:54321/callback` （デフォルトポート）
     - アプリケーションの **Client ID** と **Client Secret** を取得
     - **権限設定**: 必要な機能の 参照・更新 にチェックを入れる
 
-
-2. **環境変数の設定**:
+2. **対話式セットアップの実行**:
    ```bash
-   FREEE_CLIENT_ID=your_client_id          # 必須: freeeアプリの Client ID
-   FREEE_CLIENT_SECRET=your_client_secret  # 必須: freeeアプリの Client Secret
-   FREEE_DEFAULT_COMPANY_ID=your_company_id        # 必須: デフォルト事業所ID
-   FREEE_CALLBACK_PORT=54321               # オプション: OAuthコールバックポート、デフォルトは 54321
+   npx @him0/freee-mcp configure
    ```
 
-   **注意**: `FREEE_DEFAULT_COMPANY_ID` はデフォルト事業所として使用されます。実行時に `freee_set_company` ツールで他の事業所に切り替えることができます。
+   セットアップウィザードが以下を自動的に行います：
+   - OAuth認証情報（Client ID, Client Secret）の入力
+   - ブラウザでのOAuth認証
+   - 事業所一覧の取得とデフォルト事業所の選択
+   - 設定ファイル（`~/.config/freee-mcp/config.json`）への保存
+   - Claude desktop用の設定スニペット表示
 
-3. **認証方法**:
-   初回API使用時またはトークンの有効期限切れ時に、`freee_authenticate` ツールを使用して認証を行います。一度認証すると、同じトークンで複数の事業所にアクセスできます。
+3. **Claude desktop設定**:
+   configure コマンドが表示する設定をコピーして、Claude desktopの設定ファイルに追加してください。
+
+### 環境変数での設定（非推奨）
+
+⚠️ **環境変数での設定は非推奨です**。今後のバージョンで削除される予定です。
+
+環境変数を使用する場合：
+```bash
+FREEE_CLIENT_ID=your_client_id          # freeeアプリの Client ID
+FREEE_CLIENT_SECRET=your_client_secret  # freeeアプリの Client Secret
+FREEE_CALLBACK_PORT=54321               # OAuthコールバックポート（オプション）
+```
+
+環境変数を使用している場合、起動時に非推奨の警告が表示されます。`freee-mcp configure` で設定ファイルに移行してください。
 
 ### 認証の仕組み
 
@@ -91,7 +105,30 @@ npx freee-mcp
 
 ### MCPサーバーとしての登録
 
-Claude デスクトップアプリケーションで使用するには、以下の設定を `~/Library/Application Support/Claude/claude_desktop_config.json` に追加してください:
+`freee-mcp configure` を実行後、以下の設定を Claude desktop の設定ファイルに追加してください：
+
+**設定ファイルの場所:**
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+- Linux: `~/.config/Claude/claude_desktop_config.json`
+
+**設定内容:**
+```json
+{
+  "mcpServers": {
+    "freee": {
+      "command": "npx",
+      "args": ["@him0/freee-mcp"]
+    }
+  }
+}
+```
+
+認証情報は `~/.config/freee-mcp/config.json` から自動的に読み込まれるため、環境変数の設定は不要です。
+
+#### 環境変数を使用する場合（非推奨）
+
+⚠️ 環境変数での設定は非推奨です。
 
 ```json
 {
@@ -102,15 +139,12 @@ Claude デスクトップアプリケーションで使用するには、以下�
       "env": {
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
-        "FREEE_DEFAULT_COMPANY_ID": "your_company_id",
         "FREEE_CALLBACK_PORT": "54321"
       }
     }
   }
 }
 ```
-
-VSCode拡張機能で使用する場合は、同様の設定を `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` に追加してください。
 
 ## 開発者向け
 

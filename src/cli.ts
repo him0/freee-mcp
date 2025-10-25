@@ -14,8 +14,8 @@ import { buildAuthUrl, exchangeCodeForTokens } from './auth/oauth.js';
 import { config as defaultConfig } from './config.js';
 import {
   setCurrentCompany,
-  saveCompaniesConfig,
-  type CompaniesConfig,
+  saveFullConfig,
+  type FullConfig,
 } from './config/companies.js';
 
 interface ConfigValues {
@@ -198,15 +198,18 @@ async function configure(): Promise<void> {
         `\n✓ ${selectedCompany.display_name || selectedCompany.name} を選択しました。\n`
       );
 
-      // Save company configuration
-      const companiesConfig: CompaniesConfig = {
+      // Save full configuration (credentials + companies)
+      const fullConfig: FullConfig = {
+        clientId: clientId.trim(),
+        clientSecret: clientSecret.trim(),
+        callbackPort: parseInt(callbackPort.trim(), 10),
         defaultCompanyId: String(selectedCompany.id),
         currentCompanyId: String(selectedCompany.id),
         companies: {},
       };
 
       companies.forEach((company) => {
-        companiesConfig.companies[String(company.id)] = {
+        fullConfig.companies[String(company.id)] = {
           id: String(company.id),
           name: company.display_name || company.name,
           description: `Role: ${company.role}`,
@@ -216,8 +219,8 @@ async function configure(): Promise<void> {
         };
       });
 
-      await saveCompaniesConfig(companiesConfig);
-      console.log('✓ 事業所情報を保存しました。\n');
+      await saveFullConfig(fullConfig);
+      console.log('✓ 設定情報を保存しました。\n');
 
       configValues = {
         clientId: clientId.trim(),
@@ -258,19 +261,14 @@ async function configure(): Promise<void> {
         freee: {
           command: 'npx',
           args: ['@him0/freee-mcp'],
-          env: {
-            FREEE_CLIENT_ID: configValues.clientId,
-            FREEE_CLIENT_SECRET: configValues.clientSecret,
-            FREEE_DEFAULT_COMPANY_ID: configValues.companyId,
-            FREEE_CALLBACK_PORT: configValues.callbackPort,
-          },
         },
       },
     };
 
     console.log(JSON.stringify(mcpConfig, null, 2));
     console.log('\n✓ セットアップ完了！\n');
-    console.log('認証情報とトークンは保存されました。');
+    console.log('認証情報は ~/.config/freee-mcp/config.json に保存されました。');
+    console.log('トークンは ~/.config/freee-mcp/tokens.json に保存されました。');
     console.log(
       'Claude desktopを再起動すると、freee-mcpが利用可能になります。\n'
     );

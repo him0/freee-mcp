@@ -13,7 +13,7 @@ vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
 }));
 
 vi.mock('../config.js', () => ({
-  config: {
+  loadConfig: vi.fn(() => Promise.resolve({
     server: {
       name: 'freee',
       version: '1.0.0'
@@ -21,7 +21,7 @@ vi.mock('../config.js', () => ({
     oauth: {
       callbackPort: 54321
     }
-  }
+  }))
 }));
 
 vi.mock('../auth/server.js', () => ({
