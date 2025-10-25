@@ -72,6 +72,15 @@ export async function configure(): Promise<void> {
   let configValues: ConfigValues | null = null;
 
   try {
+    // Load existing config if available
+    const existingConfig = await import('./config/companies.js').then(m => m.loadFullConfig());
+    const hasExistingCredentials = !!(existingConfig.clientId && existingConfig.clientSecret);
+
+    if (hasExistingCredentials) {
+      console.log('✓ 既存の設定が見つかりました。');
+      console.log('  変更しない項目はそのまま Enter を押してください。\n');
+    }
+
     // Step 1: Collect OAuth credentials
     console.log('ステップ 1/3: OAuth認証情報の入力\n');
 
@@ -80,34 +89,51 @@ export async function configure(): Promise<void> {
         type: 'text',
         name: 'clientId',
         message: 'FREEE_CLIENT_ID:',
+        initial: existingConfig.clientId || undefined,
         validate: (value: string): string | boolean => value.trim() ? true : 'CLIENT_ID は必須です'
       },
       {
         type: 'password',
         name: 'clientSecret',
-        message: 'FREEE_CLIENT_SECRET:',
-        validate: (value: string): string | boolean => value.trim() ? true : 'CLIENT_SECRET は必須です'
+        message: hasExistingCredentials
+          ? 'FREEE_CLIENT_SECRET (変更しない場合は空欄):'
+          : 'FREEE_CLIENT_SECRET:',
+        validate: (value: string): string | boolean => {
+          // 既存値がある場合は空欄を許可
+          if (hasExistingCredentials && !value.trim()) {
+            return true;
+          }
+          return value.trim() ? true : 'CLIENT_SECRET は必須です';
+        }
       },
       {
         type: 'text',
         name: 'callbackPort',
         message: 'FREEE_CALLBACK_PORT:',
-        initial: '54321'
+        initial: String(existingConfig.callbackPort || 54321)
       }
     ]);
 
     // Check if user cancelled (Ctrl+C)
-    if (!credentials.clientId || !credentials.clientSecret) {
+    if (!credentials.clientId) {
       console.error('\n❌ セットアップがキャンセルされました。');
       process.exit(1);
     }
 
-    const { clientId, clientSecret, callbackPort } = credentials;
+    // Use existing secret if not provided
+    const clientId = credentials.clientId.trim();
+    const clientSecret = credentials.clientSecret.trim() || existingConfig.clientSecret;
+    const callbackPort = credentials.callbackPort.trim();
+
+    if (!clientSecret) {
+      console.error('\n❌ エラー: CLIENT_SECRET は必須です。');
+      process.exit(1);
+    }
 
     // Set temporary environment variables for this process
-    process.env.FREEE_CLIENT_ID = clientId.trim();
-    process.env.FREEE_CLIENT_SECRET = clientSecret.trim();
-    process.env.FREEE_CALLBACK_PORT = callbackPort.trim();
+    process.env.FREEE_CLIENT_ID = clientId;
+    process.env.FREEE_CLIENT_SECRET = clientSecret;
+    process.env.FREEE_CALLBACK_PORT = callbackPort;
 
     console.log('\n✓ 認証情報を受け取りました。\n');
 
@@ -215,9 +241,9 @@ export async function configure(): Promise<void> {
 
       // Save full configuration (credentials + companies)
       const fullConfig: FullConfig = {
-        clientId: clientId.trim(),
-        clientSecret: clientSecret.trim(),
-        callbackPort: parseInt(callbackPort.trim(), 10),
+        clientId: clientId,
+        clientSecret: clientSecret,
+        callbackPort: parseInt(callbackPort, 10),
         defaultCompanyId: String(selectedCompany.id),
         currentCompanyId: String(selectedCompany.id),
         companies: {},
@@ -238,10 +264,10 @@ export async function configure(): Promise<void> {
       console.log('✓ 設定情報を保存しました。\n');
 
       configValues = {
-        clientId: clientId.trim(),
-        clientSecret: clientSecret.trim(),
+        clientId: clientId,
+        clientSecret: clientSecret,
         companyId: String(selectedCompany.id),
-        callbackPort: callbackPort.trim(),
+        callbackPort: callbackPort,
       };
     } catch (error) {
       authError = error as Error;
