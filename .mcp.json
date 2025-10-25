@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "freee": {
+      "command": "npx",
+      "args": ["pnpm", "start", "client"],
+      "env": {
+        "FREEE_CLIENT_ID": "your_client_id",
+        "FREEE_CLIENT_SECRET": "your_client_secret",
+        "FREEE_COMPANY_ID": "your_company_id",
+        "FREEE_CALLBACK_PORT": "54321"
+      }
+    }
+  }
+}
