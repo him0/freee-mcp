@@ -25,7 +25,7 @@ MCP server that exposes freee API endpoints as MCP tools:
 
 - `FREEE_CLIENT_ID` (required) - OAuth client ID
 - `FREEE_CLIENT_SECRET` (required) - OAuth client secret
-- `FREEE_COMPANY_ID` (required) - Company ID
+- `FREEE_DEFAULT_COMPANY_ID` (required) - Company ID
 - `FREEE_CALLBACK_PORT` (optional) - OAuth callback port, defaults to 54321
 
 ### MCP Configuration
@@ -41,7 +41,7 @@ Add to Claude Code config:
       "env": {
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
-        "FREEE_COMPANY_ID": "your_company_id",
+        "FREEE_DEFAULT_COMPANY_ID": "your_company_id",
         "FREEE_CALLBACK_PORT": "54321"
       }
     }

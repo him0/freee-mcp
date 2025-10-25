@@ -462,7 +462,7 @@ freee_current_user
 ## ⚠️ 重要なポイント
 
 1. **ユーザー認証**: 初回に一度認証が必要（全事業所で共通）
-2. **環境変数**: FREEE_CLIENT_ID, FREEE_CLIENT_SECRET, FREEE_COMPANY_ID（デフォルト用）
+2. **環境変数**: FREEE_CLIENT_ID, FREEE_CLIENT_SECRET, FREEE_DEFAULT_COMPANY_ID（デフォルト用）
 3. **ファイル保存場所**: ~/.config/freee-mcp/
 
 ## 🆘 困ったときは
@@ -519,7 +519,7 @@ ${setupStatus}
 以下の環境変数が設定されている必要があります：
 - \`FREEE_CLIENT_ID\`: freee開発者アプリのクライアントID
 - \`FREEE_CLIENT_SECRET\`: freee開発者アプリのクライアントシークレット
-- \`FREEE_COMPANY_ID\`: デフォルト事業所ID
+- \`FREEE_DEFAULT_COMPANY_ID\`: デフォルト事業所ID
 
 ### 2. 事業所の設定
 \`\`\`
