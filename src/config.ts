@@ -1,5 +1,8 @@
 const CALLBACK_PORT = parseInt(process.env.FREEE_CALLBACK_PORT || '54321', 10);
 
+// Mode can be set programmatically via setMode()
+let clientMode = false;
+
 export const config = {
   freee: {
     clientId: process.env.FREEE_CLIENT_ID || '',
@@ -21,8 +24,16 @@ export const config = {
   auth: {
     timeoutMs: 5 * 60 * 1000, // 5分
   },
-  mode: {
-    // Client mode: true = single generic API client tool, false = individual tools per endpoint
-    useClientMode: process.env.FREEE_CLIENT_MODE === 'true',
+  get mode() {
+    return {
+      useClientMode: clientMode,
+    };
   },
 } as const;
+
+/**
+ * Sets the API mode (client or individual tools)
+ */
+export function setMode(useClient: boolean): void {
+  clientMode = useClient;
+}

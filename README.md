@@ -55,7 +55,6 @@ OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順
    FREEE_CLIENT_SECRET=your_client_secret  # 必須: freeeアプリの Client Secret
    FREEE_COMPANY_ID=your_company_id        # 必須: デフォルト事業所ID
    FREEE_CALLBACK_PORT=54321               # オプション: OAuthコールバックポート、デフォルトは 54321
-   FREEE_CLIENT_MODE=true                  # オプション: APIクライアントモード（true=単一ツール、false=個別ツール）
    ```
 
    **注意**: `FREEE_COMPANY_ID` はデフォルト事業所として使用されます。実行時に `freee_set_company` ツールで他の事業所に切り替えることができます。
@@ -73,9 +72,17 @@ OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順
 
 ## 使用方法
 
-### 単体実行
+### 起動モードの選択
+
+freee-mcp は2つのモードで起動できます：
 
 ```bash
+# クライアントモード（推奨）：HTTPメソッド別の6ツール
+npx @him0/freee-mcp client
+
+# APIモード（デフォルト）：エンドポイントごとの個別ツール
+npx @him0/freee-mcp api
+# または
 npx @him0/freee-mcp
 ```
 
@@ -84,28 +91,48 @@ npx @him0/freee-mcp
 ```bash
 # グローバルインストール
 npm install -g @him0/freee-mcp
-freee-mcp
 
-# または
-npx freee-mcp
+# クライアントモードで起動
+freee-mcp client
+
+# APIモードで起動
+freee-mcp api
 ```
 
 ### MCPサーバーとしての登録
 
 Claude デスクトップアプリケーションで使用するには、以下の設定を `~/Library/Application Support/Claude/claude_desktop_config.json` に追加してください:
 
+**クライアントモード（推奨）**:
 ```json
 {
   "mcpServers": {
     "freee": {
       "command": "npx",
-      "args": ["@him0/freee-mcp"],
+      "args": ["@him0/freee-mcp", "client"],
       "env": {
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
         "FREEE_COMPANY_ID": "your_company_id",
-        "FREEE_CALLBACK_PORT": "54321",
-        "FREEE_CLIENT_MODE": "true"
+        "FREEE_CALLBACK_PORT": "54321"
+      }
+    }
+  }
+}
+```
+
+**APIモード（個別ツール）**:
+```json
+{
+  "mcpServers": {
+    "freee": {
+      "command": "npx",
+      "args": ["@him0/freee-mcp", "api"],
+      "env": {
+        "FREEE_CLIENT_ID": "your_client_id",
+        "FREEE_CLIENT_SECRET": "your_client_secret",
+        "FREEE_COMPANY_ID": "your_company_id",
+        "FREEE_CALLBACK_PORT": "54321"
       }
     }
   }
@@ -148,7 +175,7 @@ pnpm lint
 
 #### APIクライアントモード（推奨）
 
-`FREEE_CLIENT_MODE=true` を設定すると、HTTPメソッドごとのサブコマンドツールでAPIにアクセスできます。この方式はコンテキストウィンドウを節約し、大規模言語モデルとの親和性が高いです。
+`freee-mcp client` で起動すると、HTTPメソッドごとのサブコマンドツールでAPIにアクセスできます。この方式はコンテキストウィンドウを節約し、大規模言語モデルとの親和性が高いです。
 
 APIクライアントモードでは、以下の6つのツールが利用可能です：
 
@@ -198,7 +225,7 @@ freee_api_post {
 
 #### 個別ツールモード
 
-`FREEE_CLIENT_MODE=false`（またはデフォルト）では、freee APIのすべてのエンドポイントが個別のMCPツールとして公開されます。各ツールは以下の命名規則に従います:
+`freee-mcp api`（またはデフォルト）で起動すると、freee APIのすべてのエンドポイントが個別のMCPツールとして公開されます。各ツールは以下の命名規則に従います:
 
 - GET: `get_[resource_name]`
 - POST: `post_[resource_name]`
