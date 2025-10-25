@@ -29,7 +29,13 @@ await build({
 
 const binFile = './bin/cli.js';
 await build({
-  ...shared,
+  bundle: true,
+  entryPoints: ['src/cli.ts'],
+  external: Object.keys(dependencies),
+  logLevel: 'info' as 'info',
+  minify: true,
+  sourcemap: false,
+  platform: 'node' as 'node',
   format: 'esm',
   outfile: binFile,
   target: ['ES2022'],
