@@ -50,7 +50,7 @@ This is a Model Context Protocol (MCP) server that exposes freee API endpoints a
 - `FREEE_CLIENT_ID` (required) - freee OAuth client ID
 - `FREEE_CLIENT_SECRET` (required) - freee OAuth client secret
 - `FREEE_COMPANY_ID` (required) - freee company ID
-- `FREEE_CALLBACK_PORT` (optional) - OAuth callback port, defaults to 8080
+- `FREEE_CALLBACK_PORT` (optional) - OAuth callback port, defaults to 54321
 
 ### Claude Code MCP Configuration
 
@@ -67,7 +67,7 @@ To use this MCP server with Claude Code, add the following configuration:
         "FREEE_CLIENT_ID": "your_client_id_here",
         "FREEE_CLIENT_SECRET": "your_client_secret_here",
         "FREEE_COMPANY_ID": "your_company_id_here",
-        "FREEE_CALLBACK_PORT": "8080"
+        "FREEE_CALLBACK_PORT": "54321"
       }
     }
   }
@@ -86,7 +86,7 @@ To use this MCP server with Claude Code, add the following configuration:
         "FREEE_CLIENT_ID": "your_client_id_here",
         "FREEE_CLIENT_SECRET": "your_client_secret_here",
         "FREEE_COMPANY_ID": "your_company_id_here",
-        "FREEE_CALLBACK_PORT": "8080"
+        "FREEE_CALLBACK_PORT": "54321"
       }
     }
   }

@@ -44,7 +44,7 @@ OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順
   - [freee アプリストア](https://app.secure.freee.co.jp/developers) にアクセス
   - 新しいアプリケーションを作成
   - 以下の設定を行う:
-    - **リダイレクトURI**: `http://127.0.0.1:8080/callback` （デフォルトポート、環境変数で変更可能）
+    - **リダイレクトURI**: `http://127.0.0.1:54321/callback` （デフォルトポート、環境変数で変更可能）
     - アプリケーションの **Client ID** と **Client Secret** を取得
     - **権限設定**: 必要な機能の 参照・更新 にチェックを入れる
 
@@ -54,7 +54,7 @@ OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順
    FREEE_CLIENT_ID=your_client_id          # 必須: freeeアプリの Client ID
    FREEE_CLIENT_SECRET=your_client_secret  # 必須: freeeアプリの Client Secret
    FREEE_COMPANY_ID=your_company_id        # 必須: デフォルト事業所ID
-   FREEE_CALLBACK_PORT=8080                # オプション: OAuthコールバックポート、デフォルトは 8080
+   FREEE_CALLBACK_PORT=54321               # オプション: OAuthコールバックポート、デフォルトは 54321
    ```
 
    **注意**: `FREEE_COMPANY_ID` はデフォルト事業所として使用されます。実行時に `freee_set_company` ツールで他の事業所に切り替えることができます。
@@ -64,7 +64,7 @@ OAuth 2.0 + PKCE フローを使用した認証が必要です。以下の手順
 
 ### 認証の仕組み
 
-1. **永続コールバックサーバー**: MCPサーバー起動時に指定ポート（デフォルト8080）でOAuthコールバック受付サーバーが起動します
+1. **永続コールバックサーバー**: MCPサーバー起動時に指定ポート（デフォルト54321）でOAuthコールバック受付サーバーが起動します
 2. **認証フロー**: `freee_authenticate` ツール実行時にブラウザで認証ページが開き、認証後にコールバックを受信します
 3. **トークン保存**: 認証後、トークンは `~/.config/freee-mcp/tokens.json` にユーザーベースで安全に保存されます（ファイル権限600）
 4. **自動更新**: アクセストークンの有効期限が切れた場合、リフレッシュトークンを使用して自動的に更新されます
@@ -103,7 +103,7 @@ Claude デスクトップアプリケーションで使用するには、以下�
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
         "FREEE_COMPANY_ID": "your_company_id",
-        "FREEE_CALLBACK_PORT": "8080"
+        "FREEE_CALLBACK_PORT": "54321"
       }
     }
   }

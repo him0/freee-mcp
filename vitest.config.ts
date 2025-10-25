@@ -17,7 +17,7 @@ export default defineConfig({
       FREEE_CLIENT_ID: 'test-client-id',
       FREEE_CLIENT_SECRET: 'test-client-secret',
       FREEE_COMPANY_ID: '12345',
-      FREEE_CALLBACK_PORT: '8080'
+      FREEE_CALLBACK_PORT: '54321'
     },
     // テスト実行時のセットアップ
     setupFiles: ['src/test-utils/setup.ts'],
