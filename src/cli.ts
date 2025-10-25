@@ -64,7 +64,7 @@ async function fetchCompanies(accessToken: string): Promise<Company[]> {
   return data.companies || [];
 }
 
-async function configure(): Promise<void> {
+export async function configure(): Promise<void> {
   const rl = createInterface({ input, output });
 
   console.log('\n=== freee-mcp Configuration Setup ===\n');
