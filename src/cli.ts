@@ -1,6 +1,4 @@
-import { createInterface } from 'node:readline/promises';
-import { stdin as input, stdout as output } from 'node:process';
-import { createAndStartServer } from './mcp/handlers.js';
+import prompts from 'prompts';
 import * as os from 'node:os';
 import crypto from 'node:crypto';
 import open from 'open';
@@ -64,24 +62,7 @@ async function fetchCompanies(accessToken: string): Promise<Company[]> {
   return data.companies || [];
 }
 
-/**
- * Read password input and hide it after entry
- * The input will be visible during typing but cleared immediately after Enter
- */
-async function readSecret(rl: ReturnType<typeof createInterface>, prompt: string): Promise<string> {
-  const secret = await rl.question(prompt);
-
-  // Move cursor up one line and clear it
-  process.stdout.write('\x1b[1A'); // Move up one line
-  process.stdout.write('\x1b[2K'); // Clear entire line
-  process.stdout.write(`${prompt}${'*'.repeat(secret.length)}\n`); // Show masked version
-
-  return secret;
-}
-
 export async function configure(): Promise<void> {
-  const rl = createInterface({ input, output });
-
   console.log('\n=== freee-mcp Configuration Setup ===\n');
   console.log(
     'このウィザードでは、freee-mcpの設定と認証を対話式で行います。'
@@ -93,15 +74,35 @@ export async function configure(): Promise<void> {
   try {
     // Step 1: Collect OAuth credentials
     console.log('ステップ 1/3: OAuth認証情報の入力\n');
-    const clientId = await rl.question('FREEE_CLIENT_ID: ');
-    const clientSecret = await readSecret(rl, 'FREEE_CLIENT_SECRET: ');
-    const callbackPort =
-      (await rl.question('FREEE_CALLBACK_PORT (default: 54321): ')) || '54321';
 
-    if (!clientId.trim() || !clientSecret.trim()) {
-      console.error('\n❌ エラー: CLIENT_IDとCLIENT_SECRETは必須です。');
+    const credentials = await prompts([
+      {
+        type: 'text',
+        name: 'clientId',
+        message: 'FREEE_CLIENT_ID:',
+        validate: (value: string): string | boolean => value.trim() ? true : 'CLIENT_ID は必須です'
+      },
+      {
+        type: 'password',
+        name: 'clientSecret',
+        message: 'FREEE_CLIENT_SECRET:',
+        validate: (value: string): string | boolean => value.trim() ? true : 'CLIENT_SECRET は必須です'
+      },
+      {
+        type: 'text',
+        name: 'callbackPort',
+        message: 'FREEE_CALLBACK_PORT:',
+        initial: '54321'
+      }
+    ]);
+
+    // Check if user cancelled (Ctrl+C)
+    if (!credentials.clientId || !credentials.clientSecret) {
+      console.error('\n❌ セットアップがキャンセルされました。');
       process.exit(1);
     }
+
+    const { clientId, clientSecret, callbackPort } = credentials;
 
     // Set temporary environment variables for this process
     process.env.FREEE_CLIENT_ID = clientId.trim();
@@ -191,26 +192,22 @@ export async function configure(): Promise<void> {
         process.exit(1);
       }
 
-      console.log('\n利用可能な事業所:\n');
-      companies.forEach((company, index) => {
-        console.log(
-          `  ${index + 1}. ${company.display_name || company.name} (ID: ${company.id}) - ${company.role}`
-        );
+      const companySelection = await prompts({
+        type: 'select',
+        name: 'companyId',
+        message: 'デフォルトの事業所を選択してください:',
+        choices: companies.map((company) => ({
+          title: `${company.display_name || company.name} (ID: ${company.id}) - ${company.role}`,
+          value: company.id
+        }))
       });
 
-      let selectedCompany: Company | null = null;
-      while (!selectedCompany) {
-        const selection = await rl.question(
-          `\nデフォルトの事業所を選択してください (1-${companies.length}): `
-        );
-        const index = parseInt(selection.trim(), 10) - 1;
-
-        if (index >= 0 && index < companies.length) {
-          selectedCompany = companies[index];
-        } else {
-          console.log('❌ 無効な選択です。もう一度入力してください。');
-        }
+      if (!companySelection.companyId) {
+        console.error('\n❌ セットアップがキャンセルされました。');
+        process.exit(1);
       }
+
+      const selectedCompany = companies.find(c => c.id === companySelection.companyId)!;
 
       console.log(
         `\n✓ ${selectedCompany.display_name || selectedCompany.name} を選択しました。\n`
@@ -294,52 +291,7 @@ export async function configure(): Promise<void> {
     console.error('\n設定中にエラーが発生しました:', error);
     process.exit(1);
   } finally {
-    rl.close();
     stopCallbackServer();
   }
 }
 
-function showHelp(): void {
-  console.log(`
-Usage: freee-mcp [command]
-
-Commands:
-  configure    Interactive configuration setup for freee-mcp
-  help         Show this help message
-  (no command) Start the MCP server
-
-Examples:
-  freee-mcp              # Start MCP server
-  freee-mcp configure    # Run configuration wizard
-  freee-mcp help         # Show help
-`);
-}
-
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  const command = args[0];
-
-  switch (command) {
-    case 'configure':
-      await configure();
-      break;
-    case 'help':
-    case '--help':
-    case '-h':
-      showHelp();
-      break;
-    case undefined:
-      // No command provided, start MCP server
-      await createAndStartServer();
-      break;
-    default:
-      console.error(`Unknown command: ${command}`);
-      showHelp();
-      process.exit(1);
-  }
-}
-
-main().catch((error) => {
-  console.error('Fatal error:', error);
-  process.exit(1);
-});
