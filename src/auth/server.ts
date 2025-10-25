@@ -130,6 +130,16 @@ export function stopCallbackServer(): void {
   }
 }
 
+interface CliAuthHandler {
+  resolve: (code: string) => void;
+  reject: (error: Error) => void;
+  codeVerifier: string;
+}
+
+declare global {
+  var __cliAuthHandlers: Record<string, CliAuthHandler> | undefined;
+}
+
 function handleCallback(url: URL, res: http.ServerResponse): void {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
@@ -145,13 +155,18 @@ function handleCallback(url: URL, res: http.ServerResponse): void {
   });
   console.error(`🔍 Pending authentications count: ${pendingAuthentications.size}`);
 
+  // Check for CLI authentication handlers
+  const cliHandlers = state ? global.__cliAuthHandlers?.[state] : undefined;
+
   if (error) {
     const errorMsg = errorDescription || error;
     console.error(`❌ OAuth error: ${error} - ${errorDescription}`);
     res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(`<h1>認証エラー</h1><p>認証に失敗しました: ${errorMsg}</p>`);
-    
-    if (state && pendingAuthentications.has(state)) {
+
+    if (cliHandlers) {
+      cliHandlers.reject(new Error(`OAuth error: ${error} - ${errorDescription}`));
+    } else if (state && pendingAuthentications.has(state)) {
       const auth = pendingAuthentications.get(state)!;
       clearTimeout(auth.timeout);
       auth.reject(new Error(`OAuth error: ${error} - ${errorDescription}`));
@@ -164,6 +179,17 @@ function handleCallback(url: URL, res: http.ServerResponse): void {
     console.error(`❌ Missing code or state`);
     res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end('<h1>認証エラー</h1><p>認証コードまたは状態パラメータが不足しています。</p>');
+    return;
+  }
+
+  // Handle CLI authentication
+  if (cliHandlers) {
+    console.error(`✅ Valid CLI callback received`);
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてターミナルに戻ってください。</p>');
+
+    // Resolve with the code for CLI to handle token exchange
+    cliHandlers.resolve(code);
     return;
   }
 
