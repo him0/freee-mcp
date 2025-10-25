@@ -86,9 +86,17 @@ FREEE_CALLBACK_PORT=54321               # OAuthコールバックポート（オ
 
 ## 使用方法
 
-### 単体実行
+### 起動モードの選択
+
+freee-mcp は2つのモードで起動できます：
 
 ```bash
+# クライアントモード（推奨）：HTTPメソッド別の6ツール
+npx @him0/freee-mcp client
+
+# APIモード（デフォルト）：エンドポイントごとの個別ツール
+npx @him0/freee-mcp api
+# または
 npx @him0/freee-mcp
 ```
 
@@ -97,10 +105,12 @@ npx @him0/freee-mcp
 ```bash
 # グローバルインストール
 npm install -g @him0/freee-mcp
-freee-mcp
 
-# または
-npx freee-mcp
+# クライアントモードで起動
+freee-mcp client
+
+# APIモードで起動
+freee-mcp api
 ```
 
 ### MCPサーバーとしての登録
@@ -130,12 +140,31 @@ npx freee-mcp
 
 ⚠️ 環境変数での設定は非推奨です。
 
+**クライアントモード（推奨）**:
 ```json
 {
   "mcpServers": {
     "freee": {
       "command": "npx",
-      "args": ["@him0/freee-mcp"],
+      "args": ["@him0/freee-mcp", "client"],
+      "env": {
+        "FREEE_CLIENT_ID": "your_client_id",
+        "FREEE_CLIENT_SECRET": "your_client_secret",
+        "FREEE_COMPANY_ID": "your_company_id",
+        "FREEE_CALLBACK_PORT": "54321"
+      }
+    }
+  }
+}
+```
+
+**APIモード（個別ツール）**:
+```json
+{
+  "mcpServers": {
+    "freee": {
+      "command": "npx",
+      "args": ["@him0/freee-mcp", "api"],
       "env": {
         "FREEE_CLIENT_ID": "your_client_id",
         "FREEE_CLIENT_SECRET": "your_client_secret",
@@ -178,12 +207,76 @@ pnpm lint
 
 ### freee APIツール
 
-freee APIのすべてのエンドポイントがMCPツールとして自動的に公開されます。各ツールは以下の命名規則に従います:
+#### APIクライアントモード（推奨）
+
+`freee-mcp client` で起動すると、HTTPメソッドごとのサブコマンドツールでAPIにアクセスできます。この方式はコンテキストウィンドウを節約し、大規模言語モデルとの親和性が高いです。
+
+APIクライアントモードでは、以下の6つのツールが利用可能です：
+
+- **`freee_api_get`**: GETリクエスト（データ取得）
+  - パラメータ:
+    - `path`: APIパス（例: `/api/1/deals`, `/api/1/deals/123`）
+    - `query`: クエリパラメータ（オプション）
+
+- **`freee_api_post`**: POSTリクエスト（新規作成）
+  - パラメータ:
+    - `path`: APIパス（例: `/api/1/deals`）
+    - `body`: リクエストボディ
+    - `query`: クエリパラメータ（オプション）
+
+- **`freee_api_put`**: PUTリクエスト（更新）
+  - パラメータ:
+    - `path`: APIパス（例: `/api/1/deals/123`）
+    - `body`: リクエストボディ
+    - `query`: クエリパラメータ（オプション）
+
+- **`freee_api_delete`**: DELETEリクエスト（削除）
+  - パラメータ:
+    - `path`: APIパス（例: `/api/1/deals/123`）
+    - `query`: クエリパラメータ（オプション）
+
+- **`freee_api_patch`**: PATCHリクエスト（部分更新）
+  - パラメータ:
+    - `path`: APIパス（例: `/api/1/deals/123`）
+    - `body`: リクエストボディ
+    - `query`: クエリパラメータ（オプション）
+
+- **`freee_api_list_paths`**: 利用可能なすべてのAPIエンドポイント一覧
+
+すべてのツールでパスはOpenAPIスキーマに対して自動検証されます。
+
+使用例:
+```json
+// GETリクエスト
+freee_api_get { "path": "/api/1/deals", "query": { "limit": 10 } }
+
+// POSTリクエスト
+freee_api_post {
+  "path": "/api/1/deals",
+  "body": { "issue_date": "2024-01-01", "type": "income", ... }
+}
+```
+
+#### 個別ツールモード
+
+`freee-mcp api`（またはデフォルト）で起動すると、freee APIのすべてのエンドポイントが個別のMCPツールとして公開されます。各ツールは以下の命名規則に従います:
 
 - GET: `get_[resource_name]`
 - POST: `post_[resource_name]`
 - PUT: `put_[resource_name]_by_id`
 - DELETE: `delete_[resource_name]_by_id`
+
+**注意**: 個別ツールモードでは多数のツールが生成されるため、LLMのコンテキストウィンドウを圧迫する可能性があります。大規模なAPIを扱う場合はクライアントモードの使用を推奨します。
+
+#### モード比較
+
+| 項目 | クライアントモード | 個別ツールモード |
+|------|-------------------|-----------------|
+| ツール数 | 6個（GET/POST/PUT/DELETE/PATCH + list_paths） | 数百個（各エンドポイントごと） |
+| コンテキスト使用量 | 低 | 高 |
+| 柔軟性 | 高（任意のパスを指定可能） | 中（定義済みエンドポイントのみ） |
+| パス検証 | あり（OpenAPIスキーマ） | あり（型定義） |
+| 推奨用途 | 大規模API、探索的利用 | 特定エンドポイントの頻繁な利用 |
 
 ## 使い方
 

@@ -1,5 +1,8 @@
 import { loadFullConfig } from './config/companies.js';
 
+// Mode can be set programmatically via setMode()
+let clientMode = false;
+
 export interface Config {
   freee: {
     clientId: string;
@@ -20,6 +23,9 @@ export interface Config {
   };
   auth: {
     timeoutMs: number;
+  };
+  mode: {
+    useClientMode: boolean;
   };
 }
 
@@ -102,6 +108,9 @@ export async function loadConfig(): Promise<Config> {
     auth: {
       timeoutMs: 5 * 60 * 1000, // 5分
     },
+    mode: {
+      useClientMode: clientMode,
+    },
   };
 
   return cachedConfig;
@@ -130,3 +139,10 @@ export const config = new Proxy({} as Config, {
     return cachedConfig[prop as keyof Config];
   },
 });
+
+/**
+ * Sets the API mode (client or individual tools)
+ */
+export function setMode(useClient: boolean): void {
+  clientMode = useClient;
+}
