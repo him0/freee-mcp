@@ -19,7 +19,7 @@ vi.mock('../config.js', () => ({
       version: '1.0.0'
     },
     oauth: {
-      callbackPort: 8080
+      callbackPort: 54321
     }
   }
 }));

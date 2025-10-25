@@ -12,8 +12,8 @@ vi.mock('../config.js', () => ({
       companyId: '12345'
     },
     oauth: {
-      redirectUri: 'http://127.0.0.1:8080/callback',
-      callbackPort: 8080
+      redirectUri: 'http://127.0.0.1:54321/callback',
+      callbackPort: 54321
     }
   }
 }));
@@ -126,7 +126,7 @@ describe('tools', () => {
           codeChallenge: 'test-challenge'
         });
         vi.mocked(mockBuildAuthUrl.buildAuthUrl).mockReturnValue('https://auth.url');
-        vi.mocked(mockRegisterAuthenticationRequest.getActualRedirectUri).mockReturnValue('http://127.0.0.1:8080/callback');
+        vi.mocked(mockRegisterAuthenticationRequest.getActualRedirectUri).mockReturnValue('http://127.0.0.1:54321/callback');
         mockCrypto.randomBytes = vi.fn().mockReturnValue({
           toString: vi.fn().mockReturnValue('test-state-hex')
         });
@@ -141,7 +141,7 @@ describe('tools', () => {
         expect(mockBuildAuthUrl.buildAuthUrl).toHaveBeenCalledWith(
           'test-challenge',
           'test-state-hex',
-          'http://127.0.0.1:8080/callback'
+          'http://127.0.0.1:54321/callback'
         );
         expect(mockRegisterAuthenticationRequest.registerAuthenticationRequest).toHaveBeenCalledWith(
           'test-state-hex',

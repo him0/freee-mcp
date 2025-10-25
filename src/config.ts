@@ -1,4 +1,4 @@
-const CALLBACK_PORT = parseInt(process.env.FREEE_CALLBACK_PORT || '8080', 10);
+const CALLBACK_PORT = parseInt(process.env.FREEE_CALLBACK_PORT || '54321', 10);
 
 export const config = {
   freee: {

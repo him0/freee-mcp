@@ -565,7 +565,7 @@ freee_set_company [事業所ID]  # 切り替え
 
 ### 認証エラーの場合
 1. 環境変数（CLIENT_ID, CLIENT_SECRET）を確認
-2. freee開発者画面でリダイレクトURI設定を確認: \`http://127.0.0.1:8080/callback\`
+2. freee開発者画面でリダイレクトURI設定を確認: \`http://127.0.0.1:54321/callback\`
 3. \`freee_clear_auth\` で認証情報をクリアして再認証
 
 ### 事業所IDが分からない場合

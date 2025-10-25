@@ -12,7 +12,7 @@ vi.mock('../config.js', () => ({
     oauth: {
       authorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
       tokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
-      redirectUri: 'http://127.0.0.1:8080/callback',
+      redirectUri: 'http://127.0.0.1:54321/callback',
       scope: 'read write'
     }
   }
@@ -66,14 +66,14 @@ describe('oauth', () => {
     it('should build correct authorization URL', () => {
       const codeChallenge = 'test-challenge';
       const state = 'test-state';
-      const redirectUri = 'http://127.0.0.1:8080/callback';
+      const redirectUri = 'http://127.0.0.1:54321/callback';
 
       const result = buildAuthUrl(codeChallenge, state, redirectUri);
 
       expect(result).toContain('https://accounts.secure.freee.co.jp/public_api/authorize');
       expect(result).toContain('response_type=code');
       expect(result).toContain('client_id=test-client-id');
-      expect(result).toContain('redirect_uri=http%3A%2F%2F127.0.0.1%3A8080%2Fcallback');
+      expect(result).toContain('redirect_uri=http%3A%2F%2F127.0.0.1%3A54321%2Fcallback');
       expect(result).toContain('scope=read+write');
       expect(result).toContain('state=test-state');
       expect(result).toContain('code_challenge=test-challenge');
@@ -96,7 +96,7 @@ describe('oauth', () => {
         json: () => Promise.resolve(mockTokenResponse)
       });
 
-      const result = await exchangeCodeForTokens('test-code', 'test-verifier', 'http://127.0.0.1:8080/callback');
+      const result = await exchangeCodeForTokens('test-code', 'test-verifier', 'http://127.0.0.1:54321/callback');
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://accounts.secure.freee.co.jp/public_api/token',
@@ -110,7 +110,7 @@ describe('oauth', () => {
             client_id: 'test-client-id',
             client_secret: 'test-client-secret',
             code: 'test-code',
-            redirect_uri: 'http://127.0.0.1:8080/callback',
+            redirect_uri: 'http://127.0.0.1:54321/callback',
             code_verifier: 'test-verifier',
           }),
         }
@@ -132,7 +132,7 @@ describe('oauth', () => {
         json: () => Promise.resolve({ error: 'invalid_grant' })
       });
 
-      await expect(exchangeCodeForTokens('invalid-code', 'test-verifier', 'http://127.0.0.1:8080/callback'))
+      await expect(exchangeCodeForTokens('invalid-code', 'test-verifier', 'http://127.0.0.1:54321/callback'))
         .rejects.toThrow('Token exchange failed: 400');
     });
 
@@ -148,7 +148,7 @@ describe('oauth', () => {
         json: () => Promise.resolve(mockTokenResponse)
       });
 
-      const result = await exchangeCodeForTokens('test-code', 'test-verifier', 'http://127.0.0.1:8080/callback');
+      const result = await exchangeCodeForTokens('test-code', 'test-verifier', 'http://127.0.0.1:54321/callback');
 
       expect(result.token_type).toBe('Bearer');
       expect(result.scope).toBe('read write');
