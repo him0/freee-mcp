@@ -17,6 +17,7 @@ export const config = {
   server: {
     name: 'freee',
     version: '1.0.0',
+    clientMode: process.env.FREEE_CLIENT_MODE === 'true',
   },
   auth: {
     timeoutMs: 5 * 60 * 1000, // 5分

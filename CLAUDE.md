@@ -27,6 +27,20 @@ MCP server that exposes freee API endpoints as MCP tools:
 - `FREEE_CLIENT_SECRET` (required) - OAuth client secret
 - `FREEE_COMPANY_ID` (required) - Company ID
 - `FREEE_CALLBACK_PORT` (optional) - OAuth callback port, defaults to 54321
+- `FREEE_CLIENT_MODE` (optional) - Enable client mode, defaults to false
+
+### Tool Modes
+
+**Individual Tools Mode (default)**:
+- Generates individual MCP tools for each API endpoint (70+ tools)
+- Each tool has specific parameters for that endpoint
+- Higher context window usage
+
+**Client Mode** (`FREEE_CLIENT_MODE=true`):
+- Single `freee_api_client` tool for all API requests
+- Validate paths against OpenAPI schema
+- Reduced context window usage
+- Helper tools: `freee_list_api_paths`, `freee_api_path_info`
 
 ### MCP Configuration
 
@@ -43,6 +57,25 @@ Add to Claude Code config:
         "FREEE_CLIENT_SECRET": "your_client_secret",
         "FREEE_COMPANY_ID": "your_company_id",
         "FREEE_CALLBACK_PORT": "54321"
+      }
+    }
+  }
+}
+```
+
+**Client Mode Configuration:**
+
+```json
+{
+  "mcpServers": {
+    "freee": {
+      "command": "npx",
+      "args": ["@him0/freee-mcp"],
+      "env": {
+        "FREEE_CLIENT_ID": "your_client_id",
+        "FREEE_CLIENT_SECRET": "your_client_secret",
+        "FREEE_COMPANY_ID": "your_company_id",
+        "FREEE_CLIENT_MODE": "true"
       }
     }
   }

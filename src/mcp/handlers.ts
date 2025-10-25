@@ -3,7 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { config } from '../config.js';
 import { startCallbackServer, stopCallbackServer } from '../auth/server.js';
 import { addAuthenticationTools } from './tools.js';
-import { generateToolsFromOpenApi } from '../openapi/converter.js';
+import { generateToolsFromOpenApi, addApiClientTool } from '../openapi/converter.js';
 
 export async function createAndStartServer(): Promise<void> {
   const server = new McpServer({
@@ -12,7 +12,16 @@ export async function createAndStartServer(): Promise<void> {
   });
 
   addAuthenticationTools(server);
-  generateToolsFromOpenApi(server);
+  
+  if (config.server?.clientMode) {
+    // Client mode: Add only the generic API client tool
+    addApiClientTool(server);
+    console.error('🔧 Running in client mode - using freee_api_client tool');
+  } else {
+    // Individual tools mode: Generate all OpenAPI tools
+    generateToolsFromOpenApi(server);
+    console.error('🔧 Running in individual tools mode - generated all API tools');
+  }
 
   try {
     await startCallbackServer();

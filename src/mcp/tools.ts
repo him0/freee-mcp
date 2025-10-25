@@ -12,6 +12,8 @@ import {
   getCompanyList,
   getCompanyInfo
 } from '../config/companies.js';
+import freeeApiSchema from '../data/freee-api-schema.json';
+import { OpenAPIPathItem } from '../api/types.js';
 
 export function addAuthenticationTools(server: McpServer): void {
   server.tool(
@@ -677,6 +679,188 @@ ${recommendations}
             {
               type: 'text',
               text: `状態確認中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}\\n\\n基本的なセットアップから始めてください:\\n1. freee_getting_started\\n2. freee_set_company [事業所ID]\\n3. freee_authenticate`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  // Add client mode helper tools if in client mode
+  if (config.server?.clientMode) {
+    addClientModeTools(server);
+  }
+}
+
+export function addClientModeTools(server: McpServer): void {
+  server.tool(
+    'freee_list_api_paths',
+    'freee APIで利用可能なパス一覧を表示します。メソッド別にフィルタリング可能です。【Client mode用・利用可能APIの確認】',
+    {
+      method: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'ALL']).optional().describe('フィルタするHTTPメソッド（省略時は全て表示）'),
+      search: z.string().optional().describe('パスの部分検索文字列（省略時は全て表示）'),
+    },
+    async (args) => {
+      try {
+        const { method = 'ALL', search } = args;
+        const paths = freeeApiSchema.paths;
+        const results: string[] = [];
+
+        Object.keys(paths).forEach((pathKey) => {
+          const pathItem: OpenAPIPathItem = paths[pathKey as keyof typeof paths];
+          
+          // Apply search filter
+          if (search && !pathKey.toLowerCase().includes(search.toLowerCase())) {
+            return;
+          }
+
+          // List methods for this path
+          const availableMethods: string[] = [];
+          if (pathItem.get) availableMethods.push('GET');
+          if (pathItem.post) availableMethods.push('POST');
+          if (pathItem.put) availableMethods.push('PUT');
+          if (pathItem.delete) availableMethods.push('DELETE');
+          if (pathItem.patch) availableMethods.push('PATCH');
+
+          // Apply method filter
+          if (method !== 'ALL') {
+            if (!availableMethods.includes(method)) {
+              return;
+            }
+            results.push(`${method} ${pathKey}`);
+          } else {
+            availableMethods.forEach(m => {
+              results.push(`${m} ${pathKey}`);
+            });
+          }
+        });
+
+        results.sort();
+
+        const filterInfo = [];
+        if (method !== 'ALL') filterInfo.push(`Method: ${method}`);
+        if (search) filterInfo.push(`Search: "${search}"`);
+        const filterText = filterInfo.length > 0 ? ` (${filterInfo.join(', ')})` : '';
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `freee API 利用可能パス一覧${filterText}:\n\n${results.join('\n')}\n\n合計: ${results.length}件\n\n使用方法:\nfreee_api_client method="GET" path="/api/1/companies" query_parameters="{}"`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `APIパス一覧の取得に失敗しました: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
+    'freee_api_path_info',
+    'freee APIの特定パスの詳細情報を表示します。必要なパラメータやリクエスト形式を確認できます。【Client mode用・API詳細確認】',
+    {
+      method: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']).describe('HTTPメソッド'),
+      path: z.string().describe('APIパス（例: /api/1/deals）'),
+    },
+    async (args) => {
+      try {
+        const { method, path } = args;
+        const paths = freeeApiSchema.paths;
+        const pathItem: OpenAPIPathItem | undefined = paths[path as keyof typeof paths];
+        
+        if (!pathItem) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `パス '${path}' が見つかりません。\n\nfreee_list_api_paths で利用可能なパスを確認してください。`,
+              },
+            ],
+          };
+        }
+
+        const operation = pathItem[method.toLowerCase() as keyof OpenAPIPathItem];
+        if (!operation) {
+          const availableMethods = [];
+          if (pathItem.get) availableMethods.push('GET');
+          if (pathItem.post) availableMethods.push('POST');
+          if (pathItem.put) availableMethods.push('PUT');
+          if (pathItem.delete) availableMethods.push('DELETE');
+          if (pathItem.patch) availableMethods.push('PATCH');
+
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `メソッド '${method}' はパス '${path}' でサポートされていません。\n\n利用可能なメソッド: ${availableMethods.join(', ')}`,
+              },
+            ],
+          };
+        }
+
+        let info = `${method} ${path}\n\n`;
+        if (operation.summary) info += `概要: ${operation.summary}\n`;
+        if (operation.description) info += `説明: ${operation.description}\n`;
+
+        // Parameters
+        if (operation.parameters && operation.parameters.length > 0) {
+          info += '\nパラメータ:\n';
+          operation.parameters.forEach(param => {
+            const required = param.required ? ' (必須)' : ' (オプション)';
+            info += `  ${param.name} (${param.in})${required}: ${param.description || 'No description'}\n`;
+          });
+        }
+
+        // Request body
+        if (operation.requestBody) {
+          info += '\nリクエストボディ: 必要 (JSON形式)\n';
+        }
+
+        info += '\n使用例:\n';
+        if (operation.parameters) {
+          const pathParams = operation.parameters.filter(p => p.in === 'path');
+          const queryParams = operation.parameters.filter(p => p.in === 'query');
+          
+          let examplePath = path;
+          pathParams.forEach(param => {
+            examplePath = examplePath.replace(`{${param.name}}`, `<${param.name}>`);
+          });
+
+          const queryExample = queryParams.length > 0 
+            ? `{"${queryParams[0].name}": "value"}` 
+            : '{}';
+
+          info += `freee_api_client method="${method}" path="${examplePath}" query_parameters='${queryExample}'`;
+          
+          if (operation.requestBody) {
+            info += ` body='{"key": "value"}'`;
+          }
+        } else {
+          info += `freee_api_client method="${method}" path="${path}"`;
+        }
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: info,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `パス情報の取得に失敗しました: ${error instanceof Error ? error.message : String(error)}`,
             },
           ],
         };
