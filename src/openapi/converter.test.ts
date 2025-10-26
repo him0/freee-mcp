@@ -2,59 +2,69 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { generateToolsFromOpenApi } from './converter.js';
 
-vi.mock('../data/freee-api-schema.json', () => ({
-  default: {
-    paths: {
-      '/api/1/users/me': {
-        get: {
-          summary: 'Get current user',
-          parameters: [
-            {
-              name: 'company_id',
-              in: 'query',
-              schema: { type: 'integer' }
-            }
-          ]
-        }
-      },
-      '/api/1/deals/{id}': {
-        get: {
-          summary: 'Get deal by ID',
-          parameters: [
-            {
-              name: 'id',
-              in: 'path',
-              required: true,
-              schema: { type: 'integer' }
+vi.mock('./schema-loader.js', () => ({
+  getAllSchemas: vi.fn(() => [
+    {
+      apiType: 'accounting',
+      config: {
+        schema: {
+          paths: {
+            '/api/1/users/me': {
+              get: {
+                summary: 'Get current user',
+                parameters: [
+                  {
+                    name: 'company_id',
+                    in: 'query',
+                    schema: { type: 'integer' }
+                  }
+                ]
+              }
             },
-            {
-              name: 'company_id',
-              in: 'query',
-              schema: { type: 'integer' }
-            }
-          ]
-        },
-        put: {
-          summary: 'Update deal',
-          parameters: [
-            {
-              name: 'id',
-              in: 'path',
-              required: true,
-              schema: { type: 'integer' }
-            }
-          ],
-          requestBody: {
-            content: {
-              'application/json': {
-                schema: { type: 'object' }
+            '/api/1/deals/{id}': {
+              get: {
+                summary: 'Get deal by ID',
+                parameters: [
+                  {
+                    name: 'id',
+                    in: 'path',
+                    required: true,
+                    schema: { type: 'integer' }
+                  },
+                  {
+                    name: 'company_id',
+                    in: 'query',
+                    schema: { type: 'integer' }
+                  }
+                ]
+              },
+              put: {
+                summary: 'Update deal',
+                parameters: [
+                  {
+                    name: 'id',
+                    in: 'path',
+                    required: true,
+                    schema: { type: 'integer' }
+                  }
+                ],
+                requestBody: {
+                  content: {
+                    'application/json': {
+                      schema: { type: 'object' }
+                    }
+                  }
+                }
               }
             }
           }
-        }
+        },
+        baseUrl: 'https://api.freee.co.jp',
+        prefix: 'accounting',
+        name: 'freee会計 API'
       }
     }
-  }
+  ])
 }));
 
 vi.mock('./schema.js', () => ({
@@ -90,24 +100,24 @@ describe('converter', () => {
       generateToolsFromOpenApi(mockServer);
 
       expect(mockTool).toHaveBeenCalledTimes(3);
-      
+
       expect(mockTool).toHaveBeenCalledWith(
-        'get_api_1_users_me',
-        'Get current user',
+        'accounting_get_api_1_users_me',
+        '[freee会計 API] Get current user',
         expect.any(Object),
         expect.any(Function)
       );
 
       expect(mockTool).toHaveBeenCalledWith(
-        'get_api_1_deals_id',
-        'Get deal by ID',
+        'accounting_get_api_1_deals_id',
+        '[freee会計 API] Get deal by ID',
         expect.any(Object),
         expect.any(Function)
       );
 
       expect(mockTool).toHaveBeenCalledWith(
-        'put_api_1_deals_id',
-        'Update deal',
+        'accounting_put_api_1_deals_id',
+        '[freee会計 API] Update deal',
         expect.any(Object),
         expect.any(Function)
       );
@@ -119,7 +129,7 @@ describe('converter', () => {
 
       generateToolsFromOpenApi(mockServer);
 
-      const getUserMeHandler = mockTool.mock.calls.find(call => call[0] === 'get_api_1_users_me')?.[3];
+      const getUserMeHandler = mockTool.mock.calls.find(call => call[0] === 'accounting_get_api_1_users_me')?.[3];
       expect(getUserMeHandler).toBeDefined();
 
       const result = await getUserMeHandler({ company_id: 12345 });
@@ -128,7 +138,8 @@ describe('converter', () => {
         'GET',
         '/api/1/users/me',
         { company_id: 12345 },
-        undefined
+        undefined,
+        'https://api.freee.co.jp'
       );
 
       expect(result).toEqual({
@@ -147,7 +158,7 @@ describe('converter', () => {
 
       generateToolsFromOpenApi(mockServer);
 
-      const getDealHandler = mockTool.mock.calls.find(call => call[0] === 'get_api_1_deals_id')?.[3];
+      const getDealHandler = mockTool.mock.calls.find(call => call[0] === 'accounting_get_api_1_deals_id')?.[3];
       expect(getDealHandler).toBeDefined();
 
       await getDealHandler({ id: 123, company_id: 12345 });
@@ -156,7 +167,8 @@ describe('converter', () => {
         'GET',
         '/api/1/deals/123',
         { company_id: 12345 },
-        undefined
+        undefined,
+        'https://api.freee.co.jp'
       );
     });
 
@@ -166,7 +178,7 @@ describe('converter', () => {
 
       generateToolsFromOpenApi(mockServer);
 
-      const putDealHandler = mockTool.mock.calls.find(call => call[0] === 'put_api_1_deals_id')?.[3];
+      const putDealHandler = mockTool.mock.calls.find(call => call[0] === 'accounting_put_api_1_deals_id')?.[3];
       expect(putDealHandler).toBeDefined();
 
       const requestBody = { name: 'Updated Deal' };
@@ -176,7 +188,8 @@ describe('converter', () => {
         'PUT',
         '/api/1/deals/123',
         {},
-        requestBody
+        requestBody,
+        'https://api.freee.co.jp'
       );
     });
 
@@ -186,7 +199,7 @@ describe('converter', () => {
 
       generateToolsFromOpenApi(mockServer);
 
-      const getUserMeHandler = mockTool.mock.calls.find(call => call[0] === 'get_api_1_users_me')?.[3];
+      const getUserMeHandler = mockTool.mock.calls.find(call => call[0] === 'accounting_get_api_1_users_me')?.[3];
       expect(getUserMeHandler).toBeDefined();
 
       const result = await getUserMeHandler({ company_id: 12345 });
@@ -207,7 +220,7 @@ describe('converter', () => {
 
       generateToolsFromOpenApi(mockServer);
 
-      const getDealHandler = mockTool.mock.calls.find(call => call[0] === 'get_api_1_deals_id')?.[3];
+      const getDealHandler = mockTool.mock.calls.find(call => call[0] === 'accounting_get_api_1_deals_id')?.[3];
       expect(getDealHandler).toBeDefined();
 
       await getDealHandler({ id: 123, company_id: undefined });
@@ -216,7 +229,8 @@ describe('converter', () => {
         'GET',
         '/api/1/deals/123',
         {},
-        undefined
+        undefined,
+        'https://api.freee.co.jp'
       );
     });
   });
