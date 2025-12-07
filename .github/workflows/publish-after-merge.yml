@@ -41,7 +41,10 @@ jobs:
       
     - name: Build project
       run: pnpm build
-        
+
+    - name: Generate API references
+      run: pnpm generate:references
+
     - name: Get version from package.json
       id: version
       run: |
@@ -103,6 +106,12 @@ jobs:
         echo "## Package" >> release_notes.md
         echo "- npm: https://www.npmjs.com/package/@him0/freee-mcp/v/${VERSION}" >> release_notes.md
         echo "- Install: \`npm install @him0/freee-mcp@${VERSION}\`" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "## Claude Plugin" >> release_notes.md
+        echo "This repository can also be used as a Claude Code plugin:" >> release_notes.md
+        echo "\`\`\`bash" >> release_notes.md
+        echo "claude plugin add him0/freee-mcp" >> release_notes.md
+        echo "\`\`\`" >> release_notes.md
         
     - name: Create GitHub Release
       if: steps.check_published.outputs.already_published != 'true'
