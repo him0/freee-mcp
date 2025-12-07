@@ -112,7 +112,13 @@ jobs:
         echo "\`\`\`bash" >> release_notes.md
         echo "claude plugin add him0/freee-mcp" >> release_notes.md
         echo "\`\`\`" >> release_notes.md
-        
+
+    - name: Package skill for release
+      if: steps.check_published.outputs.already_published != 'true'
+      run: |
+        cd skills/freee-api-skill
+        zip -r ../../freee-skill.zip .
+
     - name: Create GitHub Release
       if: steps.check_published.outputs.already_published != 'true'
       uses: softprops/action-gh-release@v1
@@ -120,6 +126,7 @@ jobs:
         tag_name: v${{ steps.version.outputs.version }}
         name: v${{ steps.version.outputs.version }}
         body_path: release_notes.md
+        files: freee-skill.zip
         draft: false
         prerelease: false
       env:
