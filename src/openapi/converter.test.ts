@@ -16,7 +16,7 @@ vi.mock('./schema-loader.js', () => ({
                   {
                     name: 'company_id',
                     in: 'query',
-                    schema: { type: 'integer' }
+                    type: 'integer'
                   }
                 ]
               }
@@ -29,12 +29,12 @@ vi.mock('./schema-loader.js', () => ({
                     name: 'id',
                     in: 'path',
                     required: true,
-                    schema: { type: 'integer' }
+                    type: 'integer'
                   },
                   {
                     name: 'company_id',
                     in: 'query',
-                    schema: { type: 'integer' }
+                    type: 'integer'
                   }
                 ]
               },
@@ -45,16 +45,10 @@ vi.mock('./schema-loader.js', () => ({
                     name: 'id',
                     in: 'path',
                     required: true,
-                    schema: { type: 'integer' }
+                    type: 'integer'
                   }
                 ],
-                requestBody: {
-                  content: {
-                    'application/json': {
-                      schema: { type: 'object' }
-                    }
-                  }
-                }
+                hasJsonBody: true
               }
             }
           }

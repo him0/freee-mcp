@@ -1,0 +1,350 @@
+{
+  "paths": {
+    "/users/me": {
+      "get": {
+        "summary": "ログインユーザー情報の取得",
+        "description": "このリクエストの認可セッションにおけるログインユーザーの情報を返します。 freee工数管理では一人のログインユーザーを複数の事業所に関連付けられるため、このユーザーと関連のあるすべての事業所の情報をリストで返します。 他のAPIのパラメータとして company_id が求められる場合は、このAPIで取得した company_id を使用します。"
+      }
+    },
+    "/projects": {
+      "get": {
+        "summary": "プロジェクト一覧の取得",
+        "description": "この事業所のプロジェクトの一覧情報を返します。 運用ステータス、マネージャー、発注先、発注元で絞り込みできます。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          },
+          {
+            "name": "operational_status",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "運用ステータス"
+          },
+          {
+            "name": "manager_ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "マネージャのユーザID"
+          },
+          {
+            "name": "orderer_ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "発注元の取引先ID"
+          },
+          {
+            "name": "contractor_ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "発注先の取引先ID"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードのオフセット（デフォルト：0）"
+          }
+        ]
+      },
+      "post": {
+        "summary": "プロジェクトの登録",
+        "description": "プロジェクトを登録することができます。",
+        "hasJsonBody": true
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "summary": "プロジェクト詳細の取得",
+        "description": "IDに該当するプロジェクトの詳細情報を返します。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer",
+            "required": true,
+            "description": "プロジェクトID"
+          }
+        ]
+      }
+    },
+    "/unit_costs": {
+      "get": {
+        "summary": "単価マスタの取得",
+        "description": "従業員の単価マスタを返します。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードのオフセット（デフォルト：0）"
+          }
+        ]
+      }
+    },
+    "/people": {
+      "get": {
+        "summary": "従業員一覧の取得",
+        "description": "このリクエストで指定したIDの事業所の従業員一覧を返します。 権限・ステータス・従業員IDで取得する情報を絞り込むことができます。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "役割"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "ステータス（招待中・利用中・無効）"
+          },
+          {
+            "name": "person_ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "従業員ID"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードのオフセット（デフォルト：0）"
+          }
+        ]
+      }
+    },
+    "/partners": {
+      "get": {
+        "summary": "取引先の一覧取得",
+        "description": "登録されている取引先の一覧を返します。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードのオフセット（デフォルト：0）"
+          }
+        ]
+      }
+    },
+    "/workloads": {
+      "get": {
+        "summary": "工数詳細の取得",
+        "description": "取得対象の従業員の工数実績の詳細を返します。 取得対象従業員と年月の取得範囲で絞り込みできます。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          },
+          {
+            "name": "employees_scope",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "取得対象従業員の検索スコープです。 <ul> <li> allを指定した場合は全従業員が対象です。 絞り込みを行わない場合にご使用ください。 person_ids, team_idsでの絞り込みはできません。 </li> <li> teamを指定した場合はチーム単位で絞り込みが可能です。 team_idsでの絞り込みができます。 person_idsでの絞り込みはできません。 </li> <li> employeeを指定した場合はperson_idsによる絞り込みができます。 team_idsでの絞り込みは行なえません。 </li> <li> scopeを指定しない場合はログインユーザの情報のみの取得です。 </li> </ul>"
+          },
+          {
+            "name": "person_ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "取得対象従業員のユーザID"
+          },
+          {
+            "name": "team_ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "取得対象のチームID"
+          },
+          {
+            "name": "year_month",
+            "in": "query",
+            "type": "string",
+            "required": true,
+            "description": "取得対象範囲（YYYY-MM）"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードのオフセット（デフォルト：0）"
+          }
+        ]
+      },
+      "post": {
+        "summary": "工数登録",
+        "description": "工数を登録することが出来ます。",
+        "hasJsonBody": true
+      }
+    },
+    "/workload_summaries": {
+      "get": {
+        "summary": "工数実績の取得",
+        "description": "取得対象の従業員の工数実績のサマリを返します。 取得対象従業員と年月の取得範囲で絞り込みできます。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          },
+          {
+            "name": "employees_scope",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "取得対象従業員の検索スコープです。 <ul> <li> allを指定した場合は全従業員が対象です。 絞り込みを行わない場合にご使用ください。 person_ids, team_idsでの絞り込みはできません。 </li> <li> teamを指定した場合はチーム単位で絞り込みが可能です。 team_idsでの絞り込みができます。 person_idsでの絞り込みはできません。 </li> <li> employeeを指定した場合はperson_idsによる絞り込みができます。 team_idsでの絞り込みは行なえません。 </li> <li> scopeを指定しない場合はログインユーザの情報のみの取得です。 </li> </ul>"
+          },
+          {
+            "name": "person_ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "取得対象従業員のユーザID"
+          },
+          {
+            "name": "team_ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "取得対象のチームID"
+          },
+          {
+            "name": "year_month",
+            "in": "query",
+            "type": "string",
+            "required": true,
+            "description": "取得対象範囲（YYYY-MM）"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードのオフセット（デフォルト：0）"
+          }
+        ]
+      }
+    },
+    "/teams": {
+      "get": {
+        "summary": "チームの一覧取得",
+        "description": "登録されているチームの一覧を返します。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードの件数（デフォルト：50, 最小：1, 最大100）"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "取得レコードのオフセット（デフォルト：0）"
+          }
+        ]
+      }
+    }
+  }
+}

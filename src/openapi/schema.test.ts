@@ -1,113 +1,113 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
 import { convertParameterToZodSchema, convertPathToToolName, sanitizePropertyName } from './schema.js';
-import { OpenAPIParameter } from '../api/types.js';
+import { MinimalParameter } from './minimal-types.js';
 
 describe('schema', () => {
   describe('convertParameterToZodSchema', () => {
     it('should convert string parameter to ZodString', () => {
-      const parameter: OpenAPIParameter = {
+      const parameter: MinimalParameter = {
         name: 'name',
         in: 'query',
-        schema: { type: 'string' },
+        type: 'string',
         required: true
       };
 
       const schema = convertParameterToZodSchema(parameter);
-      
+
       expect(schema).toBeInstanceOf(z.ZodString);
     });
 
     it('should convert integer parameter to ZodNumber with int constraint', () => {
-      const parameter: OpenAPIParameter = {
+      const parameter: MinimalParameter = {
         name: 'id',
         in: 'path',
-        schema: { type: 'integer' },
+        type: 'integer',
         required: true
       };
 
       const schema = convertParameterToZodSchema(parameter);
-      
+
       // ZodNumber.int() creates a ZodEffects schema internally, but vitest might see the outer type
       expect((schema._def as unknown as { typeName: string }).typeName).toMatch(/^Zod(Effects|Number)$/);
     });
 
     it('should convert number parameter to ZodNumber', () => {
-      const parameter: OpenAPIParameter = {
+      const parameter: MinimalParameter = {
         name: 'amount',
         in: 'query',
-        schema: { type: 'number' },
+        type: 'number',
         required: true
       };
 
       const schema = convertParameterToZodSchema(parameter);
-      
+
       expect(schema).toBeInstanceOf(z.ZodNumber);
     });
 
     it('should convert boolean parameter to ZodBoolean', () => {
-      const parameter: OpenAPIParameter = {
+      const parameter: MinimalParameter = {
         name: 'active',
         in: 'query',
-        schema: { type: 'boolean' },
+        type: 'boolean',
         required: true
       };
 
       const schema = convertParameterToZodSchema(parameter);
-      
+
       expect(schema).toBeInstanceOf(z.ZodBoolean);
     });
 
     it('should convert unknown type to ZodAny', () => {
-      const parameter: OpenAPIParameter = {
+      const parameter: MinimalParameter = {
         name: 'data',
         in: 'query',
-        schema: { type: 'array' as unknown as 'string' },
+        type: 'array',
         required: true
       };
 
       const schema = convertParameterToZodSchema(parameter);
-      
+
       expect(schema).toBeInstanceOf(z.ZodAny);
     });
 
     it('should make schema optional when not required', () => {
-      const parameter: OpenAPIParameter = {
+      const parameter: MinimalParameter = {
         name: 'optional_param',
         in: 'query',
-        schema: { type: 'string' },
+        type: 'string',
         required: false
       };
 
       const schema = convertParameterToZodSchema(parameter);
-      
+
       expect((schema._def as unknown as { typeName: string }).typeName).toBe('ZodOptional');
     });
 
     it('should add description when provided', () => {
-      const parameter: OpenAPIParameter = {
+      const parameter: MinimalParameter = {
         name: 'name',
         in: 'query',
-        schema: { type: 'string' },
+        type: 'string',
         description: 'The name of the resource',
         required: true
       };
 
       const schema = convertParameterToZodSchema(parameter);
-      
+
       expect(schema._def.description).toBe('The name of the resource');
     });
 
-    it('should handle parameter without schema property', () => {
-      const parameter: OpenAPIParameter = {
+    it('should handle type string directly', () => {
+      const parameter: MinimalParameter = {
         name: 'legacy_param',
         in: 'query',
         type: 'string',
         required: true
-      } as OpenAPIParameter & { type: string };
+      };
 
       const schema = convertParameterToZodSchema(parameter);
-      
+
       expect(schema).toBeInstanceOf(z.ZodString);
     });
   });

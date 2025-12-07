@@ -1,15 +1,17 @@
-import accountingSchema from '../../openapi/accounting-api-schema.json';
-import hrSchema from '../../openapi/hr-api-schema.json';
-import invoiceSchema from '../../openapi/invoice-api-schema.json';
-import pmSchema from '../../openapi/pm-api-schema.json';
-import { OpenAPIOperation, OpenAPIPathItem } from '../api/types.js';
+import accountingSchema from '../../openapi/minimal/accounting.json';
+import hrSchema from '../../openapi/minimal/hr.json';
+import invoiceSchema from '../../openapi/minimal/invoice.json';
+import pmSchema from '../../openapi/minimal/pm.json';
+import {
+  MinimalSchema,
+  MinimalPathItem,
+  MinimalOperation,
+} from './minimal-types.js';
 
 export type ApiType = 'accounting' | 'hr' | 'invoice' | 'pm';
 
 export interface ApiConfig {
-  schema: {
-    paths: Record<string, OpenAPIPathItem>;
-  };
+  schema: MinimalSchema;
   baseUrl: string;
   prefix: string;
   name: string;
@@ -17,25 +19,25 @@ export interface ApiConfig {
 
 export const API_CONFIGS: Record<ApiType, ApiConfig> = {
   accounting: {
-    schema: accountingSchema as unknown as { paths: Record<string, OpenAPIPathItem> },
+    schema: accountingSchema as MinimalSchema,
     baseUrl: 'https://api.freee.co.jp',
     prefix: 'accounting',
     name: 'freee会計 API',
   },
   hr: {
-    schema: hrSchema as unknown as { paths: Record<string, OpenAPIPathItem> },
+    schema: hrSchema as MinimalSchema,
     baseUrl: 'https://api.freee.co.jp/hr',
     prefix: 'hr',
     name: 'freee人事労務 API',
   },
   invoice: {
-    schema: invoiceSchema as unknown as { paths: Record<string, OpenAPIPathItem> },
+    schema: invoiceSchema as MinimalSchema,
     baseUrl: 'https://api.freee.co.jp/iv',
     prefix: 'invoice',
     name: 'freee請求書 API',
   },
   pm: {
-    schema: pmSchema as unknown as { paths: Record<string, OpenAPIPathItem> },
+    schema: pmSchema as MinimalSchema,
     baseUrl: 'https://api.freee.co.jp/pm',
     prefix: 'pm',
     name: 'freee工数管理 API',
@@ -45,7 +47,7 @@ export const API_CONFIGS: Record<ApiType, ApiConfig> = {
 export interface PathValidationResult {
   isValid: boolean;
   message: string;
-  operation?: OpenAPIOperation;
+  operation?: MinimalOperation;
   actualPath?: string;
   apiType?: ApiType;
   baseUrl?: string;
@@ -56,7 +58,7 @@ export interface PathValidationResult {
  * Returns the matching API type and base URL
  */
 export function validatePathAcrossApis(method: string, path: string): PathValidationResult {
-  const normalizedMethod = method.toLowerCase();
+  const normalizedMethod = method.toLowerCase() as keyof MinimalPathItem;
 
   // Search across all API schemas
   for (const [apiType, config] of Object.entries(API_CONFIGS) as [ApiType, ApiConfig][]) {
@@ -69,7 +71,7 @@ export function validatePathAcrossApis(method: string, path: string): PathValida
         return {
           isValid: true,
           message: 'Valid path and method',
-          operation: pathItem[normalizedMethod as keyof OpenAPIPathItem] as OpenAPIOperation,
+          operation: pathItem[normalizedMethod],
           actualPath: path,
           apiType,
           baseUrl: config.baseUrl,
@@ -90,7 +92,7 @@ export function validatePathAcrossApis(method: string, path: string): PathValida
           return {
             isValid: true,
             message: 'Valid path and method',
-            operation: pathItem[normalizedMethod as keyof OpenAPIPathItem] as OpenAPIOperation,
+            operation: pathItem[normalizedMethod],
             actualPath: path,
             apiType,
             baseUrl: config.baseUrl,
@@ -113,12 +115,12 @@ export function validatePathAcrossApis(method: string, path: string): PathValida
 export function listAllAvailablePaths(): string {
   const sections: string[] = [];
 
-  for (const [apiType, config] of Object.entries(API_CONFIGS) as [ApiType, ApiConfig][]) {
+  for (const [, config] of Object.entries(API_CONFIGS) as [ApiType, ApiConfig][]) {
     const paths = config.schema.paths;
     const pathList: string[] = [];
 
     Object.entries(paths).forEach(([path, pathItem]) => {
-      const methods = Object.keys(pathItem as OpenAPIPathItem)
+      const methods = Object.keys(pathItem as MinimalPathItem)
         .filter((m) => ['get', 'post', 'put', 'delete', 'patch'].includes(m))
         .map((m) => m.toUpperCase());
 
