@@ -12,7 +12,7 @@
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationDir './dist'",
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
-    "type-check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint --fix 'src/**/*.ts'",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",
