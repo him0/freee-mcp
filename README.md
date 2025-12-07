@@ -318,6 +318,43 @@ freee_status
 
 ISC
 
+## Claude Plugin / Skills
+
+このリポジトリは Claude Code / Claude Desktop 用のプラグインとしても利用できます。プラグインには以下が含まれます：
+
+- **freee API スキル**: 62個の詳細なAPIリファレンスドキュメント
+- **MCP サーバー設定**: 自動的に `@him0/freee-mcp` を MCP サーバーとして設定
+
+### プラグインのインストール
+
+Claude Code でこのリポジトリをプラグインとして追加：
+
+```bash
+# Claude Code でプラグインを追加
+claude plugin add him0/freee-mcp
+```
+
+または Claude Desktop の設定でプラグインパスを指定してください。
+
+### APIリファレンスの利用
+
+スキルには以下のAPIリファレンスが含まれています：
+
+- **会計API**: 取引、勘定科目、取引先、請求書、経費申請など（31ファイル）
+- **人事労務API**: 従業員、勤怠、給与明細、年末調整など（27ファイル）
+- **請求書API**: 請求書、見積書、納品書（3ファイル）
+- **工数管理API**: ユーザー情報（1ファイル）
+
+Claude との会話中に API の使い方を質問すると、これらのリファレンスを参照して正確な情報を提供します。
+
+### リファレンスの再生成
+
+OpenAPI スキーマが更新された場合、リファレンスを再生成できます：
+
+```bash
+pnpm generate:references
+```
+
 ## 関連リンク
 
 - [freee API ドキュメント](https://developer.freee.co.jp/docs)

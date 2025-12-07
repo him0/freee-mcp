@@ -55,7 +55,7 @@ jobs:
       
     - name: Build project
       run: pnpm build
-      
+
     - name: Check build artifacts
       run: |
         ls -la dist/
@@ -63,13 +63,24 @@ jobs:
         test -f dist/index.cjs
         test -f dist/index.d.ts
         test -f bin/cli.js
-        
+
+    - name: Generate API references
+      run: pnpm generate:references
+
     - name: Bump version
       id: version
       run: |
         npm version ${{ github.event.inputs.version }} --no-git-tag-version
         NEW_VERSION=$(node -e "console.log(require('./package.json').version)")
         echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+    - name: Sync plugin.json version
+      run: |
+        VERSION=${{ steps.version.outputs.new_version }}
+        # Update plugin.json version
+        jq --arg v "$VERSION" '.version = $v' .claude-plugin/plugin.json > tmp.json && mv tmp.json .claude-plugin/plugin.json
+        # Update marketplace.json version
+        jq --arg v "$VERSION" '.plugins[0].version = $v' .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
         
     - name: Create Pull Request
       id: pr
@@ -81,6 +92,8 @@ jobs:
         commit-message: "chore: bump version to ${{ steps.version.outputs.new_version }}"
         add-paths: |
           package.json
+          skills/
+          .claude-plugin/
         title: "chore: bump version to ${{ steps.version.outputs.new_version }}"
         body: |
           ## Version Bump
