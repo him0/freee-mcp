@@ -217,6 +217,7 @@ export function addAuthenticationTools(server: McpServer): void {
   );
 
   // Company management tools
+  // @ts-expect-error - Zod 3.25+ type inference issue with MCP SDK
   server.tool(
     'freee_set_company',
     '事業所を設定・切り替えます。新しい事業所の場合は自動的に追加されます。認証済みの場合はそのまま使用できます。',

@@ -1,0 +1,3581 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "freee販売 API (β版)",
+    "version": "2025-11-17",
+    "termsOfService": "https://app.secure.freee.co.jp/terms-freee-api.html",
+    "contact": {
+      "name": "サポートデスクへのお問い合わせ",
+      "url": "https://accounts.secure.freee.co.jp/contacts?from=sales_management"
+    },
+    "license": {
+      "name": "© Since 2013 freee K.K."
+    },
+    "description": "<h2 id=\"start_guide\">スタートガイド</h2> <p>freee API開発がはじめての方は<a href=\"https://developer.freee.co.jp/getting-started\">freee APIスタートガイド</a>を参照してください。</p>\n<hr />\n<h2 id=\"specification\">仕様</h2>\n<h3 id=\"api_endpoint\">APIエンドポイント</h3> <p>https://api.freee.co.jp/sm (httpsのみ)</p>\n<h3 id=\"about_authorize\">認証について</h3> <p>OAuth2.0を利用します。詳細は<a href=\"https://developer.freee.co.jp/reference/#%e8%aa%8d%e8%a8%bc\"\n    target=\"_blank\">リファレンスの認証に関する記載</a>を参照してください。</p>\n\n<h3 id=\"data_format\">データフォーマット</h3> <p>リクエスト、レスポンスともにJSON形式をサポートしていますが、詳細は、API毎の説明欄（application/jsonなど）を確認してください。</p>\n<h3 id=\"compatibility\">後方互換性ありの変更</h3> <p>freeeでは、APIを改善していくために以下のような変更は後方互換性ありとして通知なく変更を入れることがあります。アプリケーション実装者は以下を踏まえて開発を行ってください。</p> <ul>\n  <li>新しいAPIリソース・エンドポイントの追加</li>\n  <li>既存のAPIに対して必須ではない新しいリクエストパラメータの追加</li>\n  <li>既存のAPIレスポンスに対する新しいプロパティの追加</li>\n  <li>既存のAPIレスポンスに対するプロパティの順番の入れ変え</li>\n  <li>keyとなっているidやcodeの長さの変更（長くする）</li>\n  <li>エラーメッセージの変更</li>\n</ul>\n<h3 id=\"common_response_header\">共通レスポンスヘッダー</h3> <p>すべてのAPIのレスポンスには以下のHTTPヘッダーが含まれます。</p> <ul>\n  <li>\n    <p>X-Freee-Request-ID</p>\n    <ul>\n      <li>各リクエスト毎に発行されるID</li>\n    </ul>\n  </li>\n</ul>\n<h3 id=\"common_error_response\">共通エラーレスポンス</h3>\n\n<p>APIリクエストでエラーが発生した場合は、エラー原因に応じたステータスコードおよびメッセージを返します。</p> <p>\n  一部のエラーレスポンスにはエラーコードが含まれます。<br>\n  詳細は、<a href=\"https://developer.freee.co.jp/tips/faq/40x-checkpoint\">HTTPステータスコード400台エラー時のチェックポイント</a>を参照してください\n</p>\n<table border=\"1\">\n  <tbody>\n    <tr>\n      <th style=\"padding: 10px\"><strong>ステータスコード</strong></th>\n      <th style=\"padding: 10px\"><strong>原因</strong></th>\n    </tr>\n    <tr><td style=\"padding: 10px\">400</td><td style=\"padding: 10px\">リクエストパラメータが不正</td></tr>\n    <tr><td style=\"padding: 10px\">401</td><td style=\"padding: 10px\">アクセストークンが無効</td></tr>\n    <tr><td style=\"padding: 10px\">403</td><td style=\"padding: 10px\">アクセス権限がない</td></tr>\n    <tr><td style=\"padding: 10px\">404</td><td style=\"padding: 10px\">リソースが存在しない</td></tr>\n    <tr><td style=\"padding: 10px\">429</td><td style=\"padding: 10px\">リクエスト回数制限を超えた</td></tr>\n    <tr><td style=\"padding: 10px\">503</td><td style=\"padding: 10px\">システム内で予期しないエラーが発生</td></tr>\n  </tbody>\n</table>\n<p>メッセージボディ内の <code>errors.messages</code> <code>message</code> にはエラー内容を説明する文字列が入ります。</p> <pre><code>  {\n    &quot;status_code&quot; : 400,\n    &quot;errors&quot; : [\n      {\n        &quot;codes&quot; : [\n          &quot;bad_request&quot;\n        ],\n        &quot;messages&quot; : [\n          &quot;リクエストの形式が不正です。&quot;\n        ]\n      }\n    ]\n  }  </code></pre>\n  <pre><code>  {\n    &quot;message&quot; : &quot;ログインをして下さい&quot;,\n    &quot;code&quot; : &quot;invalid_access_token&quot;\n  }  </code></pre>\n</p>\n<h3 id=\"api_rate_limit\">API使用制限</h3> <p>APIリクエストは1分あたり30回、および1時間あたり1500回を上限としています。<br>API使用ステータスはレスポンスヘッダに付与されます。各ヘッダの意味は次のとおりです。</p>\n<table>\n  <thead>\n    <tr>\n      <th>ヘッダ名</th>\n      <th>説明</th>\n    </tr>\n  </thead>\n <tbody>\n   <tr>\n     <td>X-RateLimit-Limit</td>\n     <td>１時間の使用回数の上限</td>\n   </tr>\n   <tr>\n     <td>X-RateLimit-Remaining</td>\n     <td>１時間の残り使用回数</td>\n   </tr>\n   <tr>\n     <td>X-RateLimit-Reset</td>\n     <td>１時間の使用回数がリセットされる時刻</td>\n   </tr>\n   <tr>\n     <td>X-RateLimit-Limit-Minute</td>\n     <td>１分間の使用回数の上限</td>\n   </tr>\n   <tr>\n     <td>X-RateLimit-Remaining-Minute</td>\n     <td>１分間の残り使用回数</td>\n   </tr>\n   <tr>\n     <td>X-RateLimit-Reset-Minute</td>\n     <td>１分間の使用回数がリセットされる時刻</td>\n   </tr>\n </tbody>\n</table>\n<p>この上限を超えた場合APIアクセスは制限され、http status codeは429となります。制限がかかってから10分程度が過ぎると再度使用することができるようになります。</p>\n<p>また、上記に加えfreeeは一定期間に過度のアクセスを検知した場合、APIアクセスをコントロールする場合があります。<br>\n  その際のhttp status codeは403となります。こちらも制限がかかってから10分程度が過ぎると再度使用することができるようになります。</p>\n\n<h3 id=\"available_apis_by_plan\">プランごとの利用可能API</h3> <p>すべてのエンドポイントはfreee販売スタンダードプランをご契約の事業所でのみ利用可能です。</p>\n<h3 id=\"accounting_master_items\">会計マスタ項目</h3>\n<p>freee請求書APIのリクエストパラメータに、会計マスタ項目があります。会計マスタ項目の詳細は<a\n    href=\"https://developer.freee.co.jp/guideline/master-guideline\">会計マスタガイドライン</a>を参照ください。</p>\n\n<p>会計のマスタ項目はfreee会計APIのエンドポイントにて取得可能です（例：<a\n    href=\"https://developer.freee.co.jp/reference/accounting/reference#operations-tag-Partners\">Partners\n    取引先</a>）。freee会計APIのエンドポイントの詳細は<a\n    href=\"https://developer.freee.co.jp/reference/accounting/reference\">会計APIリファレンス</a>を参照ください。</p>"
+  },
+  "servers": [
+    {
+      "url": "https://api.freee.co.jp/sm"
+    }
+  ],
+  "security": [
+    {
+      "oauth2": [
+        "write",
+        "read"
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "businesses",
+      "description": "案件"
+    },
+    {
+      "name": "sales_orders",
+      "description": "受注"
+    },
+    {
+      "name": "master",
+      "description": "関連マスタ"
+    }
+  ],
+  "paths": {
+    "/businesses": {
+      "get": {
+        "tags": [
+          "businesses"
+        ],
+        "summary": "案件一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>案件の一覧を取得します。\n登録されている案件情報を一覧形式で取得できます。\n各種フィルタ条件を指定することで、特定の条件に合致する案件のみを取得することが可能です。\n</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>start_business_date : 案件登録日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_business_date : 案件登録日(絞り込み終了)</p>\n</li>\n<li>\n<p>sales_progression_ids : 受注確度ID(複数指定可)</p>\n</li>\n<li>\n<p>business_phase_ids : 案件フェーズID(複数指定可)</p>\n</li>\n<li>\n<p>charge_employee_ids : 社内担当者の従業員ID(複数指定可)</p>\n</li>\n<li>\n<p>customer_ids : 顧客の取引先ID(複数指定可)</p>\n</li>\n<li>\n<p>canceled : 取消状態(デフォルト:false)</p>\n</li>\n</ul>\n<p>\n`limit`と`offset`パラメータを使用してページネーションが可能です。\nデフォルトでは20件ずつ取得され、最大100件まで一度に取得できます。\n</p>",
+        "operationId": "get_businesses",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "$ref": "#/components/parameters/start_business_date"
+          },
+          {
+            "$ref": "#/components/parameters/end_business_date"
+          },
+          {
+            "$ref": "#/components/parameters/sales_progression_ids"
+          },
+          {
+            "$ref": "#/components/parameters/business_phase_ids"
+          },
+          {
+            "$ref": "#/components/parameters/charge_employee_ids"
+          },
+          {
+            "$ref": "#/components/parameters/customer_ids"
+          },
+          {
+            "$ref": "#/components/parameters/canceled"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BusinessIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "businesses"
+        ],
+        "summary": "案件登録",
+        "description": "<h2 id=\"\">概要</h2>\n<p>新しい案件を登録します。\n顧客との商談や受注案件を管理するための案件情報を登録できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>必須項目</h3>\n<ul>\n<li>\n<p>name : 案件名称</p>\n</li>\n<li>\n<p>company_id : 事業所ID</p>\n</li>\n</ul>\n<h3>任意項目</h3>\n<ul>\n<li>\n<p>code : 案件コード</p>\n</li>\n<li>\n<p>business_date : 案件登録日</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>prospect_sales_order : 受注見込</p>\n</li>\n<li>\n<p>sales_progression_id : 受注確度ID</p>\n</li>\n<li>\n<p>scheduled_completion_date : 完了予定日</p>\n</li>\n<li>\n<p>completion_date : 完了日</p>\n</li>\n<li>\n<p>business_phase_id : 案件フェーズID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n</ul>",
+        "operationId": "create_business",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/BusinessCreateRequest"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/BusinessCreateResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/businesses/{id}": {
+      "get": {
+        "tags": [
+          "businesses"
+        ],
+        "summary": "案件詳細取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの案件の詳細情報を取得します。\n案件の基本情報に加えて、粗利や売上情報などの詳細な集計情報も取得できます。\n</p>",
+        "operationId": "get_business",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "案件ID",
+            "schema": {
+              "type": "string",
+              "minLength": 26,
+              "maxLength": 26,
+              "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BusinessShowResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/master/business_phases": {
+      "get": {
+        "tags": [
+          "master"
+        ],
+        "summary": "案件フェーズ一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>案件フェーズ一覧を取得します。\n使用可能なもののみを返却します。\n</p>",
+        "operationId": "get_master_business_phases",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BusinessPhasesIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/master/sales_progressions": {
+      "get": {
+        "tags": [
+          "master"
+        ],
+        "summary": "受注確度一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>受注確度情報を取得します。\n使用可能なもののみを返却します。\n</p>",
+        "operationId": "get_sales_progressions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SalesProgressionIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/master/items": {
+      "get": {
+        "tags": [
+          "master"
+        ],
+        "summary": "商品一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>商品情報を取得します。\n使用可能なもののみを返却します。\n</p>",
+        "operationId": "get_master_items",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "name": "limit",
+            "description": "取得レコードの件数（デフォルト：100, 最小：1, 最大：500）",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            }
+          },
+          {
+            "name": "type",
+            "description": "業務区分 (sales: 販売系, procurement: 調達系)",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sales",
+                "procurement"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ItemsIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/master/deal_line_types": {
+      "get": {
+        "tags": [
+          "master"
+        ],
+        "summary": "明細取引タイプ一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>明細取引タイプ一覧を取得します。\n使用停止中のものはレスポンスに含まれません。\n</p>",
+        "operationId": "get_master_deal_line_types",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "name": "type",
+            "description": "利用区分: 販売系、調達系どちらの明細取引タイプを取得するか",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sales",
+                "procurement"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/DealLineTypesIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/master/employees": {
+      "get": {
+        "tags": [
+          "master"
+        ],
+        "summary": "従業員一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>従業員一覧を取得します。\n使用可能なもののみを返却します。\n</p>",
+        "operationId": "get_master_employees",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "name": "limit",
+            "description": "取得レコードの件数（デフォルト：100, 最小：1, 最大：500）",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/EmployeesIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/master/custom_fields/business/definitions": {
+      "get": {
+        "tags": [
+          "master"
+        ],
+        "summary": "案件カスタム項目定義一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>\nカスタム項目定義の一覧を取得します。\n使用可能なもののみを返却します。\n</p>\n\n<h3>入力形式の一覧</h3>\n<ul>\n  <li><code>text</code>: 一行テキスト</li>\n  <li><code>textarea</code>: 複数行テキスト</li>\n  <li><code>amount</code>: 金額</li>\n  <li><code>quantity</code>: 数量</li>\n  <li><code>number</code>: 数値</li>\n  <li><code>date</code>: 日付</li>\n  <li><code>enum</code>: プルダウン</li>\n</ul>",
+        "operationId": "get_master_custom_fields_business_definitions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CustomFieldDefinitionsIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/sales_orders": {
+      "get": {
+        "tags": [
+          "sales_orders"
+        ],
+        "summary": "受注一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>受注の一覧を取得します。\n登録されている受注情報を一覧形式で取得できます。\n各種フィルタ条件を指定することで、特定の条件に合致する受注のみを取得することが可能です。\n</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>start_sales_order_date : 受注日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_sales_order_date : 受注日(絞り込み終了)</p>\n</li>\n<li>\n<p>charge_employee_ids : 社内担当者の従業員ID(複数指定可)</p>\n</li>\n<li>\n<p>customer_ids : 顧客の取引先ID(複数指定可)</p>\n</li>\n<li>\n<p>canceled : 取消状態(デフォルト:false)</p>\n</li>\n</ul>\n<p>\n`limit`と`offset`パラメータを使用してページネーションが可能です。\nデフォルトでは20件ずつ取得され、最大100件まで一度に取得できます。\n</p>",
+        "operationId": "get_sales_orders",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "$ref": "#/components/parameters/start_sales_order_date"
+          },
+          {
+            "$ref": "#/components/parameters/end_sales_order_date"
+          },
+          {
+            "$ref": "#/components/parameters/charge_employee_ids"
+          },
+          {
+            "$ref": "#/components/parameters/customer_ids"
+          },
+          {
+            "$ref": "#/components/parameters/canceled"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SalesOrderIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales_orders"
+        ],
+        "summary": "受注登録",
+        "description": "<h2 id=\"\">概要</h2>\n<p>新しい受注を登録します。\n顧客からの注文情報を登録し、納品・請求・入金の予定情報を管理できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>必須項目</h3>\n<ul>\n<li>\n<p>sales_order_date : 受注日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>lines : 明細リスト</p>\n</li>\n</ul>\n<h3>任意項目</h3>\n<ul>\n<li>\n<p>sales_order_subject : 受注タイトル</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>deliveries_on : 納品予定日</p>\n</li>\n<li>\n<p>accepts_on : 検収予定日</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n</ul>",
+        "operationId": "create_sales_order",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/SalesOrderCreateRequest"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/SalesOrderCreateResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/sales_orders/{id}": {
+      "get": {
+        "tags": [
+          "sales_orders"
+        ],
+        "summary": "受注詳細取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの受注の詳細情報を取得します。\n受注の基本情報に加えて、納品・請求・入金情報などの詳細な進捗情報も取得できます。\n</p>",
+        "operationId": "get_sales_order",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "受注ID",
+            "schema": {
+              "type": "string",
+              "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+              "maxLength": 26,
+              "minLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "受注詳細取得のレスポンス",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalesOrderDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.secure.freee.co.jp/public_api/authorize",
+            "tokenUrl": "https://accounts.secure.freee.co.jp/public_api/token",
+            "scopes": {
+              "write": "データの書き込み",
+              "read": "データの読み取り"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "company_id": {
+        "name": "company_id",
+        "in": "query",
+        "required": true,
+        "description": "事業所ID",
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "minimum": 1,
+          "maximum": 9223372036854776000,
+          "example": 1
+        }
+      },
+      "start_business_date": {
+        "name": "start_business_date",
+        "description": "案件登録日で絞込：開始日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "end_business_date": {
+        "name": "end_business_date",
+        "description": "案件登録日で絞込：終了日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "sales_progression_ids": {
+        "name": "sales_progression_ids[]",
+        "description": "受注確度ID",
+        "in": "query",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 26,
+            "minLength": 26,
+            "example": "01K35WX4YTCRD5KG58GGWEV8JT"
+          }
+        }
+      },
+      "business_phase_ids": {
+        "name": "business_phase_ids[]",
+        "description": "案件フェーズID",
+        "in": "query",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 26,
+            "minLength": 26,
+            "example": "01K35WX4YTCRD5KG58GGWEV8JT"
+          }
+        }
+      },
+      "charge_employee_ids": {
+        "name": "charge_employee_ids[]",
+        "description": "社内担当者の従業員ID",
+        "in": "query",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854776000,
+            "example": 1001
+          }
+        }
+      },
+      "customer_ids": {
+        "name": "customer_ids[]",
+        "description": "顧客の取引先ID",
+        "in": "query",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854776000,
+            "example": 12345
+          }
+        }
+      },
+      "canceled": {
+        "name": "canceled",
+        "description": "取消状態",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "description": "取得レコードの件数（デフォルト：20, 最小：1, 最大：100）",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        }
+      },
+      "offset": {
+        "name": "offset",
+        "description": "取得レコードのオフセット（デフォルト：0）",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0,
+          "maximum": 2147483647,
+          "default": 0
+        }
+      },
+      "start_sales_order_date": {
+        "name": "start_sales_order_date",
+        "description": "受注日で絞込：開始日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2024-01-01"
+        }
+      },
+      "end_sales_order_date": {
+        "name": "end_sales_order_date",
+        "description": "受注日で絞込：終了日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2024-12-31"
+        }
+      }
+    },
+    "schemas": {
+      "Employee": {
+        "description": "社内担当者",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "従業員ID",
+            "example": 101
+          },
+          "display_name": {
+            "type": "string",
+            "description": "従業員名",
+            "example": "田中太郎"
+          }
+        },
+        "required": [
+          "id",
+          "display_name"
+        ],
+        "nullable": true,
+        "additionalProperties": false
+      },
+      "Customer": {
+        "description": "顧客",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "取引先ID",
+            "example": 1001
+          },
+          "name": {
+            "type": "string",
+            "description": "取引先名",
+            "example": "株式会社サンプル"
+          },
+          "code": {
+            "type": "string",
+            "description": "取引先コード",
+            "nullable": true,
+            "example": "C-001"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "nullable": true,
+        "additionalProperties": false
+      },
+      "SalesProgression": {
+        "description": "受注確度",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "受注確度ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "name": {
+            "type": "string",
+            "description": "受注確度名称",
+            "example": "B"
+          }
+        },
+        "nullable": true,
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "BusinessPhase": {
+        "description": "案件フェーズ",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "フェーズID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "name": {
+            "type": "string",
+            "description": "フェーズ名称",
+            "example": "引き合い"
+          }
+        },
+        "nullable": true,
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "ReportingSection": {
+        "description": "担当部門",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "部門ID",
+            "example": 67890
+          },
+          "name": {
+            "type": "string",
+            "description": "部門名",
+            "example": "開発部"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "nullable": true,
+        "additionalProperties": false
+      },
+      "BusinessDigest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "案件ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "name": {
+            "type": "string",
+            "description": "案件名称",
+            "example": "サンプル案件"
+          },
+          "business_date": {
+            "type": "string",
+            "format": "date",
+            "description": "案件登録日",
+            "nullable": true,
+            "example": "2025-04-01"
+          },
+          "charge_employee": {
+            "$ref": "#/components/schemas/Employee"
+          },
+          "code": {
+            "type": "string",
+            "description": "案件コード",
+            "nullable": true,
+            "example": "B-0000000003"
+          },
+          "canceled": {
+            "type": "boolean",
+            "description": "取消状態",
+            "example": false,
+            "nullable": true
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "sales_progression": {
+            "$ref": "#/components/schemas/SalesProgression"
+          },
+          "scheduled_completion_date": {
+            "type": "string",
+            "format": "date",
+            "description": "完了予定日",
+            "nullable": true,
+            "example": "2025-06-30"
+          },
+          "completion_date": {
+            "type": "string",
+            "format": "date",
+            "description": "完了日",
+            "nullable": true,
+            "example": "2025-06-15"
+          },
+          "business_phase": {
+            "$ref": "#/components/schemas/BusinessPhase"
+          },
+          "reporting_section": {
+            "$ref": "#/components/schemas/ReportingSection"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "limit_value": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "description": "現在の1ページあたりの件数",
+            "example": 50
+          },
+          "current_offset": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "description": "現在のオフセット件数",
+            "example": 0
+          },
+          "next_offset": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "description": "次のオフセット（存在しない場合はnull）",
+            "nullable": true,
+            "example": 50
+          },
+          "prev_offset": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "description": "前のオフセット（存在しない場合はnull）",
+            "nullable": true,
+            "example": 0
+          },
+          "total_count": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "description": "現在のフィルタ条件での総件数",
+            "example": 200
+          }
+        },
+        "required": [
+          "limit_value",
+          "current_offset",
+          "total_count"
+        ],
+        "additionalProperties": false
+      },
+      "ProductError": {
+        "type": "object",
+        "description": "エラー",
+        "properties": {
+          "status_code": {
+            "type": "integer",
+            "description": "HTTPステータスコード",
+            "minimum": 400,
+            "maximum": 599,
+            "example": 404
+          },
+          "errors": {
+            "type": "array",
+            "maxItems": 1,
+            "description": "エラーの詳細",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "codes": {
+                  "type": "array",
+                  "description": "エラーコード",
+                  "maxItems": 1,
+                  "items": {
+                    "type": "string",
+                    "example": "company_not_found"
+                  }
+                },
+                "messages": {
+                  "type": "array",
+                  "description": "エラーメッセージ",
+                  "items": {
+                    "type": "string",
+                    "example": "事業所が見つかりませんでした。"
+                  }
+                }
+              },
+              "required": [
+                "codes",
+                "messages"
+              ]
+            }
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "status_code",
+          "errors"
+        ]
+      },
+      "AuthError": {
+        "type": "object",
+        "description": "認証エラー",
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "エラーメッセージ",
+            "example": "ログインをして下さい"
+          },
+          "code": {
+            "type": "string",
+            "description": "エラーコード",
+            "example": "invalid_access_token"
+          }
+        }
+      },
+      "WithCompanyId": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "company_id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "事業所ID",
+            "example": 1
+          }
+        },
+        "required": [
+          "company_id"
+        ]
+      },
+      "ChargeEmployeeId": {
+        "description": "社内担当者の従業員ID",
+        "type": "integer",
+        "format": "int64",
+        "maximum": 9223372036854776000,
+        "nullable": true,
+        "example": 101
+      },
+      "CustomerId": {
+        "description": "顧客の取引先ID",
+        "type": "integer",
+        "format": "int64",
+        "maximum": 9223372036854776000,
+        "nullable": true,
+        "example": 1001
+      },
+      "ReportingSectionId": {
+        "description": "担当部門ID<br>\n※ 親部門のIDは指定できません",
+        "type": "integer",
+        "format": "int64",
+        "maximum": 9223372036854776000,
+        "nullable": true,
+        "example": 67890
+      },
+      "InternalMemo": {
+        "description": "社内メモ",
+        "type": "string",
+        "nullable": true,
+        "maxLength": 2000,
+        "example": "重要案件のため優先対応"
+      },
+      "BusinessRequestBase": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "案件名称",
+            "type": "string",
+            "example": "サンプル案件",
+            "maxLength": 100
+          },
+          "code": {
+            "description": "案件コード",
+            "type": "string",
+            "example": "B-0000000001",
+            "maxLength": 50
+          },
+          "business_date": {
+            "description": "案件登録日",
+            "type": "string",
+            "format": "date",
+            "example": "2025-04-01"
+          },
+          "charge_employee_id": {
+            "$ref": "#/components/schemas/ChargeEmployeeId"
+          },
+          "customer_id": {
+            "$ref": "#/components/schemas/CustomerId"
+          },
+          "prospect_sales_order": {
+            "description": "受注見込",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "nullable": true,
+            "example": 6000000
+          },
+          "sales_progression_id": {
+            "description": "受注確度ID",
+            "type": "string",
+            "nullable": true,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "scheduled_completion_date": {
+            "description": "完了予定日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2025-06-30"
+          },
+          "completion_date": {
+            "description": "完了日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2025-06-15"
+          },
+          "business_phase_id": {
+            "type": "string",
+            "description": "フェーズID",
+            "nullable": true,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "reporting_section_id": {
+            "$ref": "#/components/schemas/ReportingSectionId"
+          },
+          "internal_memo": {
+            "$ref": "#/components/schemas/InternalMemo"
+          },
+          "custom_fields": {
+            "type": "array",
+            "nullable": true,
+            "description": "カスタム項目",
+            "items": {
+              "type": "object",
+              "properties": {
+                "definition_id": {
+                  "type": "string",
+                  "description": "カスタム項目ID",
+                  "minLength": 26,
+                  "maxLength": 26,
+                  "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+                },
+                "value": {
+                  "description": "カスタム項目の値",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "nullable": true,
+                  "example": "サンプル値"
+                }
+              },
+              "required": [
+                "definition_id",
+                "value"
+              ]
+            },
+            "example": [
+              {
+                "definition_id": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+                "value": "PJ-123456"
+              },
+              {
+                "definition_id": "01JPP4FD1CVQWCDSWA90VE1ZTN",
+                "value": 234
+              }
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "CustomField": {
+        "type": "object",
+        "description": "カスタム項目",
+        "properties": {
+          "value": {
+            "description": "カスタム項目の値",
+            "nullable": true,
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "example": "サンプル値"
+          },
+          "definition_id": {
+            "type": "string",
+            "description": "カスタム項目定義ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+            "maxLength": 26,
+            "minLength": 26
+          },
+          "definition_name": {
+            "type": "string",
+            "description": "カスタム項目定義名",
+            "example": "カスタム項目1"
+          }
+        },
+        "required": [
+          "value",
+          "definition_id",
+          "definition_name"
+        ],
+        "additionalProperties": false
+      },
+      "BusinessDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BusinessDigest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "actual_profit": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "粗利(実績)",
+                "nullable": true,
+                "example": 1000000
+              },
+              "sales_totals_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "売上合計金額(税抜)",
+                "nullable": true,
+                "example": 5000000
+              },
+              "procurement_totals_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "仕入合計金額(税抜)",
+                "nullable": true,
+                "example": 3000000
+              },
+              "other_cost_totals_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "その他原価実績",
+                "nullable": true,
+                "example": 1000000
+              },
+              "prospect_sales_order": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "受注見込",
+                "nullable": true,
+                "example": 6000000
+              },
+              "prospect_purchase_order": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "発注見込",
+                "nullable": true,
+                "example": 3500000
+              },
+              "prospect_other_cost": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "その他費用見込",
+                "nullable": true,
+                "example": 1200000
+              },
+              "quotation_totals_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "見積合計金額(税抜)",
+                "nullable": true,
+                "example": 5500000
+              },
+              "sales_order_totals_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "受注合計金額(税抜)",
+                "nullable": true,
+                "example": 5200000
+              },
+              "delivered_totals_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "納品確定金額(税抜)",
+                "nullable": true,
+                "example": 4800000
+              },
+              "bill_totals_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "請求合計金額(税抜)",
+                "nullable": true,
+                "example": 4800000
+              },
+              "purchase_order_totals_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "発注合計金額(税抜)",
+                "nullable": true,
+                "example": 3200000
+              },
+              "actual_other_cost": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "その他費用実績",
+                "nullable": true,
+                "example": 900000
+              },
+              "prospect_profit": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "粗利(見込)",
+                "nullable": true,
+                "example": 1300000
+              },
+              "budget_profit": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "受発注差額(税抜)",
+                "nullable": true,
+                "example": 1500000
+              },
+              "margin_actual_rate_percent": {
+                "type": "number",
+                "format": "float",
+                "description": "粗利率実績",
+                "nullable": true,
+                "example": 20.5
+              },
+              "budget_total_labor_cost": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "人件費(予算)\n\n※freee工数管理と連携している場合のみ値が反映されます\n",
+                "nullable": true,
+                "example": 2000000
+              },
+              "actual_total_labor_cost": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "人件費(実績)\n\n※freee工数管理と連携している場合のみ値が反映されます\n",
+                "nullable": true,
+                "example": 1800000
+              },
+              "internal_memo": {
+                "type": "string",
+                "description": "社内メモ",
+                "nullable": true,
+                "example": "重要顧客案件"
+              },
+              "registered_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "登録日時",
+                "nullable": true,
+                "example": "2025-04-01T09:00:00+09:00"
+              },
+              "registered_by": {
+                "$ref": "#/components/schemas/Employee"
+              },
+              "last_updated_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "変更日時",
+                "nullable": true,
+                "example": "2025-04-15T14:30:00+09:00"
+              },
+              "last_updated_by": {
+                "$ref": "#/components/schemas/Employee"
+              },
+              "custom_fields": {
+                "type": "array",
+                "description": "カスタム項目一覧",
+                "items": {
+                  "$ref": "#/components/schemas/CustomField"
+                },
+                "example": [
+                  {
+                    "value": "サンプルテキスト",
+                    "definition_id": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+                    "definition_name": "カスタム項目1"
+                  },
+                  {
+                    "value": 12345,
+                    "definition_id": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+                    "definition_name": "カスタム項目2"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "custom_fields"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "schemas-BusinessPhase": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "name": {
+            "type": "string",
+            "description": "名称",
+            "example": "引き合い"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "schemas-SalesProgression": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "name": {
+            "type": "string",
+            "description": "名称",
+            "example": "A"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "MasterItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "code": {
+            "type": "string",
+            "description": "商品コード",
+            "example": "ITEM-001"
+          },
+          "name": {
+            "type": "string",
+            "description": "商品名",
+            "example": "サンプル商品"
+          },
+          "display_name": {
+            "type": "string",
+            "description": "表示名",
+            "example": "サンプル商品（表示用）"
+          },
+          "uom_name": {
+            "type": "string",
+            "description": "単位",
+            "example": "個"
+          },
+          "unit_price": {
+            "type": "number",
+            "description": "単価",
+            "example": 1000,
+            "format": "float",
+            "nullable": true
+          },
+          "tax_code": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "description": "税区分",
+            "example": 128,
+            "nullable": true
+          },
+          "item_tag_id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "会計品目タグID",
+            "example": 2001,
+            "nullable": true
+          },
+          "memo_tag_ids": {
+            "type": "array",
+            "description": "メモタグID",
+            "items": {
+              "type": "integer",
+              "format": "int64",
+              "maximum": 9223372036854776000,
+              "example": 3001
+            },
+            "nullable": false
+          },
+          "quantity": {
+            "type": "number",
+            "description": "標準数量",
+            "example": 10,
+            "format": "float",
+            "nullable": true
+          },
+          "account_item_id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "勘定科目ID",
+            "example": 12345,
+            "nullable": true
+          },
+          "reduced": {
+            "type": "boolean",
+            "description": "軽減税率対象フラグ",
+            "example": false,
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "display_name",
+          "memo_tag_ids"
+        ],
+        "additionalProperties": false
+      },
+      "DealLineType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "code": {
+            "type": "string",
+            "description": "コード",
+            "example": "LT-0000000001",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "description": "名称",
+            "example": "課税売上"
+          },
+          "type": {
+            "type": "string",
+            "description": "利用区分",
+            "enum": [
+              "sales",
+              "procurement"
+            ],
+            "example": "sales"
+          },
+          "account_item_id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "勘定科目ID",
+            "example": 12345
+          },
+          "tax_code": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "description": "税区分",
+            "example": 128
+          },
+          "reduced": {
+            "type": "boolean",
+            "description": "軽減税率対象フラグ",
+            "example": false
+          },
+          "is_default": {
+            "type": "boolean",
+            "description": "既定フラグ",
+            "example": false
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "account_item_id",
+          "tax_code",
+          "reduced",
+          "is_default"
+        ],
+        "additionalProperties": false
+      },
+      "schemas-Employee": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID",
+            "example": 101
+          },
+          "num": {
+            "type": "string",
+            "description": "従業員番号",
+            "example": "A001",
+            "nullable": true
+          },
+          "display_name": {
+            "type": "string",
+            "description": "表示名",
+            "example": "山田太郎"
+          }
+        },
+        "required": [
+          "id",
+          "display_name"
+        ]
+      },
+      "CustomFieldDefinitionBase": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "カスタム項目定義のID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "key": {
+            "type": "string",
+            "description": "カスタム項目定義のキー",
+            "example": "custom_field_001"
+          },
+          "display_name": {
+            "type": "string",
+            "description": "表示名",
+            "example": "プロジェクトコード"
+          },
+          "type": {
+            "type": "string",
+            "description": "カスタム項目の入力形式\n* `text` - 一行テキスト\n* `textarea` - 複数行テキスト\n* `amount` - 金額\n* `quantity` - 数量\n* `number` - 数値\n* `date` - 日付\n* `enum` - プルダウン",
+            "enum": [
+              "text",
+              "textarea",
+              "amount",
+              "quantity",
+              "number",
+              "date",
+              "enum"
+            ],
+            "example": "text"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "必須項目かどうか",
+            "example": false
+          },
+          "description": {
+            "type": "string",
+            "description": "項目の説明",
+            "nullable": true,
+            "example": "プロジェクトを識別するためのコード"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "display_name",
+          "type",
+          "required"
+        ],
+        "additionalProperties": false
+      },
+      "TextCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "text"
+                ],
+                "example": "text"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
+      },
+      "TextareaCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "textarea"
+                ],
+                "example": "textarea"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
+      },
+      "AmountCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "amount"
+                ],
+                "example": "amount"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
+      },
+      "QuantityCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "quantity"
+                ],
+                "example": "quantity"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
+      },
+      "NumberCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "number"
+                ],
+                "example": "number"
+              },
+              "unit": {
+                "type": "string",
+                "description": "単位",
+                "nullable": true,
+                "example": "個"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
+      },
+      "DateCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "date"
+                ],
+                "example": "date"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
+      },
+      "EnumCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "enum"
+                ],
+                "example": "enum"
+              },
+              "enumerations": {
+                "type": "array",
+                "description": "選択肢",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID",
+                      "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "表示名",
+                      "example": "オプション1"
+                    },
+                    "usable": {
+                      "type": "boolean",
+                      "description": "入力候補に使用可能かどうか<br><br>※falseの場合、その選択肢自体は削除せず、Web画面での案件登録時などに入力候補として表示されません。ただし案件登録APIなどでfalseの選択肢をパラメータに指定すれば設定できます。",
+                      "example": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "usable"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "type",
+              "enumerations"
+            ]
+          }
+        ]
+      },
+      "CustomFieldDefinition": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/TextCustomFieldDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/TextareaCustomFieldDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/AmountCustomFieldDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/QuantityCustomFieldDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/NumberCustomFieldDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/DateCustomFieldDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/EnumCustomFieldDefinition"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "text": "#/components/schemas/TextCustomFieldDefinition",
+            "textarea": "#/components/schemas/TextareaCustomFieldDefinition",
+            "amount": "#/components/schemas/AmountCustomFieldDefinition",
+            "quantity": "#/components/schemas/QuantityCustomFieldDefinition",
+            "number": "#/components/schemas/NumberCustomFieldDefinition",
+            "date": "#/components/schemas/DateCustomFieldDefinition",
+            "enum": "#/components/schemas/EnumCustomFieldDefinition"
+          }
+        }
+      },
+      "AmountSet": {
+        "type": "object",
+        "required": [
+          "excluding_tax",
+          "tax",
+          "including_tax"
+        ],
+        "properties": {
+          "excluding_tax": {
+            "type": "integer",
+            "format": "int64",
+            "description": "税抜金額",
+            "maximum": 999999999999,
+            "minimum": -999999999999,
+            "example": 100000
+          },
+          "tax": {
+            "type": "integer",
+            "format": "int64",
+            "description": "税額",
+            "maximum": 999999999999,
+            "minimum": -999999999999,
+            "example": 10000
+          },
+          "including_tax": {
+            "type": "integer",
+            "format": "int64",
+            "description": "税込金額",
+            "maximum": 999999999999,
+            "minimum": -999999999999,
+            "example": 110000
+          }
+        },
+        "description": "金額セット",
+        "additionalProperties": false
+      },
+      "DeliveryProgress": {
+        "description": "納品ステータス (未納品: todo, 一部納品済: doing, 納品済: done)",
+        "enum": [
+          "todo",
+          "doing",
+          "done"
+        ],
+        "type": "string",
+        "example": "todo"
+      },
+      "SalesStatus": {
+        "description": "売上ステータス (未計上: todo, 一部計上済: doing, 計上済: done)",
+        "enum": [
+          "todo",
+          "doing",
+          "done"
+        ],
+        "type": "string",
+        "example": "todo"
+      },
+      "BillingStatus": {
+        "description": "請求書送付ステータス (未送付: todo, 一部送付済: doing, 送付済: done)",
+        "enum": [
+          "todo",
+          "doing",
+          "done"
+        ],
+        "type": "string",
+        "example": "todo"
+      },
+      "CollectionStatus": {
+        "description": "決済ステータス (未決済: todo, 一部決済済: doing, 決済済: done)",
+        "enum": [
+          "todo",
+          "doing",
+          "done"
+        ],
+        "type": "string",
+        "example": "todo"
+      },
+      "Business": {
+        "description": "案件",
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "案件ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "code": {
+            "type": "string",
+            "description": "案件コード",
+            "nullable": true,
+            "example": "B-001"
+          },
+          "name": {
+            "type": "string",
+            "description": "案件名",
+            "example": "サンプル案件"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "SalesOrderDigest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "受注ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "sales_order_no": {
+            "type": "string",
+            "description": "受注No.",
+            "nullable": true,
+            "example": "S211212-00001"
+          },
+          "sales_order_subject": {
+            "description": "受注タイトル",
+            "type": "string",
+            "nullable": true,
+            "example": "サンプル案件受注の件"
+          },
+          "sales_order_date": {
+            "description": "受注日",
+            "type": "string",
+            "format": "date",
+            "example": "2025-04-01"
+          },
+          "customer_order_no": {
+            "description": "顧客注文No.",
+            "type": "string",
+            "nullable": true,
+            "example": "C-PO-20250401-001"
+          },
+          "amount_set": {
+            "$ref": "#/components/schemas/AmountSet",
+            "nullable": true
+          },
+          "amount_of_withholding_tax": {
+            "description": "源泉徴収税額",
+            "format": "int64",
+            "type": "integer",
+            "example": 10000,
+            "nullable": true
+          },
+          "registered_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "登録日時",
+            "nullable": true,
+            "example": "2025-01-15T10:30:00+09:00"
+          },
+          "registered_by": {
+            "description": "登録者",
+            "$ref": "#/components/schemas/Employee",
+            "nullable": true
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "変更日時",
+            "nullable": true,
+            "example": "2025-01-16T14:45:00+09:00"
+          },
+          "last_updated_by": {
+            "description": "変更者",
+            "$ref": "#/components/schemas/Employee",
+            "nullable": true
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "sales_on": {
+            "description": "売上予定日",
+            "type": "string",
+            "format": "date",
+            "example": "2025-04-01",
+            "nullable": true
+          },
+          "delivery_progress": {
+            "$ref": "#/components/schemas/DeliveryProgress",
+            "nullable": true
+          },
+          "sales_status": {
+            "$ref": "#/components/schemas/SalesStatus",
+            "nullable": true
+          },
+          "billing_status": {
+            "$ref": "#/components/schemas/BillingStatus",
+            "nullable": true
+          },
+          "collection_status": {
+            "$ref": "#/components/schemas/CollectionStatus",
+            "nullable": true
+          },
+          "business": {
+            "$ref": "#/components/schemas/Business"
+          },
+          "total_amount": {
+            "description": "源泉徴収税額を除いた合計金額",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 10000,
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "sales_order_date",
+          "customer",
+          "registered_at",
+          "last_updated_at"
+        ],
+        "additionalProperties": false
+      },
+      "BillingCreatingMethodType": {
+        "description": "請求作成方法区分 (自動作成: automatically, 手動作成: manually)",
+        "enum": [
+          "automatically",
+          "manually"
+        ],
+        "type": "string",
+        "example": "automatically"
+      },
+      "CollectionMethodType": {
+        "description": "入金方法 (振込: transfer, 現金: cash, 手形: bill_payable, 口座振替: direct_debit)",
+        "type": "string",
+        "enum": [
+          "transfer",
+          "cash",
+          "bill_payable",
+          "direct_debit"
+        ],
+        "example": "transfer"
+      },
+      "LineType": {
+        "description": "明細種別",
+        "enum": [
+          "basic",
+          "text"
+        ],
+        "type": "string"
+      },
+      "BasicLineParams": {
+        "description": "通常明細パラメータ",
+        "type": "object",
+        "properties": {
+          "line_type": {
+            "$ref": "#/components/schemas/LineType"
+          },
+          "master_item_id": {
+            "description": "商品ID",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 26,
+            "minLength": 26,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "deal_line_type_id": {
+            "description": "明細取引タイプID",
+            "type": "string",
+            "maxLength": 26,
+            "minLength": 26,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "description": {
+            "description": "摘要",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200,
+            "example": "パンフレットデザイン料"
+          },
+          "quantity": {
+            "description": "数量",
+            "format": "double",
+            "type": "number",
+            "example": 100
+          },
+          "uom_name": {
+            "description": "単位",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10,
+            "example": "個"
+          },
+          "unit_price": {
+            "description": "単価",
+            "format": "double",
+            "type": "number",
+            "example": 1000,
+            "maximum": 999999999999,
+            "minimum": -999999999999
+          },
+          "accounting_reporting_section_id": {
+            "description": "会計計上部門ID<br>\n※ 親部門のIDは指定できません",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "type": "integer",
+            "nullable": true,
+            "example": 67890
+          },
+          "item_tag_id": {
+            "description": "会計品目タグID",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "type": "integer",
+            "nullable": true,
+            "example": 2001
+          },
+          "memo_tags": {
+            "description": "メモタグID",
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "format": "int64",
+              "maximum": 9223372036854776000,
+              "type": "integer",
+              "example": 3001
+            }
+          },
+          "withholding_enabled": {
+            "description": "源泉徴収税対象明細かどうか",
+            "type": "boolean",
+            "example": false
+          },
+          "is_manual_tax_entry": {
+            "description": "税の手動入力を行うかどうか",
+            "type": "boolean",
+            "example": false
+          },
+          "tax": {
+            "description": "手動入力した税額<br>\n※is_manual_tax_entryがtrueの場合のみ参照されます。falseの場合は値を設定しても無視されます。",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 999999999999,
+            "minimum": -999999999999,
+            "nullable": true,
+            "example": 10000
+          }
+        },
+        "required": [
+          "line_type",
+          "deal_line_type_id",
+          "quantity",
+          "unit_price",
+          "withholding_enabled",
+          "is_manual_tax_entry"
+        ],
+        "additionalProperties": false
+      },
+      "TextLineParams": {
+        "description": "テキスト明細パラメータ",
+        "type": "object",
+        "properties": {
+          "line_type": {
+            "$ref": "#/components/schemas/LineType"
+          },
+          "text": {
+            "description": "テキスト行",
+            "type": "string",
+            "maxLength": 200,
+            "example": "備考：特急料金が含まれます"
+          }
+        },
+        "required": [
+          "line_type",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "LineParams": {
+        "description": "明細パラメータ",
+        "discriminator": {
+          "propertyName": "line_type",
+          "mapping": {
+            "basic": "#/components/schemas/BasicLineParams",
+            "text": "#/components/schemas/TextLineParams"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BasicLineParams"
+          },
+          {
+            "$ref": "#/components/schemas/TextLineParams"
+          }
+        ]
+      },
+      "SalesOrderRequestBase": {
+        "type": "object",
+        "properties": {
+          "sales_order_subject": {
+            "description": "受注タイトル",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件パンフレット作成"
+          },
+          "sales_order_date": {
+            "description": "受注日",
+            "type": "string",
+            "format": "date",
+            "example": "2021-12-12"
+          },
+          "customer_order_no": {
+            "description": "顧客注文No.",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "C-PO-20211212-001"
+          },
+          "customer_id": {
+            "description": "顧客の取引先ID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 1001
+          },
+          "sales_on": {
+            "description": "売上予定日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2021-12-12"
+          },
+          "deliveries_on": {
+            "description": "納品予定日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2021-12-12"
+          },
+          "accepts_on": {
+            "description": "検収予定日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2021-12-12"
+          },
+          "delivery_template_id": {
+            "description": "納品書テンプレートID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "nullable": true,
+            "example": 10001
+          },
+          "delivery_subject": {
+            "description": "納品書件名",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件パンフレット作成"
+          },
+          "delivery_note": {
+            "description": "納品書の備考欄に掲載する内容",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000,
+            "example": "納品時の注意事項"
+          },
+          "billing_creating_method_type": {
+            "description": "請求の管理",
+            "$ref": "#/components/schemas/BillingCreatingMethodType"
+          },
+          "bills_on": {
+            "description": "請求予定日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2021-12-12"
+          },
+          "billing_partner_id": {
+            "description": "請求先の取引先ID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 1002
+          },
+          "invoice_template_id": {
+            "description": "請求書テンプレートID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "nullable": true,
+            "example": 10002
+          },
+          "invoice_subject": {
+            "description": "請求書件名",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件パンフレット作成"
+          },
+          "invoice_note": {
+            "description": "請求書の備考欄に掲載する内容",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000,
+            "example": "お振込期限は月末までとなります"
+          },
+          "collects_on": {
+            "description": "入金予定日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2021-12-12"
+          },
+          "collecting_partner_id": {
+            "description": "入金元の取引先ID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 1003
+          },
+          "collection_method_type": {
+            "description": "入金方法",
+            "$ref": "#/components/schemas/CollectionMethodType"
+          },
+          "charge_employee_id": {
+            "$ref": "#/components/schemas/ChargeEmployeeId"
+          },
+          "reporting_section_id": {
+            "$ref": "#/components/schemas/ReportingSectionId"
+          },
+          "internal_memo": {
+            "$ref": "#/components/schemas/InternalMemo"
+          },
+          "business_id": {
+            "description": "案件ID",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 26,
+            "minLength": 26,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "lines": {
+            "description": "明細リスト",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineParams"
+            }
+          }
+        },
+        "required": [
+          "sales_order_date",
+          "customer_id",
+          "billing_creating_method_type",
+          "billing_partner_id",
+          "collecting_partner_id",
+          "collection_method_type",
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "AmountSetRate": {
+        "description": "税率を含む金額セット",
+        "type": "object",
+        "properties": {
+          "rate": {
+            "description": "税率",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "type": "integer",
+            "example": 10
+          },
+          "reduced": {
+            "description": "軽減税率フラグ",
+            "type": "boolean",
+            "example": false
+          },
+          "amount_set": {
+            "$ref": "#/components/schemas/AmountSet"
+          },
+          "amount_of_deductible_tax": {
+            "description": "控除可能税額",
+            "format": "int64",
+            "type": "integer",
+            "nullable": true,
+            "example": 5000
+          }
+        },
+        "required": [
+          "rate",
+          "reduced",
+          "amount_set"
+        ],
+        "additionalProperties": false
+      },
+      "BillingPartner": {
+        "description": "請求先",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "取引先ID",
+            "example": 1002
+          },
+          "name": {
+            "type": "string",
+            "description": "取引先名",
+            "example": "株式会社サンプル請求先"
+          },
+          "code": {
+            "type": "string",
+            "description": "取引先コード",
+            "nullable": true,
+            "example": "BP-001"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "nullable": true,
+        "additionalProperties": false
+      },
+      "CollectingPartner": {
+        "description": "入金元",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "取引先ID",
+            "example": 1003
+          },
+          "name": {
+            "type": "string",
+            "description": "取引先名",
+            "example": "株式会社サンプル入金元"
+          },
+          "code": {
+            "type": "string",
+            "description": "取引先コード",
+            "nullable": true,
+            "example": "CP-001"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "nullable": true,
+        "additionalProperties": false
+      },
+      "BasicLineDetail": {
+        "description": "通常明細詳細",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "明細ID",
+            "type": "string",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTN"
+          },
+          "line_no": {
+            "description": "明細行番号",
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "example": 1
+          },
+          "line_type": {
+            "$ref": "#/components/schemas/LineType"
+          },
+          "master_item": {
+            "description": "商品情報",
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "商品ID",
+                "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+              },
+              "code": {
+                "type": "string",
+                "description": "商品コード",
+                "nullable": true,
+                "example": "P-001"
+              },
+              "name": {
+                "type": "string",
+                "description": "商品名",
+                "example": "パンフレットA4"
+              }
+            },
+            "additionalProperties": false
+          },
+          "deal_line_type": {
+            "description": "明細取引タイプ",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "明細取引タイプID",
+                "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+              },
+              "name": {
+                "type": "string",
+                "description": "明細取引タイプ名",
+                "example": "課税売上10%"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": {
+            "description": "摘要",
+            "type": "string",
+            "nullable": true,
+            "example": "パンフレットデザイン料"
+          },
+          "quantity": {
+            "description": "数量",
+            "format": "double",
+            "type": "number",
+            "example": 100,
+            "nullable": true
+          },
+          "uom_name": {
+            "description": "単位",
+            "type": "string",
+            "nullable": true,
+            "example": "個"
+          },
+          "unit_price": {
+            "description": "単価",
+            "format": "double",
+            "type": "number",
+            "example": 1000,
+            "nullable": true
+          },
+          "amount_set": {
+            "description": "受注金額",
+            "$ref": "#/components/schemas/AmountSet",
+            "nullable": true
+          },
+          "tax_type": {
+            "description": "税区分",
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "code": {
+                "type": "integer",
+                "format": "int32",
+                "maximum": 2147483647,
+                "description": "税区分コード<br>※freee会計 APIで参照可能な税区分のコードです",
+                "example": "10"
+              },
+              "name": {
+                "type": "string",
+                "description": "税区分名",
+                "example": "課税売上10%"
+              }
+            },
+            "additionalProperties": false
+          },
+          "accounting_reporting_section": {
+            "description": "会計計上部門",
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "部門ID",
+                "example": 1001
+              },
+              "name": {
+                "type": "string",
+                "description": "部門名",
+                "example": "営業部"
+              }
+            },
+            "additionalProperties": false
+          },
+          "item_tag": {
+            "description": "会計品目タグ",
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "会計品目タグID",
+                "example": 2001
+              },
+              "name": {
+                "type": "string",
+                "description": "会計品目タグ名",
+                "example": "印刷物"
+              }
+            },
+            "additionalProperties": false
+          },
+          "memo_tags": {
+            "description": "メモタグ",
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "maximum": 9223372036854776000,
+                  "description": "メモタグID",
+                  "example": 3001
+                },
+                "name": {
+                  "type": "string",
+                  "description": "メモタグ名",
+                  "example": "重要案件"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "withholding_enabled": {
+            "description": "源泉徴収税対象明細かどうか",
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "id",
+          "line_no",
+          "line_type",
+          "deal_line_type",
+          "quantity",
+          "unit_price",
+          "withholding_enabled"
+        ],
+        "additionalProperties": false
+      },
+      "TextLineDetail": {
+        "description": "テキスト明細詳細",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "明細ID",
+            "type": "string",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTN"
+          },
+          "line_no": {
+            "description": "明細行番号",
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "example": 1
+          },
+          "line_type": {
+            "$ref": "#/components/schemas/LineType"
+          },
+          "text": {
+            "description": "テキスト行",
+            "type": "string",
+            "example": "備考：特急料金が含まれます"
+          }
+        },
+        "required": [
+          "id",
+          "line_no",
+          "line_type",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "LineDetail": {
+        "description": "明細詳細",
+        "discriminator": {
+          "propertyName": "line_type",
+          "mapping": {
+            "basic": "#/components/schemas/BasicLineDetail",
+            "text": "#/components/schemas/TextLineDetail"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BasicLineDetail"
+          },
+          {
+            "$ref": "#/components/schemas/TextLineDetail"
+          }
+        ]
+      },
+      "SalesOrderDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SalesOrderDigest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "amount_set_rates": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AmountSetRate"
+                },
+                "nullable": true
+              },
+              "deliveries_on": {
+                "description": "納品予定日",
+                "type": "string",
+                "format": "date",
+                "example": "2025-04-01",
+                "nullable": true
+              },
+              "accepts_on": {
+                "description": "検収予定日",
+                "type": "string",
+                "format": "date",
+                "example": "2025-04-01",
+                "nullable": true
+              },
+              "delivery_template_name": {
+                "description": "納品書テンプレート名称",
+                "type": "string",
+                "nullable": true,
+                "example": "デフォルトテンプレート"
+              },
+              "delivery_subject": {
+                "description": "納品書件名",
+                "type": "string",
+                "nullable": true,
+                "example": "サンプル案件受注の件"
+              },
+              "delivery_note": {
+                "description": "納品書の備考欄に掲載する内容",
+                "type": "string",
+                "nullable": true,
+                "example": "納品時の注意事項"
+              },
+              "delivered_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "納品済金額(税抜)",
+                "nullable": true,
+                "example": 5200000
+              },
+              "remaining_delivered_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "納品残金額(税抜)",
+                "nullable": true,
+                "example": 5200000
+              },
+              "sales_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "売上金額(税抜)",
+                "nullable": true,
+                "example": 5200000
+              },
+              "remaining_sales_order_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "description": "受注残金額(税抜)",
+                "nullable": true,
+                "example": 5200000
+              },
+              "billing_creating_method_type": {
+                "description": "請求の管理",
+                "$ref": "#/components/schemas/BillingCreatingMethodType",
+                "nullable": true
+              },
+              "bills_on": {
+                "description": "請求予定日",
+                "type": "string",
+                "format": "date",
+                "example": "2025-04-01",
+                "nullable": true
+              },
+              "billing_partner": {
+                "$ref": "#/components/schemas/BillingPartner"
+              },
+              "invoice_template_name": {
+                "description": "請求書テンプレート名称",
+                "type": "string",
+                "nullable": true,
+                "example": "デフォルトテンプレート"
+              },
+              "invoice_subject": {
+                "description": "請求書件名",
+                "type": "string",
+                "nullable": true,
+                "example": "サンプル案件受注の件"
+              },
+              "invoice_note": {
+                "description": "請求書の備考欄に掲載する内容",
+                "type": "string",
+                "nullable": true,
+                "example": "お振込期限は月末までとなります"
+              },
+              "collects_on": {
+                "description": "入金予定日",
+                "type": "string",
+                "format": "date",
+                "example": "2025-04-01",
+                "nullable": true
+              },
+              "collecting_partner": {
+                "$ref": "#/components/schemas/CollectingPartner"
+              },
+              "collection_method_type": {
+                "description": "入金方法",
+                "$ref": "#/components/schemas/CollectionMethodType",
+                "nullable": true
+              },
+              "charge_employee": {
+                "$ref": "#/components/schemas/Employee",
+                "nullable": true
+              },
+              "reporting_section": {
+                "$ref": "#/components/schemas/ReportingSection",
+                "nullable": true
+              },
+              "internal_memo": {
+                "type": "string",
+                "description": "社内メモ",
+                "nullable": true,
+                "example": "重要顧客案件"
+              },
+              "lines": {
+                "description": "明細リスト",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LineDetail"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "sales_order_date",
+              "customer",
+              "billing_partner",
+              "collecting_partner",
+              "registered_at",
+              "last_updated_at",
+              "lines"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "responses": {
+      "BusinessIndexResponse": {
+        "description": "案件一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "businesses": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BusinessDigest"
+                  }
+                },
+                "meta": {
+                  "$ref": "#/components/schemas/PaginationMeta"
+                }
+              },
+              "required": [
+                "businesses",
+                "meta"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "BadRequestErrorResponse": {
+        "description": "Bad Request - リクエストパラメータが不正",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProductError"
+            },
+            "example": {
+              "status_code": 400,
+              "errors": [
+                {
+                  "codes": [
+                    "bad_request"
+                  ],
+                  "messages": [
+                    "リクエストの形式が不正です。"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "UnauthorizedErrorResponse": {
+        "description": "Unauthorized - アクセストークンが無効",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AuthError"
+            },
+            "example": {
+              "message": "ログインをして下さい",
+              "code": "invalid_access_token"
+            }
+          }
+        }
+      },
+      "ForbiddenErrorResponse": {
+        "description": "Forbidden - アクセス権限がない",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProductError"
+            },
+            "example": {
+              "status_code": 403,
+              "errors": [
+                {
+                  "codes": [
+                    "forbidden"
+                  ],
+                  "messages": [
+                    "アクセス権限がありません。"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "NotFoundErrorResponse": {
+        "description": "Not Found - リソースが存在しない",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProductError"
+            },
+            "example": {
+              "status_code": 404,
+              "errors": [
+                {
+                  "codes": [
+                    "not_found"
+                  ],
+                  "messages": [
+                    "指定されたリソースが見つかりませんでした。"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "TooManyRequestsErrorResponse": {
+        "description": "Too Many Requests - リクエスト回数制限を超えた",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProductError"
+            },
+            "example": {
+              "status_code": 429,
+              "errors": [
+                {
+                  "codes": [
+                    "too_many_requests"
+                  ],
+                  "messages": [
+                    "リクエスト回数制限を超えました。しばらく時間をおいてから再度お試しください。"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "InternalServerErrorResponse": {
+        "description": "Internal Server Error - システム内で予期しないエラーが発生",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProductError"
+            },
+            "example": {
+              "status_code": 500,
+              "errors": [
+                {
+                  "codes": [
+                    "internal_server_error"
+                  ],
+                  "messages": [
+                    "システムエラーが発生しました。"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "BusinessCreateResponse": {
+        "description": "案件登録のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BusinessDetail"
+            }
+          }
+        }
+      },
+      "ConflictErrorResponse": {
+        "description": "Conflict - リソースの競合",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ProductError"
+            },
+            "example": {
+              "status_code": 409,
+              "errors": [
+                {
+                  "codes": [
+                    "conflict"
+                  ],
+                  "messages": [
+                    "リソースが競合しています。"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "BusinessShowResponse": {
+        "description": "案件詳細取得のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BusinessDetail"
+            }
+          }
+        }
+      },
+      "BusinessPhasesIndexResponse": {
+        "description": "案件一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "business_phases": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/schemas-BusinessPhase"
+                  }
+                }
+              },
+              "required": [
+                "business_phases"
+              ]
+            }
+          }
+        }
+      },
+      "SalesProgressionIndexResponse": {
+        "description": "営業進捗一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sales_progressions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/schemas-SalesProgression"
+                  }
+                }
+              },
+              "required": [
+                "sales_progressions"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "ItemsIndexResponse": {
+        "description": "商品一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MasterItem"
+                  }
+                }
+              },
+              "required": [
+                "items"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "DealLineTypesIndexResponse": {
+        "description": "明細取引タイプ一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "deal_line_types": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DealLineType"
+                  }
+                }
+              },
+              "required": [
+                "deal_line_types"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "EmployeesIndexResponse": {
+        "description": "従業員一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "employees": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/schemas-Employee"
+                  }
+                }
+              },
+              "required": [
+                "employees"
+              ]
+            }
+          }
+        }
+      },
+      "CustomFieldDefinitionsIndexResponse": {
+        "description": "カスタム項目定義一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "custom_field_definitions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomFieldDefinition"
+                  }
+                }
+              },
+              "required": [
+                "custom_field_definitions"
+              ],
+              "additionalProperties": false
+            },
+            "example": {
+              "custom_field_definitions": [
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+                  "key": "custom_field_001",
+                  "display_name": "プロジェクトコード",
+                  "type": "text",
+                  "required": false,
+                  "description": "プロジェクトを識別するためのコード"
+                },
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTN",
+                  "key": "custom_field_002",
+                  "display_name": "詳細説明",
+                  "type": "textarea",
+                  "required": false,
+                  "description": null
+                },
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTO",
+                  "key": "custom_field_003",
+                  "display_name": "契約金額",
+                  "type": "amount",
+                  "required": true,
+                  "description": null
+                },
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTP",
+                  "key": "custom_field_004",
+                  "display_name": "数量",
+                  "type": "quantity",
+                  "required": false,
+                  "description": null
+                },
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTQ",
+                  "key": "custom_field_005",
+                  "display_name": "重要度",
+                  "type": "number",
+                  "required": false,
+                  "description": null,
+                  "unit": "点"
+                },
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTR",
+                  "key": "custom_field_006",
+                  "display_name": "契約開始日",
+                  "type": "date",
+                  "required": false,
+                  "description": null
+                },
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTS",
+                  "key": "custom_field_007",
+                  "display_name": "優先度",
+                  "type": "enum",
+                  "required": false,
+                  "description": null,
+                  "enumerations": [
+                    {
+                      "id": "01JPP4FD1CVQWCDSWA90VE1ZTT",
+                      "name": "高",
+                      "usable": true
+                    },
+                    {
+                      "id": "01JPP4FD1CVQWCDSWA90VE1ZTU",
+                      "name": "中",
+                      "usable": true
+                    },
+                    {
+                      "id": "01JPP4FD1CVQWCDSWA90VE1ZTV",
+                      "name": "低",
+                      "usable": false
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "SalesOrderIndexResponse": {
+        "description": "受注一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sales_orders": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SalesOrderDigest"
+                  }
+                },
+                "meta": {
+                  "$ref": "#/components/schemas/PaginationMeta"
+                }
+              },
+              "required": [
+                "sales_orders",
+                "meta"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "SalesOrderCreateResponse": {
+        "description": "受注登録のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SalesOrderDetail"
+            }
+          }
+        }
+      }
+    },
+    "requestBodies": {
+      "BusinessCreateRequest": {
+        "description": "案件登録リクエスト",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/WithCompanyId"
+                },
+                {
+                  "$ref": "#/components/schemas/BusinessRequestBase"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "SalesOrderCreateRequest": {
+        "description": "受注登録リクエスト",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/WithCompanyId"
+                },
+                {
+                  "$ref": "#/components/schemas/SalesOrderRequestBase"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -4,6 +4,9 @@ import prettierConfig from 'eslint-config-prettier';
 
 export default [
   {
+    ignores: ['openapi/**'],
+  },
+  {
     files: ['**/*.ts'],
     languageOptions: {
       parser: tsParser,

@@ -113,8 +113,8 @@
       "description": "勤務時間修正申請の操作"
     },
     {
-      "name": "有給申請",
-      "description": "有給申請の操作"
+      "name": "有給休暇申請",
+      "description": "有給休暇申請の操作"
     },
     {
       "name": "特別休暇申請",
@@ -4681,6 +4681,145 @@
         }
       }
     },
+    "/api/v1/employees/{employee_id}/group_memberships": {
+      "get": {
+        "tags": [
+          "所属"
+        ],
+        "summary": "従業員の所属取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した従業員の所属情報をリストで返します。</p>\n<p>base_dateを指定した場合は指定日付時点の所属情報を、base_dateを省略した場合は全期間の所属履歴を返します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>管理者権限を持ったユーザーのみ実行可能です。</li>\n</ul>",
+        "operationId": "get_employee_group_memberships_by_employee_id",
+        "parameters": [
+          {
+            "name": "employee_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "example": 1,
+            "description": "従業員ID"
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "example": 1,
+            "description": "事業所ID"
+          },
+          {
+            "name": "base_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            },
+            "description": "指定日。指定日付時点における所属情報を返します。(YYYY-MM-DD)(例:2018-07-31)\n省略した場合は全期間の所属履歴を返します。\n",
+            "example": "2018-07-31"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "取得レコードの件数 (デフォルト: 50, 最小: 1, 最大: 100)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "example": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "取得レコードのオフセット (デフォルト: 0)",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647,
+              "example": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiV1EmployeesGroupMembershipsIndexSerializer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/accessDeniedError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/notfoundError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internalServerError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/groups": {
       "get": {
         "tags": [
@@ -6822,10 +6961,10 @@
     "/api/v1/approval_requests/paid_holidays": {
       "get": {
         "tags": [
-          "有給申請"
+          "有給休暇申請"
         ],
-        "summary": "有給申請一覧の取得",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の指定日付時点における有給申請情報をリストで返します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n  <li>申請者と承認者が同一ユーザーの場合、feedback(差戻し)をするとレスポンスは以下のようになります。</li>\n  <ul>\n    <li>status: draft</li>\n    <li>approval_flow_logs.action: cancel</li>\n  </ul>\n</ul>",
+        "summary": "有給休暇申請一覧の取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の指定日付時点における有給休暇申請情報をリストで返します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n  <li>申請者と承認者が同一ユーザーの場合、feedback(差戻し)をするとレスポンスは以下のようになります。</li>\n  <ul>\n    <li>status: draft</li>\n    <li>approval_flow_logs.action: cancel</li>\n  </ul>\n</ul>",
         "operationId": "get_approval_requests_paid_holidays",
         "parameters": [
           {
@@ -7024,10 +7163,10 @@
       },
       "post": {
         "tags": [
-          "有給申請"
+          "有給休暇申請"
         ],
-        "summary": "有給申請の作成",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の有給申請を新規作成します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n  <li>申請者と承認者が同一ユーザーの場合、feedback(差戻し)をするとレスポンスは以下のようになります。</li>\n  <ul>\n    <li>status: draft</li>\n    <li>approval_flow_logs.action: cancel</li>\n  </ul>\n</ul>",
+        "summary": "有給休暇申請の作成",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の有給休暇申請を新規作成します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n  <li>申請者と承認者が同一ユーザーの場合、feedback(差戻し)をするとレスポンスは以下のようになります。</li>\n  <ul>\n    <li>status: draft</li>\n    <li>approval_flow_logs.action: cancel</li>\n  </ul>\n</ul>",
         "operationId": "create_approval_requests_paid_holiday",
         "requestBody": {
           "content": {
@@ -7107,10 +7246,10 @@
     "/api/v1/approval_requests/paid_holidays/{id}": {
       "get": {
         "tags": [
-          "有給申請"
+          "有給休暇申請"
         ],
-        "summary": "有給申請の取得",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の有給申請情報を取得します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n  <li>申請者と承認者が同一ユーザーの場合、feedback(差戻し)をするとレスポンスは以下のようになります。</li>\n  <ul>\n    <li>status: draft</li>\n    <li>approval_flow_logs.action: cancel</li>\n  </ul>\n</ul>",
+        "summary": "有給休暇申請の取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の有給休暇申請情報を取得します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n  <li>申請者と承認者が同一ユーザーの場合、feedback(差戻し)をするとレスポンスは以下のようになります。</li>\n  <ul>\n    <li>status: draft</li>\n    <li>approval_flow_logs.action: cancel</li>\n  </ul>\n</ul>",
         "operationId": "get_approval_requests_paid_holiday",
         "parameters": [
           {
@@ -7128,7 +7267,7 @@
           {
             "name": "id",
             "in": "path",
-            "description": "有給申請ID",
+            "description": "有給休暇申請ID",
             "required": true,
             "schema": {
               "type": "integer",
@@ -7207,16 +7346,16 @@
       },
       "put": {
         "tags": [
-          "有給申請"
+          "有給休暇申請"
         ],
-        "summary": "有給申請の更新",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の有給申請情報を更新します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n  <li>申請者と承認者が同一ユーザーの場合、feedback(差戻し)をするとレスポンスは以下のようになります。</li>\n  <ul>\n    <li>status: draft</li>\n    <li>approval_flow_logs.action: cancel</li>\n  </ul>\n</ul>",
+        "summary": "有給休暇申請の更新",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の有給休暇申請情報を更新します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n  <li>申請者と承認者が同一ユーザーの場合、feedback(差戻し)をするとレスポンスは以下のようになります。</li>\n  <ul>\n    <li>status: draft</li>\n    <li>approval_flow_logs.action: cancel</li>\n  </ul>\n</ul>",
         "operationId": "update_approval_requests_paid_holiday",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "有給申請ID",
+            "description": "有給休暇申請ID",
             "required": true,
             "schema": {
               "type": "integer",
@@ -7311,16 +7450,16 @@
       },
       "delete": {
         "tags": [
-          "有給申請"
+          "有給休暇申請"
         ],
-        "summary": "有給申請の削除",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の有給申請情報を削除します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n</ul>",
+        "summary": "有給休暇申請の削除",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の有給休暇申請情報を削除します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n</ul>",
         "operationId": "destroy_approval_requests_paid_holiday",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "有給申請ID",
+            "description": "有給休暇申請ID",
             "required": true,
             "schema": {
               "type": "integer",
@@ -7407,16 +7546,16 @@
     "/api/v1/approval_requests/paid_holidays/{id}/actions": {
       "post": {
         "tags": [
-          "有給申請"
+          "有給休暇申請"
         ],
-        "summary": "有給申請の承認操作",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の有給申請情報を承認操作します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n  <li>全休の有給申請は承認されると申請者の有給の残数が減ります。</li>\n  <li>半休と時間休の有給申請は承認されても申請者の有給の残数が減らない場合があります。以下の条件を満たす場合、申請者の有給の残数が減ります。</li>\n  <ul>\n    <li>申請承認後、申請者が申請の対象日に出勤打刻と退勤打刻をする。</li>\n    <li>申請承認前に、申請者が申請の対象日に勤怠を登録している。</li>\n  </ul>\n  <li>申請者と承認者が同一ユーザーの場合、feedback(差戻し)をするとレスポンスは以下のようになります。</li>\n  <ul>\n    <li>status: draft</li>\n    <li>approval_flow_logs.action: cancel</li>\n  </ul>\n</ul>",
+        "summary": "有給休暇申請の承認操作",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の有給休暇申請情報を承認操作します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>申請経路、承認者の指定として部門役職データ連携を活用し、以下のいずれかを利用している申請と申請経路はAPI経由で参照は可能ですが、作成と更新、承認ステータスの変更ができません。</li>\n  <ul>\n    <li>役職指定（申請者の所属部門）</li>\n    <li>役職指定（申請時に部門指定）</li>\n    <li>部門および役職指定</li>\n  </ul>\n  <li>全休の有給休暇申請は承認されると申請者の有給の残数が減ります。</li>\n  <li>半休と時間休の有給休暇申請は承認されても申請者の有給の残数が減らない場合があります。以下の条件を満たす場合、申請者の有給の残数が減ります。</li>\n  <ul>\n    <li>申請承認後、申請者が申請の対象日に出勤打刻と退勤打刻をする。</li>\n    <li>申請承認前に、申請者が申請の対象日に勤怠を登録している。</li>\n  </ul>\n  <li>申請者と承認者が同一ユーザーの場合、feedback(差戻し)をするとレスポンスは以下のようになります。</li>\n  <ul>\n    <li>status: draft</li>\n    <li>approval_flow_logs.action: cancel</li>\n  </ul>\n</ul>",
         "operationId": "action_approval_requests_paid_holiday",
         "parameters": [
           {
             "name": "id",
             "in": "path",
-            "description": "有給申請ID",
+            "description": "有給休暇申請ID",
             "required": true,
             "schema": {
               "type": "integer",
@@ -11162,7 +11301,6 @@
           },
           "employee_num": {
             "type": "string",
-            "nullable": true,
             "description": "従業員番号"
           },
           "pay_date": {
@@ -11611,7 +11749,6 @@
           "num": {
             "type": "string",
             "description": "従業員番号",
-            "nullable": true,
             "example": "A-001"
           },
           "display_name": {
@@ -12849,8 +12986,7 @@
           },
           "num": {
             "type": "string",
-            "description": "従業員番号",
-            "nullable": true
+            "description": "従業員番号"
           },
           "display_name": {
             "type": "string",
@@ -13033,8 +13169,7 @@
           },
           "employee_num": {
             "type": "string",
-            "description": "従業員番号",
-            "nullable": true
+            "description": "従業員番号"
           },
           "closing_date": {
             "type": "string",
@@ -13120,8 +13255,7 @@
           },
           "num": {
             "type": "string",
-            "description": "従業員番号(従業員詳細未設定の場合、nullになります。)",
-            "nullable": true
+            "description": "従業員番号"
           },
           "display_name": {
             "type": "string",
@@ -18272,8 +18406,7 @@
           },
           "num": {
             "type": "string",
-            "description": "従業員番号",
-            "nullable": true
+            "description": "従業員番号"
           },
           "employee_display_name": {
             "type": "string",
@@ -18426,7 +18559,7 @@
             "type": "integer",
             "description": "その他の事業所の給与収入",
             "example": 1000000,
-            "minimum": 0,
+            "minimum": -999999999,
             "maximum": 1999999999,
             "nullable": true
           },
@@ -18434,7 +18567,7 @@
             "type": "integer",
             "description": "給与以外の所得",
             "example": 1000000,
-            "minimum": 0,
+            "minimum": -999999999,
             "maximum": 1999999999,
             "nullable": true
           },
@@ -18489,8 +18622,7 @@
           "num": {
             "type": "string",
             "description": "従業員番号<br>\n従業員を判別しやすいよう管理することができます。（例: 1人目の正社員を A-001 と入力）",
-            "example": "A-001",
-            "nullable": true
+            "example": "A-001"
           },
           "last_name": {
             "type": "string",
@@ -19023,14 +19155,14 @@
             "type": "integer",
             "description": "給与収入 配偶者は「扶養状況」がsocial_insurance_and_tax又はtax_onlyの場合のみ更新可能。配偶者以外は更新不可。更新不可の場合は0となります。",
             "format": "int32",
-            "minimum": 0,
+            "minimum": -999999999,
             "maximum": 999999999
           },
           "all_other_income": {
             "type": "integer",
             "description": "給与以外の所得 配偶者は「扶養状況」がsocial_insurance_and_tax又はtax_onlyの場合のみ更新可能。配偶者以外は更新不可。更新不可の場合は0となります。",
             "format": "int32",
-            "minimum": 0,
+            "minimum": -999999999,
             "maximum": 999999999
           },
           "disability_type": {
@@ -19696,6 +19828,11 @@
             "example": 1000000,
             "minimum": 0,
             "maximum": 99999999
+          },
+          "is_group_insurance": {
+            "type": "boolean",
+            "description": "団体保険に該当するかどうか",
+            "nullable": true
           }
         }
       },
@@ -19962,6 +20099,11 @@
             "enum": [
               "xml"
             ],
+            "nullable": true
+          },
+          "is_group_insurance": {
+            "type": "boolean",
+            "description": "団体保険に該当するかどうか",
             "nullable": true
           }
         }
@@ -20445,6 +20587,109 @@
             "format": "int32",
             "minimum": 0,
             "maximum": 99999,
+            "example": 1
+          }
+        }
+      },
+      "ApiV1EmployeesGroupMembershipsIndexSerializer": {
+        "type": "object",
+        "required": [
+          "group_memberships",
+          "total_count"
+        ],
+        "properties": {
+          "group_memberships": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "start_date",
+                "end_date",
+                "main_duty",
+                "group_id",
+                "group_code",
+                "group_name"
+              ],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "グループ所属ID",
+                  "format": "int64",
+                  "example": 1
+                },
+                "start_date": {
+                  "type": "string",
+                  "description": "開始日",
+                  "format": "date",
+                  "example": "2000-01-01"
+                },
+                "end_date": {
+                  "type": "string",
+                  "description": "終了日",
+                  "format": "date",
+                  "nullable": true,
+                  "example": "2020-01-01"
+                },
+                "boss_id": {
+                  "type": "integer",
+                  "description": "上司ID",
+                  "format": "int64",
+                  "nullable": true,
+                  "example": 1
+                },
+                "main_duty": {
+                  "type": "string",
+                  "enum": [
+                    "unspecified",
+                    "sub_duty",
+                    "main_duty"
+                  ],
+                  "description": "主務",
+                  "example": "main_duty"
+                },
+                "group_id": {
+                  "type": "integer",
+                  "description": "部門ID",
+                  "format": "int32",
+                  "example": 10
+                },
+                "group_code": {
+                  "type": "string",
+                  "description": "部門コード",
+                  "example": "group2"
+                },
+                "group_name": {
+                  "type": "string",
+                  "description": "部門名称",
+                  "example": "営業部"
+                },
+                "position_id": {
+                  "type": "integer",
+                  "description": "役職ID",
+                  "format": "int32",
+                  "nullable": true,
+                  "example": 1
+                },
+                "position_code": {
+                  "type": "string",
+                  "description": "役職コード",
+                  "nullable": true,
+                  "example": "position1"
+                },
+                "position_name": {
+                  "type": "string",
+                  "description": "役職名称",
+                  "nullable": true,
+                  "example": "部長"
+                }
+              }
+            }
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "合計件数",
+            "format": "int32",
             "example": 1
           }
         }

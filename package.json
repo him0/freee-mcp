@@ -21,7 +21,8 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
-    "generate:references": "tsx scripts/generate-references.ts"
+    "generate:references": "tsx scripts/generate-references.ts",
+    "fetch:schemas": "tsx scripts/fetch-schemas.ts"
   },
   "author": "him0",
   "license": "ISC",
@@ -42,7 +43,8 @@
     "prettier": "^3.7.4",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "yaml": "^2.8.2"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.24.3",

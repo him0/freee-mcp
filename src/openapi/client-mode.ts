@@ -65,24 +65,26 @@ function createMethodTool(method: string): (args: { path: string; query?: Record
  */
 export function generateClientModeTool(server: McpServer): void {
   // GET tool
+  // @ts-expect-error - Zod 3.25+ type inference issue with MCP SDK
   server.tool(
     'freee_api_get',
     'freee APIへのGETリクエスト。データの取得に使用します。パスはOpenAPIスキーマに対して検証されます。',
     {
       path: z.string().describe('APIパス (例: /api/1/deals, /api/1/deals/123)'),
-      query: z.record(z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('GET')
   );
 
   // POST tool
+  // @ts-expect-error - Zod 3.25+ type inference issue with MCP SDK
   server.tool(
     'freee_api_post',
     'freee APIへのPOSTリクエスト。新規データの作成に使用します。パスはOpenAPIスキーマに対して検証されます。',
     {
       path: z.string().describe('APIパス (例: /api/1/deals)'),
-      body: z.record(z.unknown()).describe('リクエストボディ'),
-      query: z.record(z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      body: z.record(z.string(), z.any()).describe('リクエストボディ'),
+      query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('POST')
   );
@@ -93,8 +95,8 @@ export function generateClientModeTool(server: McpServer): void {
     'freee APIへのPUTリクエスト。既存データの更新に使用します。パスはOpenAPIスキーマに対して検証されます。',
     {
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-      body: z.record(z.unknown()).describe('リクエストボディ'),
-      query: z.record(z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      body: z.record(z.string(), z.any()).describe('リクエストボディ'),
+      query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('PUT')
   );
@@ -105,7 +107,7 @@ export function generateClientModeTool(server: McpServer): void {
     'freee APIへのDELETEリクエスト。データの削除に使用します。パスはOpenAPIスキーマに対して検証されます。',
     {
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-      query: z.record(z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('DELETE')
   );
@@ -116,8 +118,8 @@ export function generateClientModeTool(server: McpServer): void {
     'freee APIへのPATCHリクエスト。既存データの部分更新に使用します。パスはOpenAPIスキーマに対して検証されます。',
     {
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-      body: z.record(z.unknown()).describe('リクエストボディ'),
-      query: z.record(z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      body: z.record(z.string(), z.any()).describe('リクエストボディ'),
+      query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('PATCH')
   );
