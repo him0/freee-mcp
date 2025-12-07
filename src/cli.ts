@@ -10,11 +10,7 @@ import {
 } from './auth/server.js';
 import { buildAuthUrl, exchangeCodeForTokens } from './auth/oauth.js';
 import { config as defaultConfig } from './config.js';
-import {
-  setCurrentCompany,
-  saveFullConfig,
-  type FullConfig,
-} from './config/companies.js';
+import { setCurrentCompany, saveFullConfig, type FullConfig } from './config/companies.js';
 
 interface ConfigValues {
   clientId: string;
@@ -41,20 +37,17 @@ declare global {
 }
 
 async function fetchCompanies(accessToken: string): Promise<Company[]> {
-  const response = await fetch(
-    `${defaultConfig.freee.apiUrl}/api/1/companies`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
+  const response = await fetch(`${defaultConfig.freee.apiUrl}/api/1/companies`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
-      `事業所一覧の取得に失敗しました: ${response.status} ${JSON.stringify(errorData)}`
+      `事業所一覧の取得に失敗しました: ${response.status} ${JSON.stringify(errorData)}`,
     );
   }
 
@@ -64,16 +57,14 @@ async function fetchCompanies(accessToken: string): Promise<Company[]> {
 
 export async function configure(): Promise<void> {
   console.log('\n=== freee-mcp Configuration Setup ===\n');
-  console.log(
-    'このウィザードでは、freee-mcpの設定と認証を対話式で行います。'
-  );
+  console.log('このウィザードでは、freee-mcpの設定と認証を対話式で行います。');
   console.log('freee OAuth認証情報が必要です。\n');
 
   let configValues: ConfigValues | null = null;
 
   try {
     // Load existing config if available
-    const existingConfig = await import('./config/companies.js').then(m => m.loadFullConfig());
+    const existingConfig = await import('./config/companies.js').then((m) => m.loadFullConfig());
     const hasExistingCredentials = !!(existingConfig.clientId && existingConfig.clientSecret);
 
     if (hasExistingCredentials) {
@@ -90,7 +81,8 @@ export async function configure(): Promise<void> {
         name: 'clientId',
         message: 'FREEE_CLIENT_ID:',
         initial: existingConfig.clientId || undefined,
-        validate: (value: string): string | boolean => value.trim() ? true : 'CLIENT_ID は必須です'
+        validate: (value: string): string | boolean =>
+          value.trim() ? true : 'CLIENT_ID は必須です',
       },
       {
         type: 'password',
@@ -104,14 +96,14 @@ export async function configure(): Promise<void> {
             return true;
           }
           return value.trim() ? true : 'CLIENT_SECRET は必須です';
-        }
+        },
       },
       {
         type: 'text',
         name: 'callbackPort',
         message: 'FREEE_CALLBACK_PORT:',
-        initial: String(existingConfig.callbackPort || 54321)
-      }
+        initial: String(existingConfig.callbackPort || 54321),
+      },
     ]);
 
     // Check if user cancelled (Ctrl+C)
@@ -142,17 +134,14 @@ export async function configure(): Promise<void> {
     console.log('ブラウザで認証ページを開きます...');
 
     // Load config first (required by startCallbackServer)
-    await import('./config.js').then(m => m.loadConfig());
+    await import('./config.js').then((m) => m.loadConfig());
 
     // Start callback server
     await startCallbackServer();
 
     // Generate PKCE
     const codeVerifier = crypto.randomBytes(32).toString('base64url');
-    const codeChallenge = crypto
-      .createHash('sha256')
-      .update(codeVerifier)
-      .digest('base64url');
+    const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
     const state = crypto.randomBytes(16).toString('base64url');
 
     // Build auth URL
@@ -164,18 +153,19 @@ export async function configure(): Promise<void> {
     await open(authUrl);
 
     console.log('ブラウザで認証を完了してください...');
-    console.log(
-      '認証が完了すると自動的に次のステップに進みます。\n'
-    );
+    console.log('認証が完了すると自動的に次のステップに進みます。\n');
 
     // Wait for callback (with timeout)
     let authCode: string | null = null;
     let authError: Error | null = null;
 
     const callbackPromise = new Promise<string>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('認証がタイムアウトしました（5分）'));
-      }, 5 * 60 * 1000);
+      const timeout = setTimeout(
+        () => {
+          reject(new Error('認証がタイムアウトしました（5分）'));
+        },
+        5 * 60 * 1000,
+      );
 
       // Store callback handlers globally so server.ts can access them
       if (!global.__cliAuthHandlers) {
@@ -200,11 +190,7 @@ export async function configure(): Promise<void> {
 
       // Exchange code for tokens
       console.log('トークンを取得中...');
-      const tokens = await exchangeCodeForTokens(
-        authCode,
-        codeVerifier,
-        getActualRedirectUri()
-      );
+      const tokens = await exchangeCodeForTokens(authCode, codeVerifier, getActualRedirectUri());
       console.log('✓ トークンを取得しました。\n');
 
       // Step 3: Fetch and select company
@@ -224,8 +210,8 @@ export async function configure(): Promise<void> {
         message: 'デフォルトの事業所を選択してください:',
         choices: companies.map((company) => ({
           title: `${company.display_name || company.name} (ID: ${company.id}) - ${company.role}`,
-          value: company.id
-        }))
+          value: company.id,
+        })),
       });
 
       if (!companySelection.companyId) {
@@ -233,11 +219,9 @@ export async function configure(): Promise<void> {
         process.exit(1);
       }
 
-      const selectedCompany = companies.find(c => c.id === companySelection.companyId)!;
+      const selectedCompany = companies.find((c) => c.id === companySelection.companyId)!;
 
-      console.log(
-        `\n✓ ${selectedCompany.display_name || selectedCompany.name} を選択しました。\n`
-      );
+      console.log(`\n✓ ${selectedCompany.display_name || selectedCompany.name} を選択しました。\n`);
 
       // Save full configuration (credentials + companies)
       const fullConfig: FullConfig = {
@@ -255,8 +239,7 @@ export async function configure(): Promise<void> {
           name: company.display_name || company.name,
           description: `Role: ${company.role}`,
           addedAt: Date.now(),
-          lastUsed:
-            company.id === selectedCompany!.id ? Date.now() : undefined,
+          lastUsed: company.id === selectedCompany!.id ? Date.now() : undefined,
         };
       });
 
@@ -287,8 +270,7 @@ export async function configure(): Promise<void> {
     const platform = os.platform();
     let configPath = '';
     if (platform === 'darwin') {
-      configPath =
-        '~/Library/Application Support/Claude/claude_desktop_config.json';
+      configPath = '~/Library/Application Support/Claude/claude_desktop_config.json';
     } else if (platform === 'win32') {
       configPath = '%APPDATA%\\Claude\\claude_desktop_config.json';
     } else {
@@ -299,9 +281,9 @@ export async function configure(): Promise<void> {
 
     const mcpConfig = {
       mcpServers: {
-        freee: {
+        'freee-mcp': {
           command: 'npx',
-          args: ['@him0/freee-mcp'],
+          args: ['@him0/freee-mcp', 'client'],
         },
       },
     };
@@ -310,9 +292,7 @@ export async function configure(): Promise<void> {
     console.log('\n✓ セットアップ完了！\n');
     console.log('認証情報は ~/.config/freee-mcp/config.json に保存されました。');
     console.log('トークンは ~/.config/freee-mcp/tokens.json に保存されました。');
-    console.log(
-      'Claude desktopを再起動すると、freee-mcpが利用可能になります。\n'
-    );
+    console.log('Claude desktopを再起動すると、freee-mcpが利用可能になります。\n');
   } catch (error) {
     console.error('\n設定中にエラーが発生しました:', error);
     process.exit(1);
@@ -320,4 +300,3 @@ export async function configure(): Promise<void> {
     stopCallbackServer();
   }
 }
-
