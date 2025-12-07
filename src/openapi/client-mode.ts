@@ -1,43 +1,57 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { makeApiRequest } from '../api/client.js';
-import { validatePathAcrossApis, listAllAvailablePaths } from './schema-loader.js';
+import { validatePathForService, listAllAvailablePaths, ApiType } from './schema-loader.js';
+
+const SERVICE_DESCRIPTION =
+  '利用可能なservice:\n' +
+  '- accounting: freee会計 (取引、勘定科目、取引先など)\n' +
+  '- hr: freee人事労務 (従業員、勤怠など)\n' +
+  '- invoice: freee請求書 (請求書、見積書、納品書)\n' +
+  '- pm: freee工数管理 (プロジェクト、工数など)';
+
+const serviceSchema = z.enum(['accounting', 'hr', 'invoice', 'pm']).describe('対象のfreeeサービス');
 
 /**
  * Creates a tool handler for a specific HTTP method
  */
-function createMethodTool(method: string): (args: { path: string; query?: Record<string, unknown>; body?: Record<string, unknown> }) => Promise<{
+function createMethodTool(method: string): (args: {
+  service: ApiType;
+  path: string;
+  query?: Record<string, unknown>;
+  body?: Record<string, unknown>;
+}) => Promise<{
   content: {
     type: 'text';
     text: string;
   }[];
 }> {
-  return async (args: { path: string; query?: Record<string, unknown>; body?: Record<string, unknown> }) => {
+  return async (args: {
+    service: ApiType;
+    path: string;
+    query?: Record<string, unknown>;
+    body?: Record<string, unknown>;
+  }) => {
     try {
-      const { path, query, body } = args;
+      const { service, path, query, body } = args;
 
-      // Validate path against all OpenAPI schemas
-      const validation = validatePathAcrossApis(method, path);
+      // Validate path against the specified service's OpenAPI schema
+      const validation = validatePathForService(method, path, service);
       if (!validation.isValid) {
         return {
           content: [
             {
               type: 'text' as const,
-              text: `❌ パス検証エラー: ${validation.message}\n\n` +
-                    `💡 利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`,
+              text:
+                `❌ パス検証エラー: ${validation.message}\n\n` +
+                `💡 利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`,
             },
           ],
         };
       }
 
       // Make API request with the correct base URL
-      const result = await makeApiRequest(
-        method,
-        validation.actualPath!,
-        query,
-        body,
-        validation.baseUrl,
-      );
+      const result = await makeApiRequest(method, validation.actualPath!, query, body, validation.baseUrl);
 
       return {
         content: [
@@ -68,9 +82,10 @@ export function generateClientModeTool(server: McpServer): void {
   // @ts-expect-error - Zod 3.25+ type inference issue with MCP SDK
   server.tool(
     'freee_api_get',
-    'freee APIへのGETリクエスト。データの取得に使用します。パスはOpenAPIスキーマに対して検証されます。',
+    `freee APIへのGETリクエスト。データの取得に使用します。\n\n${SERVICE_DESCRIPTION}`,
     {
-      path: z.string().describe('APIパス (例: /api/1/deals, /api/1/deals/123)'),
+      service: serviceSchema,
+      path: z.string().describe('APIパス (例: /api/1/deals, /invoices)'),
       query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('GET')
@@ -80,9 +95,10 @@ export function generateClientModeTool(server: McpServer): void {
   // @ts-expect-error - Zod 3.25+ type inference issue with MCP SDK
   server.tool(
     'freee_api_post',
-    'freee APIへのPOSTリクエスト。新規データの作成に使用します。パスはOpenAPIスキーマに対して検証されます。',
+    `freee APIへのPOSTリクエスト。新規データの作成に使用します。\n\n${SERVICE_DESCRIPTION}`,
     {
-      path: z.string().describe('APIパス (例: /api/1/deals)'),
+      service: serviceSchema,
+      path: z.string().describe('APIパス (例: /api/1/deals, /invoices)'),
       body: z.record(z.string(), z.any()).describe('リクエストボディ'),
       query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
     },
@@ -92,9 +108,10 @@ export function generateClientModeTool(server: McpServer): void {
   // PUT tool
   server.tool(
     'freee_api_put',
-    'freee APIへのPUTリクエスト。既存データの更新に使用します。パスはOpenAPIスキーマに対して検証されます。',
+    `freee APIへのPUTリクエスト。既存データの更新に使用します。\n\n${SERVICE_DESCRIPTION}`,
     {
-      path: z.string().describe('APIパス (例: /api/1/deals/123)'),
+      service: serviceSchema,
+      path: z.string().describe('APIパス (例: /api/1/deals/123, /invoices/123)'),
       body: z.record(z.string(), z.any()).describe('リクエストボディ'),
       query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
     },
@@ -104,8 +121,9 @@ export function generateClientModeTool(server: McpServer): void {
   // DELETE tool
   server.tool(
     'freee_api_delete',
-    'freee APIへのDELETEリクエスト。データの削除に使用します。パスはOpenAPIスキーマに対して検証されます。',
+    `freee APIへのDELETEリクエスト。データの削除に使用します。\n\n${SERVICE_DESCRIPTION}`,
     {
+      service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
       query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
     },
@@ -115,8 +133,9 @@ export function generateClientModeTool(server: McpServer): void {
   // PATCH tool
   server.tool(
     'freee_api_patch',
-    'freee APIへのPATCHリクエスト。既存データの部分更新に使用します。パスはOpenAPIスキーマに対して検証されます。',
+    `freee APIへのPATCHリクエスト。既存データの部分更新に使用します。\n\n${SERVICE_DESCRIPTION}`,
     {
+      service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
       body: z.record(z.string(), z.any()).describe('リクエストボディ'),
       query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
@@ -135,10 +154,12 @@ export function generateClientModeTool(server: McpServer): void {
         content: [
           {
             type: 'text' as const,
-            text: `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +
-                  `💡 使用例:\n` +
-                  `freee_api_get { "path": "/api/1/deals", "query": { "limit": 10 } }\n` +
-                  `freee_api_post { "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }`,
+            text:
+              `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +
+              `💡 使用例:\n` +
+              `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "limit": 10 } }\n` +
+              `freee_api_get { "service": "invoice", "path": "/invoices" }\n` +
+              `freee_api_post { "service": "accounting", "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }`,
           },
         ],
       };

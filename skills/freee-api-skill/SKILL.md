@@ -73,6 +73,15 @@ output_mode: "files_with_matches"
 - `freee_api_delete` - DELETE リクエスト
 - `freee_api_patch` - PATCH リクエスト
 
+**serviceパラメータ** (必須):
+
+| service | 説明 | パス例 |
+|---------|------|--------|
+| `accounting` | freee会計 (取引、勘定科目、取引先など) | `/api/1/deals` |
+| `hr` | freee人事労務 (従業員、勤怠など) | `/api/1/employees` |
+| `invoice` | freee請求書 (請求書、見積書、納品書) | `/invoices` |
+| `pm` | freee工数管理 (プロジェクト、工数など) | `/api/1/projects` |
+
 ### 基本ワークフロー
 
 1. **リファレンスを検索**: Grep で `skills/freee-api-skill/references` を検索
@@ -89,6 +98,7 @@ Read: "skills/freee-api-skill/references/accounting-expense-applications.md"
 
 # 2. APIを呼び出す
 freee_api_post {
+  "service": "accounting",
   "path": "/api/1/expense_applications",
   "body": {
     "company_id": 123456,
@@ -107,9 +117,9 @@ freee_api_post {
 
 ```
 freee_api_get {
+  "service": "accounting",
   "path": "/api/1/deals",
   "query": {
-    "company_id": 123456,
     "limit": 10
   }
 }
@@ -119,12 +129,21 @@ freee_api_get {
 
 ```
 freee_api_get {
-  "path": "/hr/api/v1/employees",
+  "service": "hr",
+  "path": "/api/1/employees",
   "query": {
-    "company_id": 123456,
     "year": 2025,
     "month": 1
   }
+}
+```
+
+**請求書一覧を取得**（請求書 API）:
+
+```
+freee_api_get {
+  "service": "invoice",
+  "path": "/invoices"
 }
 ```
 
@@ -136,18 +155,18 @@ freee_api_get {
 
 ## 対応 API
 
-- **会計**: `/api/1/...`
-- **人事労務**: `/hr/api/v1/...`
-- **請求書**: `/invoices`, `/quotations`, `/delivery_slips` など（後述）
-- **工数管理**: `/pm/api/v1/...`
-
-パスから自動的に正しいエンドポイントが選択されます。
+| service | ベースURL | パス形式 |
+|---------|-----------|----------|
+| `accounting` | `https://api.freee.co.jp` | `/api/1/...` |
+| `hr` | `https://api.freee.co.jp/hr` | `/api/1/...` |
+| `invoice` | `https://api.freee.co.jp/iv` | `/invoices`, `/quotations`, `/delivery_slips` |
+| `pm` | `https://api.freee.co.jp/pm` | `/api/1/...` |
 
 ### 請求書 API について
 
 請求書 API は `https://api.freee.co.jp/iv` をベースとした独立した API です。
 
-**注意**: 会計 API の `/api/1/invoices` は過去の API であり、現在は請求書 API を使用してください。
+**注意**: 会計 API の `/api/1/invoices` は過去の API であり、現在は請求書 API (`service: "invoice"`) を使用してください。
 
 **利用可能なパス**:
 
@@ -162,10 +181,8 @@ freee_api_get {
 
 ```
 freee_api_get {
-  "path": "/invoices",
-  "query": {
-    "company_id": 123456
-  }
+  "service": "invoice",
+  "path": "/invoices"
 }
 ```
 

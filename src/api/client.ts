@@ -22,7 +22,10 @@ export async function makeApiRequest(
     );
   }
 
-  const url = new URL(path, apiUrl);
+  // Properly join baseUrl and path, preserving baseUrl's path component
+  const normalizedBase = apiUrl.endsWith('/') ? apiUrl : apiUrl + '/';
+  const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+  const url = new URL(normalizedPath, normalizedBase);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
