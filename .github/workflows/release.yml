@@ -46,6 +46,8 @@ jobs:
 
       - name: Run type check
         run: pnpm typecheck
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
 
       - name: Run linter
         run: pnpm lint
