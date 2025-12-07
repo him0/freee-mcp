@@ -4,6 +4,8 @@ freee API を Claude から使えるようにする MCP サーバー & Claude Pl
 
 [![npm version](https://badge.fury.io/js/@him0%2Ffreee-mcp.svg)](https://www.npmjs.com/package/@him0/freee-mcp)
 
+> **Note**: このプロジェクトは開発中であり、予期せぬ不具合が発生する可能性があります。問題を発見された場合は [Issue](https://github.com/him0/freee-mcp/issues) として報告していただけると幸いです。プルリクエストも歓迎しています。
+
 ## 特徴
 
 - **MCP サーバー**: freee API を Claude Desktop / Claude Code から直接呼び出し
@@ -68,6 +70,25 @@ claude plugin add him0/freee-mcp
 | 工数管理 | ユーザー情報 | 1 |
 
 Claude との会話中に API の使い方を質問すると、これらのリファレンスを参照して正確な情報を提供します。
+
+## 起動モード
+
+freee-mcp は2つのモードで起動できます：
+
+```bash
+# クライアントモード（推奨）：HTTPメソッド別の6ツール
+npx @him0/freee-mcp client
+
+# APIモード：エンドポイントごとの個別ツール（数百個）
+npx @him0/freee-mcp api
+# または
+npx @him0/freee-mcp
+```
+
+| モード | ツール数 | 特徴 |
+|--------|---------|------|
+| client | 6個 | コンテキスト使用量が少ない、任意のパスを指定可能 |
+| api | 数百個 | エンドポイントごとに専用ツール |
 
 ## 利用可能なツール
 
