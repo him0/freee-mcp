@@ -41,6 +41,8 @@ jobs:
 
       - name: Build project
         run: pnpm build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
 
       - name: Get version from package.json
         id: version
