@@ -2,6 +2,8 @@
 
 freee API を Claude から使えるようにする MCP サーバー & Claude Plugin です。
 
+MCP サーバー（API 呼び出し機能）と skill（API リファレンス）を組み合わせて利用することを想定しています。
+
 [![npm version](https://badge.fury.io/js/@him0%2Ffreee-mcp.svg)](https://www.npmjs.com/package/@him0/freee-mcp)
 
 > **Note**: このプロジェクトは開発中であり、予期せぬ不具合が発生する可能性があります。問題を発見された場合は [Issue](https://github.com/him0/freee-mcp/issues) として報告していただけると幸いです。プルリクエストも歓迎しています。
@@ -19,6 +21,7 @@ freee API を Claude から使えるようにする MCP サーバー & Claude Pl
 ### 1. freee アプリケーションの登録
 
 [freee アプリストア](https://app.secure.freee.co.jp/developers) で新しいアプリを作成:
+
 - **リダイレクトURI**: `http://127.0.0.1:54321/callback`
 - **Client ID** と **Client Secret** を取得
 - 必要な権限にチェック
@@ -35,18 +38,18 @@ npx @him0/freee-mcp configure
 
 `configure` が出力する設定を Claude Desktop の設定ファイルに追加:
 
-| OS | 設定ファイルパス |
-|----|-----------------|
-| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
-| Linux | `~/.config/Claude/claude_desktop_config.json` |
+| OS      | 設定ファイルパス                                                  |
+| ------- | ----------------------------------------------------------------- |
+| macOS   | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json`                     |
+| Linux   | `~/.config/Claude/claude_desktop_config.json`                     |
 
 ```json
 {
   "mcpServers": {
     "freee": {
       "command": "npx",
-      "args": ["@him0/freee-mcp"]
+      "args": ["@him0/freee-mcp", "client"]
     }
   }
 }
@@ -62,12 +65,12 @@ claude plugin add him0/freee-mcp
 
 ### 含まれるリファレンス
 
-| API | 内容 | ファイル数 |
-|-----|------|-----------|
-| 会計 | 取引、勘定科目、取引先、請求書、経費申請など | 31 |
-| 人事労務 | 従業員、勤怠、給与明細、年末調整など | 27 |
-| 請求書 | 請求書、見積書、納品書 | 3 |
-| 工数管理 | ユーザー情報 | 1 |
+| API      | 内容                                         | ファイル数 |
+| -------- | -------------------------------------------- | ---------- |
+| 会計     | 取引、勘定科目、取引先、請求書、経費申請など | 31         |
+| 人事労務 | 従業員、勤怠、給与明細、年末調整など         | 27         |
+| 請求書   | 請求書、見積書、納品書                       | 3          |
+| 工数管理 | ユーザー情報                                 | 1          |
 
 Claude との会話中に API の使い方を質問すると、これらのリファレンスを参照して正確な情報を提供します。
 
@@ -85,36 +88,36 @@ npx @him0/freee-mcp api
 npx @him0/freee-mcp
 ```
 
-| モード | ツール数 | 特徴 |
-|--------|---------|------|
-| client | 6個 | コンテキスト使用量が少ない、任意のパスを指定可能 |
-| api | 数百個 | エンドポイントごとに専用ツール |
+| モード | ツール数 | 特徴 | 推奨 |
+| ------ | -------- | ---- | ---- |
+| client | 6個 | コンテキスト使用量が少ない、任意のパスを指定可能 | ✅ |
+| api | 数百個 | エンドポイントごとに専用ツール、コンテキスト消費大 | ❌ |
 
 ## 利用可能なツール
 
 ### 管理ツール
 
-| ツール | 説明 |
-|--------|------|
-| `freee_authenticate` | OAuth 認証を実行 |
-| `freee_auth_status` | 認証状態を確認 |
-| `freee_set_company` | 事業所を切り替え |
-| `freee_list_companies` | 事業所一覧を取得 |
-| `freee_help` | 使い方ガイド |
-| `freee_status` | 現在の状態と推奨アクション |
+| ツール                 | 説明                       |
+| ---------------------- | -------------------------- |
+| `freee_authenticate`   | OAuth 認証を実行           |
+| `freee_auth_status`    | 認証状態を確認             |
+| `freee_set_company`    | 事業所を切り替え           |
+| `freee_list_companies` | 事業所一覧を取得           |
+| `freee_help`           | 使い方ガイド               |
+| `freee_status`         | 現在の状態と推奨アクション |
 
 ### API ツール（クライアントモード）
 
 HTTPメソッドごとのシンプルなツール構成:
 
-| ツール | 説明 | 例 |
-|--------|------|-----|
-| `freee_api_get` | データ取得 | `/api/1/deals` |
-| `freee_api_post` | 新規作成 | `/api/1/deals` |
-| `freee_api_put` | 更新 | `/api/1/deals/123` |
-| `freee_api_delete` | 削除 | `/api/1/deals/123` |
-| `freee_api_patch` | 部分更新 | `/api/1/deals/123` |
-| `freee_api_list_paths` | エンドポイント一覧 | - |
+| ツール                 | 説明               | 例                 |
+| ---------------------- | ------------------ | ------------------ |
+| `freee_api_get`        | データ取得         | `/api/1/deals`     |
+| `freee_api_post`       | 新規作成           | `/api/1/deals`     |
+| `freee_api_put`        | 更新               | `/api/1/deals/123` |
+| `freee_api_delete`     | 削除               | `/api/1/deals/123` |
+| `freee_api_patch`      | 部分更新           | `/api/1/deals/123` |
+| `freee_api_list_paths` | エンドポイント一覧 | -                  |
 
 パスは OpenAPI スキーマに対して自動検証されます。
 
