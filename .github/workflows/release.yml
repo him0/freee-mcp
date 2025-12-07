@@ -44,8 +44,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # - name: Run type check
-      #   run: pnpm type-check
+      - name: Run type check
+        run: pnpm type-check
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
 
       - name: Run linter
         run: pnpm lint
@@ -55,6 +57,8 @@ jobs:
 
       - name: Build project
         run: pnpm build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=6144"
 
       - name: Check build artifacts
         run: |
