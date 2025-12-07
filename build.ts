@@ -30,7 +30,7 @@ await build({
 const binFile = './bin/cli.js';
 await build({
   bundle: true,
-  entryPoints: ['src/cli.ts'],
+  entryPoints: ['src/index.ts'],
   external: Object.keys(dependencies),
   logLevel: 'info' as 'info',
   minify: true,
