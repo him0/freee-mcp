@@ -7,7 +7,7 @@ freee API を Claude から使えるようにする MCP サーバー & Claude Pl
 ## 特徴
 
 - **MCP サーバー**: freee API を Claude Desktop / Claude Code から直接呼び出し
-- **Claude Plugin**: 62個の API リファレンスドキュメント付きスキルを提供
+- **Claude Plugin**: 詳細な API リファレンスドキュメント付きスキルを提供
 - **複数 API 対応**: 会計・人事労務・請求書・工数管理の4つの freee API をサポート
 - **OAuth 2.0 + PKCE**: セキュアな認証フロー、トークン自動更新
 - **複数事業所対応**: 事業所の動的切り替えが可能

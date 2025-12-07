@@ -1,7 +1,7 @@
 {
   "name": "freee-api",
   "version": "0.2.7",
-  "description": "freee API を MCP 経由で操作するためのスキル。62個の詳細なAPIリファレンスと freee-mcp を使用した API 呼び出しガイドを提供。",
+  "description": "freee API を MCP 経由で操作するためのスキル。詳細なAPIリファレンスと freee-mcp を使用した API 呼び出しガイドを提供。",
   "author": {
     "name": "him0"
   },
