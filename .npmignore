@@ -24,6 +24,11 @@ CLAUDE.md
 *.test.ts
 *.spec.ts
 
+# Skills (GitHub repo only, not published to npm)
+/skills
+/.claude-plugin
+/openapi/tag-mappings.json
+
 # Other files
 .env*
 .git*

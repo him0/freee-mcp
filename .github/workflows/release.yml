@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version type to bump'
+        description: "Version type to bump"
         required: true
-        default: 'patch'
+        default: "patch"
         type: choice
         options:
           - patch
@@ -19,86 +19,96 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0
-      
-    - name: Configure git
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-      
-    - name: Install pnpm
-      uses: pnpm/action-setup@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'pnpm'
-        
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
-        
-    - name: Run type check
-      run: pnpm type-check
-      
-    - name: Run linter
-      run: pnpm lint
-      
-    - name: Run tests
-      run: pnpm test:run
-      
-    - name: Build project
-      run: pnpm build
-      
-    - name: Check build artifacts
-      run: |
-        ls -la dist/
-        test -f dist/index.esm.js
-        test -f dist/index.cjs
-        test -f dist/index.d.ts
-        test -f bin/cli.js
-        
-    - name: Bump version
-      id: version
-      run: |
-        npm version ${{ github.event.inputs.version }} --no-git-tag-version
-        NEW_VERSION=$(node -e "console.log(require('./package.json').version)")
-        echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
-        
-    - name: Create Pull Request
-      id: pr
-      uses: peter-evans/create-pull-request@v5
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        branch: release/v${{ steps.version.outputs.new_version }}-${{ github.run_number }}
-        base: main
-        commit-message: "chore: bump version to ${{ steps.version.outputs.new_version }}"
-        add-paths: |
-          package.json
-        title: "chore: bump version to ${{ steps.version.outputs.new_version }}"
-        body: |
-          ## Version Bump
-          
-          This PR updates the version to `${{ steps.version.outputs.new_version }}`.
-          
-          ### Changes
-          - Updated version in package.json to ${{ steps.version.outputs.new_version }}
-          
-          ### Next Steps
-          1. Review and merge this PR
-          2. After merge, the npm publish job will automatically run
-          3. A GitHub release will be created
-          
-          ### Pre-publish Checklist
-          - [ ] Version number is correct
-          - [ ] All tests pass
-          - [ ] Build artifacts are generated correctly
-        labels: |
-          release
-          automated
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run type check
+        run: pnpm type-check
+
+      - name: Run linter
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test:run
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Check build artifacts
+        run: |
+          ls -la dist/
+          test -f dist/index.esm.js
+          test -f dist/index.cjs
+          test -f dist/index.d.ts
+          test -f bin/cli.js
+
+      - name: Bump version
+        id: version
+        run: |
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          NEW_VERSION=$(node -e "console.log(require('./package.json').version)")
+          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Sync plugin.json version
+        run: |
+          VERSION=${{ steps.version.outputs.new_version }}
+          # Update plugin.json version
+          jq --arg v "$VERSION" '.version = $v' .claude-plugin/plugin.json > tmp.json && mv tmp.json .claude-plugin/plugin.json
+          # Update marketplace.json version
+          jq --arg v "$VERSION" '.plugins[0].version = $v' .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
+
+      - name: Create Pull Request
+        id: pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: release/v${{ steps.version.outputs.new_version }}-${{ github.run_number }}
+          base: main
+          commit-message: "chore: bump version to ${{ steps.version.outputs.new_version }}"
+          add-paths: |
+            package.json
+            skills/
+            .claude-plugin/
+          title: "chore: bump version to ${{ steps.version.outputs.new_version }}"
+          body: |
+            ## Version Bump
+
+            This PR updates the version to `${{ steps.version.outputs.new_version }}`.
+
+            ### Changes
+            - Updated version in package.json to ${{ steps.version.outputs.new_version }}
+
+            ### Next Steps
+            1. Review and merge this PR
+            2. After merge, the npm publish job will automatically run
+            3. A GitHub release will be created
+
+            ### Pre-publish Checklist
+            - [ ] Version number is correct
+            - [ ] All tests pass
+            - [ ] Build artifacts are generated correctly
+          labels: |
+            release
+            automated

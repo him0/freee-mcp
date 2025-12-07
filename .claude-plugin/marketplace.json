@@ -1,0 +1,14 @@
+{
+  "name": "freee-api-marketplace",
+  "owner": {
+    "name": "him0"
+  },
+  "plugins": [
+    {
+      "name": "freee-api",
+      "source": "./",
+      "version": "0.2.7",
+      "description": "freee API を MCP 経由で操作するためのスキル。詳細なAPIリファレンス（パラメータ、リクエストボディ、レスポンス情報含む）と、freee-mcp を使用した API 呼び出しガイドを提供。OAuth 認証とトークン管理を自動化し、経費申請、会計データ取得、人事情報管理など、freee の様々な機能を利用可能。"
+    }
+  ]
+}

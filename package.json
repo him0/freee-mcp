@@ -20,7 +20,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "generate:references": "tsx scripts/generate-references.ts"
   },
   "author": "him0",
   "license": "ISC",
