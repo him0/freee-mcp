@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { OpenAPIOperation, OpenAPIPathItem, OpenAPIParameter } from '../api/types.js';
+import { MinimalPathItem, MinimalOperation, MinimalParameter } from './minimal-types.js';
 import { convertParameterToZodSchema, convertPathToToolName, sanitizePropertyName } from './schema.js';
 import { makeApiRequest } from '../api/client.js';
 import { getAllSchemas } from './schema-loader.js';
@@ -9,7 +9,7 @@ export function generateToolsFromOpenApi(server: McpServer): void {
   // Generate tools from all API schemas
   const allSchemas = getAllSchemas();
 
-  allSchemas.forEach(({ apiType, config }) => {
+  allSchemas.forEach(({ config }) => {
     const paths = config.schema.paths;
     const prefix = config.prefix;
     const baseUrl = config.baseUrl;
@@ -17,8 +17,10 @@ export function generateToolsFromOpenApi(server: McpServer): void {
     const orderedPathKeys = Object.keys(paths).sort();
 
     orderedPathKeys.forEach((pathKey) => {
-      const pathItem: OpenAPIPathItem = paths[pathKey];
-      Object.entries(pathItem).forEach(([method, operation]: [string, OpenAPIOperation]) => {
+      const pathItem: MinimalPathItem = paths[pathKey];
+      Object.entries(pathItem).forEach(([method, operation]: [string, MinimalOperation | undefined]) => {
+        if (!operation) return;
+
         // Add API prefix to tool name
         const toolName = `${prefix}_${method}_${convertPathToToolName(pathKey)}`;
         const description = `[${config.name}] ${operation.summary || operation.description || ''}`;
@@ -39,10 +41,9 @@ export function generateToolsFromOpenApi(server: McpServer): void {
           parameterSchema[sanitizePropertyName(param.name)] = schema;
         });
 
-        let bodySchema = z.any();
+        const bodySchema = z.any();
         if (method === 'post' || method === 'put') {
-          const requestBody = operation.requestBody?.content?.['application/json']?.schema;
-          if (requestBody) {
+          if (operation.hasJsonBody) {
             parameterSchema['body'] = bodySchema.describe('Request body');
           }
         }
@@ -50,13 +51,13 @@ export function generateToolsFromOpenApi(server: McpServer): void {
         server.tool(toolName, description, parameterSchema, async (params) => {
           try {
             let actualPath = pathKey as string;
-            pathParams.forEach((param: OpenAPIParameter) => {
+            pathParams.forEach((param: MinimalParameter) => {
               const sanitizedName = sanitizePropertyName(param.name);
               actualPath = actualPath.replace(`{${param.name}}`, String(params[sanitizedName]));
             });
 
             const queryParameters: Record<string, unknown> = {};
-            queryParams.forEach((param: OpenAPIParameter) => {
+            queryParams.forEach((param: MinimalParameter) => {
               const sanitizedName = sanitizePropertyName(param.name);
               if (params[sanitizedName] !== undefined) {
                 queryParameters[param.name] = params[sanitizedName];

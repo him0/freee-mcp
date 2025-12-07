@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { OpenAPIParameter } from '../api/types.js';
+import { MinimalParameter } from './minimal-types.js';
 
-export function convertParameterToZodSchema(parameter: OpenAPIParameter): z.ZodType {
-  const { type } = parameter.schema || parameter;
-  const { description, required } = parameter;
+export function convertParameterToZodSchema(parameter: MinimalParameter): z.ZodType {
+  const { type, description, required } = parameter;
 
   let schema;
 
