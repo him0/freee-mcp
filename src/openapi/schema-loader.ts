@@ -54,8 +54,66 @@ export interface PathValidationResult {
 }
 
 /**
+ * Validates if a given path and method exist for a specific API service
+ * Returns the validation result with base URL
+ */
+export function validatePathForService(
+  method: string,
+  path: string,
+  service: ApiType
+): PathValidationResult {
+  const normalizedMethod = method.toLowerCase() as keyof MinimalPathItem;
+  const config = API_CONFIGS[service];
+  const paths = config.schema.paths;
+
+  // Try exact match first
+  if (path in paths) {
+    const pathItem = paths[path];
+    if (normalizedMethod in pathItem) {
+      return {
+        isValid: true,
+        message: 'Valid path and method',
+        operation: pathItem[normalizedMethod],
+        actualPath: path,
+        apiType: service,
+        baseUrl: config.baseUrl,
+      };
+    }
+  }
+
+  // Try pattern matching for paths with parameters
+  const pathKeys = Object.keys(paths);
+  for (const schemaPath of pathKeys) {
+    // Convert OpenAPI path pattern to regex
+    const pattern = schemaPath.replace(/\{[^}]+\}/g, '[^/]+');
+    const regex = new RegExp(`^${pattern}$`);
+
+    if (regex.test(path)) {
+      const pathItem = paths[schemaPath];
+      if (normalizedMethod in pathItem) {
+        return {
+          isValid: true,
+          message: 'Valid path and method',
+          operation: pathItem[normalizedMethod],
+          actualPath: path,
+          apiType: service,
+          baseUrl: config.baseUrl,
+        };
+      }
+    }
+  }
+
+  // Path not found in specified service
+  return {
+    isValid: false,
+    message: `Path '${path}' not found in ${config.name} schema. Please check the path format or use freee_api_list_paths to see available endpoints.`,
+  };
+}
+
+/**
  * Validates if a given path and method exist across all API schemas
  * Returns the matching API type and base URL
+ * @deprecated Use validatePathForService() instead
  */
 export function validatePathAcrossApis(method: string, path: string): PathValidationResult {
   const normalizedMethod = method.toLowerCase() as keyof MinimalPathItem;
