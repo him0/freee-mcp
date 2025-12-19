@@ -22,7 +22,7 @@ MCP サーバー（API 呼び出し機能）と skill（API リファレンス�
 
 [freee アプリストア](https://app.secure.freee.co.jp/developers) で新しいアプリを作成:
 
-- **リダイレクトURI**: `http://127.0.0.1:54321/callback`
+- **コールバックURL**: `http://127.0.0.1:54321/callback`
 - **Client ID** と **Client Secret** を取得
 - 必要な権限にチェック
 
@@ -60,7 +60,8 @@ npx @him0/freee-mcp configure
 Claude Code でプラグインとしてインストールすると、API リファレンス付きのスキルが利用できます:
 
 ```bash
-claude plugin add him0/freee-mcp
+claude plugin marketplace add him0/freee-mcp
+claude plugin install freee-api
 ```
 
 ### 含まれるリファレンス
