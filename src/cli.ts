@@ -11,6 +11,7 @@ import {
 import { buildAuthUrl, exchangeCodeForTokens } from './auth/oauth.js';
 import { config as defaultConfig } from './config.js';
 import { setCurrentCompany, saveFullConfig, type FullConfig } from './config/companies.js';
+import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS } from './constants.js';
 
 interface ConfigValues {
   clientId: string;
@@ -102,7 +103,7 @@ export async function configure(): Promise<void> {
         type: 'text',
         name: 'callbackPort',
         message: 'FREEE_CALLBACK_PORT:',
-        initial: String(existingConfig.callbackPort || 54321),
+        initial: String(existingConfig.callbackPort || DEFAULT_CALLBACK_PORT),
       },
     ]);
 
@@ -164,7 +165,7 @@ export async function configure(): Promise<void> {
         () => {
           reject(new Error('認証がタイムアウトしました（5分）'));
         },
-        5 * 60 * 1000,
+        AUTH_TIMEOUT_MS,
       );
 
       // Store callback handlers globally so server.ts can access them

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { loadConfig } from './config.js';
+import { AUTH_TIMEOUT_MS } from './constants.js';
 
 describe('config', () => {
   it('should have correct OAuth configuration', async () => {
@@ -18,7 +19,7 @@ describe('config', () => {
 
   it('should have correct auth timeout', async () => {
     const config = await loadConfig();
-    expect(config.auth.timeoutMs).toBe(5 * 60 * 1000);
+    expect(config.auth.timeoutMs).toBe(AUTH_TIMEOUT_MS);
   });
 
 });
