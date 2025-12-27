@@ -3,12 +3,8 @@ import { z } from 'zod';
 import { makeApiRequest } from '../api/client.js';
 import { validatePathForService, listAllAvailablePaths, ApiType } from './schema-loader.js';
 
-const SERVICE_DESCRIPTION =
-  '利用可能なservice:\n' +
-  '- accounting: freee会計 (取引、勘定科目、取引先など)\n' +
-  '- hr: freee人事労務 (従業員、勤怠など)\n' +
-  '- invoice: freee請求書 (請求書、見積書、納品書)\n' +
-  '- pm: freee工数管理 (プロジェクト、工数など)';
+// 簡略化: 詳細はfreee_api_list_pathsで確認可能
+const SERVICE_HINT = 'service: accounting/hr/invoice/pm';
 
 const serviceSchema = z.enum(['accounting', 'hr', 'invoice', 'pm']).describe('対象のfreeeサービス');
 
@@ -82,7 +78,7 @@ export function generateClientModeTool(server: McpServer): void {
   // @ts-expect-error - Zod 3.25+ type inference issue with MCP SDK
   server.tool(
     'freee_api_get',
-    `freee APIへのGETリクエスト。データの取得に使用します。\n\n${SERVICE_DESCRIPTION}`,
+    `freee API GET。${SERVICE_HINT}`,
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals, /invoices)'),
@@ -95,7 +91,7 @@ export function generateClientModeTool(server: McpServer): void {
   // @ts-expect-error - Zod 3.25+ type inference issue with MCP SDK
   server.tool(
     'freee_api_post',
-    `freee APIへのPOSTリクエスト。新規データの作成に使用します。\n\n${SERVICE_DESCRIPTION}`,
+    `freee API POST。${SERVICE_HINT}`,
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals, /invoices)'),
@@ -108,7 +104,7 @@ export function generateClientModeTool(server: McpServer): void {
   // PUT tool
   server.tool(
     'freee_api_put',
-    `freee APIへのPUTリクエスト。既存データの更新に使用します。\n\n${SERVICE_DESCRIPTION}`,
+    `freee API PUT。${SERVICE_HINT}`,
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123, /invoices/123)'),
@@ -121,7 +117,7 @@ export function generateClientModeTool(server: McpServer): void {
   // DELETE tool
   server.tool(
     'freee_api_delete',
-    `freee APIへのDELETEリクエスト。データの削除に使用します。\n\n${SERVICE_DESCRIPTION}`,
+    `freee API DELETE。${SERVICE_HINT}`,
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
@@ -133,7 +129,7 @@ export function generateClientModeTool(server: McpServer): void {
   // PATCH tool
   server.tool(
     'freee_api_patch',
-    `freee APIへのPATCHリクエスト。既存データの部分更新に使用します。\n\n${SERVICE_DESCRIPTION}`,
+    `freee API PATCH。${SERVICE_HINT}`,
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
@@ -146,7 +142,7 @@ export function generateClientModeTool(server: McpServer): void {
   // Add helper tool to list available paths
   server.tool(
     'freee_api_list_paths',
-    'freee APIで利用可能なすべてのエンドポイントパスとHTTPメソッドの一覧を表示します。会計、人事労務、請求書、工数管理の全APIに対応しています。',
+    'freee API エンドポイント一覧。詳細なガイドはfreee-mcp skillを参照。',
     {},
     async () => {
       const pathsList = listAllAvailablePaths();
