@@ -54,16 +54,15 @@ export interface PathValidationResult {
 }
 
 /**
- * Validates if a given path and method exist for a specific API service
- * Returns the validation result with base URL
+ * Internal helper to find a path and method in a specific API schema
+ * Returns PathValidationResult if found, null otherwise
  */
-export function validatePathForService(
-  method: string,
+function findPathInSchema(
+  normalizedMethod: keyof MinimalPathItem,
   path: string,
-  service: ApiType
-): PathValidationResult {
-  const normalizedMethod = method.toLowerCase() as keyof MinimalPathItem;
-  const config = API_CONFIGS[service];
+  apiType: ApiType,
+  config: ApiConfig
+): PathValidationResult | null {
   const paths = config.schema.paths;
 
   // Try exact match first
@@ -75,15 +74,14 @@ export function validatePathForService(
         message: 'Valid path and method',
         operation: pathItem[normalizedMethod],
         actualPath: path,
-        apiType: service,
+        apiType,
         baseUrl: config.baseUrl,
       };
     }
   }
 
   // Try pattern matching for paths with parameters
-  const pathKeys = Object.keys(paths);
-  for (const schemaPath of pathKeys) {
+  for (const schemaPath of Object.keys(paths)) {
     // Convert OpenAPI path pattern to regex
     const pattern = schemaPath.replace(/\{[^}]+\}/g, '[^/]+');
     const regex = new RegExp(`^${pattern}$`);
@@ -96,67 +94,47 @@ export function validatePathForService(
           message: 'Valid path and method',
           operation: pathItem[normalizedMethod],
           actualPath: path,
-          apiType: service,
+          apiType,
           baseUrl: config.baseUrl,
         };
       }
     }
   }
 
-  // Path not found in specified service
-  return {
-    isValid: false,
-    message: `Path '${path}' not found in ${config.name} schema. Please check the path format or use freee_api_list_paths to see available endpoints.`,
-  };
+  return null;
 }
 
 /**
- * Validates if a given path and method exist across all API schemas
- * Returns the matching API type and base URL
- * @deprecated Use validatePathForService() instead
+ * Validates if a given path and method exist for a specific API service or across all APIs
+ * When service is provided, validates only against that service's schema
+ * When service is omitted, searches across all API schemas
+ * Returns the validation result with base URL
  */
-export function validatePathAcrossApis(method: string, path: string): PathValidationResult {
+export function validatePathForService(
+  method: string,
+  path: string,
+  service?: ApiType
+): PathValidationResult {
   const normalizedMethod = method.toLowerCase() as keyof MinimalPathItem;
+
+  if (service !== undefined) {
+    // Validate against specific service
+    const config = API_CONFIGS[service];
+    const result = findPathInSchema(normalizedMethod, path, service, config);
+    if (result) {
+      return result;
+    }
+    return {
+      isValid: false,
+      message: `Path '${path}' not found in ${config.name} schema. Please check the path format or use freee_api_list_paths to see available endpoints.`,
+    };
+  }
 
   // Search across all API schemas
   for (const [apiType, config] of Object.entries(API_CONFIGS) as [ApiType, ApiConfig][]) {
-    const paths = config.schema.paths;
-
-    // Try exact match first
-    if (path in paths) {
-      const pathItem = paths[path];
-      if (normalizedMethod in pathItem) {
-        return {
-          isValid: true,
-          message: 'Valid path and method',
-          operation: pathItem[normalizedMethod],
-          actualPath: path,
-          apiType,
-          baseUrl: config.baseUrl,
-        };
-      }
-    }
-
-    // Try pattern matching for paths with parameters
-    const pathKeys = Object.keys(paths);
-    for (const schemaPath of pathKeys) {
-      // Convert OpenAPI path pattern to regex
-      const pattern = schemaPath.replace(/\{[^}]+\}/g, '[^/]+');
-      const regex = new RegExp(`^${pattern}$`);
-
-      if (regex.test(path)) {
-        const pathItem = paths[schemaPath];
-        if (normalizedMethod in pathItem) {
-          return {
-            isValid: true,
-            message: 'Valid path and method',
-            operation: pathItem[normalizedMethod],
-            actualPath: path,
-            apiType,
-            baseUrl: config.baseUrl,
-          };
-        }
-      }
+    const result = findPathInSchema(normalizedMethod, path, apiType, config);
+    if (result) {
+      return result;
     }
   }
 
