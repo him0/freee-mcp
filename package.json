@@ -22,12 +22,16 @@
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "generate:references": "tsx scripts/generate-references.ts",
-    "fetch:schemas": "tsx scripts/fetch-schemas.ts"
+    "fetch:schemas": "tsx scripts/fetch-schemas.ts",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "author": "him0",
   "license": "ISC",
   "description": "Model Context Protocol (MCP) server for freee API integration",
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@modelcontextprotocol/inspector": "^0.17.2",
     "@types/crypto-js": "^4.2.2",
     "@types/node": "^24.10.1",
