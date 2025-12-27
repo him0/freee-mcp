@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { CONFIG_FILE_PERMISSION } from '../constants.js';
 
 export interface CompanyConfig {
   id: string;
@@ -122,7 +123,7 @@ export async function loadFullConfig(): Promise<FullConfig> {
 export async function saveFullConfig(config: FullConfig): Promise<void> {
   await ensureConfigDir();
   const configPath = getConfigFilePath();
-  await fs.writeFile(configPath, JSON.stringify(config, null, 2), { mode: 0o600 });
+  await fs.writeFile(configPath, JSON.stringify(config, null, 2), { mode: CONFIG_FILE_PERMISSION });
 }
 
 /**

@@ -2,16 +2,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { 
-  TokenData, 
-  saveTokens, 
-  loadTokens, 
-  isTokenValid, 
-  refreshAccessToken, 
-  clearTokens, 
-  getValidAccessToken 
+import {
+  TokenData,
+  saveTokens,
+  loadTokens,
+  isTokenValid,
+  refreshAccessToken,
+  clearTokens,
+  getValidAccessToken
 } from './tokens.js';
 import { setupTestTempDir } from '../test-utils/temp-dir.js';
+import { CONFIG_FILE_PERMISSION } from '../constants.js';
 
 // テスト用一時ディレクトリの設定
 const { tempDir, setup: setupTempDir, cleanup: cleanupTempDir } = setupTestTempDir('tokens-test-');
@@ -85,7 +86,7 @@ describe('tokens', () => {
       expect(mockFs.writeFile).toHaveBeenCalledWith(
         expectedTokenPath,
         JSON.stringify(mockTokenData, null, 2),
-        { mode: 0o600 }
+        { mode: CONFIG_FILE_PERMISSION }
       );
     });
 

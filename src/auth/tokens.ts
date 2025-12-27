@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { config } from '../config.js';
+import { CONFIG_FILE_PERMISSION } from '../constants.js';
 
 export interface TokenData {
   access_token: string;
@@ -29,7 +30,7 @@ export async function saveTokens(tokens: TokenData): Promise<void> {
     console.error(`📁 Creating directory: ${configDir}`);
     await fs.mkdir(configDir, { recursive: true });
     console.error(`💾 Writing tokens to: ${tokenPath}`);
-    await fs.writeFile(tokenPath, JSON.stringify(tokens, null, 2), { mode: 0o600 });
+    await fs.writeFile(tokenPath, JSON.stringify(tokens, null, 2), { mode: CONFIG_FILE_PERMISSION });
     console.error('✅ Tokens saved successfully');
   } catch (error) {
     console.error('❌ Failed to save tokens:', error);

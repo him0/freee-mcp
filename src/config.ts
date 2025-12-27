@@ -1,4 +1,5 @@
 import { loadFullConfig } from './config/companies.js';
+import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS } from './constants.js';
 
 // Mode can be set programmatically via setMode()
 let clientMode = false;
@@ -62,7 +63,7 @@ export async function loadConfig(): Promise<Config> {
     clientSecret = process.env.FREEE_CLIENT_SECRET || '';
     callbackPort = process.env.FREEE_CALLBACK_PORT
       ? parseInt(process.env.FREEE_CALLBACK_PORT, 10)
-      : 54321;
+      : DEFAULT_CALLBACK_PORT;
   } else {
     // Load from config file
     if (!fullConfig.clientId || !fullConfig.clientSecret) {
@@ -74,7 +75,7 @@ export async function loadConfig(): Promise<Config> {
 
     clientId = fullConfig.clientId;
     clientSecret = fullConfig.clientSecret;
-    callbackPort = fullConfig.callbackPort || 54321;
+    callbackPort = fullConfig.callbackPort || DEFAULT_CALLBACK_PORT;
   }
 
   // Load default company ID from env (deprecated)
@@ -103,7 +104,7 @@ export async function loadConfig(): Promise<Config> {
       version: '1.0.0',
     },
     auth: {
-      timeoutMs: 5 * 60 * 1000, // 5分
+      timeoutMs: AUTH_TIMEOUT_MS,
     },
   };
 
