@@ -11,6 +11,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm inspector` - MCP inspector for debugging tools
 - `node scripts/test-tools.js` - Quick tool verification
 - `node scripts/test-mcp.js` - Full MCP protocol testing
+- `pnpm changeset` - Create a new changeset for version bumps
+- `pnpm version` - Apply changesets to update versions and CHANGELOG
+- `pnpm release` - Build and publish to npm
 
 ## Architecture
 
@@ -133,6 +136,11 @@ Development mode: Use `"command": "pnpm", "args": ["tsx", "src/index.ts", "clien
 ```bash
 pnpm type-check && pnpm lint && pnpm test:run && pnpm build
 ```
+
+**Changeset requirement:**
+- Run `pnpm changeset` to create a changeset file for any user-facing changes
+- Select the appropriate bump type: `patch` (bug fixes), `minor` (new features), `major` (breaking changes)
+- Write a concise description of what changed for the CHANGELOG
 
 **Common issues:**
 - Mock function return types (ensure `id` fields are strings)
