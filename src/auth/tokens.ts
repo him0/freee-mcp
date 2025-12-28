@@ -27,13 +27,13 @@ export async function saveTokens(tokens: TokenData): Promise<void> {
   const configDir = path.dirname(tokenPath);
 
   try {
-    console.error(`📁 Creating directory: ${configDir}`);
+    console.error(`[tokens] Creating directory: ${configDir}`);
     await fs.mkdir(configDir, { recursive: true });
-    console.error(`💾 Writing tokens to: ${tokenPath}`);
+    console.error(`[tokens] Writing tokens to: ${tokenPath}`);
     await fs.writeFile(tokenPath, JSON.stringify(tokens, null, 2), { mode: CONFIG_FILE_PERMISSION });
-    console.error('✅ Tokens saved successfully');
+    console.error('[tokens] Tokens saved successfully');
   } catch (error) {
-    console.error('❌ Failed to save tokens:', error);
+    console.error('[tokens] Failed to save tokens:', error);
     throw error;
   }
 }
@@ -83,16 +83,16 @@ async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
       await Promise.all(
         tokenFiles.map(file =>
           fs.unlink(path.join(configDir, file)).catch((err) => {
-            console.error(`⚠️ Failed to clean up legacy token file ${file}:`, err);
+            console.error(`[tokens] Failed to clean up legacy token file ${file}:`, err);
           })
         )
       );
       
-      console.error('✅ Migrated legacy company-specific tokens to user-based tokens');
+      console.error('[tokens] Migrated legacy company-specific tokens to user-based tokens');
       return tokens;
     }
   } catch (error) {
-    console.error('⚠️ Error during legacy token migration attempt:', error);
+    console.error('[tokens] Error during legacy token migration attempt:', error);
   }
 
   return null;
@@ -159,16 +159,16 @@ async function clearLegacyTokens(): Promise<void> {
     await Promise.all(
       tokenFiles.map(file =>
         fs.unlink(path.join(configDir, file)).catch((err) => {
-          console.error(`⚠️ Failed to clear legacy token file ${file}:`, err);
+          console.error(`[tokens] Failed to clear legacy token file ${file}:`, err);
         })
       )
     );
     
     if (tokenFiles.length > 0) {
-      console.error('✅ Cleared legacy company-specific token files');
+      console.error('[tokens] Cleared legacy company-specific token files');
     }
   } catch (error) {
-    console.error('⚠️ Error during legacy token cleanup:', error);
+    console.error('[tokens] Error during legacy token cleanup:', error);
   }
 }
 
