@@ -6,6 +6,7 @@ import {
   startCallbackServer,
   stopCallbackServer,
   getActualRedirectUri,
+  getDefaultAuthManager,
 } from './auth/server.js';
 import { buildAuthUrl, exchangeCodeForTokens } from './auth/oauth.js';
 import { config as defaultConfig } from './config.js';
@@ -36,16 +37,6 @@ type Company = {
   display_name: string;
   role: string;
 };
-
-type CliAuthHandler = {
-  resolve: (code: string) => void;
-  reject: (error: Error) => void;
-  codeVerifier: string;
-};
-
-declare global {
-  var __cliAuthHandlers: Record<string, CliAuthHandler> | undefined;
-}
 
 async function fetchCompanies(accessToken: string): Promise<Company[]> {
   const response = await fetch(`${defaultConfig.freee.apiUrl}/api/1/companies`, {
@@ -148,6 +139,8 @@ async function performOAuth(): Promise<OAuthResult> {
   console.log('ブラウザで認証を完了してください...');
   console.log('認証が完了すると自動的に次のステップに進みます。\n');
 
+  const authManager = getDefaultAuthManager();
+
   const callbackPromise = new Promise<string>((resolve, reject) => {
     const timeout = setTimeout(
       () => {
@@ -156,10 +149,7 @@ async function performOAuth(): Promise<OAuthResult> {
       AUTH_TIMEOUT_MS,
     );
 
-    if (!global.__cliAuthHandlers) {
-      global.__cliAuthHandlers = {};
-    }
-    global.__cliAuthHandlers[state] = {
+    authManager.registerCliAuthHandler(state, {
       resolve: (code: string): void => {
         clearTimeout(timeout);
         resolve(code);
@@ -169,7 +159,7 @@ async function performOAuth(): Promise<OAuthResult> {
         reject(error);
       },
       codeVerifier,
-    };
+    });
   });
 
   try {
@@ -185,9 +175,7 @@ async function performOAuth(): Promise<OAuthResult> {
       refreshToken: tokens.refresh_token,
     };
   } finally {
-    if (global.__cliAuthHandlers) {
-      delete global.__cliAuthHandlers[state];
-    }
+    authManager.removeCliAuthHandler(state);
   }
 }
 
