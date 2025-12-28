@@ -81,7 +81,7 @@ export function generateClientModeTool(server: McpServer): void {
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals, /invoices)'),
-      query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
+      query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('GET')
   );
@@ -93,8 +93,8 @@ export function generateClientModeTool(server: McpServer): void {
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals, /invoices)'),
-      body: z.record(z.string(), z.any()).describe('リクエストボディ'),
-      query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
+      body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
+      query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('POST')
   );
@@ -106,8 +106,8 @@ export function generateClientModeTool(server: McpServer): void {
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123, /invoices/123)'),
-      body: z.record(z.string(), z.any()).describe('リクエストボディ'),
-      query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
+      body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
+      query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('PUT')
   );
@@ -119,7 +119,7 @@ export function generateClientModeTool(server: McpServer): void {
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-      query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
+      query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('DELETE')
   );
@@ -131,8 +131,8 @@ export function generateClientModeTool(server: McpServer): void {
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-      body: z.record(z.string(), z.any()).describe('リクエストボディ'),
-      query: z.record(z.string(), z.any()).optional().describe('クエリパラメータ (オプション)'),
+      body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
+      query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('PATCH')
   );
