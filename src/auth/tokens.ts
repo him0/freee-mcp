@@ -3,6 +3,7 @@ import path from 'path';
 import os from 'os';
 import { config } from '../config.js';
 import { CONFIG_FILE_PERMISSION } from '../constants.js';
+import { safeParseJson } from '../utils/error.js';
 
 export interface TokenData {
   access_token: string;
@@ -113,7 +114,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await safeParseJson(response);
     throw new Error(`Token refresh failed: ${response.status} ${JSON.stringify(errorData)}`);
   }
 
