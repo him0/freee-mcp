@@ -75,7 +75,6 @@ function createMethodTool(method: string): (args: {
  */
 export function generateClientModeTool(server: McpServer): void {
   // GET tool
-  // @ts-expect-error - Zod 3.25+ type inference issue with MCP SDK
   server.tool(
     'freee_api_get',
     `freee API GET。${SERVICE_HINT}`,
@@ -88,7 +87,6 @@ export function generateClientModeTool(server: McpServer): void {
   );
 
   // POST tool
-  // @ts-expect-error - Zod 3.25+ type inference issue with MCP SDK
   server.tool(
     'freee_api_post',
     `freee API POST。${SERVICE_HINT}`,

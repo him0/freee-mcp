@@ -1,12 +1,20 @@
-import accountingSchema from '../../openapi/minimal/accounting.json';
-import hrSchema from '../../openapi/minimal/hr.json';
-import invoiceSchema from '../../openapi/minimal/invoice.json';
-import pmSchema from '../../openapi/minimal/pm.json';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   MinimalSchema,
   MinimalPathItem,
   MinimalOperation,
 } from './minimal-types.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const schemasDir = path.resolve(__dirname, '../../openapi/minimal');
+
+function loadSchema(filename: string): MinimalSchema {
+  const filePath = path.join(schemasDir, filename);
+  const content = fs.readFileSync(filePath, 'utf-8');
+  return JSON.parse(content) as MinimalSchema;
+}
 
 export type ApiType = 'accounting' | 'hr' | 'invoice' | 'pm';
 
@@ -17,32 +25,63 @@ export interface ApiConfig {
   name: string;
 }
 
-export const API_CONFIGS: Record<ApiType, ApiConfig> = {
-  accounting: {
-    schema: accountingSchema as MinimalSchema,
-    baseUrl: 'https://api.freee.co.jp',
-    prefix: 'accounting',
-    name: 'freee会計 API',
-  },
-  hr: {
-    schema: hrSchema as MinimalSchema,
-    baseUrl: 'https://api.freee.co.jp/hr',
-    prefix: 'hr',
-    name: 'freee人事労務 API',
-  },
-  invoice: {
-    schema: invoiceSchema as MinimalSchema,
-    baseUrl: 'https://api.freee.co.jp/iv',
-    prefix: 'invoice',
-    name: 'freee請求書 API',
-  },
-  pm: {
-    schema: pmSchema as MinimalSchema,
-    baseUrl: 'https://api.freee.co.jp/pm',
-    prefix: 'pm',
-    name: 'freee工数管理 API',
-  },
-};
+// Lazy-load schemas to avoid loading at module initialization
+let _apiConfigs: Record<ApiType, ApiConfig> | null = null;
+
+function getApiConfigs(): Record<ApiType, ApiConfig> {
+  if (_apiConfigs === null) {
+    _apiConfigs = {
+      accounting: {
+        schema: loadSchema('accounting.json'),
+        baseUrl: 'https://api.freee.co.jp',
+        prefix: 'accounting',
+        name: 'freee会計 API',
+      },
+      hr: {
+        schema: loadSchema('hr.json'),
+        baseUrl: 'https://api.freee.co.jp/hr',
+        prefix: 'hr',
+        name: 'freee人事労務 API',
+      },
+      invoice: {
+        schema: loadSchema('invoice.json'),
+        baseUrl: 'https://api.freee.co.jp/iv',
+        prefix: 'invoice',
+        name: 'freee請求書 API',
+      },
+      pm: {
+        schema: loadSchema('pm.json'),
+        baseUrl: 'https://api.freee.co.jp/pm',
+        prefix: 'pm',
+        name: 'freee工数管理 API',
+      },
+    };
+  }
+  return _apiConfigs;
+}
+
+export const API_CONFIGS: Record<ApiType, ApiConfig> = new Proxy(
+  {} as Record<ApiType, ApiConfig>,
+  {
+    get(_, prop: string): ApiConfig | undefined {
+      return getApiConfigs()[prop as ApiType];
+    },
+    ownKeys(): string[] {
+      return Object.keys(getApiConfigs());
+    },
+    getOwnPropertyDescriptor(_, prop: string): PropertyDescriptor | undefined {
+      const configs = getApiConfigs();
+      if (prop in configs) {
+        return {
+          enumerable: true,
+          configurable: true,
+          value: configs[prop as ApiType],
+        };
+      }
+      return undefined;
+    },
+  }
+);
 
 export interface PathValidationResult {
   isValid: boolean;
