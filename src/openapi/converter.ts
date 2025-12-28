@@ -48,7 +48,7 @@ export function generateToolsFromOpenApi(server: McpServer): void {
           }
         }
 
-        server.tool(toolName, description, parameterSchema, async (params) => {
+        server.tool(toolName, description, parameterSchema, async (params: Record<string, unknown>) => {
           try {
             let actualPath = pathKey as string;
             pathParams.forEach((param: MinimalParameter) => {
@@ -65,7 +65,7 @@ export function generateToolsFromOpenApi(server: McpServer): void {
             });
 
             const bodyParameters =
-              method === 'post' || method === 'put' ? params.body : undefined;
+              method === 'post' || method === 'put' ? (params.body as Record<string, unknown> | undefined) : undefined;
             const result = await makeApiRequest(
               method.toUpperCase(),
               actualPath,
