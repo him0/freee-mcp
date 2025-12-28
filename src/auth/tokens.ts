@@ -1,8 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
 import { config } from '../config.js';
-import { CONFIG_FILE_PERMISSION } from '../constants.js';
+import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 
 export interface TokenData {
   access_token: string;
@@ -13,13 +12,11 @@ export interface TokenData {
 }
 
 function getTokenFilePath(): string {
-  const configDir = path.join(os.homedir(), '.config', 'freee-mcp');
-  return path.join(configDir, 'tokens.json');
+  return path.join(getConfigDir(), 'tokens.json');
 }
 
 function getLegacyTokenFilePath(companyId: string): string {
-  const configDir = path.join(os.homedir(), '.config', 'freee-mcp');
-  return path.join(configDir, `tokens-${companyId}.json`);
+  return path.join(getConfigDir(), `tokens-${companyId}.json`);
 }
 
 export async function saveTokens(tokens: TokenData): Promise<void> {
@@ -64,7 +61,7 @@ export function isTokenValid(tokens: TokenData): boolean {
 
 async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
   // Try to find and migrate legacy company-specific token files
-  const configDir = path.join(os.homedir(), '.config', 'freee-mcp');
+  const configDir = getConfigDir();
   
   try {
     const files = await fs.readdir(configDir);
@@ -150,7 +147,7 @@ export async function clearTokens(): Promise<void> {
 }
 
 async function clearLegacyTokens(): Promise<void> {
-  const configDir = path.join(os.homedir(), '.config', 'freee-mcp');
+  const configDir = getConfigDir();
   
   try {
     const files = await fs.readdir(configDir);
