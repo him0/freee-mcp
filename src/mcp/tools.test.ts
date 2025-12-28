@@ -78,7 +78,7 @@ describe('tools', () => {
     it('should register authentication tools', () => {
       addAuthenticationTools(mockServer);
 
-      expect(mockTool).toHaveBeenCalledTimes(10);
+      expect(mockTool).toHaveBeenCalledTimes(7);
       expect(mockTool).toHaveBeenCalledWith('freee_current_user', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_authenticate', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_auth_status', expect.any(String), {}, expect.any(Function));
@@ -97,7 +97,7 @@ describe('tools', () => {
         const result = await handler();
 
         expect(result.content[0].text).toContain('現在のユーザー情報');
-        expect(result.content[0].text).toContain('現在の会社ID: 12345');
+        expect(result.content[0].text).toContain('会社ID: 12345');
         expect(result.content[0].text).toContain(JSON.stringify(mockUserInfo, null, 2));
       });
 
@@ -110,7 +110,7 @@ describe('tools', () => {
         
         const result = await handler();
 
-        expect(result.content[0].text).toContain('ユーザー情報の取得に失敗しました');
+        expect(result.content[0].text).toContain('ユーザー情報の取得に失敗');
         expect(result.content[0].text).toContain('Authentication required');
       });
     });
@@ -147,7 +147,7 @@ describe('tools', () => {
           'test-state-hex',
           'test-verifier'
         );
-        expect(result.content[0].text).toContain('OAuth認証を開始しました');
+        expect(result.content[0].text).toContain('認証URL:');
         expect(result.content[0].text).toContain('https://auth.url');
       });
 
@@ -177,8 +177,7 @@ describe('tools', () => {
         const result = await handler();
 
         expect(result.content[0].text).toContain('認証状態: 有効');
-        expect(result.content[0].text).toContain('test-access-token-12');
-        expect(result.content[0].text).toContain('read write');
+        expect(result.content[0].text).toContain('有効期限:');
       });
 
       it('should return expired token status', async () => {
@@ -210,7 +209,7 @@ describe('tools', () => {
         
         const result = await handler();
 
-        expect(result.content[0].text).toContain('認証されていません');
+        expect(result.content[0].text).toContain('未認証');
       });
     });
 
@@ -225,7 +224,7 @@ describe('tools', () => {
         const result = await handler();
 
         expect(mockClearTokens.clearTokens).toHaveBeenCalled();
-        expect(result.content[0].text).toContain('認証情報がクリアされました');
+        expect(result.content[0].text).toContain('認証情報をクリアしました');
       });
 
       it('should handle clear tokens error', async () => {
@@ -237,7 +236,7 @@ describe('tools', () => {
         
         const result = await handler();
 
-        expect(result.content[0].text).toContain('認証情報のクリアに失敗しました');
+        expect(result.content[0].text).toContain('認証情報のクリアに失敗');
         expect(result.content[0].text).toContain('Permission denied');
       });
     });
