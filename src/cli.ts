@@ -203,7 +203,11 @@ async function selectCompany(accessToken: string): Promise<{ selected: SelectedC
     throw new Error('セットアップがキャンセルされました。');
   }
 
-  const selectedCompany = companies.find((c) => c.id === companySelection.companyId)!;
+  const selectedCompany = companies.find((c) => c.id === companySelection.companyId);
+
+  if (!selectedCompany) {
+    throw new Error(`選択した事業所が見つかりません: ID ${companySelection.companyId}`);
+  }
 
   console.log(`\n✓ ${selectedCompany.display_name || selectedCompany.name} を選択しました。\n`);
 
