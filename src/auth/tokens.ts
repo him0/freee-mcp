@@ -27,13 +27,13 @@ export async function saveTokens(tokens: TokenData): Promise<void> {
   const configDir = path.dirname(tokenPath);
 
   try {
-    console.error(`[tokens] Creating directory: ${configDir}`);
+    console.error(`[info] Creating directory: ${configDir}`);
     await fs.mkdir(configDir, { recursive: true });
-    console.error(`[tokens] Writing tokens to: ${tokenPath}`);
+    console.error(`[info] Writing tokens to: ${tokenPath}`);
     await fs.writeFile(tokenPath, JSON.stringify(tokens, null, 2), { mode: CONFIG_FILE_PERMISSION });
-    console.error('[tokens] Tokens saved successfully');
+    console.error('[info] Tokens saved successfully');
   } catch (error) {
-    console.error('[tokens] Failed to save tokens:', error);
+    console.error('[error] Failed to save tokens:', error);
     throw error;
   }
 }
@@ -53,7 +53,7 @@ export async function loadTokens(): Promise<TokenData | null> {
       }
       return null;
     }
-    console.error('Failed to load tokens:', error);
+    console.error('[error] Failed to load tokens:', error);
     throw error;
   }
 }
@@ -83,16 +83,16 @@ async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
       await Promise.all(
         tokenFiles.map(file =>
           fs.unlink(path.join(configDir, file)).catch((err) => {
-            console.error(`[tokens] Failed to clean up legacy token file ${file}:`, err);
+            console.error(`[warn] Failed to clean up legacy token file ${file}:`, err);
           })
         )
       );
       
-      console.error('[tokens] Migrated legacy company-specific tokens to user-based tokens');
+      console.error('[info] Migrated legacy company-specific tokens to user-based tokens');
       return tokens;
     }
   } catch (error) {
-    console.error('[tokens] Error during legacy token migration attempt:', error);
+    console.error('[warn] Error during legacy token migration attempt:', error);
   }
 
   return null;
@@ -135,13 +135,13 @@ export async function clearTokens(): Promise<void> {
 
   try {
     await fs.unlink(tokenPath);
-    console.error('Tokens cleared successfully');
+    console.error('[info] Tokens cleared successfully');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      console.error('No tokens to clear (file does not exist)');
+      console.error('[info] No tokens to clear (file does not exist)');
       return;
     }
-    console.error('Failed to clear tokens:', error);
+    console.error('[error] Failed to clear tokens:', error);
     throw error;
   }
   
@@ -159,16 +159,16 @@ async function clearLegacyTokens(): Promise<void> {
     await Promise.all(
       tokenFiles.map(file =>
         fs.unlink(path.join(configDir, file)).catch((err) => {
-          console.error(`[tokens] Failed to clear legacy token file ${file}:`, err);
+          console.error(`[warn] Failed to clear legacy token file ${file}:`, err);
         })
       )
     );
     
     if (tokenFiles.length > 0) {
-      console.error('[tokens] Cleared legacy company-specific token files');
+      console.error('[info] Cleared legacy company-specific token files');
     }
   } catch (error) {
-    console.error('[tokens] Error during legacy token cleanup:', error);
+    console.error('[warn] Error during legacy token cleanup:', error);
   }
 }
 
@@ -186,7 +186,7 @@ export async function getValidAccessToken(): Promise<string | null> {
     const newTokens = await refreshAccessToken(tokens.refresh_token);
     return newTokens.access_token;
   } catch (error) {
-    console.error('Failed to refresh token:', error);
+    console.error('[warn] Failed to refresh token:', error);
     return null;
   }
 }
