@@ -81,8 +81,10 @@ async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
       
       // Clean up all legacy token files
       await Promise.all(
-        tokenFiles.map(file => 
-          fs.unlink(path.join(configDir, file)).catch(() => {}) // Ignore errors
+        tokenFiles.map(file =>
+          fs.unlink(path.join(configDir, file)).catch((err) => {
+            console.error(`⚠️ Failed to clean up legacy token file ${file}:`, err);
+          })
         )
       );
       
@@ -90,9 +92,9 @@ async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
       return tokens;
     }
   } catch (error) {
-    // Ignore errors during migration attempt
+    console.error('⚠️ Error during legacy token migration attempt:', error);
   }
-  
+
   return null;
 }
 
@@ -155,8 +157,10 @@ async function clearLegacyTokens(): Promise<void> {
     const tokenFiles = files.filter(file => file.startsWith('tokens-') && file.endsWith('.json'));
     
     await Promise.all(
-      tokenFiles.map(file => 
-        fs.unlink(path.join(configDir, file)).catch(() => {}) // Ignore errors
+      tokenFiles.map(file =>
+        fs.unlink(path.join(configDir, file)).catch((err) => {
+          console.error(`⚠️ Failed to clear legacy token file ${file}:`, err);
+        })
       )
     );
     
@@ -164,7 +168,7 @@ async function clearLegacyTokens(): Promise<void> {
       console.error('✅ Cleared legacy company-specific token files');
     }
   } catch (error) {
-    // Ignore errors during cleanup
+    console.error('⚠️ Error during legacy token cleanup:', error);
   }
 }
 
