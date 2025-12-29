@@ -1,7 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
-import { CONFIG_FILE_PERMISSION } from '../constants.js';
+import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 
 export interface CompanyConfig {
   id: string;
@@ -31,8 +30,7 @@ export interface LegacyCompaniesConfig {
 }
 
 function getConfigFilePath(): string {
-  const configDir = path.join(os.homedir(), '.config', 'freee-mcp');
-  return path.join(configDir, 'config.json');
+  return path.join(getConfigDir(), 'config.json');
 }
 
 async function ensureConfigDir(): Promise<void> {
