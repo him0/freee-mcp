@@ -1,6 +1,7 @@
 import { config } from '../config.js';
 import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
+import { safeParseJson } from '../utils/error.js';
 
 export async function makeApiRequest(
   method: string,
@@ -46,7 +47,7 @@ export async function makeApiRequest(
   });
 
   if (response.status === 401 || response.status === 403) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await safeParseJson(response);
     throw new Error(
       `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
       `現在の事業所ID: ${companyId}\n` +
@@ -60,8 +61,8 @@ export async function makeApiRequest(
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    
+    const errorData = await safeParseJson(response);
+
     // Extract detailed error messages from freee API response
     let errorMessage = `API request failed: ${response.status}`;
     
