@@ -41,7 +41,7 @@ export function generateToolsFromOpenApi(server: McpServer): void {
           parameterSchema[sanitizePropertyName(param.name)] = schema;
         });
 
-        const bodySchema = z.any();
+        const bodySchema = z.record(z.string(), z.unknown());
         if (method === 'post' || method === 'put') {
           if (operation.hasJsonBody) {
             parameterSchema['body'] = bodySchema.describe('Request body');
