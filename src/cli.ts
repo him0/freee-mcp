@@ -12,6 +12,7 @@ import { buildAuthUrl, exchangeCodeForTokens } from './auth/oauth.js';
 import { config as defaultConfig } from './config.js';
 import { saveFullConfig, type FullConfig } from './config/companies.js';
 import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS } from './constants.js';
+import { safeParseJson } from './utils/error.js';
 
 type Credentials = {
   clientId: string;
@@ -47,7 +48,7 @@ async function fetchCompanies(accessToken: string): Promise<Company[]> {
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await safeParseJson(response);
     throw new Error(
       `事業所一覧の取得に失敗しました: ${response.status} ${JSON.stringify(errorData)}`,
     );
@@ -203,7 +204,11 @@ async function selectCompany(accessToken: string): Promise<{ selected: SelectedC
     throw new Error('セットアップがキャンセルされました。');
   }
 
-  const selectedCompany = companies.find((c) => c.id === companySelection.companyId)!;
+  const selectedCompany = companies.find((c) => c.id === companySelection.companyId);
+
+  if (!selectedCompany) {
+    throw new Error(`選択した事業所が見つかりません: ID ${companySelection.companyId}`);
+  }
 
   console.log(`\n✓ ${selectedCompany.display_name || selectedCompany.name} を選択しました。\n`);
 
