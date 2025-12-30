@@ -19,18 +19,18 @@ export async function createAndStartServer(): Promise<void> {
 
   // Use client mode or generate individual tools based on mode
   if (getMode()) {
-    console.error('🔧 Using API client mode (single generic tool)');
+    console.error('Using API client mode (single generic tool)');
     generateClientModeTool(server);
   } else {
-    console.error('🔧 Using individual tool mode (one tool per endpoint)');
+    console.error('Using individual tool mode (one tool per endpoint)');
     generateToolsFromOpenApi(server);
   }
 
   try {
     await startCallbackServer();
-    console.error(`✅ OAuth callback server started on http://127.0.0.1:${config.oauth.callbackPort}`);
+    console.error(`OAuth callback server started on http://127.0.0.1:${config.oauth.callbackPort}`);
   } catch (error) {
-    console.error('⚠️ Failed to start callback server:', error);
+    console.error('Failed to start callback server:', error);
     console.error('OAuth authentication will fall back to manual mode');
   }
 

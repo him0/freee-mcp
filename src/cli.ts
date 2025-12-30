@@ -63,7 +63,7 @@ async function collectCredentials(): Promise<Credentials> {
   const hasExistingCredentials = !!(existingConfig.clientId && existingConfig.clientSecret);
 
   if (hasExistingCredentials) {
-    console.log('✓ 既存の設定が見つかりました。');
+    console.log('既存の設定が見つかりました。');
     console.log('  変更しない項目はそのまま Enter を押してください。\n');
   }
 
@@ -115,7 +115,7 @@ async function collectCredentials(): Promise<Credentials> {
   process.env.FREEE_CLIENT_SECRET = clientSecret;
   process.env.FREEE_CALLBACK_PORT = String(callbackPort);
 
-  console.log('\n✓ 認証情報を受け取りました。\n');
+  console.log('\n認証情報を受け取りました。\n');
 
   return { clientId, clientSecret, callbackPort };
 }
@@ -165,11 +165,11 @@ async function performOAuth(): Promise<OAuthResult> {
 
   try {
     const authCode = await callbackPromise;
-    console.log('✓ 認証コードを受け取りました。');
+    console.log('認証コードを受け取りました。');
 
     console.log('トークンを取得中...');
     const tokens = await exchangeCodeForTokens(authCode, codeVerifier, getActualRedirectUri());
-    console.log('✓ トークンを取得しました。\n');
+    console.log('トークンを取得しました。\n');
 
     return {
       accessToken: tokens.access_token,
@@ -210,7 +210,7 @@ async function selectCompany(accessToken: string): Promise<{ selected: SelectedC
     throw new Error(`選択した事業所が見つかりません: ID ${companySelection.companyId}`);
   }
 
-  console.log(`\n✓ ${selectedCompany.display_name || selectedCompany.name} を選択しました。\n`);
+  console.log(`\n${selectedCompany.display_name || selectedCompany.name} を選択しました。\n`);
 
   return {
     selected: {
@@ -248,7 +248,7 @@ async function saveConfig(
   });
 
   await saveFullConfig(fullConfig);
-  console.log('✓ 設定情報を保存しました。\n');
+  console.log('設定情報を保存しました。\n');
 
   console.log('=== MCP設定 ===\n');
   console.log('以下の設定をClaude desktopの設定ファイルに追加してください:\n');
@@ -275,7 +275,7 @@ async function saveConfig(
   };
 
   console.log(JSON.stringify(mcpConfig, null, 2));
-  console.log('\n✓ セットアップ完了！\n');
+  console.log('\nセットアップ完了!\n');
   console.log('認証情報は ~/.config/freee-mcp/config.json に保存されました。');
   console.log('トークンは ~/.config/freee-mcp/tokens.json に保存されました。');
   console.log('Claude desktopを再起動すると、freee-mcpが利用可能になります。\n');
@@ -293,7 +293,7 @@ export async function configure(): Promise<void> {
     await saveConfig(credentials, selectedCompany, allCompanies);
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`\n❌ ${error.message}`);
+      console.error(`\nError: ${error.message}`);
     } else {
       console.error('\n設定中にエラーが発生しました:', error);
     }
