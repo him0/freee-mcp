@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { makeApiRequest } from './client.js';
+import { makeApiRequest, BinaryFileResponse } from './client.js';
+import fs from 'fs/promises';
 
 vi.mock('../config.js', () => ({
   config: {
@@ -11,10 +12,11 @@ vi.mock('../config.js', () => ({
 }));
 
 vi.mock('../config/companies.js', () => ({
-  getCurrentCompanyId: vi.fn().mockResolvedValue('12345')
+  getCurrentCompanyId: vi.fn(),
+  getDownloadDir: vi.fn()
 }));
 
-const { getCurrentCompanyId } = await import('../config/companies.js');
+const { getCurrentCompanyId, getDownloadDir } = await import('../config/companies.js');
 
 vi.mock('../auth/tokens.js', () => ({
   getValidAccessToken: vi.fn()
@@ -26,8 +28,9 @@ global.fetch = mockFetch;
 describe('client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // getCurrentCompanyIdのモックを確実に設定
+    // モックを確実に設定
     vi.mocked(getCurrentCompanyId).mockResolvedValue('12345');
+    vi.mocked(getDownloadDir).mockResolvedValue('/tmp');
   });
 
   afterEach(() => {
@@ -42,6 +45,9 @@ describe('client', () => {
       const mockResponse = { data: 'test-data' };
       mockFetch.mockResolvedValue({
         ok: true,
+        headers: {
+          get: (name: string) => name === 'content-type' ? 'application/json' : null
+        },
         json: () => Promise.resolve(mockResponse)
       });
 
@@ -64,9 +70,12 @@ describe('client', () => {
     it('should include query parameters', async () => {
       const mockGetValidAccessToken = await import('../auth/tokens.js');
       vi.mocked(mockGetValidAccessToken.getValidAccessToken).mockResolvedValue('test-access-token');
-      
+
       mockFetch.mockResolvedValue({
         ok: true,
+        headers: {
+          get: (name: string) => name === 'content-type' ? 'application/json' : null
+        },
         json: () => Promise.resolve({})
       });
 
@@ -81,9 +90,12 @@ describe('client', () => {
     it('should skip undefined parameters', async () => {
       const mockGetValidAccessToken = await import('../auth/tokens.js');
       vi.mocked(mockGetValidAccessToken.getValidAccessToken).mockResolvedValue('test-access-token');
-      
+
       mockFetch.mockResolvedValue({
         ok: true,
+        headers: {
+          get: (name: string) => name === 'content-type' ? 'application/json' : null
+        },
         json: () => Promise.resolve({})
       });
 
@@ -98,9 +110,12 @@ describe('client', () => {
     it('should include request body for POST requests', async () => {
       const mockGetValidAccessToken = await import('../auth/tokens.js');
       vi.mocked(mockGetValidAccessToken.getValidAccessToken).mockResolvedValue('test-access-token');
-      
+
       mockFetch.mockResolvedValue({
         ok: true,
+        headers: {
+          get: (name: string) => name === 'content-type' ? 'application/json' : null
+        },
         json: () => Promise.resolve({})
       });
 
@@ -177,7 +192,7 @@ describe('client', () => {
     it('should handle JSON parsing errors in error responses', async () => {
       const mockGetValidAccessToken = await import('../auth/tokens.js');
       vi.mocked(mockGetValidAccessToken.getValidAccessToken).mockResolvedValue('test-token');
-      
+
       mockFetch.mockResolvedValue({
         ok: false,
         status: 500,
@@ -187,6 +202,53 @@ describe('client', () => {
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
         'API request failed: 500\n\n詳細: {}'
       );
+    });
+
+    it('should save binary response to file and return file info', async () => {
+      const mockGetValidAccessToken = await import('../auth/tokens.js');
+      vi.mocked(mockGetValidAccessToken.getValidAccessToken).mockResolvedValue('test-access-token');
+
+      const binaryData = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // PDF magic bytes
+      mockFetch.mockResolvedValue({
+        ok: true,
+        headers: {
+          get: (name: string) => name === 'content-type' ? 'application/pdf' : null
+        },
+        arrayBuffer: () => Promise.resolve(binaryData.buffer)
+      });
+
+      const result = await makeApiRequest('GET', '/api/1/receipts/123/download') as BinaryFileResponse;
+
+      expect(result.type).toBe('binary');
+      expect(result.mimeType).toBe('application/pdf');
+      expect(result.size).toBe(4);
+      expect(result.filePath).toContain('.pdf');
+
+      // Clean up: delete the created file
+      await fs.unlink(result.filePath).catch(() => {});
+    });
+
+    it('should save image response to file with correct extension', async () => {
+      const mockGetValidAccessToken = await import('../auth/tokens.js');
+      vi.mocked(mockGetValidAccessToken.getValidAccessToken).mockResolvedValue('test-access-token');
+
+      const imageData = new Uint8Array([0x89, 0x50, 0x4E, 0x47]); // PNG magic bytes
+      mockFetch.mockResolvedValue({
+        ok: true,
+        headers: {
+          get: (name: string) => name === 'content-type' ? 'image/png' : null
+        },
+        arrayBuffer: () => Promise.resolve(imageData.buffer)
+      });
+
+      const result = await makeApiRequest('GET', '/api/1/receipts/456/download') as BinaryFileResponse;
+
+      expect(result.type).toBe('binary');
+      expect(result.mimeType).toBe('image/png');
+      expect(result.filePath).toContain('.png');
+
+      // Clean up: delete the created file
+      await fs.unlink(result.filePath).catch(() => {});
     });
   });
 });

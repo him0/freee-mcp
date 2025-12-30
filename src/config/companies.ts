@@ -21,6 +21,9 @@ export interface FullConfig {
   defaultCompanyId: string;
   currentCompanyId: string;
   companies: Record<string, CompanyConfig>;
+
+  // Download settings
+  downloadDir?: string;
 }
 
 // Legacy format (for backward compatibility)
@@ -183,4 +186,22 @@ export async function getCompanyList(): Promise<CompanyConfig[]> {
 export async function getCompanyInfo(companyId: string): Promise<CompanyConfig | null> {
   const config = await loadFullConfig();
   return config.companies[companyId] || null;
+}
+
+/**
+ * Get download directory for binary files
+ * Returns configured directory or system temp directory as default
+ */
+export async function getDownloadDir(): Promise<string> {
+  const config = await loadFullConfig();
+  return config.downloadDir || os.tmpdir();
+}
+
+/**
+ * Set download directory for binary files
+ */
+export async function setDownloadDir(dir: string): Promise<void> {
+  const config = await loadFullConfig();
+  config.downloadDir = dir;
+  await saveFullConfig(config);
 }

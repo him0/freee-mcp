@@ -1,14 +1,64 @@
 import { config } from '../config.js';
 import { getValidAccessToken } from '../auth/tokens.js';
-import { getCurrentCompanyId } from '../config/companies.js';
+import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
+import fs from 'fs/promises';
+import path from 'path';
+
+/**
+ * Response type for binary file downloads
+ */
+export interface BinaryFileResponse {
+  type: 'binary';
+  filePath: string;
+  mimeType: string;
+  size: number;
+}
+
+/**
+ * Check if Content-Type indicates binary response
+ */
+function isBinaryContentType(contentType: string): boolean {
+  const binaryTypes = [
+    'application/pdf',
+    'application/octet-stream',
+    'image/',
+  ];
+  return binaryTypes.some(type => contentType.includes(type));
+}
+
+/**
+ * Get file extension from Content-Type
+ */
+function getExtensionFromContentType(contentType: string): string {
+  const typeMap: Record<string, string> = {
+    'application/pdf': '.pdf',
+    'image/png': '.png',
+    'image/jpeg': '.jpg',
+    'image/gif': '.gif',
+    'image/webp': '.webp',
+    'text/csv': '.csv',
+  };
+
+  for (const [type, ext] of Object.entries(typeMap)) {
+    if (contentType.includes(type)) {
+      return ext;
+    }
+  }
+
+  if (contentType.includes('image/')) {
+    return '.bin';
+  }
+
+  return '.bin';
+}
 
 export async function makeApiRequest(
   method: string,
-  path: string,
+  apiPath: string,
   params?: Record<string, unknown>,
   body?: Record<string, unknown>,
   baseUrl?: string,
-): Promise<unknown> {
+): Promise<unknown | BinaryFileResponse> {
   const apiUrl = baseUrl || config.freee.apiUrl;
   const companyId = await getCurrentCompanyId();
 
@@ -24,7 +74,7 @@ export async function makeApiRequest(
 
   // Properly join baseUrl and path, preserving baseUrl's path component
   const normalizedBase = apiUrl.endsWith('/') ? apiUrl : apiUrl + '/';
-  const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+  const normalizedPath = apiPath.startsWith('/') ? apiPath.slice(1) : apiPath;
   const url = new URL(normalizedPath, normalizedBase);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -92,6 +142,28 @@ export async function makeApiRequest(
     }
     
     throw new Error(errorMessage);
+  }
+
+  // Check Content-Type for binary response
+  const contentType = response.headers.get('content-type') || '';
+
+  if (isBinaryContentType(contentType)) {
+    // Handle binary response: save to file and return path
+    const downloadDir = await getDownloadDir();
+    const extension = getExtensionFromContentType(contentType);
+    const timestamp = Date.now();
+    const fileName = `freee_download_${timestamp}${extension}`;
+    const filePath = path.join(downloadDir, fileName);
+
+    const buffer = await response.arrayBuffer();
+    await fs.writeFile(filePath, Buffer.from(buffer));
+
+    return {
+      type: 'binary',
+      filePath,
+      mimeType: contentType,
+      size: buffer.byteLength,
+    } as BinaryFileResponse;
   }
 
   return response.json();
