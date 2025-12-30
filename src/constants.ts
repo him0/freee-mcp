@@ -5,6 +5,26 @@
  * across multiple files in the codebase.
  */
 
+import path from 'path';
+import os from 'os';
+
+/**
+ * Application name used for configuration directory
+ */
+export const APP_NAME = 'freee-mcp';
+
+/**
+ * Get the configuration directory path.
+ * Respects XDG Base Directory specification:
+ * - Uses XDG_CONFIG_HOME if set
+ * - Falls back to ~/.config/freee-mcp
+ */
+export function getConfigDir(): string {
+  return process.env.XDG_CONFIG_HOME
+    ? path.join(process.env.XDG_CONFIG_HOME, APP_NAME)
+    : path.join(os.homedir(), '.config', APP_NAME);
+}
+
 /**
  * Default port for OAuth callback server
  */

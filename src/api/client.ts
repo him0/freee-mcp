@@ -1,6 +1,7 @@
 import { config } from '../config.js';
 import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
+import { safeParseJson } from '../utils/error.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -96,7 +97,7 @@ export async function makeApiRequest(
   });
 
   if (response.status === 401 || response.status === 403) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await safeParseJson(response);
     throw new Error(
       `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
       `現在の事業所ID: ${companyId}\n` +
@@ -110,37 +111,37 @@ export async function makeApiRequest(
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    
+    const errorData = await safeParseJson(response);
+
     // Extract detailed error messages from freee API response
     let errorMessage = `API request failed: ${response.status}`;
-    
+
     if (errorData && errorData.errors && Array.isArray(errorData.errors)) {
       const allMessages: string[] = [];
-      
+
       for (const error of errorData.errors) {
         if (error.messages && Array.isArray(error.messages)) {
           allMessages.push(...error.messages);
         }
       }
-      
+
       if (allMessages.length > 0) {
         errorMessage += `\n\nエラー詳細:\n${allMessages.join('\n')}`;
-        
+
         // Add helpful guidance for bad request errors
         if (response.status === 400) {
-          errorMessage += `\n\n💡 ヒント: 不正なリクエストエラーが発生しました。`;
+          errorMessage += `\n\nヒント: 不正なリクエストエラーが発生しました。`;
           errorMessage += `\n既存のデータを取得して正しい構造を確認することをお勧めします。`;
           errorMessage += `\n例: get_items, get_partners, get_account_items などで既存データの構造を確認してください。`;
         }
       }
     }
-    
+
     // Fallback to raw error data if no structured errors found
     if (!errorData?.errors) {
       errorMessage += `\n\n詳細: ${JSON.stringify(errorData)}`;
     }
-    
+
     throw new Error(errorMessage);
   }
 

@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { config } from '../config.js';
 import { TokenData, saveTokens } from './tokens.js';
+import { safeParseJson } from '../utils/error.js';
 
 export function generatePKCE(): { codeVerifier: string; codeChallenge: string } {
   const codeVerifier = crypto.randomBytes(32).toString('base64url');
@@ -39,7 +40,7 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string, 
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
+    const errorData = await safeParseJson(response);
     throw new Error(`Token exchange failed: ${response.status} ${JSON.stringify(errorData)}`);
   }
 
