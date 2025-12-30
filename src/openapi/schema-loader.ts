@@ -16,7 +16,7 @@ function loadSchema(filename: string): MinimalSchema {
   return JSON.parse(content) as MinimalSchema;
 }
 
-export type ApiType = 'accounting' | 'hr' | 'invoice' | 'pm';
+export type ApiType = 'accounting' | 'hr' | 'invoice' | 'pm' | 'sm';
 
 export interface ApiConfig {
   schema: MinimalSchema;
@@ -54,6 +54,12 @@ function getApiConfigs(): Record<ApiType, ApiConfig> {
         baseUrl: 'https://api.freee.co.jp/pm',
         prefix: 'pm',
         name: 'freee工数管理 API',
+      },
+      sm: {
+        schema: loadSchema('sm.json'),
+        baseUrl: 'https://api.freee.co.jp/sm',
+        prefix: 'sm',
+        name: 'freee販売 API',
       },
     };
   }
