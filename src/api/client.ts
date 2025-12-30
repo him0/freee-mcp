@@ -80,7 +80,7 @@ export async function makeApiRequest(
         
         // Add helpful guidance for bad request errors
         if (response.status === 400) {
-          errorMessage += `\n\n💡 ヒント: 不正なリクエストエラーが発生しました。`;
+          errorMessage += `\n\nヒント: 不正なリクエストエラーが発生しました。`;
           errorMessage += `\n既存のデータを取得して正しい構造を確認することをお勧めします。`;
           errorMessage += `\n例: get_items, get_partners, get_account_items などで既存データの構造を確認してください。`;
         }
