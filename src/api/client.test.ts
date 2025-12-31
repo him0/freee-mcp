@@ -31,10 +31,32 @@ vi.mock('../auth/tokens.js', () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+interface MockHeaders {
+  get: (name: string) => string | null;
+}
+
+interface MockJsonResponse {
+  ok: true;
+  headers: MockHeaders;
+  json: () => Promise<unknown>;
+}
+
+interface MockErrorResponse {
+  ok: false;
+  status: number;
+  json: () => Promise<unknown>;
+}
+
+interface MockBinaryResponse {
+  ok: true;
+  headers: MockHeaders;
+  arrayBuffer: () => Promise<ArrayBufferLike>;
+}
+
 /**
  * Create mock headers with content-type
  */
-function createMockHeaders(contentType: string) {
+function createMockHeaders(contentType: string): MockHeaders {
   return {
     get: (name: string) => name === 'content-type' ? contentType : null
   };
@@ -43,7 +65,7 @@ function createMockHeaders(contentType: string) {
 /**
  * Create a successful JSON response mock
  */
-function createJsonResponse(data: unknown) {
+function createJsonResponse(data: unknown): MockJsonResponse {
   return {
     ok: true,
     headers: createMockHeaders('application/json'),
@@ -54,7 +76,7 @@ function createJsonResponse(data: unknown) {
 /**
  * Create an error response mock
  */
-function createErrorResponse(status: number, errorData: unknown) {
+function createErrorResponse(status: number, errorData: unknown): MockErrorResponse {
   return {
     ok: false,
     status,
@@ -65,7 +87,7 @@ function createErrorResponse(status: number, errorData: unknown) {
 /**
  * Create a binary response mock
  */
-function createBinaryResponse(contentType: string, data: Uint8Array) {
+function createBinaryResponse(contentType: string, data: Uint8Array): MockBinaryResponse {
   return {
     ok: true,
     headers: createMockHeaders(contentType),
@@ -76,7 +98,7 @@ function createBinaryResponse(contentType: string, data: Uint8Array) {
 /**
  * Setup access token mock
  */
-async function setupAccessToken(token: string | null) {
+async function setupAccessToken(token: string | null): Promise<void> {
   const mockGetValidAccessToken = await import('../auth/tokens.js');
   vi.mocked(mockGetValidAccessToken.getValidAccessToken).mockResolvedValue(token);
 }
