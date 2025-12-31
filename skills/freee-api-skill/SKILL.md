@@ -151,7 +151,7 @@ freee_api_get {
 
 - **認証エラー**: `freee_auth_status` で確認 → `freee_clear_auth` → `freee_authenticate`
 - **事業所エラー**: `freee_list_companies` → `freee_set_company`
-- **詳細**: `references/troubleshooting.md` 参照
+- **詳細**: `docs/troubleshooting.md` 参照
 
 ## 対応 API
 
