@@ -16,10 +16,10 @@ const main = async (): Promise<void> => {
   // Set mode based on subcommand
   if (subcommand === 'client') {
     setMode(true);
-    console.error('🚀 Starting freee MCP server in client mode (HTTP method sub-commands)');
+    console.error('Starting freee MCP server in client mode (HTTP method sub-commands)');
   } else if (subcommand === 'api' || !subcommand) {
     setMode(false);
-    console.error('🚀 Starting freee MCP server in API mode (individual tools per endpoint)');
+    console.error('Starting freee MCP server in API mode (individual tools per endpoint)');
   } else {
     console.error(`Unknown subcommand: ${subcommand}`);
     console.error('Usage: freee-mcp [configure|client|api]');

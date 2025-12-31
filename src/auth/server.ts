@@ -27,26 +27,26 @@ export class AuthenticationManager {
   private cliAuthHandlers = new Map<string, CliAuthHandler>();
 
   registerAuthentication(state: string, codeVerifier: string): void {
-    console.error(`🔐 Registering authentication request with state: ${state.substring(0, 10)}...`);
-    console.error(`🔐 Code verifier: ${codeVerifier.substring(0, 10)}...`);
+    console.error(`Registering authentication request with state: ${state.substring(0, 10)}...`);
+    console.error(`Code verifier: ${codeVerifier.substring(0, 10)}...`);
 
     const timeout = setTimeout(() => {
       this.pendingAuthentications.delete(state);
-      console.error(`⏰ Authentication timeout for state: ${state.substring(0, 10)}...`);
+      console.error(`Authentication timeout for state: ${state.substring(0, 10)}...`);
     }, config.auth.timeoutMs);
 
     this.pendingAuthentications.set(state, {
       codeVerifier,
       resolve: (tokens: TokenData) => {
-        console.error('🎉 Authentication completed successfully!');
+        console.error('Authentication completed successfully!');
       },
       reject: (error: Error) => {
-        console.error('❌ Authentication failed:', error);
+        console.error('Authentication failed:', error);
       },
       timeout
     });
 
-    console.error(`📝 Registration complete. Total pending: ${this.pendingAuthentications.size}`);
+    console.error(`Registration complete. Total pending: ${this.pendingAuthentications.size}`);
   }
 
   getPendingAuthentication(state: string): PendingAuthentication | undefined {
@@ -125,12 +125,12 @@ export class CallbackServer {
     this.port = port;
 
     if (port !== preferredPort) {
-      console.error(`⚠️ Port ${preferredPort} is in use. Using fallback port ${port} for OAuth callback server.`);
+      console.error(`Warning: Port ${preferredPort} is in use. Using fallback port ${port} for OAuth callback server.`);
     }
 
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => {
-        console.error(`📥 Callback request: ${req.method} ${req.url}`);
+        console.error(`Callback request: ${req.method} ${req.url}`);
         const url = new URL(req.url!, `http://127.0.0.1:${port}`);
 
         if (url.pathname === '/callback') {
@@ -150,7 +150,7 @@ export class CallbackServer {
       });
 
       this.server.listen(port, '127.0.0.1', () => {
-        console.error(`🔗 OAuth callback server listening on http://127.0.0.1:${port}`);
+        console.error(`OAuth callback server listening on http://127.0.0.1:${port}`);
         resolve();
       });
     });
@@ -161,7 +161,7 @@ export class CallbackServer {
       this.authManager.clearAllPending();
 
       this.server.close(() => {
-        console.error('🔴 OAuth callback server stopped');
+        console.error('OAuth callback server stopped');
       });
       this.server = null;
       this.port = null;
@@ -199,20 +199,20 @@ export class CallbackServer {
     const error = url.searchParams.get('error');
     const errorDescription = url.searchParams.get('error_description');
 
-    console.error(`🔍 Callback received - URL: ${url.toString()}`);
-    console.error(`🔍 Callback parameters:`, {
+    console.error(`Callback received - URL: ${url.toString()}`);
+    console.error(`Callback parameters:`, {
       code: code ? `${code.substring(0, 10)}...` : null,
       state: state ? `${state.substring(0, 10)}...` : null,
       error,
       errorDescription
     });
-    console.error(`🔍 Pending authentications count: ${this.authManager.pendingCount}`);
+    console.error(`Pending authentications count: ${this.authManager.pendingCount}`);
 
     const cliHandler = state ? this.authManager.getCliAuthHandler(state) : undefined;
 
     if (error) {
       const errorMsg = errorDescription || error;
-      console.error(`❌ OAuth error: ${error} - ${errorDescription}`);
+      console.error(`OAuth error: ${error} - ${errorDescription}`);
       res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(`<h1>認証エラー</h1><p>認証に失敗しました: ${errorMsg}</p>`);
 
@@ -230,7 +230,7 @@ export class CallbackServer {
     }
 
     if (!code || !state) {
-      console.error(`❌ Missing code or state`);
+      console.error(`Missing code or state`);
       res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end('<h1>認証エラー</h1><p>認証コードまたは状態パラメータが不足しています。</p>');
       return;
@@ -238,7 +238,7 @@ export class CallbackServer {
 
     // Handle CLI authentication
     if (cliHandler) {
-      console.error(`✅ Valid CLI callback received`);
+      console.error(`Valid CLI callback received`);
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてターミナルに戻ってください。</p>');
 
@@ -248,13 +248,13 @@ export class CallbackServer {
 
     const pendingAuth = this.authManager.getPendingAuthentication(state);
     if (!pendingAuth) {
-      console.error(`❌ Unknown state: ${state}`);
+      console.error(`Unknown state: ${state}`);
       res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end('<h1>認証エラー</h1><p>不明な認証状態です。認証を再開してください。</p>');
       return;
     }
 
-    console.error(`✅ Valid callback received, exchanging code for tokens...`);
+    console.error(`Valid callback received, exchanging code for tokens...`);
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてください。</p>');
 
@@ -262,11 +262,11 @@ export class CallbackServer {
 
     exchangeCodeForTokens(code, pendingAuth.codeVerifier, this.getRedirectUri())
       .then((tokens) => {
-        console.error(`🎉 Token exchange successful!`);
+        console.error(`Token exchange successful!`);
         pendingAuth.resolve(tokens);
       })
       .catch((exchangeError) => {
-        console.error(`❌ Token exchange failed:`, exchangeError);
+        console.error(`Token exchange failed:`, exchangeError);
         pendingAuth.reject(exchangeError);
       });
   }
