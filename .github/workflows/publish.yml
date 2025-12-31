@@ -3,14 +3,16 @@ name: Publish
 on:
   pull_request:
     types: [closed]
+  workflow_dispatch:
 
 jobs:
   publish:
     name: Publish to npm
     runs-on: ubuntu-latest
     if: |
-      github.event.pull_request.merged == true &&
-      contains(github.event.pull_request.labels.*.name, 'release')
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true &&
+       contains(github.event.pull_request.labels.*.name, 'release'))
     permissions:
       contents: write
       packages: write
@@ -28,9 +30,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
+          node-version-file: .tool-versions
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -38,23 +39,33 @@ jobs:
       - name: Build project
         run: pnpm build
         env:
-          NODE_OPTIONS: "--max-old-space-size=6144"
+          NODE_OPTIONS: '--max-old-space-size=6144'
+
+      - name: Check if version already published
+        id: check-version
+        run: |
+          VERSION=$(node -e "console.log(require('./package.json').version)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          if npm view @him0/freee-mcp@$VERSION version 2>/dev/null; then
+            echo "❌ Version $VERSION is already published to npm"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Version $VERSION is not published yet - proceeding"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Publish to npm
+        if: steps.check-version.outputs.skip != 'true'
         run: pnpm run release
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Get published version
-        id: version
-        run: |
-          VERSION=$(node -e "console.log(require('./package.json').version)")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       - name: Sync plugin.json version
+        if: steps.check-version.outputs.skip != 'true'
         run: |
-          VERSION=${{ steps.version.outputs.version }}
+          VERSION=${{ steps.check-version.outputs.version }}
           jq --arg v "$VERSION" '.version = $v' .claude-plugin/plugin.json > tmp.json && mv tmp.json .claude-plugin/plugin.json
           jq --arg v "$VERSION" '.plugins[0].version = $v' .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
           git config user.name "github-actions[bot]"
@@ -64,31 +75,34 @@ jobs:
           git push
 
       - name: Create Git Tag
+        if: steps.check-version.outputs.skip != 'true'
         run: |
-          VERSION=${{ steps.version.outputs.version }}
+          VERSION=${{ steps.check-version.outputs.version }}
           if ! git rev-parse v$VERSION >/dev/null 2>&1; then
             git tag v$VERSION
             git push origin v$VERSION
           fi
 
       - name: Package skill for release
+        if: steps.check-version.outputs.skip != 'true'
         run: |
           cd skills/freee-api-skill
           zip -r ../../freee-skill.zip .
 
       - name: Create GitHub Release
+        if: steps.check-version.outputs.skip != 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: v${{ steps.version.outputs.version }}
+          tag_name: v${{ steps.check-version.outputs.version }}
+          name: v${{ steps.check-version.outputs.version }}
           body: |
             ## What's Changed
 
             See [CHANGELOG.md](./CHANGELOG.md) for details.
 
             ## Package
-            - npm: https://www.npmjs.com/package/@him0/freee-mcp/v/${{ steps.version.outputs.version }}
-            - Install: `npm install @him0/freee-mcp@${{ steps.version.outputs.version }}`
+            - npm: https://www.npmjs.com/package/@him0/freee-mcp/v/${{ steps.check-version.outputs.version }}
+            - Install: `npm install @him0/freee-mcp@${{ steps.check-version.outputs.version }}`
 
             ## Claude Plugin
             This repository can also be used as a Claude Code plugin:
