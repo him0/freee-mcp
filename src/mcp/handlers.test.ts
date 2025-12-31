@@ -96,7 +96,7 @@ describe('handlers', () => {
 
       await createAndStartServer();
 
-      expect(console.error).toHaveBeenCalledWith('⚠️ Failed to start callback server:', expect.any(Error));
+      expect(console.error).toHaveBeenCalledWith('Failed to start callback server:', expect.any(Error));
       expect(console.error).toHaveBeenCalledWith('OAuth authentication will fall back to manual mode');
       expect(mockServerInstance.connect).toHaveBeenCalled();
     });
