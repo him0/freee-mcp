@@ -9,17 +9,27 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Resolve schemas directory based on runtime context:
-// - In built dist: dist/openapi/schema-loader.js -> ../openapi/minimal -> dist/openapi/minimal
-// - In development/test (tsx): src/openapi/schema-loader.ts -> ../../openapi/minimal -> openapi/minimal
+// Resolve schemas directory based on runtime context.
+// esbuild bundles code into different entry points:
+// - dist/index.esm.js: __dirname = .../dist → ./openapi/minimal
+// - bin/cli.js: __dirname = .../bin → ../dist/openapi/minimal
+// - development (tsx): __dirname = .../src/openapi → ../../openapi/minimal
 function getSchemasDir(): string {
-  // Try built location first (dist/openapi/minimal)
-  const distPath = path.resolve(__dirname, '../openapi/minimal');
-  if (fs.existsSync(distPath)) {
-    return distPath;
+  const candidates = [
+    path.resolve(__dirname, './openapi/minimal'),      // dist/index.esm.js
+    path.resolve(__dirname, '../dist/openapi/minimal'), // bin/cli.js
+    path.resolve(__dirname, '../../openapi/minimal'),  // development (tsx)
+  ];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
   }
-  // Fall back to source tree location (openapi/minimal)
-  return path.resolve(__dirname, '../../openapi/minimal');
+
+  throw new Error(
+    `Could not find minimal schema directory. Searched paths:\n${candidates.join('\n')}`
+  );
 }
 
 const schemasDir = getSchemasDir();
