@@ -1,5 +1,11 @@
 # @him0/freee-mcp
 
+## 0.5.2
+
+### Patch Changes
+
+- 28a4f85: Fix bin/cli.js path resolution for minimal schemas when running via npx
+
 ## 0.5.1
 
 ### Patch Changes
