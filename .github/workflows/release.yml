@@ -37,74 +37,20 @@ jobs:
         env:
           NODE_OPTIONS: "--max-old-space-size=6144"
 
-      - name: Create Release Pull Request or Publish
+      - name: Create Release Pull Request
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm run version
-          publish: pnpm run release
           title: "chore: release packages"
           commit: "chore: release packages"
           setupGitUser: true
-          createGithubReleases: true
           commitMode: git-cli
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Sync plugin.json version after publish
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          VERSION=$(node -e "console.log(require('./package.json').version)")
-          # Update plugin.json version
-          jq --arg v "$VERSION" '.version = $v' .claude-plugin/plugin.json > tmp.json && mv tmp.json .claude-plugin/plugin.json
-          # Update marketplace.json version
-          jq --arg v "$VERSION" '.plugins[0].version = $v' .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .claude-plugin/
-          git commit -m "chore: sync plugin version to $VERSION" || echo "No changes to commit"
-          git push
-
-      - name: Create Git Tag
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          VERSION=$(node -e "console.log(require('./package.json').version)")
-          if ! git rev-parse v$VERSION >/dev/null 2>&1; then
-            git tag v$VERSION
-            git push origin v$VERSION
-          fi
-
-      - name: Package skill for release
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          cd skills/freee-api-skill
-          zip -r ../../freee-skill.zip .
-
-      - name: Create GitHub Release
-        if: steps.changesets.outputs.published == 'true'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          name: v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-          body: |
-            ## What's Changed
-
-            See [CHANGELOG.md](./CHANGELOG.md) for details.
-
-            ## Package
-            - npm: https://www.npmjs.com/package/@him0/freee-mcp/v/${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
-            - Install: `npm install @him0/freee-mcp@${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}`
-
-            ## Claude Plugin
-            This repository can also be used as a Claude Code plugin:
-            ```bash
-            claude plugin add him0/freee-mcp
-            ```
-          files: freee-skill.zip
-          draft: false
-          prerelease: false
+      - name: Add release label to PR
+        if: steps.changesets.outputs.pullRequestNumber != ''
+        run: gh pr edit ${{ steps.changesets.outputs.pullRequestNumber }} --add-label release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

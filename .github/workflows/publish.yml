@@ -1,0 +1,142 @@
+name: Publish
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true &&
+       contains(github.event.pull_request.labels.*.name, 'release'))
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .tool-versions
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build project
+        run: pnpm build
+        env:
+          NODE_OPTIONS: '--max-old-space-size=6144'
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(node -e "console.log(require('./package.json').version)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+
+      # Phase 1: GitHub Release
+      - name: Check if GitHub Release exists
+        id: check-release
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          if gh release view v$VERSION >/dev/null 2>&1; then
+            echo "ℹ️  GitHub Release v$VERSION already exists - skipping"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ GitHub Release v$VERSION does not exist - will create"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Git Tag
+        if: steps.check-release.outputs.skip != 'true'
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          if ! git rev-parse v$VERSION >/dev/null 2>&1; then
+            git tag v$VERSION
+            git push origin v$VERSION
+            echo "✅ Created and pushed tag v$VERSION"
+          else
+            echo "ℹ️  Tag v$VERSION already exists"
+          fi
+
+      - name: Package skill for release
+        if: steps.check-release.outputs.skip != 'true'
+        run: |
+          cd skills/freee-api-skill
+          zip -r ../../freee-skill.zip .
+          echo "✅ Packaged skill"
+
+      - name: Create GitHub Release
+        if: steps.check-release.outputs.skip != 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: |
+            ## What's Changed
+
+            See [CHANGELOG.md](./CHANGELOG.md) for details.
+
+            ## Package
+            - npm: https://www.npmjs.com/package/@him0/freee-mcp/v/${{ steps.version.outputs.version }}
+            - Install: `npm install @him0/freee-mcp@${{ steps.version.outputs.version }}`
+
+            ## Claude Plugin
+            This repository can also be used as a Claude Code plugin:
+            ```bash
+            claude plugin add him0/freee-mcp
+            ```
+          files: freee-skill.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Phase 2: npm publish
+      - name: Check if npm package exists
+        id: check-npm
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          if npm view @him0/freee-mcp@$VERSION version 2>/dev/null; then
+            echo "ℹ️  npm package @him0/freee-mcp@$VERSION already exists - skipping"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ npm package @him0/freee-mcp@$VERSION does not exist - will publish"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to npm
+        if: steps.check-npm.outputs.skip != 'true'
+        run: pnpm run release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Sync plugin.json version
+        if: steps.check-npm.outputs.skip != 'true'
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          jq --arg v "$VERSION" '.version = $v' .claude-plugin/plugin.json > tmp.json && mv tmp.json .claude-plugin/plugin.json
+          jq --arg v "$VERSION" '.plugins[0].version = $v' .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/
+          git commit -m "chore: sync plugin version to $VERSION" || echo "No changes to commit"
+          git push
+          echo "✅ Synced plugin.json version"
