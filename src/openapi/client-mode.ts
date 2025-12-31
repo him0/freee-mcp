@@ -1,7 +1,32 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { makeApiRequest } from '../api/client.js';
+import { makeApiRequest, BinaryFileResponse } from '../api/client.js';
 import { validatePathForService, listAllAvailablePaths, ApiType } from './schema-loader.js';
+
+/**
+ * Check if result is a binary file response
+ */
+function isBinaryFileResponse(result: unknown): result is BinaryFileResponse {
+  return (
+    typeof result === 'object' &&
+    result !== null &&
+    'type' in result &&
+    (result as BinaryFileResponse).type === 'binary'
+  );
+}
+
+/**
+ * Format binary file response for display
+ */
+function formatBinaryResponse(response: BinaryFileResponse): string {
+  const sizeInKB = (response.size / 1024).toFixed(2);
+  return (
+    `ファイルをダウンロードしました\n\n` +
+    `保存場所: ${response.filePath}\n` +
+    `MIMEタイプ: ${response.mimeType}\n` +
+    `サイズ: ${sizeInKB} KB`
+  );
+}
 
 // 簡略化: 詳細はfreee_api_list_pathsで確認可能
 const SERVICE_HINT = 'service: accounting/hr/invoice/pm/sm';
@@ -48,6 +73,18 @@ function createMethodTool(method: string): (args: {
 
       // Make API request with the correct base URL
       const result = await makeApiRequest(method, validation.actualPath!, query, body, validation.baseUrl);
+
+      // Handle binary file response
+      if (isBinaryFileResponse(result)) {
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: formatBinaryResponse(result),
+            },
+          ],
+        };
+      }
 
       return {
         content: [

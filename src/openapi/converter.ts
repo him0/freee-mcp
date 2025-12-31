@@ -2,8 +2,33 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { MinimalPathItem, MinimalOperation, MinimalParameter } from './minimal-types.js';
 import { convertParameterToZodSchema, convertPathToToolName, sanitizePropertyName } from './schema.js';
-import { makeApiRequest } from '../api/client.js';
+import { makeApiRequest, BinaryFileResponse } from '../api/client.js';
 import { getAllSchemas } from './schema-loader.js';
+
+/**
+ * Check if result is a binary file response
+ */
+function isBinaryFileResponse(result: unknown): result is BinaryFileResponse {
+  return (
+    typeof result === 'object' &&
+    result !== null &&
+    'type' in result &&
+    (result as BinaryFileResponse).type === 'binary'
+  );
+}
+
+/**
+ * Format binary file response for display
+ */
+function formatBinaryResponse(response: BinaryFileResponse): string {
+  const sizeInKB = (response.size / 1024).toFixed(2);
+  return (
+    `ファイルをダウンロードしました\n\n` +
+    `保存場所: ${response.filePath}\n` +
+    `MIMEタイプ: ${response.mimeType}\n` +
+    `サイズ: ${sizeInKB} KB`
+  );
+}
 
 export function generateToolsFromOpenApi(server: McpServer): void {
   // Generate tools from all API schemas
@@ -73,6 +98,18 @@ export function generateToolsFromOpenApi(server: McpServer): void {
               bodyParameters,
               baseUrl, // Use the API-specific base URL
             );
+
+            // Handle binary file response
+            if (isBinaryFileResponse(result)) {
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: formatBinaryResponse(result),
+                  },
+                ],
+              };
+            }
 
             return {
               content: [

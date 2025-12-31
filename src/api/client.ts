@@ -1,15 +1,65 @@
 import { config } from '../config.js';
 import { getValidAccessToken } from '../auth/tokens.js';
-import { getCurrentCompanyId } from '../config/companies.js';
+import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
 import { safeParseJson } from '../utils/error.js';
+import fs from 'fs/promises';
+import path from 'path';
+
+/**
+ * Response type for binary file downloads
+ */
+export interface BinaryFileResponse {
+  type: 'binary';
+  filePath: string;
+  mimeType: string;
+  size: number;
+}
+
+/**
+ * Check if Content-Type indicates binary response
+ */
+function isBinaryContentType(contentType: string): boolean {
+  const binaryTypes = [
+    'application/pdf',
+    'application/octet-stream',
+    'image/',
+  ];
+  return binaryTypes.some(type => contentType.includes(type));
+}
+
+/**
+ * Get file extension from Content-Type
+ */
+function getExtensionFromContentType(contentType: string): string {
+  const typeMap: Record<string, string> = {
+    'application/pdf': '.pdf',
+    'image/png': '.png',
+    'image/jpeg': '.jpg',
+    'image/gif': '.gif',
+    'image/webp': '.webp',
+    'text/csv': '.csv',
+  };
+
+  for (const [type, ext] of Object.entries(typeMap)) {
+    if (contentType.includes(type)) {
+      return ext;
+    }
+  }
+
+  if (contentType.includes('image/')) {
+    return '.bin';
+  }
+
+  return '.bin';
+}
 
 export async function makeApiRequest(
   method: string,
-  path: string,
+  apiPath: string,
   params?: Record<string, unknown>,
   body?: Record<string, unknown>,
   baseUrl?: string,
-): Promise<unknown> {
+): Promise<unknown | BinaryFileResponse> {
   const apiUrl = baseUrl || config.freee.apiUrl;
   const companyId = await getCurrentCompanyId();
 
@@ -25,7 +75,7 @@ export async function makeApiRequest(
 
   // Properly join baseUrl and path, preserving baseUrl's path component
   const normalizedBase = apiUrl.endsWith('/') ? apiUrl : apiUrl + '/';
-  const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+  const normalizedPath = apiPath.startsWith('/') ? apiPath.slice(1) : apiPath;
   const url = new URL(normalizedPath, normalizedBase);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -65,19 +115,19 @@ export async function makeApiRequest(
 
     // Extract detailed error messages from freee API response
     let errorMessage = `API request failed: ${response.status}`;
-    
+
     if (errorData && errorData.errors && Array.isArray(errorData.errors)) {
       const allMessages: string[] = [];
-      
+
       for (const error of errorData.errors) {
         if (error.messages && Array.isArray(error.messages)) {
           allMessages.push(...error.messages);
         }
       }
-      
+
       if (allMessages.length > 0) {
         errorMessage += `\n\nエラー詳細:\n${allMessages.join('\n')}`;
-        
+
         // Add helpful guidance for bad request errors
         if (response.status === 400) {
           errorMessage += `\n\nヒント: 不正なリクエストエラーが発生しました。`;
@@ -86,13 +136,35 @@ export async function makeApiRequest(
         }
       }
     }
-    
+
     // Fallback to raw error data if no structured errors found
     if (!errorData?.errors) {
       errorMessage += `\n\n詳細: ${JSON.stringify(errorData)}`;
     }
-    
+
     throw new Error(errorMessage);
+  }
+
+  // Check Content-Type for binary response
+  const contentType = response.headers.get('content-type') || '';
+
+  if (isBinaryContentType(contentType)) {
+    // Handle binary response: save to file and return path
+    const downloadDir = await getDownloadDir();
+    const extension = getExtensionFromContentType(contentType);
+    const timestamp = Date.now();
+    const fileName = `freee_download_${timestamp}${extension}`;
+    const filePath = path.join(downloadDir, fileName);
+
+    const buffer = await response.arrayBuffer();
+    await fs.writeFile(filePath, Buffer.from(buffer));
+
+    return {
+      type: 'binary',
+      filePath,
+      mimeType: contentType,
+      size: buffer.byteLength,
+    } as BinaryFileResponse;
   }
 
   return response.json();
