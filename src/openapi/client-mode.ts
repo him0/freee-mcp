@@ -64,8 +64,8 @@ function createMethodTool(method: string): (args: {
             {
               type: 'text' as const,
               text:
-                `❌ パス検証エラー: ${validation.message}\n\n` +
-                `💡 利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`,
+                `パス検証エラー: ${validation.message}\n\n` +
+                `利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`,
             },
           ],
         };
@@ -99,7 +99,7 @@ function createMethodTool(method: string): (args: {
         content: [
           {
             type: 'text' as const,
-            text: `❌ APIリクエストエラー: ${error instanceof Error ? error.message : String(error)}`,
+            text: `APIリクエストエラー: ${error instanceof Error ? error.message : String(error)}`,
           },
         ],
       };
@@ -187,7 +187,7 @@ export function generateClientModeTool(server: McpServer): void {
             type: 'text' as const,
             text:
               `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +
-              `💡 使用例:\n` +
+              `使用例:\n` +
               `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "limit": 10 } }\n` +
               `freee_api_get { "service": "invoice", "path": "/invoices" }\n` +
               `freee_api_post { "service": "accounting", "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }`,

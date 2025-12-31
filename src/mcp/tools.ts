@@ -97,7 +97,7 @@ export function addAuthenticationTools(server: McpServer): void {
 
         registerAuthenticationRequest(state, codeVerifier);
 
-        console.error(`🌐 Authentication URL: ${authUrl}`);
+        console.error(`Authentication URL: ${authUrl}`);
 
         return {
           content: [
