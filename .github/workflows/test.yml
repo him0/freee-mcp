@@ -89,7 +89,6 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [lint, unit-test, e2e-test]
 
     steps:
       - name: Checkout code
