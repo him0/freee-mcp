@@ -10,10 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [24]
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -21,10 +17,10 @@ jobs:
     - name: Install pnpm
       uses: pnpm/action-setup@v4
 
-    - name: Setup Node.js ${{ matrix.node-version }}
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 24
         cache: 'pnpm'
 
     - name: Install dependencies
@@ -43,7 +39,6 @@ jobs:
       run: pnpm test:coverage
 
     - name: Upload coverage reports
-      if: matrix.node-version == 24
       uses: codecov/codecov-action@v3
       with:
         files: ./coverage/lcov.info
