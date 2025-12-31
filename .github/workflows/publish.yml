@@ -32,14 +32,13 @@ jobs:
         with:
           node-version-file: .tool-versions
           cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build project
         run: pnpm build
-        env:
-          NODE_OPTIONS: '--max-old-space-size=6144'
 
       - name: Get version
         id: version
