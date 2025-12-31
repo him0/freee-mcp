@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `pnpm dev` - Start development server with watch mode
 - `pnpm build` - Full build (types + esbuild)
-- `pnpm type-check` - TypeScript type checking
+- `pnpm typecheck` - TypeScript type checking
 - `pnpm lint` - Run ESLint
 - `pnpm inspector` - MCP inspector for debugging tools
 - `node scripts/test-tools.js` - Quick tool verification
@@ -26,18 +26,11 @@ MCP server that exposes freee API endpoints as MCP tools:
   - `pm-api-schema.json` - 工数管理API (https://api.freee.co.jp/pm)
   - `sm-api-schema.json` - 販売API (https://api.freee.co.jp/sm)
 - **Schema Loader**: `src/openapi/schema-loader.ts` loads and manages all API schemas
-- **Tool Generation**: Two modes available (selected via CLI subcommand):
-  - **Client Mode** (`freee-mcp client`): Sub-command tools per HTTP method **[RECOMMENDED]**
-    - `generateClientModeTool()` in `src/openapi/client-mode.ts` creates method-specific tools
-    - Tools: `freee_api_get`, `freee_api_post`, `freee_api_put`, `freee_api_delete`, `freee_api_patch`, `freee_api_list_paths`
-    - Automatically detects API type from path and uses correct base URL
-    - Validates paths against all OpenAPI schemas before execution
-    - Reduces context window usage significantly (6 tools vs hundreds)
-    - Supports all 5 freee APIs seamlessly
-  - **Individual Mode** (`freee-mcp api` or default): One tool per endpoint
-    - `generateToolsFromOpenApi()` in `src/openapi/converter.ts` converts OpenAPI paths to MCP tools
-    - Naming with API prefix: `accounting_get_deals`, `hr_get_employees`, `invoice_get_delivery_slips`, `pm_get_projects`, `sm_get_businesses`
-    - Each tool automatically uses the correct base URL for its API
+- **Tool Generation**: `generateClientModeTool()` in `src/openapi/client-mode.ts` creates method-specific tools
+  - Tools: `freee_api_get`, `freee_api_post`, `freee_api_put`, `freee_api_delete`, `freee_api_patch`, `freee_api_list_paths`
+  - Automatically detects API type from path and uses correct base URL
+  - Validates paths against all OpenAPI schemas before execution
+  - Supports all 5 freee APIs seamlessly
 - **Requests**: `makeApiRequest()` in `src/api/client.ts` handles API calls with auto-auth and company_id injection
 
 ### Configuration
@@ -45,6 +38,7 @@ MCP server that exposes freee API endpoints as MCP tools:
 #### Recommended Setup (Config File)
 
 Run `freee-mcp configure` to set up configuration interactively:
+
 - Creates `~/.config/freee-mcp/config.json` with OAuth credentials and company settings
 - No environment variables needed
 - More secure (file permissions 0600)
@@ -60,8 +54,8 @@ Run `freee-mcp configure` to set up configuration interactively:
 
 ### CLI Subcommands
 
-- `freee-mcp client` - Start in client mode (HTTP method sub-commands)
-- `freee-mcp api` - Start in API mode (individual tools per endpoint) [default]
+- `freee-mcp` - Start MCP server
+- `freee-mcp configure` - Interactive configuration setup
 
 ### MCP Configuration
 
@@ -82,68 +76,24 @@ After running `freee-mcp configure`:
 
 Configuration is automatically loaded from `~/.config/freee-mcp/config.json`.
 
-#### Using Environment Variables (Deprecated)
-
-⚠️ **Deprecated: Will be removed in future versions**
-
-**Client Mode (recommended):**
-```json
-{
-  "mcpServers": {
-    "freee": {
-      "command": "npx",
-      "args": ["@him0/freee-mcp", "client"],
-      "env": {
-        "FREEE_CLIENT_ID": "your_client_id",
-        "FREEE_CLIENT_SECRET": "your_client_secret",
-        "FREEE_CALLBACK_PORT": "54321"
-      }
-    }
-  }
-}
-```
-
-**API Mode (individual tools):**
-```json
-{
-  "mcpServers": {
-    "freee": {
-      "command": "npx",
-      "args": ["@him0/freee-mcp", "api"],
-      "env": {
-        "FREEE_CLIENT_ID": "your_client_id",
-        "FREEE_CLIENT_SECRET": "your_client_secret",
-        "FREEE_COMPANY_ID": "your_company_id",
-        "FREEE_CALLBACK_PORT": "54321"
-      }
-    }
-  }
-}
-```
-
-**Client Mode vs Individual Mode**:
-- Use `freee-mcp client` for HTTP method sub-command tools (recommended for large APIs)
-  - 6 tools total: freee_api_{get,post,put,delete,patch} + freee_api_list_paths
-  - Significantly reduces context window usage
-- Use `freee-mcp api` for individual tools per endpoint (more granular but uses more context)
-  - Hundreds of tools (one per API endpoint)
-
-Development mode: Use `"command": "pnpm", "args": ["tsx", "src/index.ts", "client"]` with `"cwd": "/path/to/freee-mcp"`
+Development mode: Use `"command": "pnpm", "args": ["tsx", "src/index.ts"]` with `"cwd": "/path/to/freee-mcp"`
 
 ## PR Creation Pre-flight Checklist
 
 **Always run before creating a PR:**
 
 ```bash
-pnpm type-check && pnpm lint && pnpm test:run && pnpm build
+pnpm typecheck && pnpm lint && pnpm test:run && pnpm build
 ```
 
 **Changeset requirement:**
+
 - Run `pnpm changeset` to create a changeset file for any user-facing changes
 - Select the appropriate bump type: `patch` (bug fixes), `minor` (new features), `major` (breaking changes)
 - Write a concise description of what changed for the CHANGELOG
 
 **Common issues:**
+
 - Mock function return types (ensure `id` fields are strings)
 - Missing return type annotations on exported functions
 - Undefined environment variables in tests
