@@ -39,3 +39,8 @@ export const AUTH_TIMEOUT_MS = 5 * 60 * 1000;
  * File permission for sensitive configuration files (owner read/write only)
  */
 export const CONFIG_FILE_PERMISSION = 0o600;
+
+/**
+ * Base URL for freee API
+ */
+export const FREEE_API_URL = 'https://api.freee.co.jp';

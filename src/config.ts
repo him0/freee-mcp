@@ -1,5 +1,5 @@
 import { loadFullConfig } from './config/companies.js';
-import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS } from './constants.js';
+import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS, FREEE_API_URL } from './constants.js';
 
 export interface Config {
   freee: {
@@ -87,7 +87,7 @@ export async function loadConfig(): Promise<Config> {
       clientId,
       clientSecret,
       companyId,
-      apiUrl: 'https://api.freee.co.jp',
+      apiUrl: FREEE_API_URL,
     },
     oauth: {
       callbackPort,

@@ -9,9 +9,8 @@ import {
   getDefaultAuthManager,
 } from './auth/server.js';
 import { buildAuthUrl, exchangeCodeForTokens } from './auth/oauth.js';
-import { config as defaultConfig } from './config.js';
 import { saveFullConfig, type FullConfig } from './config/companies.js';
-import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS } from './constants.js';
+import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS, FREEE_API_URL } from './constants.js';
 import { safeParseJson } from './utils/error.js';
 
 type Credentials = {
@@ -40,7 +39,7 @@ type Company = {
 };
 
 async function fetchCompanies(accessToken: string): Promise<Company[]> {
-  const response = await fetch(`${defaultConfig.freee.apiUrl}/api/1/companies`, {
+  const response = await fetch(`${FREEE_API_URL}/api/1/companies`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
