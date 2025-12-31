@@ -8,7 +8,21 @@ import {
 } from './minimal-types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const schemasDir = path.resolve(__dirname, '../../openapi/minimal');
+
+// Resolve schemas directory based on runtime context:
+// - In built dist: dist/openapi/schema-loader.js -> ../openapi/minimal -> dist/openapi/minimal
+// - In development/test (tsx): src/openapi/schema-loader.ts -> ../../openapi/minimal -> openapi/minimal
+function getSchemasDir(): string {
+  // Try built location first (dist/openapi/minimal)
+  const distPath = path.resolve(__dirname, '../openapi/minimal');
+  if (fs.existsSync(distPath)) {
+    return distPath;
+  }
+  // Fall back to source tree location (openapi/minimal)
+  return path.resolve(__dirname, '../../openapi/minimal');
+}
+
+const schemasDir = getSchemasDir();
 
 function loadSchema(filename: string): MinimalSchema {
   const filePath = path.join(schemasDir, filename);
