@@ -48,3 +48,9 @@ jobs:
           commitMode: git-cli
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add release label to PR
+        if: steps.changesets.outputs.pullRequestNumber != ''
+        run: gh pr edit ${{ steps.changesets.outputs.pullRequestNumber }} --add-label release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
