@@ -55,9 +55,9 @@ export async function loadConfig(): Promise<Config> {
 
   if (hasEnvCredentials()) {
     // Environment variables take priority (with deprecation warning)
-    console.error('⚠️  警告: 環境変数での認証情報設定は非推奨です。');
-    console.error('    `freee-mcp configure` を実行して設定ファイルに移行してください。');
-    console.error('    環境変数設定は将来のバージョンで削除される予定です。\n');
+    console.error('Warning: 環境変数での認証情報設定は非推奨です。');
+    console.error('  `freee-mcp configure` を実行して設定ファイルに移行してください。');
+    console.error('  環境変数設定は将来のバージョンで削除される予定です。\n');
 
     clientId = process.env.FREEE_CLIENT_ID || '';
     clientSecret = process.env.FREEE_CLIENT_SECRET || '';
@@ -81,8 +81,8 @@ export async function loadConfig(): Promise<Config> {
   // Load default company ID from env (deprecated)
   let companyId = process.env.FREEE_DEFAULT_COMPANY_ID || '0';
   if (process.env.FREEE_DEFAULT_COMPANY_ID) {
-    console.error('⚠️  警告: FREEE_DEFAULT_COMPANY_ID 環境変数は非推奨です。');
-    console.error('    事業所IDは `freee_set_company` ツールで動的に変更できます。\n');
+    console.error('Warning: FREEE_DEFAULT_COMPANY_ID 環境変数は非推奨です。');
+    console.error('  事業所IDは `freee_set_company` ツールで動的に変更できます。\n');
   }
 
   cachedConfig = {
