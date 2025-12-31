@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
 import {
   TokenData,
   saveTokens,
@@ -12,7 +11,7 @@ import {
   getValidAccessToken
 } from './tokens.js';
 import { setupTestTempDir } from '../test-utils/temp-dir.js';
-import { CONFIG_FILE_PERMISSION } from '../constants.js';
+import { CONFIG_FILE_PERMISSION, APP_NAME } from '../constants.js';
 
 // テスト用一時ディレクトリの設定
 const { tempDir, setup: setupTempDir, cleanup: cleanupTempDir } = setupTestTempDir('tokens-test-');
@@ -31,19 +30,12 @@ vi.mock('../config.js', () => ({
   }
 }));
 
-
-// osモジュールをモックして、テスト用ディレクトリを返すようにする
-vi.mock('os', () => ({
-  default: {
-    homedir: vi.fn(),
-    tmpdir: vi.fn().mockReturnValue('/tmp')
-  }
-}));
-const mockOs = vi.mocked(os);
-
 const mockFs = vi.mocked(fs);
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
+
+// 元のXDG_CONFIG_HOMEを保存
+const originalXdgConfigHome = process.env.XDG_CONFIG_HOME;
 
 describe('tokens', () => {
   const mockTokenData: TokenData = {
@@ -57,14 +49,20 @@ describe('tokens', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    
-    // テスト用一時ディレクトリを設定
+
+    // テスト用一時ディレクトリを設定し、XDG_CONFIG_HOMEに設定
     const testTempDir = await setupTempDir();
-    mockOs.homedir.mockReturnValue(testTempDir);
+    process.env.XDG_CONFIG_HOME = testTempDir;
   });
 
   afterEach(async () => {
     vi.restoreAllMocks();
+    // XDG_CONFIG_HOMEを元に戻す
+    if (originalXdgConfigHome !== undefined) {
+      process.env.XDG_CONFIG_HOME = originalXdgConfigHome;
+    } else {
+      delete process.env.XDG_CONFIG_HOME;
+    }
     // テスト用一時ディレクトリをクリーンアップ
     await cleanupTempDir();
   });
@@ -76,7 +74,8 @@ describe('tokens', () => {
 
       await saveTokens(mockTokenData);
 
-      const expectedConfigDir = path.join(tempDir.getPath(), '.config', 'freee-mcp');
+      // XDG_CONFIG_HOMEが設定されている場合、パスは $XDG_CONFIG_HOME/freee-mcp
+      const expectedConfigDir = path.join(tempDir.getPath(), APP_NAME);
       const expectedTokenPath = path.join(expectedConfigDir, 'tokens.json');
 
       expect(mockFs.mkdir).toHaveBeenCalledWith(
@@ -107,7 +106,7 @@ describe('tokens', () => {
 
       expect(result).toEqual(mockTokenData);
       expect(mockFs.readFile).toHaveBeenCalledWith(
-        path.join(tempDir.getPath(), '.config', 'freee-mcp', 'tokens.json'),
+        path.join(tempDir.getPath(), APP_NAME, 'tokens.json'),
         'utf8'
       );
     });
@@ -199,11 +198,13 @@ describe('tokens', () => {
   describe('clearTokens', () => {
     it('should clear tokens successfully', async () => {
       mockFs.unlink.mockResolvedValue(undefined);
+      // readdir is called for legacy token cleanup
+      mockFs.readdir.mockResolvedValue([]);
 
       await clearTokens();
 
       expect(mockFs.unlink).toHaveBeenCalledWith(
-        path.join(tempDir.getPath(), '.config', 'freee-mcp', 'tokens.json')
+        path.join(tempDir.getPath(), APP_NAME, 'tokens.json')
       );
     });
 
