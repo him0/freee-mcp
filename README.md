@@ -49,11 +49,16 @@ npx @him0/freee-mcp configure
   "mcpServers": {
     "freee": {
       "command": "npx",
-      "args": ["@him0/freee-mcp", "client"]
+      "args": ["@him0/freee-mcp"]
     }
   }
 }
 ```
+
+> **⚠️ 環境変数での設定について**
+> 環境変数（`FREEE_CLIENT_ID`、`FREEE_CLIENT_SECRET` など）を使った設定は非推奨です。
+> 代わりに `npx @him0/freee-mcp configure` を実行して設定ファイルに移行してください。
+> 環境変数設定は将来のバージョンで削除される予定です。
 
 ## Claude Plugin として使う
 
@@ -88,25 +93,6 @@ Claude との会話中に API の使い方を質問すると、これらのリ�
 例: 「先月の○○社への請求書を参考に、今月分を作成して」
 ```
 
-## 起動モード
-
-freee-mcp は2つのモードで起動できます：
-
-```bash
-# クライアントモード（推奨）：HTTPメソッド別の6ツール
-npx @him0/freee-mcp client
-
-# APIモード：エンドポイントごとの個別ツール（数百個）
-npx @him0/freee-mcp api
-# または
-npx @him0/freee-mcp
-```
-
-| モード | ツール数 | 特徴 | 推奨 |
-| ------ | -------- | ---- | ---- |
-| client | 6個 | コンテキスト使用量が少ない、任意のパスを指定可能 | ✅ |
-| api | 数百個 | エンドポイントごとに専用ツール、コンテキスト消費大 | ❌ |
-
 ## 利用可能なツール
 
 ### 管理ツール
@@ -120,7 +106,7 @@ npx @him0/freee-mcp
 | `freee_help`           | 使い方ガイド               |
 | `freee_status`         | 現在の状態と推奨アクション |
 
-### API ツール（クライアントモード）
+### API ツール
 
 HTTPメソッドごとのシンプルなツール構成:
 
@@ -144,7 +130,7 @@ pnpm install
 
 pnpm dev           # 開発サーバー（ウォッチモード）
 pnpm build         # ビルド
-pnpm type-check    # 型チェック
+pnpm typecheck    # 型チェック
 pnpm lint          # リント
 pnpm test:run      # テスト
 
@@ -155,6 +141,10 @@ pnpm generate:references
 ### 技術スタック
 
 TypeScript / Model Context Protocol SDK / OAuth 2.0 + PKCE / Zod / esbuild
+
+### アーキテクチャ詳細
+
+プロジェクトのアーキテクチャ、内部構造、開発ガイドラインについては [CLAUDE.md](./CLAUDE.md) を参照してください。
 
 ## ライセンス
 

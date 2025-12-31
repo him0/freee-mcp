@@ -1,5 +1,4 @@
 import { createAndStartServer } from './mcp/handlers.js';
-import { setMode } from './config.js';
 import { configure } from './cli.js';
 
 const main = async (): Promise<void> => {
@@ -13,22 +12,15 @@ const main = async (): Promise<void> => {
     return;
   }
 
-  // Set mode based on subcommand
-  if (subcommand === 'client') {
-    setMode(true);
-    console.error('Starting freee MCP server in client mode (HTTP method sub-commands)');
-  } else if (subcommand === 'api' || !subcommand) {
-    setMode(false);
-    console.error('Starting freee MCP server in API mode (individual tools per endpoint)');
-  } else {
+  // Handle unknown subcommands
+  if (subcommand && subcommand !== 'client') {
     console.error(`Unknown subcommand: ${subcommand}`);
-    console.error('Usage: freee-mcp [configure|client|api]');
+    console.error('Usage: freee-mcp [configure]');
     console.error('  configure - Interactive configuration setup');
-    console.error('  client    - Use HTTP method sub-commands (freee_api_get, freee_api_post, etc.)');
-    console.error('  api       - Use individual tools per endpoint (get_deals, post_deals, etc.) [default]');
     process.exit(1);
   }
 
+  console.error('Starting freee MCP server');
   await createAndStartServer();
 };
 

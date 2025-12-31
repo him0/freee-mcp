@@ -21,8 +21,7 @@ vi.mock('../config.js', () => ({
     oauth: {
       callbackPort: 54321
     }
-  })),
-  getMode: vi.fn(() => false)
+  }))
 }));
 
 vi.mock('../auth/server.js', () => ({
@@ -32,10 +31,6 @@ vi.mock('../auth/server.js', () => ({
 
 vi.mock('./tools.js', () => ({
   addAuthenticationTools: vi.fn()
-}));
-
-vi.mock('../openapi/converter.js', () => ({
-  generateToolsFromOpenApi: vi.fn()
 }));
 
 vi.mock('../openapi/client-mode.js', () => ({
@@ -59,16 +54,16 @@ describe('handlers', () => {
       const mockStdioTransport = await import('@modelcontextprotocol/sdk/server/stdio.js');
       const mockStartCallbackServer = await import('../auth/server.js');
       const mockAddAuthenticationTools = await import('./tools.js');
-      const mockGenerateToolsFromOpenApi = await import('../openapi/converter.js');
+      const mockGenerateClientModeTool = await import('../openapi/client-mode.js');
 
       const mockServerInstance = {
         connect: vi.fn().mockResolvedValue(undefined)
       };
       vi.mocked(mockMcpServer.McpServer).mockReturnValue(mockServerInstance as unknown as InstanceType<typeof mockMcpServer.McpServer>);
-      
+
       const mockTransportInstance = {};
       vi.mocked(mockStdioTransport.StdioServerTransport).mockReturnValue(mockTransportInstance as unknown as InstanceType<typeof mockStdioTransport.StdioServerTransport>);
-      
+
       vi.mocked(mockStartCallbackServer.startCallbackServer).mockResolvedValue();
 
       await createAndStartServer();
@@ -78,7 +73,7 @@ describe('handlers', () => {
         version: '1.0.0'
       });
       expect(mockAddAuthenticationTools.addAuthenticationTools).toHaveBeenCalledWith(mockServerInstance);
-      expect(mockGenerateToolsFromOpenApi.generateToolsFromOpenApi).toHaveBeenCalledWith(mockServerInstance);
+      expect(mockGenerateClientModeTool.generateClientModeTool).toHaveBeenCalledWith(mockServerInstance);
       expect(mockStartCallbackServer.startCallbackServer).toHaveBeenCalled();
       expect(mockServerInstance.connect).toHaveBeenCalledWith(mockTransportInstance);
     });

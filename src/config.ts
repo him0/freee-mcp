@@ -1,9 +1,6 @@
 import { loadFullConfig } from './config/companies.js';
 import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS } from './constants.js';
 
-// Mode can be set programmatically via setMode()
-let clientMode = false;
-
 export interface Config {
   freee: {
     clientId: string;
@@ -135,16 +132,3 @@ export const config = new Proxy({} as Config, {
   },
 });
 
-/**
- * Sets the API mode (client or individual tools)
- */
-export function setMode(useClient: boolean): void {
-  clientMode = useClient;
-}
-
-/**
- * Get current mode (client or individual tools)
- */
-export function getMode(): boolean {
-  return clientMode;
-}
