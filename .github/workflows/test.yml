@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,11 +32,30 @@ jobs:
       - name: Run linter
         run: pnpm lint
 
-      - name: Run tests
-        run: pnpm test:run
+  unit-test:
+    runs-on: ubuntu-latest
 
-      - name: Run tests with coverage
-        run: pnpm test:coverage
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .tool-versions
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests
+        run: pnpm vitest run --exclude 'src/e2e/**'
+
+      - name: Run unit tests with coverage
+        run: pnpm vitest run --coverage --exclude 'src/e2e/**'
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v3
@@ -46,9 +65,30 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
 
+  e2e-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .tool-versions
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run E2E tests
+        run: pnpm vitest run src/e2e/
+
   build:
     runs-on: ubuntu-latest
-    needs: test
 
     steps:
       - name: Checkout code
