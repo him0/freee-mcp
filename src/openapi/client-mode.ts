@@ -29,9 +29,9 @@ function formatBinaryResponse(response: BinaryFileResponse): string {
 }
 
 // 簡略化: 詳細はfreee_api_list_pathsで確認可能
-const SERVICE_HINT = 'service: accounting/hr/invoice/pm';
+const SERVICE_HINT = 'service: accounting/hr/invoice/pm/sm';
 
-const serviceSchema = z.enum(['accounting', 'hr', 'invoice', 'pm']).describe('対象のfreeeサービス');
+const serviceSchema = z.enum(['accounting', 'hr', 'invoice', 'pm', 'sm']).describe('対象のfreeeサービス');
 
 /**
  * Creates a tool handler for a specific HTTP method
