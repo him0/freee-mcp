@@ -1,6 +1,7 @@
 import { build } from 'esbuild';
 import { dependencies } from './package.json';
-import { chmod } from 'fs/promises';
+import { chmod, mkdir, copyFile, readdir } from 'fs/promises';
+import { join } from 'path';
 
 const entryFile = 'src/index.ts';
 const shared = {
@@ -44,3 +45,17 @@ await build({
   },
 });
 await chmod(binFile, 0o755);
+
+// Copy minimal schema files to dist for npm package
+const minimalSrcDir = './openapi/minimal';
+const minimalDestDir = './dist/openapi/minimal';
+await mkdir(minimalDestDir, { recursive: true });
+
+const minimalFiles = await readdir(minimalSrcDir);
+for (const file of minimalFiles) {
+  if (file.endsWith('.json')) {
+    await copyFile(join(minimalSrcDir, file), join(minimalDestDir, file));
+  }
+}
+console.log(`Copied ${minimalFiles.filter(f => f.endsWith('.json')).length} minimal schema files to dist/`);
+
