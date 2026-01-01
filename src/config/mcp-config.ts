@@ -11,22 +11,22 @@ import os from 'node:os';
 
 export type McpTarget = 'claude-code' | 'claude-desktop';
 
-export interface McpConfigStatus {
+export type McpConfigStatus = {
   path: string;
   exists: boolean;
   hasFreeeConfig: boolean;
-}
+};
 
-interface McpServerEntry {
+type McpServerEntry = {
   command: string;
   args: string[];
   env?: Record<string, string>;
-}
+};
 
-interface McpConfig {
+type McpConfig = {
   mcpServers?: Record<string, McpServerEntry>;
   [key: string]: unknown;
-}
+};
 
 const FREEE_MCP_SERVER_NAME = 'freee-mcp';
 
