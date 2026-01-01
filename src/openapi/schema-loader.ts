@@ -90,7 +90,7 @@ function getApiConfigs(): Record<ApiType, ApiConfig> {
   return _apiConfigs;
 }
 
-export const API_CONFIGS: Record<ApiType, ApiConfig> = new Proxy(
+const API_CONFIGS: Record<ApiType, ApiConfig> = new Proxy(
   {} as Record<ApiType, ApiConfig>,
   {
     get(_, prop: string): ApiConfig | undefined {
@@ -240,14 +240,4 @@ export function listAllAvailablePaths(): string {
   }
 
   return sections.join('\n');
-}
-
-/**
- * Get all schemas for API mode tool generation
- */
-export function getAllSchemas(): Array<{ apiType: ApiType; config: ApiConfig }> {
-  return Object.entries(API_CONFIGS).map(([apiType, config]) => ({
-    apiType: apiType as ApiType,
-    config,
-  }));
 }

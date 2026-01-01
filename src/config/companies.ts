@@ -27,7 +27,7 @@ export interface FullConfig {
 }
 
 // Legacy format (for backward compatibility)
-export interface LegacyCompaniesConfig {
+interface LegacyCompaniesConfig {
   defaultCompanyId: string;
   currentCompanyId: string;
   companies: Record<string, CompanyConfig>;
@@ -170,16 +170,6 @@ export async function setCurrentCompany(
 }
 
 /**
- * Get list of all companies
- */
-export async function getCompanyList(): Promise<CompanyConfig[]> {
-  const config = await loadFullConfig();
-  return Object.values(config.companies).sort((a, b) =>
-    (b.lastUsed || 0) - (a.lastUsed || 0)
-  );
-}
-
-/**
  * Get company info by ID
  */
 export async function getCompanyInfo(companyId: string): Promise<CompanyConfig | null> {
@@ -194,13 +184,4 @@ export async function getCompanyInfo(companyId: string): Promise<CompanyConfig |
 export async function getDownloadDir(): Promise<string> {
   const config = await loadFullConfig();
   return config.downloadDir || os.tmpdir();
-}
-
-/**
- * Set download directory for binary files
- */
-export async function setDownloadDir(dir: string): Promise<void> {
-  const config = await loadFullConfig();
-  config.downloadDir = dir;
-  await saveFullConfig(config);
 }

@@ -109,17 +109,6 @@ export async function loadConfig(): Promise<Config> {
 }
 
 /**
- * Get config synchronously (must call loadConfig first)
- * For backward compatibility with existing code
- */
-export function getConfig(): Config {
-  if (!cachedConfig) {
-    throw new Error('Config not loaded. Call loadConfig() first.');
-  }
-  return cachedConfig;
-}
-
-/**
  * Legacy export for backward compatibility
  * @deprecated Use loadConfig() or getConfig() instead
  */

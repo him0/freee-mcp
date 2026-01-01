@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/index.ts", "src/cli.ts", "scripts/*.ts"],
+  "entry": ["src/cli.ts", "scripts/*.ts"],
   "project": ["src/**/*.ts", "scripts/**/*.ts"],
   "ignore": ["src/**/*.test.ts", "src/e2e/**/*.ts", "src/test-utils/**/*.ts"],
   "ignoreDependencies": ["@types/crypto-js"]

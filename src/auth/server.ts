@@ -91,7 +91,7 @@ export class AuthenticationManager {
  * CallbackServer - manages the OAuth callback HTTP server
  * Encapsulates server state that was previously global
  */
-export class CallbackServer {
+class CallbackServer {
   private server: http.Server | null = null;
   private port: number | null = null;
   private authManager: AuthenticationManager;
@@ -281,10 +281,6 @@ export function getActualRedirectUri(): string {
   return defaultCallbackServer.getRedirectUri();
 }
 
-export function getActualCallbackPort(): number | null {
-  return defaultCallbackServer.getPort();
-}
-
 export async function startCallbackServer(): Promise<void> {
   return defaultCallbackServer.start();
 }
@@ -300,8 +296,4 @@ export function stopCallbackServer(): void {
 // Export authentication manager for CLI usage
 export function getDefaultAuthManager(): AuthenticationManager {
   return defaultAuthManager;
-}
-
-export function getDefaultCallbackServer(): CallbackServer {
-  return defaultCallbackServer;
 }
