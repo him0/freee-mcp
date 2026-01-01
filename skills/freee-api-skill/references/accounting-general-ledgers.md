@@ -8,9 +8,9 @@
 
 ### GET /api/1/reports/general_ledgers
 
-**操作**: 総勘定元帳一覧の取得（β版）
+操作: 総勘定元帳一覧の取得（β版）
 
-**説明**: 概要 指定した事業所の総勘定元帳一覧を取得する ※このAPIはβ版として提供しています。 このAPIは法人アドバンスプラン（および旧法人プロフェッショナルプラン）・法人エンタープライズプランに加入している事業所のみが利用できます。 利用状況によって事前の告知なく提供プラン・コール数の上限を変更する可能性があります。 他エンドポイントと比べてレスポンスタイムが遅い場合があります。
+説明: 概要 指定した事業所の総勘定元帳一覧を取得する ※このAPIはβ版として提供しています。 このAPIは法人アドバンスプラン（および旧法人プロフェッショナルプラン）・法人エンタープライズプランに加入している事業所のみが利用できます。 利用状況によって事前の告知なく提供プラン・コール数の上限を変更する可能性があります。 他エンドポイントと比べてレスポンスタイムが遅い場合があります。
 
 ### パラメータ
 
@@ -40,14 +40,14 @@
 
 ### レスポンス (200)
 
-- **general_ledgers** **(必須)**: array[object]
+- general_ledgers (必須): array[object]
   配列の要素:
-    - **account_item_id** (任意): integer(int64) - 勘定科目ID 例: `1`
-    - **account_item_name** (任意): string - 勘定科目名 例: `売掛金`
-    - **total_amount** (任意): integer(int64) - 発生額累計 例: `100`
-    - **final_balance** (任意): integer(int64) - 残高 例: `100`
-    - **debit_amount** (任意): integer(int64) - 借方発生額累計 例: `100`
-    - **credit_amount** (任意): integer(int64) - 貸方発生額累計 例: `100`
+    - account_item_id (任意): integer(int64) - 勘定科目ID 例: `1`
+    - account_item_name (任意): string - 勘定科目名 例: `売掛金`
+    - total_amount (任意): integer(int64) - 発生額累計 例: `100`
+    - final_balance (任意): integer(int64) - 残高 例: `100`
+    - debit_amount (任意): integer(int64) - 借方発生額累計 例: `100`
+    - credit_amount (任意): integer(int64) - 貸方発生額累計 例: `100`
 
 
 

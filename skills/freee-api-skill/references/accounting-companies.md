@@ -8,20 +8,20 @@
 
 ### GET /api/1/companies
 
-**操作**: 事業所一覧の取得
+操作: 事業所一覧の取得
 
-**説明**: 概要 ユーザーが所属する事業所一覧を取得する
+説明: 概要 ユーザーが所属する事業所一覧を取得する
 
 ### レスポンス (200)
 
-- **companies** **(必須)**: array[object]
+- companies (必須): array[object]
   配列の要素:
-    - **id** **(必須)**: integer(int64) - 事業所ID 例: `1` (最小: 1)
-    - **name** **(必須)**: string - 事業所名 例: `freee事務所`
-    - **name_kana** **(必須)**: string - 事業所名（カナ） 例: `フリージムショ`
-    - **display_name** **(必須)**: string - 事業所名 例: `freee事務所`
-    - **company_number** **(必須)**: string - 事業所番号（ハイフン無し)(半角英数字10桁) 例: `97e576421b`
-    - **role** **(必須)**: string - ユーザーの権限
+    - id (必須): integer(int64) - 事業所ID 例: `1` (最小: 1)
+    - name (必須): string - 事業所名 例: `freee事務所`
+    - name_kana (必須): string - 事業所名（カナ） 例: `フリージムショ`
+    - display_name (必須): string - 事業所名 例: `freee事務所`
+    - company_number (必須): string - 事業所番号（ハイフン無し)(半角英数字10桁) 例: `97e576421b`
+    - role (必須): string - ユーザーの権限
 
 * admin - 管理者
 * simple_accounting - 一般（経理）
@@ -31,9 +31,9 @@
 
 ### GET /api/1/companies/{id}
 
-**操作**: 事業所の取得
+操作: 事業所の取得
 
-**説明**: 概要 ユーザーが所属する事業所を取得する
+説明: 概要 ユーザーが所属する事業所を取得する
 
 ### パラメータ
 
@@ -51,36 +51,36 @@
 
 ### レスポンス (200)
 
-- **company** **(必須)**: object
-  - **id** **(必須)**: integer(int64) - 事業所ID 例: `1` (最小: 1)
-  - **name** **(必須)**: string - 事業所の正式名称 (100文字以内) 例: `freee事務所`
-  - **name_kana** **(必須)**: string - 正式名称フリガナ (100文字以内) 例: `フリージムショ`
-  - **display_name** **(必須)**: string - 事業所名 例: `freee事務所`
-  - **tax_at_source_calc_type** **(必須)**: integer(int64) - 源泉徴収税計算（0: 消費税を含める、1: 消費税を含めない） 例: `0` (最小: 0, 最大: 1)
-  - **contact_name** **(必須)**: string - 担当者名 (50文字以内) 例: `user1`
-  - **head_count** **(必須)**: integer(int64) - 従業員数（0: 経営者のみ、1: 2〜5人、2: 6〜10人、3: 11〜20人、4: 21〜30人、5: 31〜40人、6: 41〜100人、7: 100人以上、13: 21〜50人、14: 51〜100人、15: 101〜300人、16: 501〜1000人、17: 1001人以上、18: 301〜500人 例: `1` (最小: 0, 最大: 99)
-  - **corporate_number** **(必須)**: string - 法人番号 (半角数字13桁、法人のみ) 例: `1234567890123`
-  - **txn_number_format** **(必須)**: string - 仕訳番号形式（not_used: 使用しない、digits: 数字（例：5091824）、alnum: 英数字（例：59J0P）） (選択肢: not_used, digits, alnum) 例: `not_used`
-  - **default_wallet_account_id** (任意): integer(int64) - デフォルトの決済口座が紐づく勘定科目ID 例: `1` (最小: 1)
-  - **private_settlement** **(必須)**: boolean - プライベート資金/役員資金（false: 使用しない、true: 使用する） 例: `true`
-  - **minus_format** **(必須)**: integer(int64) - マイナスの表示方法（0: -、 1: △） 例: `0` (最小: 0, 最大: 1)
-  - **org_code** **(必須)**: integer - 事業所種別コード（1: 法人、 2: 個人事業主） 例: `1` (最小: 1, 最大: 2)
-  - **company_number** **(必須)**: string - 事業所番号（ハイフン無し)(半角英数字10桁) 例: `97e576421b`
-  - **role** **(必須)**: string - ユーザーの権限
+- company (必須): object
+  - id (必須): integer(int64) - 事業所ID 例: `1` (最小: 1)
+  - name (必須): string - 事業所の正式名称 (100文字以内) 例: `freee事務所`
+  - name_kana (必須): string - 正式名称フリガナ (100文字以内) 例: `フリージムショ`
+  - display_name (必須): string - 事業所名 例: `freee事務所`
+  - tax_at_source_calc_type (必須): integer(int64) - 源泉徴収税計算（0: 消費税を含める、1: 消費税を含めない） 例: `0` (最小: 0, 最大: 1)
+  - contact_name (必須): string - 担当者名 (50文字以内) 例: `user1`
+  - head_count (必須): integer(int64) - 従業員数（0: 経営者のみ、1: 2〜5人、2: 6〜10人、3: 11〜20人、4: 21〜30人、5: 31〜40人、6: 41〜100人、7: 100人以上、13: 21〜50人、14: 51〜100人、15: 101〜300人、16: 501〜1000人、17: 1001人以上、18: 301〜500人 例: `1` (最小: 0, 最大: 99)
+  - corporate_number (必須): string - 法人番号 (半角数字13桁、法人のみ) 例: `1234567890123`
+  - txn_number_format (必須): string - 仕訳番号形式（not_used: 使用しない、digits: 数字（例：5091824）、alnum: 英数字（例：59J0P）） (選択肢: not_used, digits, alnum) 例: `not_used`
+  - default_wallet_account_id (任意): integer(int64) - デフォルトの決済口座が紐づく勘定科目ID 例: `1` (最小: 1)
+  - private_settlement (必須): boolean - プライベート資金/役員資金（false: 使用しない、true: 使用する） 例: `true`
+  - minus_format (必須): integer(int64) - マイナスの表示方法（0: -、 1: △） 例: `0` (最小: 0, 最大: 1)
+  - org_code (必須): integer - 事業所種別コード（1: 法人、 2: 個人事業主） 例: `1` (最小: 1, 最大: 2)
+  - company_number (必須): string - 事業所番号（ハイフン無し)(半角英数字10桁) 例: `97e576421b`
+  - role (必須): string - ユーザーの権限
 
 * admin - 管理者
 * simple_accounting - 一般（経理）
 * read_only - 取引登録のみ
 * self_only - 閲覧のみ
 * workflow - 申請・承認 (選択肢: admin, simple_accounting, self_only, read_only, workflow) 例: `admin`
-  - **phone1** **(必須)**: string - 電話番号１ 例: `03-1234-xxxx`
-  - **phone2** **(必須)**: string - 電話番号２ 例: `090-1234-xxxx`
-  - **fax** **(必須)**: string - FAX 例: `03-1234-xxxx`
-  - **zipcode** **(必須)**: string - 郵便番号 例: `000-0000`
-  - **prefecture_code** **(必須)**: integer(int64) - 都道府県コード（-1: 設定しない、0: 北海道、1:青森、2:岩手、3:宮城、4:秋田、5:山形、6:福島、7:茨城、8:栃木、9:群馬、10:埼玉、11:千葉、12:東京、13:神奈川、14:新潟、15:富山、16:石川、17:福井、18:山梨、19:長野、20:岐阜、21:静岡、22:愛知、23:三重、24:滋賀、25:京都、26:大阪、27:兵庫、28:奈良、29:和歌山、30:鳥取、31:島根、32:岡山、33:広島、34:山口、35:徳島、36:香川、37:愛媛、38:高知、39:福岡、40:佐賀、41:長崎、42:熊本、43:大分、44:宮崎、45:鹿児島、46:沖縄 例: `4` (最小: -1, 最大: 46)
-  - **street_name1** **(必須)**: string - 市区町村・番地 例: `ＸＸ区ＹＹ１−１−１`
-  - **street_name2** **(必須)**: string - 建物名・部屋番号など 例: `ビル１Ｆ`
-  - **invoice_layout** **(必須)**: string - 請求書レイアウト
+  - phone1 (必須): string - 電話番号１ 例: `03-1234-xxxx`
+  - phone2 (必須): string - 電話番号２ 例: `090-1234-xxxx`
+  - fax (必須): string - FAX 例: `03-1234-xxxx`
+  - zipcode (必須): string - 郵便番号 例: `000-0000`
+  - prefecture_code (必須): integer(int64) - 都道府県コード（-1: 設定しない、0: 北海道、1:青森、2:岩手、3:宮城、4:秋田、5:山形、6:福島、7:茨城、8:栃木、9:群馬、10:埼玉、11:千葉、12:東京、13:神奈川、14:新潟、15:富山、16:石川、17:福井、18:山梨、19:長野、20:岐阜、21:静岡、22:愛知、23:三重、24:滋賀、25:京都、26:大阪、27:兵庫、28:奈良、29:和歌山、30:鳥取、31:島根、32:岡山、33:広島、34:山口、35:徳島、36:香川、37:愛媛、38:高知、39:福岡、40:佐賀、41:長崎、42:熊本、43:大分、44:宮崎、45:鹿児島、46:沖縄 例: `4` (最小: -1, 最大: 46)
+  - street_name1 (必須): string - 市区町村・番地 例: `ＸＸ区ＹＹ１−１−１`
+  - street_name2 (必須): string - 建物名・部屋番号など 例: `ビル１Ｆ`
+  - invoice_layout (必須): string - 請求書レイアウト
 * `default_classic` - レイアウト１/クラシック (デフォルト)
 
 * `standard_classic` - レイアウト２/クラシック
@@ -96,10 +96,10 @@
 * `standard_modern` - レイアウト２/モダン
 
 * `envelope_modern` - 封筒/モダン (選択肢: default_classic, standard_classic, envelope_classic, carried_forward_standard_classic, carried_forward_envelope_classic, default_modern, standard_modern, envelope_modern) 例: `default_classic`
-  - **amount_fraction** **(必須)**: integer(int64) - 金額端数処理方法（0: 切り捨て、1: 切り上げ、2: 四捨五入） 例: `0` (最小: 0, 最大: 2)
-  - **use_partner_code** **(必須)**: boolean - 取引先コードの利用設定（true: 有効、 false: 無効） 例: `true`
-  - **industry_class** **(必須)**: string - 種別（agriculture_forestry_fisheries_ore: 農林水産業/鉱業,construction: 建設,manufacturing_processing: 製造/加工,it: IT,transportation_logistics: 運輸/物流,retail_wholesale: 小売/卸売,finance_insurance: 金融/保険,real_estate_rental: 不動産/レンタル,profession: 士業/学術/専門技術サービス,design_production: デザイン/制作,food: 飲食,leisure_entertainment: レジャー/娯楽,lifestyle: 生活関連サービス,education: 教育/学習支援,medical_welfare: 医療/福祉,other_services: その他サービス,other_association: NPO、一般社団法人等,other: その他, "": 未選択） (選択肢: agriculture_forestry_fisheries_ore, construction, manufacturing_processing, it, transportation_logistics, retail_wholesale, finance_insurance, real_estate_rental, profession, design_production, food, leisure_entertainment, lifestyle, education, medical_welfare, other_services, other_association, other, ) 例: `agriculture_forestry_fisheries_ore`
-  - **industry_code** **(必須)**: string - ### 業種 法人<br>
+  - amount_fraction (必須): integer(int64) - 金額端数処理方法（0: 切り捨て、1: 切り上げ、2: 四捨五入） 例: `0` (最小: 0, 最大: 2)
+  - use_partner_code (必須): boolean - 取引先コードの利用設定（true: 有効、 false: 無効） 例: `true`
+  - industry_class (必須): string - 種別（agriculture_forestry_fisheries_ore: 農林水産業/鉱業,construction: 建設,manufacturing_processing: 製造/加工,it: IT,transportation_logistics: 運輸/物流,retail_wholesale: 小売/卸売,finance_insurance: 金融/保険,real_estate_rental: 不動産/レンタル,profession: 士業/学術/専門技術サービス,design_production: デザイン/制作,food: 飲食,leisure_entertainment: レジャー/娯楽,lifestyle: 生活関連サービス,education: 教育/学習支援,medical_welfare: 医療/福祉,other_services: その他サービス,other_association: NPO、一般社団法人等,other: その他, "": 未選択） (選択肢: agriculture_forestry_fisheries_ore, construction, manufacturing_processing, it, transportation_logistics, retail_wholesale, finance_insurance, real_estate_rental, profession, design_production, food, leisure_entertainment, lifestyle, education, medical_welfare, other_services, other_association, other, ) 例: `agriculture_forestry_fisheries_ore`
+  - industry_code (必須): string - ### 業種 法人<br>
   - '': 未選択
   - agriculture: 農業
   - forestry: 林業
@@ -235,15 +235,15 @@
   - others_side_business: その他(副業や株取引のみなど)
   - others_deduction: その他(医療費などの控除のみ)
   - default: 未定 (選択肢: , agriculture, forestry, fishing_industry, mining, civil_contractors, pavement, carpenter, renovation, electrical_plumbing, grocery, machinery_manufacturing, printing, other_manufacturing, software_development, system_development, survey_analysis, server_management, website_production, online_service_management, online_advertising_agency, online_advertising_planning_production, online_media_management, portal_site_management, other_it_services, transport_delivery, delivery, other_transportation_logistics, other_wholesale, clothing_wholesale_fiber, food_wholesale, entrusted_development_wholesale, online_shop, fashion_grocery_store, food_store, entrusted_store, other_store, financial_instruments_exchange, commodity_futures_investment_advisor, other_financial, brokerage_insurance, other_insurance, real_estate_developer, real_estate_brokerage, rent_coin_parking_management, rental_office_co_working_space, rental_lease, cpa_tax_accountant, law_office, judicial_and_administrative_scrivener, labor_consultant, other_profession, business_consultant, academic_research_development, advertising_agency, advertising_planning_production, design_development, apparel_industry_design, website_design, advertising_planning_design, other_design, restaurants_coffee_shops, sale_of_lunch, bread_confectionery_manufacture_sale, delivery_catering_mobile_catering, hotel_inn, homestay, travel_agency, leisure_sports_facility_management, show_event_management, barber, beauty_salon, spa_sand_bath_sauna, este_ail_salon, bridal_planning_introduce_wedding, memorial_ceremony_funeral, moving, courier_industry, house_maid_cleaning_agency, re_tailoring_clothes, training_institute_management, tutoring_school, music_calligraphy_abacus_classroom, english_school, tennis_yoga_judo_school, culture_school, seminar_planning_management, hospital_clinic, dental_clinic, other_medical_services, nursery, nursing_home, rehabilitation_support_services, other_welfare, visit_welfare_service, recruitment_temporary_staffing, life_related_recruitment_temporary_staffing, car_maintenance_car_repair, machinery_equipment_maintenance_repair, cleaning_maintenance_building_management, security, other_services, npo, general_incorporated_association, general_incorporated_foundation, other_association, manufacturing, education, medical, ict, food, construction, transportation, trading, retail, finance, real_estate, travel, accountant, lawer, consultant, recruit, publication, design, others, company_employee, others_side_business, others_deduction, default)
-  - **workflow_setting** **(必須)**: string - 仕訳承認フロー（enable: 有効、 disable: 無効） (選択肢: enable, disable) 例: `disabled`
-  - **fiscal_years** **(必須)**: array[object]
-  - **account_items** (任意): array[object]
-  - **tax_codes** (任意): array[object]
-  - **items** (任意): array[object]
-  - **partners** (任意): array[object]
-  - **sections** (任意): array[object]
-  - **tags** (任意): array[object]
-  - **walletables** (任意): array[object]
+  - workflow_setting (必須): string - 仕訳承認フロー（enable: 有効、 disable: 無効） (選択肢: enable, disable) 例: `disabled`
+  - fiscal_years (必須): array[object]
+  - account_items (任意): array[object]
+  - tax_codes (任意): array[object]
+  - items (任意): array[object]
+  - partners (任意): array[object]
+  - sections (任意): array[object]
+  - tags (任意): array[object]
+  - walletables (任意): array[object]
 
 
 

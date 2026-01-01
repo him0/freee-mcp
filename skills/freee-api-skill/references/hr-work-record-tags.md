@@ -8,9 +8,9 @@
 
 ### GET /api/v1/employees/{employee_id}/attendance_tags
 
-**操作**: 勤怠タグ一覧の取得
+操作: 勤怠タグ一覧の取得
 
-**説明**: 概要 指定した従業員の利用可能な勤怠タグの一覧を返します。
+説明: 概要 指定した従業員の利用可能な勤怠タグの一覧を返します。
 
 ### パラメータ
 
@@ -23,21 +23,21 @@
 
 successful operation
 
-- **employee_attendance_tags** (任意): array[object]
+- employee_attendance_tags (任意): array[object]
   配列の要素:
-    - **id** **(必須)**: integer(int32) - 勤怠タグID 例: `1` (最小: 1, 最大: 2147483647)
-    - **company_id** **(必須)**: integer(int32) - 事業所ID 例: `1` (最小: 1, 最大: 2147483647)
-    - **name** **(必須)**: string - 勤怠タグ名称 例: `勤怠タグの名称`
-    - **description** **(必須)**: string - 勤怠タグ備考 例: `勤怠タグの備考`
-    - **max_amount** **(必須)**: integer(int32) - 勤怠タグ回数上限 例: `1` (最小: 1, 最大: 999)
-    - **published** **(必須)**: boolean - 勤怠タグ公開ステータス 例: `true`
-    - **is_employee_usable** **(必須)**: boolean - 対象従業員が利用可能かどうか 例: `true`
+    - id (必須): integer(int32) - 勤怠タグID 例: `1` (最小: 1, 最大: 2147483647)
+    - company_id (必須): integer(int32) - 事業所ID 例: `1` (最小: 1, 最大: 2147483647)
+    - name (必須): string - 勤怠タグ名称 例: `勤怠タグの名称`
+    - description (必須): string - 勤怠タグ備考 例: `勤怠タグの備考`
+    - max_amount (必須): integer(int32) - 勤怠タグ回数上限 例: `1` (最小: 1, 最大: 999)
+    - published (必須): boolean - 勤怠タグ公開ステータス 例: `true`
+    - is_employee_usable (必須): boolean - 対象従業員が利用可能かどうか 例: `true`
 
 ### GET /api/v1/employees/{employee_id}/attendance_tags/{date}
 
-**操作**: 勤怠タグと利用回数の取得
+操作: 勤怠タグと利用回数の取得
 
-**説明**: 概要 指定した従業員・日付の勤怠タグと利用回数の一覧を返します。
+説明: 概要 指定した従業員・日付の勤怠タグと利用回数の一覧を返します。
 
 ### パラメータ
 
@@ -51,16 +51,16 @@ successful operation
 
 successful operation
 
-- **employee_attendance_tags** (任意): array[object]
+- employee_attendance_tags (任意): array[object]
   配列の要素:
-    - **attendance_tag** **(必須)**: object
-    - **amount** **(必須)**: integer(int32) - 勤怠タグ回数 例: `1` (最小: 0, 最大: 999)
+    - attendance_tag (必須): object
+    - amount (必須): integer(int32) - 勤怠タグ回数 例: `1` (最小: 0, 最大: 999)
 
 ### PUT /api/v1/employees/{employee_id}/attendance_tags/{date}
 
-**操作**: 勤怠タグの更新
+操作: 勤怠タグの更新
 
-**説明**: 概要 指定した従業員・日付の勤怠タグを更新します。 注意点 指定した従業員・日付の勤怠タグが存在する場合は、上書き更新されます。 指定がなかった勤怠タグは削除されます。
+説明: 概要 指定した従業員・日付の勤怠タグを更新します。 注意点 指定した従業員・日付の勤怠タグが存在する場合は、上書き更新されます。 指定がなかった勤怠タグは削除されます。
 
 ### パラメータ
 
@@ -71,20 +71,20 @@ successful operation
 
 ### リクエストボディ
 
-- **company_id** **(必須)**: integer(int32) - 事業所ID 例: `1` (最小: 1, 最大: 2147483647)
-- **employee_attendance_tags** **(必須)**: array[object] - 更新対象の勤怠タグのリスト
+- company_id (必須): integer(int32) - 事業所ID 例: `1` (最小: 1, 最大: 2147483647)
+- employee_attendance_tags (必須): array[object] - 更新対象の勤怠タグのリスト
   配列の要素:
-    - **attendance_tag_id** **(必須)**: integer(int32) - 勤怠タグID 例: `1` (最小: 1, 最大: 2147483647)
-    - **amount** **(必須)**: integer(int32) - 勤怠タグ回数 例: `1` (最小: 0, 最大: 999)
+    - attendance_tag_id (必須): integer(int32) - 勤怠タグID 例: `1` (最小: 1, 最大: 2147483647)
+    - amount (必須): integer(int32) - 勤怠タグ回数 例: `1` (最小: 0, 最大: 999)
 
 ### レスポンス (200)
 
 successful operation
 
-- **employee_attendance_tags** (任意): array[object]
+- employee_attendance_tags (任意): array[object]
   配列の要素:
-    - **attendance_tag** **(必須)**: object
-    - **amount** **(必須)**: integer(int32) - 勤怠タグ回数 例: `1` (最小: 0, 最大: 999)
+    - attendance_tag (必須): object
+    - amount (必須): integer(int32) - 勤怠タグ回数 例: `1` (最小: 0, 最大: 999)
 
 
 
