@@ -49,63 +49,81 @@ export interface ApiConfig {
   name: string;
 }
 
-// Lazy-load schemas to avoid loading at module initialization
-let _apiConfigs: Record<ApiType, ApiConfig> | null = null;
-
-function getApiConfigs(): Record<ApiType, ApiConfig> {
-  if (_apiConfigs === null) {
-    _apiConfigs = {
-      accounting: {
-        schema: loadSchema('accounting.json'),
-        baseUrl: 'https://api.freee.co.jp',
-        prefix: 'accounting',
-        name: 'freee会計 API',
-      },
-      hr: {
-        schema: loadSchema('hr.json'),
-        baseUrl: 'https://api.freee.co.jp/hr',
-        prefix: 'hr',
-        name: 'freee人事労務 API',
-      },
-      invoice: {
-        schema: loadSchema('invoice.json'),
-        baseUrl: 'https://api.freee.co.jp/iv',
-        prefix: 'invoice',
-        name: 'freee請求書 API',
-      },
-      pm: {
-        schema: loadSchema('pm.json'),
-        baseUrl: 'https://api.freee.co.jp/pm',
-        prefix: 'pm',
-        name: 'freee工数管理 API',
-      },
-      sm: {
-        schema: loadSchema('sm.json'),
-        baseUrl: 'https://api.freee.co.jp/sm',
-        prefix: 'sm',
-        name: 'freee販売 API',
-      },
-    };
-  }
-  return _apiConfigs;
+// API metadata without schema (loaded lazily per-API)
+interface ApiMetadata {
+  schemaFile: string;
+  baseUrl: string;
+  prefix: string;
+  name: string;
 }
 
-const API_CONFIGS: Record<ApiType, ApiConfig> = new Proxy(
+const API_METADATA: Record<ApiType, ApiMetadata> = {
+  accounting: {
+    schemaFile: 'accounting.json',
+    baseUrl: 'https://api.freee.co.jp',
+    prefix: 'accounting',
+    name: 'freee会計 API',
+  },
+  hr: {
+    schemaFile: 'hr.json',
+    baseUrl: 'https://api.freee.co.jp/hr',
+    prefix: 'hr',
+    name: 'freee人事労務 API',
+  },
+  invoice: {
+    schemaFile: 'invoice.json',
+    baseUrl: 'https://api.freee.co.jp/iv',
+    prefix: 'invoice',
+    name: 'freee請求書 API',
+  },
+  pm: {
+    schemaFile: 'pm.json',
+    baseUrl: 'https://api.freee.co.jp/pm',
+    prefix: 'pm',
+    name: 'freee工数管理 API',
+  },
+  sm: {
+    schemaFile: 'sm.json',
+    baseUrl: 'https://api.freee.co.jp/sm',
+    prefix: 'sm',
+    name: 'freee販売 API',
+  },
+};
+
+// Per-API lazy loading: only load schemas when accessed
+const _loadedConfigs: Partial<Record<ApiType, ApiConfig>> = {};
+
+function getApiConfig(apiType: ApiType): ApiConfig {
+  if (!_loadedConfigs[apiType]) {
+    const metadata = API_METADATA[apiType];
+    _loadedConfigs[apiType] = {
+      schema: loadSchema(metadata.schemaFile),
+      baseUrl: metadata.baseUrl,
+      prefix: metadata.prefix,
+      name: metadata.name,
+    };
+  }
+  return _loadedConfigs[apiType]!;
+}
+
+export const API_CONFIGS: Record<ApiType, ApiConfig> = new Proxy(
   {} as Record<ApiType, ApiConfig>,
   {
     get(_, prop: string): ApiConfig | undefined {
-      return getApiConfigs()[prop as ApiType];
+      if (prop in API_METADATA) {
+        return getApiConfig(prop as ApiType);
+      }
+      return undefined;
     },
     ownKeys(): string[] {
-      return Object.keys(getApiConfigs());
+      return Object.keys(API_METADATA);
     },
     getOwnPropertyDescriptor(_, prop: string): PropertyDescriptor | undefined {
-      const configs = getApiConfigs();
-      if (prop in configs) {
+      if (prop in API_METADATA) {
         return {
           enumerable: true,
           configurable: true,
-          value: configs[prop as ApiType],
+          value: getApiConfig(prop as ApiType),
         };
       }
       return undefined;
