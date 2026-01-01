@@ -4,9 +4,10 @@ import { chmod, mkdir, copyFile, readdir } from 'fs/promises';
 import { join } from 'path';
 
 const entryFile = 'src/index.ts';
+const libFile = 'src/lib.ts';
+
 const shared = {
   bundle: true,
-  entryPoints: [entryFile],
   external: Object.keys(dependencies),
   logLevel: 'info' as 'info',
   minify: true,
@@ -16,6 +17,7 @@ const shared = {
 
 await build({
   ...shared,
+  entryPoints: [entryFile],
   format: 'esm',
   outfile: './dist/index.esm.js',
   target: ['ES2022'],
@@ -23,8 +25,18 @@ await build({
 
 await build({
   ...shared,
+  entryPoints: [entryFile],
   format: 'cjs',
   outfile: './dist/index.cjs',
+  target: ['ES2022'],
+});
+
+// Build library exports (for testing and programmatic use)
+await build({
+  ...shared,
+  entryPoints: [libFile],
+  format: 'esm',
+  outfile: './dist/lib.esm.js',
   target: ['ES2022'],
 });
 
