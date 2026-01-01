@@ -27,7 +27,7 @@ export function addAuthenticationTools(server: McpServer): void {
             content: [
               {
                 type: 'text',
-                text: '会社IDが設定されていません。freee_set_company で設定してください。',
+                text: '会社IDが設定されていません。freee_set_current_company で設定してください。',
               },
             ],
           };
@@ -193,7 +193,7 @@ export function addAuthenticationTools(server: McpServer): void {
 
   // Company management tools
   server.tool(
-    'freee_set_company',
+    'freee_set_current_company',
     '事業所を設定・切り替え。',
     {
       company_id: z.string().describe('事業所ID'),

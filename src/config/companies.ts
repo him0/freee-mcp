@@ -95,22 +95,13 @@ export async function loadFullConfig(): Promise<FullConfig> {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       // Create default config
-      const defaultCompanyId = process.env.FREEE_DEFAULT_COMPANY_ID || '0';
       const defaultConfig: FullConfig = {
         clientId: undefined,
         clientSecret: undefined,
         callbackPort: undefined,
-        defaultCompanyId,
-        currentCompanyId: defaultCompanyId,
-        companies: {
-          [defaultCompanyId]: {
-            id: defaultCompanyId,
-            name: 'Default Company',
-            description: 'Company from environment variable',
-            addedAt: Date.now(),
-            lastUsed: Date.now(),
-          },
-        },
+        defaultCompanyId: '0',
+        currentCompanyId: '0',
+        companies: {},
       };
       await saveFullConfig(defaultConfig);
       return defaultConfig;

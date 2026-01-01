@@ -24,7 +24,7 @@ async function testFreeeTools() {
     'freee_authenticate',
     'freee_auth_status',
     'freee_clear_auth',
-    'freee_set_company',
+    'freee_set_current_company',
     'freee_get_current_company',
     'freee_list_companies'
   ];
@@ -84,7 +84,6 @@ async function testFreeeTools() {
         "env": {
           "FREEE_CLIENT_ID": "your_client_id_here",
           "FREEE_CLIENT_SECRET": "your_client_secret_here",
-          "FREEE_DEFAULT_COMPANY_ID": "your_company_id_here",
           "FREEE_CALLBACK_PORT": "54321"
         }
       }

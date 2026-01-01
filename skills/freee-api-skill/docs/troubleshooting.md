@@ -54,7 +54,7 @@ freee_authenticate
 freee_list_companies
 
 # 正しい事業所IDを設定
-freee_set_company [正しい事業所ID]
+freee_set_current_company [正しい事業所ID]
 ```
 
 ### 問題: 事業所を切り替えたい
@@ -63,7 +63,7 @@ freee_set_company [正しい事業所ID]
 
 ```
 freee_list_companies
-freee_set_company [新しい事業所ID]
+freee_set_current_company [新しい事業所ID]
 freee_current_user  # 切り替わったことを確認
 ```
 

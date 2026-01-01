@@ -102,7 +102,7 @@ Claude との会話中に API の使い方を質問すると、これらのリ�
 | `freee_authenticate`       | OAuth 認証を実行   |
 | `freee_auth_status`        | 認証状態を確認     |
 | `freee_clear_auth`         | 認証情報をクリア   |
-| `freee_set_company`        | 事業所を切り替え   |
+| `freee_set_current_company`| 事業所を切り替え   |
 | `freee_get_current_company`| 現在の事業所を表示 |
 | `freee_list_companies`     | 事業所一覧を取得   |
 | `freee_current_user`       | 現在のユーザー情報 |

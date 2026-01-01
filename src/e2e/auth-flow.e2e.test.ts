@@ -140,7 +140,7 @@ describe('E2E: Authentication Flow', () => {
       expect(registeredTools.has('freee_auth_status')).toBe(true);
       expect(registeredTools.has('freee_clear_auth')).toBe(true);
       expect(registeredTools.has('freee_current_user')).toBe(true);
-      expect(registeredTools.has('freee_set_company')).toBe(true);
+      expect(registeredTools.has('freee_set_current_company')).toBe(true);
       expect(registeredTools.has('freee_get_current_company')).toBe(true);
       expect(registeredTools.has('freee_list_companies')).toBe(true);
     });
@@ -251,9 +251,9 @@ describe('E2E: Authentication Flow', () => {
     });
   });
 
-  describe('freee_set_company', () => {
+  describe('freee_set_current_company', () => {
     it('should set current company', async () => {
-      const handler = registeredTools.get('freee_set_company')!.handler;
+      const handler = registeredTools.get('freee_set_current_company')!.handler;
 
       const result = await handler({
         company_id: '67890',
@@ -265,7 +265,7 @@ describe('E2E: Authentication Flow', () => {
     });
 
     it('should set company without name', async () => {
-      const handler = registeredTools.get('freee_set_company')!.handler;
+      const handler = registeredTools.get('freee_set_current_company')!.handler;
 
       const result = await handler({
         company_id: '99999',
