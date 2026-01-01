@@ -63,7 +63,7 @@ output_mode: "files_with_matches"
 - `freee_authenticate` - OAuth 認証
 - `freee_auth_status` - 認証状態確認
 - `freee_list_companies` - 事業所一覧
-- `freee_set_company` - 事業所切り替え
+- `freee_set_current_company` - 事業所切り替え
 
 API 呼び出し:
 
@@ -150,7 +150,7 @@ freee_api_get {
 ## エラー対応
 
 - 認証エラー: `freee_auth_status` で確認 → `freee_clear_auth` → `freee_authenticate`
-- 事業所エラー: `freee_list_companies` → `freee_set_company`
+- 事業所エラー: `freee_list_companies` → `freee_set_current_company`
 - 詳細: `docs/troubleshooting.md` 参照
 
 ## 対応 API

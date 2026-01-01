@@ -49,7 +49,7 @@ Run `freee-mcp configure` to set up configuration interactively:
 
 - `FREEE_CLIENT_ID` - OAuth client ID (deprecated, use config file)
 - `FREEE_CLIENT_SECRET` - OAuth client secret (deprecated, use config file)
-- `FREEE_DEFAULT_COMPANY_ID` - Company ID (deprecated, use `freee_set_company` tool)
+- `FREEE_DEFAULT_COMPANY_ID` - Company ID (deprecated, use `freee_set_current_company` tool)
 - `FREEE_CALLBACK_PORT` - OAuth callback port (deprecated, set in config file)
 
 ### CLI Subcommands

@@ -24,7 +24,7 @@ async function testFreeeTools() {
     'freee_authenticate',
     'freee_auth_status',
     'freee_clear_auth',
-    'freee_set_company',
+    'freee_set_current_company',
     'freee_get_current_company',
     'freee_list_companies'
   ];

@@ -79,7 +79,7 @@ export async function loadConfig(): Promise<Config> {
   let companyId = process.env.FREEE_DEFAULT_COMPANY_ID || '0';
   if (process.env.FREEE_DEFAULT_COMPANY_ID) {
     console.error('Warning: FREEE_DEFAULT_COMPANY_ID 環境変数は非推奨です。');
-    console.error('  事業所IDは `freee_set_company` ツールで動的に変更できます。\n');
+    console.error('  事業所IDは `freee_set_current_company` ツールで動的に変更できます。\n');
   }
 
   cachedConfig = {
