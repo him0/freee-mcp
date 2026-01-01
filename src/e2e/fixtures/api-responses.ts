@@ -198,21 +198,6 @@ export const mockUnauthorizedResponse = {
   error_description: 'The access token is invalid or has expired.',
 };
 
-export const mockForbiddenResponse = {
-  error: 'insufficient_scope',
-  error_description: 'The access token does not have the required scope.',
-};
-
-export const mockBadRequestResponse = {
-  status_code: 400,
-  errors: [
-    {
-      type: 'validation',
-      messages: ['issue_date is required', 'amount must be positive'],
-    },
-  ],
-};
-
 export const mockNotFoundResponse = {
   status_code: 404,
   errors: [
@@ -223,29 +208,10 @@ export const mockNotFoundResponse = {
   ],
 };
 
-export const mockServerErrorResponse = {
-  status_code: 500,
-  errors: [
-    {
-      type: 'internal_error',
-      messages: ['An internal server error occurred.'],
-    },
-  ],
-};
-
 // Token responses for OAuth
 export const mockTokenResponse = {
   access_token: 'mock-access-token-12345',
   refresh_token: 'mock-refresh-token-67890',
-  token_type: 'Bearer',
-  expires_in: 3600,
-  scope: 'read write',
-  created_at: Math.floor(Date.now() / 1000),
-};
-
-export const mockRefreshedTokenResponse = {
-  access_token: 'mock-refreshed-access-token-abcde',
-  refresh_token: 'mock-refreshed-refresh-token-fghij',
   token_type: 'Bearer',
   expires_in: 3600,
   scope: 'read write',

@@ -15,9 +15,7 @@ import {
   mockEmployeesResponse,
   mockProjectsResponse,
   mockUnauthorizedResponse,
-  mockBadRequestResponse,
   mockNotFoundResponse,
-  mockServerErrorResponse,
 } from './fixtures/api-responses.js';
 
 export interface MockApiConfig {
@@ -43,7 +41,7 @@ type MockFetchFn = MockInstance<(url: string, options?: RequestInit) => Promise<
 /**
  * Creates a mock fetch function that responds based on URL patterns
  */
-export function createMockFetch(config: MockApiConfig = {}): MockFetchFn {
+function createMockFetch(config: MockApiConfig = {}): MockFetchFn {
   const mockFetch = vi.fn<(url: string, options?: RequestInit) => Promise<MockResponse>>();
 
   mockFetch.mockImplementation(async (url: string, options?: RequestInit): Promise<MockResponse> => {
@@ -174,58 +172,3 @@ export function setupMockApi(config: MockApiConfig = {}): MockFetchFn {
 export function clearMockApi(): void {
   vi.mocked(global.fetch).mockClear();
 }
-
-interface MockScenarioResponse {
-  status: number;
-  body: unknown;
-}
-
-/**
- * Creates mock responses for specific test scenarios
- */
-export const mockScenarios = {
-  /** Successful API call */
-  success: (body: unknown): MockScenarioResponse => ({
-    status: 200,
-    body,
-  }),
-
-  /** Created response (201) */
-  created: (body: unknown): MockScenarioResponse => ({
-    status: 201,
-    body,
-  }),
-
-  /** No content response (204) */
-  noContent: (): MockScenarioResponse => ({
-    status: 204,
-    body: {},
-  }),
-
-  /** Bad request (400) */
-  badRequest: (messages: string[] = ['Invalid request']): MockScenarioResponse => ({
-    status: 400,
-    body: {
-      ...mockBadRequestResponse,
-      errors: [{ type: 'validation', messages }],
-    },
-  }),
-
-  /** Unauthorized (401) */
-  unauthorized: (): MockScenarioResponse => ({
-    status: 401,
-    body: mockUnauthorizedResponse,
-  }),
-
-  /** Not found (404) */
-  notFound: (): MockScenarioResponse => ({
-    status: 404,
-    body: mockNotFoundResponse,
-  }),
-
-  /** Server error (500) */
-  serverError: (): MockScenarioResponse => ({
-    status: 500,
-    body: mockServerErrorResponse,
-  }),
-};
