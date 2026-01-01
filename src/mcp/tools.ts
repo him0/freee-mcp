@@ -5,7 +5,7 @@ import { makeApiRequest } from '../api/client.js';
 import { loadTokens, clearTokens } from '../auth/tokens.js';
 import { generatePKCE, buildAuthUrl } from '../auth/oauth.js';
 import { registerAuthenticationRequest, getActualRedirectUri } from '../auth/server.js';
-import { getDefaultCompanyId } from '../config/companies.js';
+import { getDefaultCompanyId, setDefaultCompanyId } from '../config/companies.js';
 
 export function addAuthenticationTools(server: McpServer): void {
   server.tool(
@@ -222,7 +222,8 @@ export function addAuthenticationTools(server: McpServer): void {
             {
               type: 'text',
               text: `事業所一覧:\n${companyList}\n\n` +
-                    `注: 別の事業所を使用する場合は、APIツールの company_id パラメータで指定してください。`,
+                    `注: デフォルト事業所を変更するには freee_set_default_company を使用してください。\n` +
+                    `一時的に別の事業所を使用する場合は、APIツールの company_id パラメータで指定してください。`,
             },
           ],
         };
@@ -232,6 +233,54 @@ export function addAuthenticationTools(server: McpServer): void {
             {
               type: 'text',
               text: `事業所一覧の取得に失敗: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+        };
+      }
+    }
+  );
+
+  server.tool(
+    'freee_set_default_company',
+    'デフォルト事業所を変更。設定ファイルを更新。',
+    {
+      company_id: {
+        type: 'string',
+        description: '設定する事業所ID',
+      },
+    },
+    async (args: { company_id: string }) => {
+      try {
+        const { company_id } = args;
+
+        if (!company_id) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'company_id パラメータが必要です。freee_list_companies で事業所IDを確認してください。',
+              },
+            ],
+          };
+        }
+
+        await setDefaultCompanyId(company_id);
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `デフォルト事業所を ${company_id} に変更しました。\n` +
+                    `設定は ~/.config/freee-mcp/config.json に保存されました。`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `デフォルト事業所の変更に失敗: ${error instanceof Error ? error.message : String(error)}`,
             },
           ],
         };

@@ -32,9 +32,16 @@ vi.mock('../config.js', () => ({
   },
 }));
 
+// Track updated company ID for set_default_company test
+let updatedCompanyId: string = mockCompanyId;
+
 // Mock companies module
 vi.mock('../config/companies.js', () => ({
   getDefaultCompanyId: vi.fn(() => Promise.resolve(mockCompanyId)),
+  setDefaultCompanyId: vi.fn((id: string) => {
+    updatedCompanyId = id;
+    return Promise.resolve();
+  }),
 }));
 
 // Mock tokens module
@@ -129,6 +136,7 @@ describe('E2E: Authentication Flow', () => {
       expect(registeredTools.has('freee_clear_auth')).toBe(true);
       expect(registeredTools.has('freee_current_user')).toBe(true);
       expect(registeredTools.has('freee_list_companies')).toBe(true);
+      expect(registeredTools.has('freee_set_default_company')).toBe(true);
       // These tools have been removed
       expect(registeredTools.has('freee_set_company')).toBe(false);
       expect(registeredTools.has('freee_get_current_company')).toBe(false);
@@ -271,6 +279,16 @@ describe('E2E: Authentication Flow', () => {
 
       // Default company should be marked
       expect(result.content[0].text).toContain('(default)');
+    });
+  });
+
+  describe('freee_set_default_company', () => {
+    it('should set default company', async () => {
+      const handler = registeredTools.get('freee_set_default_company')!.handler;
+      const result = await handler({ company_id: '67890' }) as { content: Array<{ type: string; text: string }> };
+
+      expect(result.content[0].text).toContain('デフォルト事業所を 67890 に変更しました');
+      expect(updatedCompanyId).toBe('67890');
     });
   });
 

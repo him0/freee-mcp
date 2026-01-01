@@ -44,15 +44,23 @@ Claude を再起動後、`freee_auth_status` ツールで認証状態を確認�
 - 設定ファイル: `~/.config/freee-mcp/config.json`
 - `defaultCompanyId` に保存される
 
-### 別の事業所を使用する場合
+### デフォルト事業所の変更
 
-各 API ツールに `company_id` パラメータを指定することで、デフォルト以外の事業所を使用できます。
+```
+freee_set_default_company { "company_id": "987654" }
+```
+
+設定ファイルが更新され、以降のAPIリクエストで新しいデフォルト事業所が使用されます。
+
+### 一時的に別の事業所を使用する場合
+
+各 API ツールに `company_id` パラメータを指定することで、デフォルト以外の事業所を一時的に使用できます。
 
 ```
 freee_api_get {
   "service": "accounting",
   "path": "/api/1/deals",
-  "company_id": "987654"  // デフォルト以外の事業所
+  "company_id": "987654"  // 一時的に別の事業所を使用
 }
 ```
 

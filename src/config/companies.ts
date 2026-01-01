@@ -115,6 +115,15 @@ export async function getDefaultCompanyId(): Promise<string> {
 }
 
 /**
+ * Set default company ID
+ */
+export async function setDefaultCompanyId(companyId: string): Promise<void> {
+  const config = await loadFullConfig();
+  config.defaultCompanyId = companyId;
+  await saveFullConfig(config);
+}
+
+/**
  * Get download directory for binary files
  * Returns configured directory or system temp directory as default
  */

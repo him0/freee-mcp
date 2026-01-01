@@ -19,10 +19,11 @@ vi.mock('../config.js', () => ({
 }));
 
 vi.mock('../config/companies.js', () => ({
-  getDefaultCompanyId: vi.fn().mockResolvedValue('12345')
+  getDefaultCompanyId: vi.fn().mockResolvedValue('12345'),
+  setDefaultCompanyId: vi.fn().mockResolvedValue(undefined)
 }));
 
-const { getDefaultCompanyId } = await import('../config/companies.js');
+const { getDefaultCompanyId, setDefaultCompanyId } = await import('../config/companies.js');
 
 vi.mock('../api/client.js', () => ({
   makeApiRequest: vi.fn()
@@ -68,12 +69,13 @@ describe('tools', () => {
     it('should register authentication tools', () => {
       addAuthenticationTools(mockServer);
 
-      expect(mockTool).toHaveBeenCalledTimes(5);
+      expect(mockTool).toHaveBeenCalledTimes(6);
       expect(mockTool).toHaveBeenCalledWith('freee_current_user', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_authenticate', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_auth_status', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_clear_auth', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_list_companies', expect.any(String), {}, expect.any(Function));
+      expect(mockTool).toHaveBeenCalledWith('freee_set_default_company', expect.any(String), expect.any(Object), expect.any(Function));
     });
 
     describe('freee_current_user', () => {
@@ -224,11 +226,46 @@ describe('tools', () => {
 
         addAuthenticationTools(mockServer);
         const handler = mockTool.mock.calls.find(call => call[0] === 'freee_clear_auth')?.[3];
-        
+
         const result = await handler();
 
         expect(result.content[0].text).toContain('認証情報のクリアに失敗');
         expect(result.content[0].text).toContain('Permission denied');
+      });
+    });
+
+    describe('freee_set_default_company', () => {
+      it('should set default company', async () => {
+        vi.mocked(setDefaultCompanyId).mockResolvedValue(undefined);
+
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_set_default_company')?.[3];
+
+        const result = await handler({ company_id: '67890' });
+
+        expect(setDefaultCompanyId).toHaveBeenCalledWith('67890');
+        expect(result.content[0].text).toContain('デフォルト事業所を 67890 に変更しました');
+      });
+
+      it('should handle missing company_id', async () => {
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_set_default_company')?.[3];
+
+        const result = await handler({ company_id: '' });
+
+        expect(result.content[0].text).toContain('company_id パラメータが必要です');
+      });
+
+      it('should handle set default company error', async () => {
+        vi.mocked(setDefaultCompanyId).mockRejectedValue(new Error('Write failed'));
+
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_set_default_company')?.[3];
+
+        const result = await handler({ company_id: '67890' });
+
+        expect(result.content[0].text).toContain('デフォルト事業所の変更に失敗');
+        expect(result.content[0].text).toContain('Write failed');
       });
     });
   });
