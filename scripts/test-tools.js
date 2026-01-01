@@ -21,15 +21,12 @@ async function testFreeeTools() {
   // 認証関連ツール
   const authTools = [
     'freee_current_user',
-    'freee_authenticate', 
+    'freee_authenticate',
     'freee_auth_status',
     'freee_clear_auth',
     'freee_set_company',
     'freee_get_current_company',
-    'freee_list_companies',
-    'freee_help',
-    'freee_getting_started',
-    'freee_status'
+    'freee_list_companies'
   ];
 
   console.log('🔐 認証・管理ツール:');
@@ -58,7 +55,7 @@ async function testFreeeTools() {
 
   // 主要ツールの存在確認
   console.log('\n=== 主要ツール存在確認 ===');
-  const testTools = ['freee_status', 'freee_auth_status', 'freee_list_companies', 'freee_help'];
+  const testTools = ['freee_auth_status', 'freee_list_companies', 'freee_current_user'];
   
   testTools.forEach(toolName => {
     const exists = authTools.includes(toolName);
