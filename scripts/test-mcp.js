@@ -80,21 +80,7 @@ async function testMcpTools() {
 
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  // 3. Test freee_status tool
-  console.log('\n=== freee_status ツールテスト ===');
-  sendMcpMessage(mcpProcess, {
-    jsonrpc: '2.0',
-    id: getNextRequestId(),
-    method: 'tools/call',
-    params: {
-      name: 'freee_status',
-      arguments: {}
-    }
-  });
-
-  await new Promise(resolve => setTimeout(resolve, 2000));
-
-  // 4. Test freee_list_companies tool
+  // 3. Test freee_list_companies tool
   console.log('\n=== freee_list_companies ツールテスト ===');
   sendMcpMessage(mcpProcess, {
     jsonrpc: '2.0',
@@ -108,7 +94,7 @@ async function testMcpTools() {
 
   await new Promise(resolve => setTimeout(resolve, 2000));
 
-  // 5. Test freee_auth_status tool
+  // 4. Test freee_auth_status tool
   console.log('\n=== freee_auth_status ツールテスト ===');
   sendMcpMessage(mcpProcess, {
     jsonrpc: '2.0',
@@ -122,14 +108,14 @@ async function testMcpTools() {
 
   await new Promise(resolve => setTimeout(resolve, 2000));
 
-  // 6. Test freee_help tool
-  console.log('\n=== freee_help ツールテスト ===');
+  // 5. Test freee_current_user tool
+  console.log('\n=== freee_current_user ツールテスト ===');
   sendMcpMessage(mcpProcess, {
     jsonrpc: '2.0',
     id: getNextRequestId(),
     method: 'tools/call',
     params: {
-      name: 'freee_help',
+      name: 'freee_current_user',
       arguments: {}
     }
   });
