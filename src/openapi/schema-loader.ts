@@ -106,14 +106,6 @@ function getApiConfig(apiType: ApiType): ApiConfig {
   return _loadedConfigs[apiType]!;
 }
 
-function getAllApiConfigs(): Record<ApiType, ApiConfig> {
-  // Load all configs (used by listAllAvailablePaths and iteration)
-  for (const apiType of Object.keys(API_METADATA) as ApiType[]) {
-    getApiConfig(apiType);
-  }
-  return _loadedConfigs as Record<ApiType, ApiConfig>;
-}
-
 export const API_CONFIGS: Record<ApiType, ApiConfig> = new Proxy(
   {} as Record<ApiType, ApiConfig>,
   {
