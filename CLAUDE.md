@@ -97,3 +97,7 @@ Common issues:
 - Mock function return types (ensure `id` fields are strings)
 - Missing return type annotations on exported functions
 - Undefined environment variables in tests
+
+## Writing Style
+
+- Do not use markdown bold syntax (`**`)  in any files
