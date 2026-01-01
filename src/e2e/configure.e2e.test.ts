@@ -4,22 +4,34 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { FullConfig } from '../config/companies.js';
-import { mockCompaniesResponse, mockTokenResponse } from './fixtures/api-responses.js';
+import type { FullConfig } from '../config/companies';
+import { mockCompaniesResponse, mockTokenResponse } from './fixtures/api-responses';
 
 // Track mock state - isolated from real config
 let mockSavedConfig: FullConfig | null = null;
 let mockExistingConfig: Partial<FullConfig> = {};
-let mockPromptsResponses: Record<string, unknown>[] = [];
+
+// Type for prompts responses
+interface PromptsResponse {
+  clientId?: string;
+  clientSecret?: string;
+  callbackPort?: string;
+  companyId?: number;
+}
+
+let mockPromptsResponses: PromptsResponse[] = [];
 let mockPromptsIndex = 0;
 let mockAuthCallback: ((code: string) => void) | null = null;
 let mockAuthReject: ((error: Error) => void) | null = null;
 let consoleLogSpy: ReturnType<typeof vi.spyOn>;
 let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
+// Auth callback delay in milliseconds (longer for CI environments)
+const AUTH_CALLBACK_DELAY_MS = 50;
+
 // Mock prompts module
 vi.mock('prompts', () => ({
-  default: vi.fn(async (questions: unknown) => {
+  default: vi.fn(async () => {
     const response = mockPromptsResponses[mockPromptsIndex] || {};
     mockPromptsIndex++;
     return response;
@@ -32,7 +44,7 @@ vi.mock('open', () => ({
 }));
 
 // Mock config/companies module (prevent file system access)
-vi.mock('../config/companies.js', () => ({
+vi.mock('../config/companies', () => ({
   loadFullConfig: vi.fn(() => Promise.resolve({
     clientId: mockExistingConfig.clientId,
     clientSecret: mockExistingConfig.clientSecret,
@@ -48,7 +60,7 @@ vi.mock('../config/companies.js', () => ({
 }));
 
 // Mock config module
-vi.mock('../config.js', () => ({
+vi.mock('../config', () => ({
   loadConfig: vi.fn(() => Promise.resolve()),
   config: {
     freee: {
@@ -63,7 +75,7 @@ vi.mock('../config.js', () => ({
 }));
 
 // Mock auth server module
-vi.mock('../auth/server.js', () => ({
+vi.mock('../auth/server', () => ({
   startCallbackServer: vi.fn(() => Promise.resolve()),
   stopCallbackServer: vi.fn(),
   getActualRedirectUri: vi.fn(() => 'http://127.0.0.1:54321/callback'),
@@ -80,14 +92,14 @@ vi.mock('../auth/server.js', () => ({
         if (mockAuthCallback) {
           mockAuthCallback('test-auth-code');
         }
-      }, 10);
+      }, AUTH_CALLBACK_DELAY_MS);
     }),
     removeCliAuthHandler: vi.fn(),
   })),
 }));
 
 // Mock OAuth module
-vi.mock('../auth/oauth.js', () => ({
+vi.mock('../auth/oauth', () => ({
   buildAuthUrl: vi.fn((codeChallenge: string, state: string, redirectUri: string) => {
     return `https://accounts.secure.freee.co.jp/public_api/authorize?client_id=test&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${codeChallenge}&state=${state}`;
   }),
@@ -161,7 +173,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(mockSavedConfig).not.toBeNull();
@@ -190,7 +202,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(mockSavedConfig?.clientId).toBe('existing-client-id');
@@ -205,7 +217,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(process.exit).toHaveBeenCalledWith(1);
@@ -221,7 +233,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(process.exit).toHaveBeenCalledWith(1);
@@ -231,7 +243,7 @@ describe('E2E: Configure Command', () => {
 
   describe('OAuth Flow', () => {
     it('should build correct auth URL with PKCE', async () => {
-      const { buildAuthUrl } = await import('../auth/oauth.js');
+      const { buildAuthUrl } = await import('../auth/oauth');
 
       mockPromptsResponses = [
         {
@@ -244,7 +256,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(buildAuthUrl).toHaveBeenCalledWith(
@@ -268,14 +280,14 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(open).toHaveBeenCalledWith(expect.stringContaining('accounts.secure.freee.co.jp'));
     });
 
     it('should exchange auth code for tokens', async () => {
-      const { exchangeCodeForTokens } = await import('../auth/oauth.js');
+      const { exchangeCodeForTokens } = await import('../auth/oauth');
 
       mockPromptsResponses = [
         {
@@ -288,7 +300,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(exchangeCodeForTokens).toHaveBeenCalledWith(
@@ -312,7 +324,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -337,7 +349,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(mockSavedConfig?.defaultCompanyId).toBe('67890');
@@ -356,7 +368,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(mockSavedConfig?.companies).toHaveProperty('12345');
@@ -377,7 +389,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(process.exit).toHaveBeenCalledWith(1);
@@ -402,7 +414,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(process.exit).toHaveBeenCalledWith(1);
@@ -423,7 +435,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(mockSavedConfig).toEqual(expect.objectContaining({
@@ -456,7 +468,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('MCP設定'));
@@ -485,7 +497,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(process.exit).toHaveBeenCalledWith(1);
@@ -493,7 +505,7 @@ describe('E2E: Configure Command', () => {
     });
 
     it('should stop callback server on error', async () => {
-      const { stopCallbackServer } = await import('../auth/server.js');
+      const { stopCallbackServer } = await import('../auth/server');
 
       mockPromptsResponses = [
         {
@@ -501,14 +513,14 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(stopCallbackServer).toHaveBeenCalled();
     });
 
     it('should stop callback server on success', async () => {
-      const { stopCallbackServer } = await import('../auth/server.js');
+      const { stopCallbackServer } = await import('../auth/server');
 
       mockPromptsResponses = [
         {
@@ -521,7 +533,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       expect(stopCallbackServer).toHaveBeenCalled();
@@ -531,7 +543,7 @@ describe('E2E: Configure Command', () => {
   describe('Environment Isolation', () => {
     it('should not modify actual config files', async () => {
       // This test verifies that our mocking is working correctly
-      const { saveFullConfig, loadFullConfig } = await import('../config/companies.js');
+      const { saveFullConfig, loadFullConfig } = await import('../config/companies');
 
       mockPromptsResponses = [
         {
@@ -544,7 +556,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       // Verify mocked functions were called instead of real file operations
@@ -569,7 +581,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       // Verify the mock was called (not the real open function)
@@ -589,7 +601,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       // Verify all fetch calls were through our mock
@@ -611,7 +623,7 @@ describe('E2E: Configure Command', () => {
         },
       ];
 
-      const { configure } = await import('../cli.js');
+      const { configure } = await import('../cli');
       await configure();
 
       // Verify entire flow completed
