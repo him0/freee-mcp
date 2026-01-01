@@ -1,5 +1,4 @@
 import prompts from 'prompts';
-import * as os from 'node:os';
 import crypto from 'node:crypto';
 import open from 'open';
 import {
@@ -10,6 +9,13 @@ import {
 } from './auth/server.js';
 import { buildAuthUrl, exchangeCodeForTokens } from './auth/oauth.js';
 import { saveFullConfig, type FullConfig } from './config/companies.js';
+import {
+  checkMcpConfigStatus,
+  addFreeeMcpConfig,
+  removeFreeeMcpConfig,
+  getTargetDisplayName,
+  type McpTarget,
+} from './config/mcp-config.js';
 import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS, FREEE_API_URL } from './constants.js';
 import { safeParseJson } from './utils/error.js';
 
@@ -229,38 +235,68 @@ async function saveConfig(
 
   await saveFullConfig(fullConfig);
   console.log('設定情報を保存しました。\n');
-  console.log(`デフォルト事業所: ${selectedCompany.displayName} (ID: ${selectedCompany.id})\n`);
+  console.log(`デフォルト事業所: ${selectedCompany.displayName} (ID: ${selectedCompany.id})`);
   console.log('注: 別の事業所を使用する場合は、APIツールの company_id パラメータで指定できます。\n');
-
-  console.log('=== MCP設定 ===\n');
-  console.log('以下の設定をClaude desktopの設定ファイルに追加してください:\n');
-
-  const platform = os.platform();
-  let configPath = '';
-  if (platform === 'darwin') {
-    configPath = '~/Library/Application Support/Claude/claude_desktop_config.json';
-  } else if (platform === 'win32') {
-    configPath = '%APPDATA%\\Claude\\claude_desktop_config.json';
-  } else {
-    configPath = '~/.config/Claude/claude_desktop_config.json';
-  }
-
-  console.log(`設定ファイルの場所: ${configPath}\n`);
-
-  const mcpConfig = {
-    mcpServers: {
-      'freee-mcp': {
-        command: 'npx',
-        args: ['@him0/freee-mcp', 'client'],
-      },
-    },
-  };
-
-  console.log(JSON.stringify(mcpConfig, null, 2));
-  console.log('\nセットアップ完了!\n');
   console.log('認証情報は ~/.config/freee-mcp/config.json に保存されました。');
-  console.log('トークンは ~/.config/freee-mcp/tokens.json に保存されました。');
-  console.log('Claude desktopを再起動すると、freee-mcpが利用可能になります。\n');
+  console.log('トークンは ~/.config/freee-mcp/tokens.json に保存されました。\n');
+}
+
+async function configureMcpTarget(target: McpTarget): Promise<void> {
+  const displayName = getTargetDisplayName(target);
+  const status = await checkMcpConfigStatus(target);
+
+  if (status.hasFreeeConfig) {
+    // Already configured - ask if user wants to remove
+    const { action } = await prompts({
+      type: 'select',
+      name: 'action',
+      message: `${displayName} に freee-mcp が設定済みです。どうしますか?`,
+      choices: [
+        { title: 'そのまま (変更なし)', value: 'keep' },
+        { title: '削除する', value: 'remove' },
+      ],
+      initial: 0,
+    });
+
+    if (action === 'remove') {
+      await removeFreeeMcpConfig(target);
+      console.log(`  ✓ ${displayName} から freee-mcp を削除しました。`);
+    } else {
+      console.log(`  - ${displayName} の設定は変更しません。`);
+    }
+  } else {
+    // Not configured - ask if user wants to add
+    const { shouldAdd } = await prompts({
+      type: 'confirm',
+      name: 'shouldAdd',
+      message: `${displayName} に freee-mcp を追加しますか?`,
+      initial: true,
+    });
+
+    if (shouldAdd) {
+      await addFreeeMcpConfig(target);
+      console.log(`  ✓ ${displayName} に freee-mcp を追加しました。`);
+      console.log(`    設定ファイル: ${status.path}`);
+    } else {
+      console.log(`  - ${displayName} への追加をスキップしました。`);
+    }
+  }
+}
+
+async function configureMcpIntegration(): Promise<void> {
+  console.log('=== MCP設定 ===\n');
+  console.log('Claude Code / Claude Desktop に freee-mcp を設定できます。\n');
+
+  // Configure Claude Code
+  await configureMcpTarget('claude-code');
+  console.log('');
+
+  // Configure Claude Desktop
+  await configureMcpTarget('claude-desktop');
+  console.log('');
+
+  console.log('セットアップ完了!');
+  console.log('変更を反映するには、Claude Code / Claude Desktop を再起動してください。\n');
 }
 
 export async function configure(): Promise<void> {
@@ -273,6 +309,7 @@ export async function configure(): Promise<void> {
     const oauthResult = await performOAuth();
     const selectedCompany = await selectCompany(oauthResult.accessToken);
     await saveConfig(credentials, selectedCompany);
+    await configureMcpIntegration();
   } catch (error) {
     if (error instanceof Error) {
       console.error(`\nError: ${error.message}`);
