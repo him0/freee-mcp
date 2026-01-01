@@ -85,7 +85,23 @@ export async function makeApiRequest(
     });
   }
 
-  url.searchParams.append('company_id', String(companyId));
+  // Validate company_id consistency if present in params
+  const paramsCompanyId = params?.company_id;
+  if (paramsCompanyId !== undefined && String(paramsCompanyId) !== String(companyId)) {
+    throw new Error(
+      `company_id の不整合: リクエストの company_id (${paramsCompanyId}) と現在の事業所 (${companyId}) が異なります。\n` +
+      `freee_set_company で事業所を切り替えるか、リクエストの company_id を修正してください。`
+    );
+  }
+
+  // Validate company_id consistency if present in body
+  const bodyCompanyId = body?.company_id;
+  if (bodyCompanyId !== undefined && String(bodyCompanyId) !== String(companyId)) {
+    throw new Error(
+      `company_id の不整合: リクエストボディの company_id (${bodyCompanyId}) と現在の事業所 (${companyId}) が異なります。\n` +
+      `freee_set_company で事業所を切り替えるか、リクエストの company_id を修正してください。`
+    );
+  }
 
   const response = await fetch(url.toString(), {
     method,

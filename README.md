@@ -122,6 +122,14 @@ HTTPメソッドごとのシンプルなツール構成:
 
 パスは OpenAPI スキーマに対して自動検証されます。
 
+### company_id の取り扱い
+
+リクエスト（パラメータまたはボディ）に `company_id` を含める場合、現在の事業所と一致している必要があります。不一致の場合はエラーになります。
+
+- 事業所の確認: `freee_get_current_company`
+- 事業所の切り替え: `freee_set_company`
+- company_id を含まない API（例: `/api/1/companies`）はそのまま実行可能
+
 ## 開発者向け
 
 ```bash

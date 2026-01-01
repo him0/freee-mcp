@@ -124,7 +124,7 @@ describe('client', () => {
       const result = await makeApiRequest('GET', '/api/1/users/me');
 
       expect(mockFetch).toHaveBeenCalledWith(
-        `${TEST_API_URL}/api/1/users/me?company_id=${TEST_COMPANY_ID}`,
+        `${TEST_API_URL}/api/1/users/me`,
         {
           method: 'GET',
           headers: {
@@ -145,7 +145,7 @@ describe('client', () => {
       await makeApiRequest('GET', '/api/1/deals', queryParams);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        `${TEST_API_URL}/api/1/deals?limit=10&offset=0&company_id=${TEST_COMPANY_ID}`,
+        `${TEST_API_URL}/api/1/deals?limit=10&offset=0`,
         expect.any(Object)
       );
     });
@@ -157,7 +157,7 @@ describe('client', () => {
       await makeApiRequest('GET', '/api/1/deals', { limit: 10, offset: undefined });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        `${TEST_API_URL}/api/1/deals?limit=10&company_id=${TEST_COMPANY_ID}`,
+        `${TEST_API_URL}/api/1/deals?limit=10`,
         expect.any(Object)
       );
     });
@@ -170,7 +170,7 @@ describe('client', () => {
       await makeApiRequest('POST', '/api/1/deals', undefined, requestBody);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        `${TEST_API_URL}/api/1/deals?company_id=${TEST_COMPANY_ID}`,
+        `${TEST_API_URL}/api/1/deals`,
         {
           method: 'POST',
           headers: {
@@ -180,6 +180,49 @@ describe('client', () => {
           body: JSON.stringify(requestBody),
         }
       );
+    });
+
+    it('should pass through matching company_id in params', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue(createJsonResponse({}));
+
+      await makeApiRequest('GET', '/api/1/deals', { company_id: TEST_COMPANY_ID });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${TEST_API_URL}/api/1/deals?company_id=${TEST_COMPANY_ID}`,
+        expect.any(Object)
+      );
+    });
+
+    it('should throw error for mismatched company_id in params', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+
+      await expect(
+        makeApiRequest('GET', '/api/1/deals', { company_id: '99999' })
+      ).rejects.toThrow('company_id の不整合');
+    });
+
+    it('should pass through matching company_id in body', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue(createJsonResponse({}));
+
+      const requestBody = { company_id: TEST_COMPANY_ID, name: 'Test' };
+      await makeApiRequest('POST', '/api/1/deals', undefined, requestBody);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${TEST_API_URL}/api/1/deals`,
+        expect.objectContaining({
+          body: JSON.stringify(requestBody),
+        })
+      );
+    });
+
+    it('should throw error for mismatched company_id in body', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+
+      await expect(
+        makeApiRequest('POST', '/api/1/deals', undefined, { company_id: '99999' })
+      ).rejects.toThrow('company_id の不整合');
     });
 
     it('should throw error when no access token available', async () => {

@@ -75,6 +75,24 @@ freee_current_user  # 切り替わったことを確認
 - 不明な場合は経理部門に確認
 - `freee_list_companies`で事業所の説明を確認
 
+### 問題: "company_id の不整合"
+
+原因: リクエストに含まれる `company_id` と、現在設定されている事業所が異なる
+
+解決方法:
+
+```
+# 現在の事業所を確認
+freee_get_current_company
+
+# 方法1: 事業所を切り替える
+freee_set_company [リクエストで使用したい事業所ID]
+
+# 方法2: リクエストの company_id を現在の事業所に合わせる
+```
+
+注意: company_id を含むリクエストは、必ず現在の事業所と一致している必要があります。
+
 ## 経費申請作成時のエラー
 
 ### 問題: "expense_application_line_template_id が無効"

@@ -82,6 +82,13 @@ serviceパラメータ (必須):
 | `invoice` | freee請求書 (請求書、見積書、納品書) | `/invoices` |
 | `pm` | freee工数管理 (プロジェクト、工数など) | `/api/1/projects` |
 
+### company_id について
+
+リクエストに `company_id` を含める場合、現在設定されている事業所（`freee_get_current_company` で確認可能）と一致している必要があります。不一致の場合はエラーになります。
+
+- 事業所を変更する場合: 先に `freee_set_company` で切り替えてからリクエストを実行
+- company_id を含まない API（例: `/api/1/companies`）: そのまま実行可能
+
 ### 基本ワークフロー
 
 1. リファレンスを検索: Grep で `skills/freee-api-skill/references` を検索
