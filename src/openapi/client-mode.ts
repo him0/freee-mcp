@@ -32,6 +32,7 @@ function formatBinaryResponse(response: BinaryFileResponse): string {
 const SERVICE_HINT = 'service: accounting/hr/invoice/pm/sm';
 
 const serviceSchema = z.enum(['accounting', 'hr', 'invoice', 'pm', 'sm']).describe('対象のfreeeサービス');
+const companyIdSchema = z.string().optional().describe('事業所ID（省略時はデフォルト事業所）');
 
 /**
  * Creates a tool handler for a specific HTTP method
@@ -41,6 +42,7 @@ function createMethodTool(method: string): (args: {
   path: string;
   query?: Record<string, unknown>;
   body?: Record<string, unknown>;
+  company_id?: string;
 }) => Promise<{
   content: {
     type: 'text';
@@ -52,9 +54,10 @@ function createMethodTool(method: string): (args: {
     path: string;
     query?: Record<string, unknown>;
     body?: Record<string, unknown>;
+    company_id?: string;
   }) => {
     try {
-      const { service, path, query, body } = args;
+      const { service, path, query, body, company_id } = args;
 
       // Validate path against the specified service's OpenAPI schema
       const validation = validatePathForService(method, path, service);
@@ -71,8 +74,8 @@ function createMethodTool(method: string): (args: {
         };
       }
 
-      // Make API request with the correct base URL
-      const result = await makeApiRequest(method, validation.actualPath!, query, body, validation.baseUrl);
+      // Make API request with the correct base URL and optional company_id
+      const result = await makeApiRequest(method, validation.actualPath!, query, body, validation.baseUrl, company_id);
 
       // Handle binary file response
       if (isBinaryFileResponse(result)) {
@@ -119,6 +122,7 @@ export function generateClientModeTool(server: McpServer): void {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals, /invoices)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      company_id: companyIdSchema,
     },
     createMethodTool('GET')
   );
@@ -132,6 +136,7 @@ export function generateClientModeTool(server: McpServer): void {
       path: z.string().describe('APIパス (例: /api/1/deals, /invoices)'),
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      company_id: companyIdSchema,
     },
     createMethodTool('POST')
   );
@@ -145,6 +150,7 @@ export function generateClientModeTool(server: McpServer): void {
       path: z.string().describe('APIパス (例: /api/1/deals/123, /invoices/123)'),
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      company_id: companyIdSchema,
     },
     createMethodTool('PUT')
   );
@@ -157,6 +163,7 @@ export function generateClientModeTool(server: McpServer): void {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      company_id: companyIdSchema,
     },
     createMethodTool('DELETE')
   );
@@ -170,6 +177,7 @@ export function generateClientModeTool(server: McpServer): void {
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      company_id: companyIdSchema,
     },
     createMethodTool('PATCH')
   );
@@ -190,7 +198,9 @@ export function generateClientModeTool(server: McpServer): void {
               `使用例:\n` +
               `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "limit": 10 } }\n` +
               `freee_api_get { "service": "invoice", "path": "/invoices" }\n` +
-              `freee_api_post { "service": "accounting", "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }`,
+              `freee_api_post { "service": "accounting", "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }\n\n` +
+              `注: company_id パラメータを省略するとデフォルト事業所が使用されます。\n` +
+              `別の事業所を指定する場合は company_id パラメータを追加してください。`,
           },
         ],
       };

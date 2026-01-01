@@ -10,13 +10,12 @@ import { setupMockApi, clearMockApi } from './mock-api.js';
 import {
   mockUserResponse,
   mockCompaniesResponse,
-  mockTokenResponse,
 } from './fixtures/api-responses.js';
 import { TokenData } from '../auth/tokens.js';
 
 // Track mock function state
 let mockTokenData: TokenData | null = null;
-let mockCompanyId: string = '12345';
+const mockCompanyId: string = '12345';
 
 // Mock config module
 vi.mock('../config.js', () => ({
@@ -35,17 +34,7 @@ vi.mock('../config.js', () => ({
 
 // Mock companies module
 vi.mock('../config/companies.js', () => ({
-  getCurrentCompanyId: vi.fn(() => Promise.resolve(mockCompanyId)),
-  setCurrentCompany: vi.fn((id: string) => {
-    mockCompanyId = id;
-    return Promise.resolve();
-  }),
-  getCompanyInfo: vi.fn((id: string) => {
-    return Promise.resolve({
-      id,
-      name: id === '12345' ? 'テスト株式会社' : 'サンプル合同会社',
-    });
-  }),
+  getDefaultCompanyId: vi.fn(() => Promise.resolve(mockCompanyId)),
 }));
 
 // Mock tokens module
@@ -110,7 +99,6 @@ describe('E2E: Authentication Flow', () => {
 
     // Reset mock state
     mockTokenData = null;
-    mockCompanyId = '12345';
 
     // Create a mock MCP server that captures registered tools
     registeredTools = new Map();
@@ -140,9 +128,10 @@ describe('E2E: Authentication Flow', () => {
       expect(registeredTools.has('freee_auth_status')).toBe(true);
       expect(registeredTools.has('freee_clear_auth')).toBe(true);
       expect(registeredTools.has('freee_current_user')).toBe(true);
-      expect(registeredTools.has('freee_set_company')).toBe(true);
-      expect(registeredTools.has('freee_get_current_company')).toBe(true);
       expect(registeredTools.has('freee_list_companies')).toBe(true);
+      // These tools have been removed
+      expect(registeredTools.has('freee_set_company')).toBe(false);
+      expect(registeredTools.has('freee_get_current_company')).toBe(false);
     });
   });
 
@@ -251,41 +240,6 @@ describe('E2E: Authentication Flow', () => {
     });
   });
 
-  describe('freee_set_company', () => {
-    it('should set current company', async () => {
-      const handler = registeredTools.get('freee_set_company')!.handler;
-
-      const result = await handler({
-        company_id: '67890',
-        name: 'サンプル合同会社',
-      }) as { content: Array<{ type: string; text: string }> };
-
-      expect(result.content[0].text).toContain('事業所を設定');
-      expect(mockCompanyId).toBe('67890');
-    });
-
-    it('should set company without name', async () => {
-      const handler = registeredTools.get('freee_set_company')!.handler;
-
-      const result = await handler({
-        company_id: '99999',
-      }) as { content: Array<{ type: string; text: string }> };
-
-      expect(result.content[0].text).toContain('事業所を設定');
-    });
-  });
-
-  describe('freee_get_current_company', () => {
-    it('should return current company info', async () => {
-      const handler = registeredTools.get('freee_get_current_company')!.handler;
-
-      const result = await handler({}) as { content: Array<{ type: string; text: string }> };
-
-      expect(result.content[0].text).toContain('事業所');
-      expect(result.content[0].text).toContain('12345');
-    });
-  });
-
   describe('freee_list_companies', () => {
     it('should list available companies', async () => {
       mockTokenData = {
@@ -303,7 +257,7 @@ describe('E2E: Authentication Flow', () => {
       expect(result.content[0].text).toContain('テスト株式会社');
     });
 
-    it('should mark current company in list', async () => {
+    it('should mark default company in list', async () => {
       mockTokenData = {
         access_token: 'test-access-token',
         refresh_token: 'test-refresh-token',
@@ -315,8 +269,8 @@ describe('E2E: Authentication Flow', () => {
       const handler = registeredTools.get('freee_list_companies')!.handler;
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
-      // Current company should be marked
-      expect(result.content[0].text).toContain('*');
+      // Default company should be marked
+      expect(result.content[0].text).toContain('(default)');
     });
   });
 

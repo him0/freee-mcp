@@ -19,15 +19,10 @@ vi.mock('../config.js', () => ({
 }));
 
 vi.mock('../config/companies.js', () => ({
-  getCurrentCompanyId: vi.fn().mockResolvedValue('12345'),
-  getCompanyInfo: vi.fn().mockResolvedValue({
-    id: '12345',
-    name: 'Demo Company',
-    addedAt: Date.now()
-  })
+  getDefaultCompanyId: vi.fn().mockResolvedValue('12345')
 }));
 
-const { getCurrentCompanyId, getCompanyInfo } = await import('../config/companies.js');
+const { getDefaultCompanyId } = await import('../config/companies.js');
 
 vi.mock('../api/client.js', () => ({
   makeApiRequest: vi.fn()
@@ -62,12 +57,7 @@ describe('tools', () => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     // モック関数を確実に設定
-    vi.mocked(getCurrentCompanyId).mockResolvedValue('12345');
-    vi.mocked(getCompanyInfo).mockResolvedValue({
-      id: '12345',
-      name: 'Demo Company',
-      addedAt: Date.now()
-    });
+    vi.mocked(getDefaultCompanyId).mockResolvedValue('12345');
   });
 
   afterEach(() => {
@@ -78,11 +68,12 @@ describe('tools', () => {
     it('should register authentication tools', () => {
       addAuthenticationTools(mockServer);
 
-      expect(mockTool).toHaveBeenCalledTimes(7);
+      expect(mockTool).toHaveBeenCalledTimes(5);
       expect(mockTool).toHaveBeenCalledWith('freee_current_user', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_authenticate', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_auth_status', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_clear_auth', expect.any(String), {}, expect.any(Function));
+      expect(mockTool).toHaveBeenCalledWith('freee_list_companies', expect.any(String), {}, expect.any(Function));
     });
 
     describe('freee_current_user', () => {
@@ -97,7 +88,7 @@ describe('tools', () => {
         const result = await handler();
 
         expect(result.content[0].text).toContain('現在のユーザー情報');
-        expect(result.content[0].text).toContain('会社ID: 12345');
+        expect(result.content[0].text).toContain('デフォルト事業所ID: 12345');
         expect(result.content[0].text).toContain(JSON.stringify(mockUserInfo, null, 2));
       });
 

@@ -24,7 +24,7 @@ description: "freee 会計・人事労務 API を MCP 経由で操作するス�
 npx @him0/freee-mcp configure
 ```
 
-ブラウザで freee にログインし、事業所を選択します。設定は `~/.config/freee-mcp/config.json` に保存されます。
+ブラウザで freee にログインし、デフォルト事業所を選択します。設定は `~/.config/freee-mcp/config.json` に保存されます。
 
 ### 2. プラグインをインストール
 
@@ -34,6 +34,33 @@ npx @him0/freee-mcp configure
 ### 3. 再起動して確認
 
 Claude を再起動後、`freee_auth_status` ツールで認証状態を確認。
+
+## 事業所（company_id）の扱い
+
+### デフォルト事業所
+
+`freee-mcp configure` で選択した事業所がデフォルトとして使用されます。
+
+- 設定ファイル: `~/.config/freee-mcp/config.json`
+- `defaultCompanyId` に保存される
+
+### 別の事業所を使用する場合
+
+各 API ツールに `company_id` パラメータを指定することで、デフォルト以外の事業所を使用できます。
+
+```
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/deals",
+  "company_id": "987654"  // デフォルト以外の事業所
+}
+```
+
+**利用可能な事業所の確認**:
+
+```
+freee_list_companies
+```
 
 ## リファレンス
 
@@ -58,12 +85,16 @@ output_mode: "files_with_matches"
 
 ### MCP ツール
 
-**認証・事業所管理**:
+**認証管理**:
 
 - `freee_authenticate` - OAuth 認証
 - `freee_auth_status` - 認証状態確認
+- `freee_clear_auth` - 認証情報クリア
+
+**事業所確認**:
+
 - `freee_list_companies` - 事業所一覧
-- `freee_set_company` - 事業所切り替え
+- `freee_current_user` - 現在のユーザー情報
 
 **API 呼び出し**:
 
@@ -73,7 +104,17 @@ output_mode: "files_with_matches"
 - `freee_api_delete` - DELETE リクエスト
 - `freee_api_patch` - PATCH リクエスト
 
-**serviceパラメータ** (必須):
+### API ツールのパラメータ
+
+| パラメータ | 必須 | 説明 |
+|-----------|------|------|
+| `service` | ○ | 対象サービス（下記参照） |
+| `path` | ○ | APIパス |
+| `query` | - | クエリパラメータ |
+| `body` | POST/PUT/PATCH | リクエストボディ |
+| `company_id` | - | 事業所ID（省略時はデフォルト） |
+
+**serviceパラメータ**:
 
 | service | 説明 | パス例 |
 |---------|------|--------|
@@ -96,12 +137,11 @@ output_mode: "files_with_matches"
 # 1. リファレンスを確認
 Read: "skills/freee-api-skill/references/accounting-expense-applications.md"
 
-# 2. APIを呼び出す
+# 2. APIを呼び出す（デフォルト事業所を使用）
 freee_api_post {
   "service": "accounting",
   "path": "/api/1/expense_applications",
   "body": {
-    "company_id": 123456,
     "title": "交通費",
     "issue_date": "2025-01-15",
     "expense_application_lines": [{
@@ -125,7 +165,7 @@ freee_api_get {
 }
 ```
 
-**従業員情報を取得**（人事労務 API）:
+**別の事業所の従業員情報を取得**:
 
 ```
 freee_api_get {
@@ -134,11 +174,12 @@ freee_api_get {
   "query": {
     "year": 2025,
     "month": 1
-  }
+  },
+  "company_id": "987654"
 }
 ```
 
-**請求書一覧を取得**（請求書 API）:
+**請求書一覧を取得**:
 
 ```
 freee_api_get {
@@ -150,7 +191,7 @@ freee_api_get {
 ## エラー対応
 
 - **認証エラー**: `freee_auth_status` で確認 → `freee_clear_auth` → `freee_authenticate`
-- **事業所エラー**: `freee_list_companies` → `freee_set_company`
+- **事業所エラー**: `freee_list_companies` で事業所IDを確認し、`company_id` パラメータで指定
 - **詳細**: `docs/troubleshooting.md` 参照
 
 ## 対応 API

@@ -18,11 +18,11 @@ vi.mock('../config.js', () => ({
 }));
 
 vi.mock('../config/companies.js', () => ({
-  getCurrentCompanyId: vi.fn(),
+  getDefaultCompanyId: vi.fn(),
   getDownloadDir: vi.fn()
 }));
 
-const { getCurrentCompanyId, getDownloadDir } = await import('../config/companies.js');
+const { getDefaultCompanyId, getDownloadDir } = await import('../config/companies.js');
 
 vi.mock('../auth/tokens.js', () => ({
   getValidAccessToken: vi.fn()
@@ -106,7 +106,7 @@ async function setupAccessToken(token: string | null): Promise<void> {
 describe('client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getCurrentCompanyId).mockResolvedValue(TEST_COMPANY_ID);
+    vi.mocked(getDefaultCompanyId).mockResolvedValue(TEST_COMPANY_ID);
     vi.mocked(getDownloadDir).mockResolvedValue(TEST_DOWNLOAD_DIR);
   });
 

@@ -28,14 +28,12 @@ type SelectedCompany = {
   id: number;
   name: string;
   displayName: string;
-  role: string;
 };
 
 type Company = {
   id: number;
   name: string;
   display_name: string;
-  role: string;
 };
 
 async function fetchCompanies(accessToken: string): Promise<Company[]> {
@@ -179,7 +177,7 @@ async function performOAuth(): Promise<OAuthResult> {
   }
 }
 
-async function selectCompany(accessToken: string): Promise<{ selected: SelectedCompany; all: Company[] }> {
+async function selectCompany(accessToken: string): Promise<SelectedCompany> {
   console.log('ステップ 3/3: デフォルト事業所の選択\n');
   console.log('事業所一覧を取得中...');
 
@@ -194,7 +192,7 @@ async function selectCompany(accessToken: string): Promise<{ selected: SelectedC
     name: 'companyId',
     message: 'デフォルトの事業所を選択してください:',
     choices: companies.map((company) => ({
-      title: `${company.display_name || company.name} (ID: ${company.id}) - ${company.role}`,
+      title: `${company.display_name || company.name} (ID: ${company.id})`,
       value: company.id,
     })),
   });
@@ -212,42 +210,27 @@ async function selectCompany(accessToken: string): Promise<{ selected: SelectedC
   console.log(`\n${selectedCompany.display_name || selectedCompany.name} を選択しました。\n`);
 
   return {
-    selected: {
-      id: selectedCompany.id,
-      name: selectedCompany.name,
-      displayName: selectedCompany.display_name || selectedCompany.name,
-      role: selectedCompany.role,
-    },
-    all: companies,
+    id: selectedCompany.id,
+    name: selectedCompany.name,
+    displayName: selectedCompany.display_name || selectedCompany.name,
   };
 }
 
 async function saveConfig(
   credentials: Credentials,
   selectedCompany: SelectedCompany,
-  allCompanies: Company[],
 ): Promise<void> {
   const fullConfig: FullConfig = {
     clientId: credentials.clientId,
     clientSecret: credentials.clientSecret,
     callbackPort: credentials.callbackPort,
     defaultCompanyId: String(selectedCompany.id),
-    currentCompanyId: String(selectedCompany.id),
-    companies: {},
   };
-
-  allCompanies.forEach((company) => {
-    fullConfig.companies[String(company.id)] = {
-      id: String(company.id),
-      name: company.display_name || company.name,
-      description: `Role: ${company.role}`,
-      addedAt: Date.now(),
-      lastUsed: company.id === selectedCompany.id ? Date.now() : undefined,
-    };
-  });
 
   await saveFullConfig(fullConfig);
   console.log('設定情報を保存しました。\n');
+  console.log(`デフォルト事業所: ${selectedCompany.displayName} (ID: ${selectedCompany.id})\n`);
+  console.log('注: 別の事業所を使用する場合は、APIツールの company_id パラメータで指定できます。\n');
 
   console.log('=== MCP設定 ===\n');
   console.log('以下の設定をClaude desktopの設定ファイルに追加してください:\n');
@@ -288,8 +271,8 @@ export async function configure(): Promise<void> {
   try {
     const credentials = await collectCredentials();
     const oauthResult = await performOAuth();
-    const { selected: selectedCompany, all: allCompanies } = await selectCompany(oauthResult.accessToken);
-    await saveConfig(credentials, selectedCompany, allCompanies);
+    const selectedCompany = await selectCompany(oauthResult.accessToken);
+    await saveConfig(credentials, selectedCompany);
   } catch (error) {
     if (error instanceof Error) {
       console.error(`\nError: ${error.message}`);

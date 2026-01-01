@@ -1,16 +1,11 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import crypto from 'crypto';
-import { z } from 'zod';
 import { config } from '../config.js';
 import { makeApiRequest } from '../api/client.js';
 import { loadTokens, clearTokens } from '../auth/tokens.js';
 import { generatePKCE, buildAuthUrl } from '../auth/oauth.js';
 import { registerAuthenticationRequest, getActualRedirectUri } from '../auth/server.js';
-import {
-  getCurrentCompanyId,
-  setCurrentCompany,
-  getCompanyInfo
-} from '../config/companies.js';
+import { getDefaultCompanyId } from '../config/companies.js';
 
 export function addAuthenticationTools(server: McpServer): void {
   server.tool(
@@ -19,15 +14,14 @@ export function addAuthenticationTools(server: McpServer): void {
     {},
     async () => {
       try {
-        const companyId = await getCurrentCompanyId();
-        const companyInfo = await getCompanyInfo(companyId);
+        const defaultCompanyId = await getDefaultCompanyId();
 
-        if (!companyId) {
+        if (!defaultCompanyId || defaultCompanyId === '0') {
           return {
             content: [
               {
                 type: 'text',
-                text: '会社IDが設定されていません。freee_set_company で設定してください。',
+                text: 'デフォルト事業所IDが設定されていません。freee-mcp configure を実行してください。',
               },
             ],
           };
@@ -40,8 +34,7 @@ export function addAuthenticationTools(server: McpServer): void {
             {
               type: 'text',
               text: `現在のユーザー情報:\n` +
-                    `会社ID: ${companyId}\n` +
-                    `会社名: ${companyInfo?.name || 'Unknown'}\n` +
+                    `デフォルト事業所ID: ${defaultCompanyId}\n` +
                     `ユーザー詳細:\n${JSON.stringify(userInfo, null, 2)}`,
             },
           ],
@@ -191,85 +184,6 @@ export function addAuthenticationTools(server: McpServer): void {
     }
   );
 
-  // Company management tools
-  server.tool(
-    'freee_set_company',
-    '事業所を設定・切り替え。',
-    {
-      company_id: z.string().describe('事業所ID'),
-      name: z.string().optional().describe('事業所名'),
-      description: z.string().optional().describe('説明'),
-    },
-    async (args: { company_id: string; name?: string; description?: string }) => {
-      try {
-        const { company_id, name, description } = args;
-
-        await setCurrentCompany(company_id, name, description);
-
-        const companyInfo = await getCompanyInfo(company_id);
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `事業所を設定: ${companyInfo?.name || company_id}`,
-            },
-          ],
-        };
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `事業所の設定に失敗: ${error instanceof Error ? error.message : String(error)}`,
-            },
-          ],
-        };
-      }
-    }
-  );
-
-  server.tool(
-    'freee_get_current_company',
-    '現在の事業所情報を表示。',
-    {},
-    async () => {
-      try {
-        const companyId = await getCurrentCompanyId();
-        const companyInfo = await getCompanyInfo(companyId);
-
-        if (!companyInfo) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `事業所ID: ${companyId} (詳細情報なし)`,
-              },
-            ],
-          };
-        }
-
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `事業所: ${companyInfo.name} (ID: ${companyInfo.id})`,
-            },
-          ],
-        };
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `事業所情報の取得に失敗: ${error instanceof Error ? error.message : String(error)}`,
-            },
-          ],
-        };
-      }
-    }
-  );
-
   server.tool(
     'freee_list_companies',
     '事業所一覧を表示。',
@@ -283,7 +197,7 @@ export function addAuthenticationTools(server: McpServer): void {
           }>;
         }
         const apiCompanies = await makeApiRequest('GET', '/api/1/companies') as CompanyResponse;
-        const currentCompanyId = await getCurrentCompanyId();
+        const defaultCompanyId = await getDefaultCompanyId();
 
         if (!apiCompanies?.companies?.length) {
           return {
@@ -298,8 +212,8 @@ export function addAuthenticationTools(server: McpServer): void {
 
         const companyList = apiCompanies.companies
           .map((company) => {
-            const current = company.id === parseInt(currentCompanyId) ? ' *' : '';
-            return `${company.name} (${company.id})${current}`;
+            const isDefault = company.id === parseInt(defaultCompanyId) ? ' (default)' : '';
+            return `${company.name} (${company.id})${isDefault}`;
           })
           .join('\n');
 
@@ -307,7 +221,8 @@ export function addAuthenticationTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `事業所一覧:\n${companyList}`,
+              text: `事業所一覧:\n${companyList}\n\n` +
+                    `注: 別の事業所を使用する場合は、APIツールの company_id パラメータで指定してください。`,
             },
           ],
         };

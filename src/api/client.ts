@@ -1,6 +1,6 @@
 import { config } from '../config.js';
 import { getValidAccessToken } from '../auth/tokens.js';
-import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
+import { getDefaultCompanyId, getDownloadDir } from '../config/companies.js';
 import { safeParseJson } from '../utils/error.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -59,16 +59,18 @@ export async function makeApiRequest(
   params?: Record<string, unknown>,
   body?: Record<string, unknown>,
   baseUrl?: string,
+  companyId?: string,
 ): Promise<unknown | BinaryFileResponse> {
   const apiUrl = baseUrl || config.freee.apiUrl;
-  const companyId = await getCurrentCompanyId();
+  // Use provided companyId or fall back to default
+  const effectiveCompanyId = companyId || await getDefaultCompanyId();
 
   const accessToken = await getValidAccessToken();
 
   if (!accessToken) {
     throw new Error(
       `認証が必要です。freee_authenticate ツールを使用して認証を行ってください。\n` +
-      `現在の事業所ID: ${companyId}\n` +
+      `事業所ID: ${effectiveCompanyId}\n` +
       `または、FREEE_CLIENT_ID環境変数が正しく設定されているか確認してください。`
     );
   }
@@ -85,7 +87,7 @@ export async function makeApiRequest(
     });
   }
 
-  url.searchParams.append('company_id', String(companyId));
+  url.searchParams.append('company_id', String(effectiveCompanyId));
 
   const response = await fetch(url.toString(), {
     method,
@@ -100,13 +102,13 @@ export async function makeApiRequest(
     const errorData = await safeParseJson(response);
     throw new Error(
       `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
-      `現在の事業所ID: ${companyId}\n` +
+      `事業所ID: ${effectiveCompanyId}\n` +
       `エラー詳細: ${response.status} ${JSON.stringify(errorData)}\n\n` +
       `確認事項:\n` +
       `1. FREEE_CLIENT_ID環境変数が正しく設定されているか\n` +
       `2. freee側でアプリケーション設定が正しいか（リダイレクトURI等）\n` +
       `3. トークンの有効期限が切れていないか\n` +
-      `4. 事業所IDが正しいか（freee_get_current_company で確認）`
+      `4. 事業所IDが正しいか（freee_list_companies で確認）`
     );
   }
 

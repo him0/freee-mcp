@@ -3,14 +3,6 @@ import path from 'path';
 import os from 'os';
 import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 
-export interface CompanyConfig {
-  id: string;
-  name?: string;
-  description?: string;
-  addedAt: number;
-  lastUsed?: number;
-}
-
 export interface FullConfig {
   // OAuth credentials
   clientId?: string;
@@ -19,18 +11,20 @@ export interface FullConfig {
 
   // Company settings
   defaultCompanyId: string;
-  currentCompanyId: string;
-  companies: Record<string, CompanyConfig>;
 
   // Download settings
   downloadDir?: string;
 }
 
 // Legacy format (for backward compatibility)
-export interface LegacyCompaniesConfig {
+interface LegacyConfig {
   defaultCompanyId: string;
-  currentCompanyId: string;
-  companies: Record<string, CompanyConfig>;
+  currentCompanyId?: string;
+  companies?: Record<string, unknown>;
+  clientId?: string;
+  clientSecret?: string;
+  callbackPort?: number;
+  downloadDir?: string;
 }
 
 function getConfigFilePath(): string {
@@ -43,34 +37,28 @@ async function ensureConfigDir(): Promise<void> {
 }
 
 /**
- * Check if config is legacy format (only has company info)
+ * Check if config is legacy format (has currentCompanyId or companies)
  */
-function isLegacyConfig(data: unknown): data is LegacyCompaniesConfig {
+function isLegacyConfig(data: unknown): data is LegacyConfig {
   return (
     data !== null &&
     data !== undefined &&
     typeof data === 'object' &&
-    'defaultCompanyId' in data &&
-    'currentCompanyId' in data &&
-    'companies' in data &&
-    !('clientId' in data)
+    ('currentCompanyId' in data || 'companies' in data)
   );
 }
 
 /**
- * Migrate legacy config to new format
+ * Migrate legacy config to new format (remove currentCompanyId and companies)
  */
-function migrateLegacyConfig(legacy: LegacyCompaniesConfig): FullConfig {
+function migrateLegacyConfig(legacy: LegacyConfig): FullConfig {
   console.error('📦 古い設定形式を検出しました。新しい形式に移行します...');
   return {
-    // Credentials will be undefined (need to be set via configure)
-    clientId: undefined,
-    clientSecret: undefined,
-    callbackPort: undefined,
-    // Keep company settings
-    defaultCompanyId: legacy.defaultCompanyId,
-    currentCompanyId: legacy.currentCompanyId,
-    companies: legacy.companies,
+    clientId: legacy.clientId,
+    clientSecret: legacy.clientSecret,
+    callbackPort: legacy.callbackPort,
+    defaultCompanyId: legacy.defaultCompanyId || legacy.currentCompanyId || '0',
+    downloadDir: legacy.downloadDir,
   };
 }
 
@@ -101,16 +89,6 @@ export async function loadFullConfig(): Promise<FullConfig> {
         clientSecret: undefined,
         callbackPort: undefined,
         defaultCompanyId,
-        currentCompanyId: defaultCompanyId,
-        companies: {
-          [defaultCompanyId]: {
-            id: defaultCompanyId,
-            name: 'Default Company',
-            description: 'Company from environment variable',
-            addedAt: Date.now(),
-            lastUsed: Date.now(),
-          },
-        },
       };
       await saveFullConfig(defaultConfig);
       return defaultConfig;
@@ -129,62 +107,11 @@ export async function saveFullConfig(config: FullConfig): Promise<void> {
 }
 
 /**
- * Get current company ID
+ * Get default company ID
  */
-export async function getCurrentCompanyId(): Promise<string> {
+export async function getDefaultCompanyId(): Promise<string> {
   const config = await loadFullConfig();
-  return config.currentCompanyId;
-}
-
-/**
- * Set current company
- */
-export async function setCurrentCompany(
-  companyId: string,
-  name?: string,
-  description?: string
-): Promise<void> {
-  const config = await loadFullConfig();
-
-  // Add or update company info
-  if (!config.companies[companyId]) {
-    config.companies[companyId] = {
-      id: companyId,
-      name: name || `Company ${companyId}`,
-      description: description || undefined,
-      addedAt: Date.now(),
-    };
-  } else if (name || description) {
-    // Update existing company info if provided
-    if (name) config.companies[companyId].name = name;
-    if (description) config.companies[companyId].description = description;
-  }
-
-  // Update last used timestamp
-  config.companies[companyId].lastUsed = Date.now();
-
-  // Set as current company
-  config.currentCompanyId = companyId;
-
-  await saveFullConfig(config);
-}
-
-/**
- * Get list of all companies
- */
-export async function getCompanyList(): Promise<CompanyConfig[]> {
-  const config = await loadFullConfig();
-  return Object.values(config.companies).sort((a, b) =>
-    (b.lastUsed || 0) - (a.lastUsed || 0)
-  );
-}
-
-/**
- * Get company info by ID
- */
-export async function getCompanyInfo(companyId: string): Promise<CompanyConfig | null> {
-  const config = await loadFullConfig();
-  return config.companies[companyId] || null;
+  return config.defaultCompanyId;
 }
 
 /**
