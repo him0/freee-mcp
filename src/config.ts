@@ -75,18 +75,11 @@ export async function loadConfig(): Promise<Config> {
     callbackPort = fullConfig.callbackPort || DEFAULT_CALLBACK_PORT;
   }
 
-  // Load default company ID from env (deprecated)
-  let companyId = process.env.FREEE_DEFAULT_COMPANY_ID || '0';
-  if (process.env.FREEE_DEFAULT_COMPANY_ID) {
-    console.error('Warning: FREEE_DEFAULT_COMPANY_ID 環境変数は非推奨です。');
-    console.error('  事業所IDは `freee_set_current_company` ツールで動的に変更できます。\n');
-  }
-
   cachedConfig = {
     freee: {
       clientId,
       clientSecret,
-      companyId,
+      companyId: '0',
       apiUrl: FREEE_API_URL,
     },
     oauth: {
