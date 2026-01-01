@@ -32,7 +32,7 @@ const FREEE_MCP_SERVER_NAME = 'freee-mcp';
 
 const FREEE_MCP_SERVER_CONFIG: McpServerEntry = {
   command: 'npx',
-  args: ['@him0/freee-mcp', 'client'],
+  args: ['@him0/freee-mcp'],
 };
 
 /**
