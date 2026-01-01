@@ -33,7 +33,7 @@ npx @him0/freee-mcp configure
 
 ### 3. 再起動して確認
 
-Claude を再起動後、`freee_help` ツールが利用可能か確認。
+Claude を再起動後、`freee_auth_status` ツールで認証状態を確認。
 
 ## リファレンス
 
