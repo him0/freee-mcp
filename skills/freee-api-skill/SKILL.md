@@ -9,12 +9,12 @@ description: "freee 会計・人事労務 API を MCP 経由で操作するス�
 
 [@him0/freee-mcp](https://www.npmjs.com/package/@him0/freee-mcp) (MCP サーバー) を通じて freee API と連携。
 
-**このスキルの役割**:
+このスキルの役割:
 
 - freee API の詳細リファレンスを提供
 - freee-mcp 使用ガイドと API 呼び出し例を提供
 
-**注意**: OAuth 認証はユーザー自身が自分の環境で実行する必要があります。
+注意: OAuth 認証はユーザー自身が自分の環境で実行する必要があります。
 
 ## セットアップ
 
@@ -28,8 +28,8 @@ npx @him0/freee-mcp configure
 
 ### 2. プラグインをインストール
 
-- **Claude Code**: コマンドパレット → "Claude: Install Plugin" → このリポジトリのパス
-- **Claude Desktop**: 設定 → Plugins → Add Plugin → このリポジトリのパス
+- Claude Code: コマンドパレット → "Claude: Install Plugin" → このリポジトリのパス
+- Claude Desktop: 設定 → Plugins → Add Plugin → このリポジトリのパス
 
 ### 3. 再起動して確認
 
@@ -39,7 +39,7 @@ Claude を再起動後、`freee_auth_status` ツールで認証状態を確認�
 
 API リファレンスが `references/` に含まれます。各リファレンスにはパラメータ、リクエストボディ、レスポンスの詳細情報があります。
 
-**検索方法**:
+検索方法:
 
 ```
 pattern: "経費"
@@ -47,7 +47,7 @@ path: "skills/freee-api-skill/references"
 output_mode: "files_with_matches"
 ```
 
-**主なリファレンス**:
+主なリファレンス:
 
 - `accounting-deals.md` - 取引
 - `accounting-expense-applications.md` - 経費申請
@@ -58,14 +58,14 @@ output_mode: "files_with_matches"
 
 ### MCP ツール
 
-**認証・事業所管理**:
+認証・事業所管理:
 
 - `freee_authenticate` - OAuth 認証
 - `freee_auth_status` - 認証状態確認
 - `freee_list_companies` - 事業所一覧
 - `freee_set_company` - 事業所切り替え
 
-**API 呼び出し**:
+API 呼び出し:
 
 - `freee_api_get` - GET リクエスト
 - `freee_api_post` - POST リクエスト
@@ -73,7 +73,7 @@ output_mode: "files_with_matches"
 - `freee_api_delete` - DELETE リクエスト
 - `freee_api_patch` - PATCH リクエスト
 
-**serviceパラメータ** (必須):
+serviceパラメータ (必須):
 
 | service | 説明 | パス例 |
 |---------|------|--------|
@@ -84,13 +84,13 @@ output_mode: "files_with_matches"
 
 ### 基本ワークフロー
 
-1. **リファレンスを検索**: Grep で `skills/freee-api-skill/references` を検索
-2. **仕様を確認**: 該当するリファレンスを読む
-3. **API を呼び出す**: `freee_api_*` ツールを使用
+1. リファレンスを検索: Grep で `skills/freee-api-skill/references` を検索
+2. 仕様を確認: 該当するリファレンスを読む
+3. API を呼び出す: `freee_api_*` ツールを使用
 
 ### 使用例
 
-**経費申請を作成**:
+経費申請を作成:
 
 ```
 # 1. リファレンスを確認
@@ -113,7 +113,7 @@ freee_api_post {
 }
 ```
 
-**取引を検索**:
+取引を検索:
 
 ```
 freee_api_get {
@@ -125,7 +125,7 @@ freee_api_get {
 }
 ```
 
-**従業員情報を取得**（人事労務 API）:
+従業員情報を取得（人事労務 API）:
 
 ```
 freee_api_get {
@@ -138,7 +138,7 @@ freee_api_get {
 }
 ```
 
-**請求書一覧を取得**（請求書 API）:
+請求書一覧を取得（請求書 API）:
 
 ```
 freee_api_get {
@@ -149,9 +149,9 @@ freee_api_get {
 
 ## エラー対応
 
-- **認証エラー**: `freee_auth_status` で確認 → `freee_clear_auth` → `freee_authenticate`
-- **事業所エラー**: `freee_list_companies` → `freee_set_company`
-- **詳細**: `docs/troubleshooting.md` 参照
+- 認証エラー: `freee_auth_status` で確認 → `freee_clear_auth` → `freee_authenticate`
+- 事業所エラー: `freee_list_companies` → `freee_set_company`
+- 詳細: `docs/troubleshooting.md` 参照
 
 ## 対応 API
 
@@ -166,9 +166,9 @@ freee_api_get {
 
 請求書 API は `https://api.freee.co.jp/iv` をベースとした独立した API です。
 
-**注意**: 会計 API の `/api/1/invoices` は過去の API であり、現在は請求書 API (`service: "invoice"`) を使用してください。
+注意: 会計 API の `/api/1/invoices` は過去の API であり、現在は請求書 API (`service: "invoice"`) を使用してください。
 
-**利用可能なパス**:
+利用可能なパス:
 
 - `/invoices` - 請求書
 - `/invoices/{id}` - 請求書詳細
@@ -177,7 +177,7 @@ freee_api_get {
 - `/delivery_slips` - 納品書
 - `/delivery_slips/{id}` - 納品書詳細
 
-**使用例**:
+使用例:
 
 ```
 freee_api_get {

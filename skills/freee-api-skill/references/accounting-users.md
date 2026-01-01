@@ -8,9 +8,9 @@
 
 ### GET /api/1/users
 
-**操作**: 事業所に所属するユーザー一覧の取得
+操作: 事業所に所属するユーザー一覧の取得
 
-**説明**: 概要 事業所に所属するユーザー一覧を取得する
+説明: 概要 事業所に所属するユーザー一覧を取得する
 
 ### パラメータ
 
@@ -21,21 +21,21 @@
 
 ### レスポンス (200)
 
-- **users** **(必須)**: array[object]
+- users (必須): array[object]
   配列の要素:
-    - **id** **(必須)**: integer(int64) - ユーザーID 例: `1` (最小: 1)
-    - **email** **(必須)**: string - メールアドレス 例: `example@freee.co.jp`
-    - **display_name** (任意): string - 表示名 例: `山田太郎`
-    - **first_name** (任意): string - 氏名（名） 例: `太郎`
-    - **last_name** (任意): string - 氏名（姓） 例: `山田`
-    - **first_name_kana** (任意): string - 氏名（カナ・名） 例: `タロウ`
-    - **last_name_kana** (任意): string - 氏名（カナ・姓） 例: `ヤマダ`
+    - id (必須): integer(int64) - ユーザーID 例: `1` (最小: 1)
+    - email (必須): string - メールアドレス 例: `example@freee.co.jp`
+    - display_name (任意): string - 表示名 例: `山田太郎`
+    - first_name (任意): string - 氏名（名） 例: `太郎`
+    - last_name (任意): string - 氏名（姓） 例: `山田`
+    - first_name_kana (任意): string - 氏名（カナ・名） 例: `タロウ`
+    - last_name_kana (任意): string - 氏名（カナ・姓） 例: `ヤマダ`
 
 ### GET /api/1/users/me
 
-**操作**: ログインユーザーの取得
+操作: ログインユーザーの取得
 
-**説明**: 概要 ログインユーザーを取得する
+説明: 概要 ログインユーザーを取得する
 
 ### パラメータ
 
@@ -46,46 +46,46 @@
 
 ### レスポンス (200)
 
-- **user** **(必須)**: object
-  - **id** **(必須)**: integer(int64) - ユーザーID 例: `1` (最小: 1)
-  - **email** **(必須)**: string - メールアドレス 例: `contaxt@example.com`
-  - **display_name** (任意): string - 表示ユーザー名 例: `フリー太郎`
-  - **first_name** (任意): string - 名 例: `太郎`
-  - **last_name** (任意): string - 姓 例: `フリー`
-  - **first_name_kana** (任意): string - 名（カナ） 例: `タロウ`
-  - **last_name_kana** (任意): string - 姓（カナ） 例: `フリー`
-  - **companies** (任意): array[object]
+- user (必須): object
+  - id (必須): integer(int64) - ユーザーID 例: `1` (最小: 1)
+  - email (必須): string - メールアドレス 例: `contaxt@example.com`
+  - display_name (任意): string - 表示ユーザー名 例: `フリー太郎`
+  - first_name (任意): string - 名 例: `太郎`
+  - last_name (任意): string - 姓 例: `フリー`
+  - first_name_kana (任意): string - 名（カナ） 例: `タロウ`
+  - last_name_kana (任意): string - 姓（カナ） 例: `フリー`
+  - companies (任意): array[object]
 
 ### PUT /api/1/users/me
 
-**操作**: ログインユーザーの更新
+操作: ログインユーザーの更新
 
-**説明**: 概要 ログインユーザーを更新する
+説明: 概要 ログインユーザーを更新する
 
 ### リクエストボディ
 
-- **display_name** (任意): string - 表示名 (20文字以内) 例: `山田太郎`
-- **first_name** (任意): string - 氏名（名） (20文字以内) 例: `太郎`
-- **last_name** (任意): string - 氏名（姓） (20文字以内) 例: `山田`
-- **first_name_kana** (任意): string - 氏名（カナ・名） (20文字以内) 例: `タロウ`
-- **last_name_kana** (任意): string - 氏名（カナ・姓） (20文字以内) 例: `ヤマダ`
+- display_name (任意): string - 表示名 (20文字以内) 例: `山田太郎`
+- first_name (任意): string - 氏名（名） (20文字以内) 例: `太郎`
+- last_name (任意): string - 氏名（姓） (20文字以内) 例: `山田`
+- first_name_kana (任意): string - 氏名（カナ・名） (20文字以内) 例: `タロウ`
+- last_name_kana (任意): string - 氏名（カナ・姓） (20文字以内) 例: `ヤマダ`
 
 ### レスポンス (200)
 
-- **user** (任意): object
-  - **id** **(必須)**: integer(int64) - ユーザーID 例: `1` (最小: 1)
-  - **email** **(必須)**: string - メールアドレス 例: `example@freee.co.jp`
-  - **display_name** (任意): string - 表示名 例: `山田太郎`
-  - **first_name** (任意): string - 氏名（名） 例: `太郎`
-  - **last_name** (任意): string - 氏名（姓） 例: `山田`
-  - **first_name_kana** (任意): string - 氏名（カナ・名） 例: `タロウ`
-  - **last_name_kana** (任意): string - 氏名（カナ・姓） 例: `ヤマダ`
+- user (任意): object
+  - id (必須): integer(int64) - ユーザーID 例: `1` (最小: 1)
+  - email (必須): string - メールアドレス 例: `example@freee.co.jp`
+  - display_name (任意): string - 表示名 例: `山田太郎`
+  - first_name (任意): string - 氏名（名） 例: `太郎`
+  - last_name (任意): string - 氏名（姓） 例: `山田`
+  - first_name_kana (任意): string - 氏名（カナ・名） 例: `タロウ`
+  - last_name_kana (任意): string - 氏名（カナ・姓） 例: `ヤマダ`
 
 ### GET /api/1/users/capabilities
 
-**操作**: ログインユーザーの権限の取得
+操作: ログインユーザーの権限の取得
 
-**説明**: 概要 ログインユーザーの権限を取得する
+説明: 概要 ログインユーザーの権限を取得する
 
 ### パラメータ
 
@@ -385,259 +385,259 @@
 </table>
 
 
-- **wallet_txns** **(必須)**: object
-  - **confirm** (任意): boolean - 「自動で経理」の操作 例: `true`
-  - **read** (任意): boolean - 「取得した明細」の閲覧 例: `true`
-  - **create** (任意): boolean - 「取得した明細」の作成 例: `true`
-  - **update** (任意): boolean - 「取得した明細」の更新 例: `true`
-  - **destroy** (任意): boolean - 「取得した明細」の削除 例: `true`
-- **deals** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-  - **allowed_target** (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
-- **transfers** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-  - **allowed_target** (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
-- **docs** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-  - **allowed_target** (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
-- **doc_postings** **(必須)**: object
-  - **create** (任意): boolean - 作成 例: `true`
-- **receipts** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-  - **allowed_target** (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
-- **receipt_stream_editor** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **spreadsheets** **(必須)**: object
-  - **create** (任意): boolean - 作成 例: `true`
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **expense_applications** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-  - **allowed_target** (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
-- **expense_application_sync_payroll** **(必須)**: object
-  - **create** (任意): boolean - 作成 例: `true`
-- **payment_requests** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-  - **allowed_target** (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
-- **approval_requests** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-  - **allowed_target** (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
-- **reports** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **reports_income_expense** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **reports_receivables** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **reports_payables** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **write** (任意): boolean - 操作 例: `true`
-- **reports_cash_balance** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **reports_managements_planning** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **write** (任意): boolean - 操作 例: `true`
-- **reports_managements_navigation** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **write** (任意): boolean - 操作 例: `true`
-- **reports_custom_reports_aggregate** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **reports_pl** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **reports_bs** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **reports_general_ledgers** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **reports_journals** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **manual_journals** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-  - **allowed_target** (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
-- **fixed_assets** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **inventory_refreshes** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **biz_allocations** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **payment_records** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **annual_reports** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **tax_reports** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **consumption_entries** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **tax_return** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **account_item_statements** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **month_end** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **year_end** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-- **walletables** **(必須)**: object
-  - **read** (任意): boolean - 「口座」の閲覧 例: `true`
-  - **create** (任意): boolean - 「口座」の作成 例: `true`
-  - **update** (任意): boolean - 「口座」の更新 例: `true`
-  - **destroy** (任意): boolean - 「口座」の削除 例: `true`
-  - **sync** (任意): boolean - 「口座の同期」の実行（廃止予定） 例: `true`
-- **companies** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-- **invitations** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **access_controls** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-  - **write** (任意): boolean - 操作 例: `true`
-- **sign_in_logs** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **user_attribute_logs** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **app_role_logs** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **txn_relationship_logs** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **backups** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **opening_balances** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-- **system_conversion** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **resets** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **partners** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **items** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **sections** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **tags** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **account_items** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **taxes** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-- **payroll_item_sets** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **user_matchers** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **deal_templates** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **manual_journal_templates** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **cost_allocations** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-- **approval_flow_routes** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **expense_application_templates** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **request_forms** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **system_messages_for_admin** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **company_internal_announcements** **(必須)**: object
-  - **update** (任意): boolean - 更新 例: `true`
-- **doc_change_logs** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-- **workflows** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **oauth_applications** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **oauth_authorizations** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
-- **bank_accountant_staff_users** **(必須)**: object
-  - **read** (任意): boolean - 閲覧 例: `true`
-  - **create** (任意): boolean - 作成 例: `true`
-  - **update** (任意): boolean - 更新 例: `true`
-  - **destroy** (任意): boolean - 削除 例: `true`
+- wallet_txns (必須): object
+  - confirm (任意): boolean - 「自動で経理」の操作 例: `true`
+  - read (任意): boolean - 「取得した明細」の閲覧 例: `true`
+  - create (任意): boolean - 「取得した明細」の作成 例: `true`
+  - update (任意): boolean - 「取得した明細」の更新 例: `true`
+  - destroy (任意): boolean - 「取得した明細」の削除 例: `true`
+- deals (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+  - allowed_target (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
+- transfers (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+  - allowed_target (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
+- docs (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+  - allowed_target (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
+- doc_postings (必須): object
+  - create (任意): boolean - 作成 例: `true`
+- receipts (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+  - allowed_target (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
+- receipt_stream_editor (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- spreadsheets (必須): object
+  - create (任意): boolean - 作成 例: `true`
+  - read (任意): boolean - 閲覧 例: `true`
+- expense_applications (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+  - allowed_target (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
+- expense_application_sync_payroll (必須): object
+  - create (任意): boolean - 作成 例: `true`
+- payment_requests (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+  - allowed_target (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
+- approval_requests (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+  - allowed_target (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
+- reports (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- reports_income_expense (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- reports_receivables (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- reports_payables (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - write (任意): boolean - 操作 例: `true`
+- reports_cash_balance (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- reports_managements_planning (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - write (任意): boolean - 操作 例: `true`
+- reports_managements_navigation (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - write (任意): boolean - 操作 例: `true`
+- reports_custom_reports_aggregate (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- reports_pl (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- reports_bs (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- reports_general_ledgers (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- reports_journals (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- manual_journals (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+  - allowed_target (任意): string - 「自分のみ」がonになっている場合はself_only、offになっている場合はallになります。 (選択肢: self_only, all)
+- fixed_assets (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- inventory_refreshes (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- biz_allocations (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- payment_records (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- annual_reports (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- tax_reports (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- consumption_entries (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- tax_return (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- account_item_statements (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- month_end (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- year_end (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+- walletables (必須): object
+  - read (任意): boolean - 「口座」の閲覧 例: `true`
+  - create (任意): boolean - 「口座」の作成 例: `true`
+  - update (任意): boolean - 「口座」の更新 例: `true`
+  - destroy (任意): boolean - 「口座」の削除 例: `true`
+  - sync (任意): boolean - 「口座の同期」の実行（廃止予定） 例: `true`
+- companies (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+- invitations (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- access_controls (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+  - write (任意): boolean - 操作 例: `true`
+- sign_in_logs (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- user_attribute_logs (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- app_role_logs (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- txn_relationship_logs (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- backups (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- opening_balances (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+- system_conversion (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- resets (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- partners (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- items (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- sections (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- tags (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- account_items (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- taxes (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+- payroll_item_sets (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- user_matchers (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- deal_templates (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- manual_journal_templates (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- cost_allocations (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+- approval_flow_routes (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- expense_application_templates (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- request_forms (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- system_messages_for_admin (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- company_internal_announcements (必須): object
+  - update (任意): boolean - 更新 例: `true`
+- doc_change_logs (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+- workflows (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- oauth_applications (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- oauth_authorizations (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
+- bank_accountant_staff_users (必須): object
+  - read (任意): boolean - 閲覧 例: `true`
+  - create (任意): boolean - 作成 例: `true`
+  - update (任意): boolean - 更新 例: `true`
+  - destroy (任意): boolean - 削除 例: `true`
 
 
 

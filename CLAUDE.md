@@ -19,19 +19,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 MCP server that exposes freee API endpoints as MCP tools:
 
-- **Schema**: Multiple OpenAPI schemas in `openapi/` directory
+- Schema: Multiple OpenAPI schemas in `openapi/` directory
   - `accounting-api-schema.json` - 会計API (https://api.freee.co.jp)
   - `hr-api-schema.json` - 人事労務API (https://api.freee.co.jp/hr)
   - `invoice-api-schema.json` - 請求書API (https://api.freee.co.jp/iv)
   - `pm-api-schema.json` - 工数管理API (https://api.freee.co.jp/pm)
   - `sm-api-schema.json` - 販売API (https://api.freee.co.jp/sm)
-- **Schema Loader**: `src/openapi/schema-loader.ts` loads and manages all API schemas
-- **Tool Generation**: `generateClientModeTool()` in `src/openapi/client-mode.ts` creates method-specific tools
+- Schema Loader: `src/openapi/schema-loader.ts` loads and manages all API schemas
+- Tool Generation: `generateClientModeTool()` in `src/openapi/client-mode.ts` creates method-specific tools
   - Tools: `freee_api_get`, `freee_api_post`, `freee_api_put`, `freee_api_delete`, `freee_api_patch`, `freee_api_list_paths`
   - Automatically detects API type from path and uses correct base URL
   - Validates paths against all OpenAPI schemas before execution
   - Supports all 5 freee APIs seamlessly
-- **Requests**: `makeApiRequest()` in `src/api/client.ts` handles API calls with auto-auth and company_id injection
+- Requests: `makeApiRequest()` in `src/api/client.ts` handles API calls with auto-auth and company_id injection
 
 ### Configuration
 
@@ -45,7 +45,7 @@ Run `freee-mcp configure` to set up configuration interactively:
 
 #### Environment Variables (Deprecated)
 
-⚠️ **Environment variables are deprecated and will be removed in a future version.**
+⚠️ Environment variables are deprecated and will be removed in a future version.
 
 - `FREEE_CLIENT_ID` - OAuth client ID (deprecated, use config file)
 - `FREEE_CLIENT_SECRET` - OAuth client secret (deprecated, use config file)
@@ -80,19 +80,19 @@ Development mode: Use `"command": "pnpm", "args": ["tsx", "src/index.ts"]` with 
 
 ## PR Creation Pre-flight Checklist
 
-**Always run before creating a PR:**
+Always run before creating a PR:
 
 ```bash
 pnpm typecheck && pnpm lint && pnpm test:run && pnpm build
 ```
 
-**Changeset requirement:**
+Changeset requirement:
 
 - Run `pnpm changeset` to create a changeset file for any user-facing changes
 - Select the appropriate bump type: `patch` (bug fixes), `minor` (new features), `major` (breaking changes)
 - Write a concise description of what changed for the CHANGELOG
 
-**Common issues:**
+Common issues:
 
 - Mock function return types (ensure `id` fields are strings)
 - Missing return type annotations on exported functions

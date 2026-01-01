@@ -171,7 +171,7 @@ function formatSchemaProperties(
 
   for (const [propName, propSchema] of Object.entries(properties)) {
     const isRequired = required.includes(propName);
-    const requiredMark = isRequired ? " **(必須)**" : " (任意)";
+    const requiredMark = isRequired ? " (必須)" : " (任意)";
 
     // Resolve $ref if present
     let resolvedSchema = propSchema;
@@ -183,7 +183,7 @@ function formatSchemaProperties(
     }
 
     const typeDesc = getTypeDescription(resolvedSchema);
-    result += `${indent}- **${propName}**${requiredMark}: ${typeDesc}`;
+    result += `${indent}- ${propName}${requiredMark}: ${typeDesc}`;
 
     if (resolvedSchema.description) {
       result += ` - ${resolvedSchema.description}`;
@@ -325,7 +325,7 @@ function formatRequestBody(
   }
 
   if (requestBody.required) {
-    result += "**(必須)**\n\n";
+    result += "(必須)\n\n";
   }
 
   result += formatSchemaProperties(apiSchema, schema);
@@ -452,7 +452,7 @@ async function generateReference(
         operation;
 
       endpointsMd += `### ${method} ${path}\n\n`;
-      endpointsMd += `**操作**: ${summary || ""}\n\n`;
+      endpointsMd += `操作: ${summary || ""}\n\n`;
 
       if (description) {
         let cleanDesc = stripHtmlTags(description)
@@ -464,7 +464,7 @@ async function generateReference(
         }
 
         if (cleanDesc) {
-          endpointsMd += `**説明**: ${cleanDesc}\n\n`;
+          endpointsMd += `説明: ${cleanDesc}\n\n`;
         }
       }
 
