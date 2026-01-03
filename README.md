@@ -159,6 +159,12 @@ TypeScript / Model Context Protocol SDK / OAuth 2.0 + PKCE / Zod / esbuild
 
 ISC
 
+## コミュニティ
+
+質問や情報交換は Discord サーバーで行っています。お気軽にご参加ください。
+
+- [Discord サーバー](https://discord.gg/fPA75nHp)
+
 ## 関連リンク
 
 - [freee API ドキュメント](https://developer.freee.co.jp/docs)
