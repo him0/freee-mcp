@@ -1,5 +1,25 @@
 # @him0/freee-mcp
 
+## 0.6.0
+
+### Minor Changes
+
+- a51a21a: Add interactive MCP configuration toggle for Claude Code and Claude Desktop
+
+  The `freee-mcp configure` command now allows you to add or remove freee-mcp from Claude Code (~/.claude.json) and Claude Desktop config files interactively.
+
+- 1f0b6c2: refactor: rename freee_set_company to freee_set_current_company
+  - Rename freee_set_company tool to freee_set_current_company for consistency with freee_get_current_company
+  - Remove FREEE_DEFAULT_COMPANY_ID environment variable (use freee_set_current_company tool instead)
+
+### Patch Changes
+
+- 66f88df: cli.tsでdeprecatedなconfig importを削除し、FREEE_API_URL定数を使用するように修正
+- ec49296: perf: per-API lazy loading for OpenAPI schemas
+  - Load individual API schemas on demand instead of loading all 5 at once
+  - Remove unused getAllSchemas() function
+  - Memory usage reduced when using only 1-2 APIs (e.g., accounting only: 311KB instead of 482KB)
+
 ## 0.5.2
 
 ### Patch Changes
