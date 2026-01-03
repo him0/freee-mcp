@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "freee-api-client": {
+    "freee-mcp": {
       "command": "pnpm",
-      "args": ["start", "client"]
+      "args": ["start"]
     }
   }
 }
