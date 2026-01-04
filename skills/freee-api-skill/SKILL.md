@@ -171,27 +171,9 @@ freee_api_get {
 
 ### 請求書 API について
 
-請求書 API は `https://api.freee.co.jp/iv` をベースとした独立した API です。
+請求書・見積書・納品書の操作については `docs/invoice-operations.md` を参照してください。
 
 注意: 会計 API の `/api/1/invoices` は過去の API であり、現在は請求書 API (`service: "invoice"`) を使用してください。
-
-利用可能なパス:
-
-- `/invoices` - 請求書
-- `/invoices/{id}` - 請求書詳細
-- `/quotations` - 見積書
-- `/quotations/{id}` - 見積書詳細
-- `/delivery_slips` - 納品書
-- `/delivery_slips/{id}` - 納品書詳細
-
-使用例:
-
-```
-freee_api_get {
-  "service": "invoice",
-  "path": "/invoices"
-}
-```
 
 ## 関連リンク
 
