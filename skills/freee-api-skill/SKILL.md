@@ -91,68 +91,18 @@ serviceパラメータ (必須):
 
 ### 基本ワークフロー
 
-1. リファレンスを検索: Grep で `skills/freee-api-skill/references` を検索
-2. 仕様を確認: 該当するリファレンスを読む
+1. 操作ガイドを確認: `docs/` 内の該当ガイドを読む
+2. リファレンスを検索: 必要に応じて `references/` を参照
 3. API を呼び出す: `freee_api_*` ツールを使用
 
-### 使用例
+### 操作ガイド
 
-経費申請を作成:
+よくある操作の使用例とTipsは以下を参照:
 
-```
-# 1. リファレンスを確認
-Read: "skills/freee-api-skill/references/accounting-expense-applications.md"
-
-# 2. APIを呼び出す
-freee_api_post {
-  "service": "accounting",
-  "path": "/api/1/expense_applications",
-  "body": {
-    "company_id": 123456,
-    "title": "交通費",
-    "issue_date": "2025-01-15",
-    "expense_application_lines": [{
-      "transaction_date": "2025-01-15",
-      "description": "新宿→渋谷",
-      "amount": 400
-    }]
-  }
-}
-```
-
-取引を検索:
-
-```
-freee_api_get {
-  "service": "accounting",
-  "path": "/api/1/deals",
-  "query": {
-    "limit": 10
-  }
-}
-```
-
-従業員情報を取得（人事労務 API）:
-
-```
-freee_api_get {
-  "service": "hr",
-  "path": "/api/1/employees",
-  "query": {
-    "year": 2025,
-    "month": 1
-  }
-}
-```
-
-請求書一覧を取得（請求書 API）:
-
-```
-freee_api_get {
-  "service": "invoice",
-  "path": "/invoices"
-}
-```
+- `docs/expense-application-operations.md` - 経費申請
+- `docs/deal-operations.md` - 取引（収入・支出）
+- `docs/hr-operations.md` - 人事労務（従業員・勤怠）
+- `docs/invoice-operations.md` - 請求書・見積書・納品書
 
 ## エラー対応
 
