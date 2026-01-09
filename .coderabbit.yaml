@@ -1,0 +1,6 @@
+version: 2
+
+reviews:
+  auto_review:
+    enabled: false
+  poem: false
