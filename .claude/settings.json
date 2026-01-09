@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx prettier --write $CLAUDE_FILE_PATHS 2>/dev/null || true"
+            "command": "pnpm prettier --write $CLAUDE_FILE_PATHS 2>/dev/null || true"
           }
         ]
       }
