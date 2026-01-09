@@ -11,12 +11,12 @@ log() {
     echo "$LOG_PREFIX $1" >&2
 }
 
-# Only run in remote Claude Code environment
-if [ "$CLAUDE_CODE_REMOTE" != "true" ]; then
+# Check if running in Claude Code environment (remote or with CLAUDE_ENV_FILE)
+if [ "$CLAUDE_CODE_REMOTE" != "true" ] && [ -z "$CLAUDE_ENV_FILE" ]; then
     exit 0
 fi
 
-log "Remote session detected, checking gh CLI..."
+log "Claude Code session detected, checking gh CLI..."
 
 # Check if gh is already available
 if command -v gh &>/dev/null; then
@@ -24,15 +24,19 @@ if command -v gh &>/dev/null; then
     exit 0
 fi
 
-# Setup local bin directory
-LOCAL_BIN="$HOME/.local/bin"
-mkdir -p "$LOCAL_BIN"
+# Determine install location: prefer /usr/local/bin if writable, else ~/.local/bin
+if [ -w "/usr/local/bin" ]; then
+    LOCAL_BIN="/usr/local/bin"
+else
+    LOCAL_BIN="$HOME/.local/bin"
+    mkdir -p "$LOCAL_BIN"
+fi
 
 # Check if gh exists in local bin
 if [ -x "$LOCAL_BIN/gh" ]; then
     log "gh found in $LOCAL_BIN"
-    # Ensure PATH includes local bin
-    if [[ ":$PATH:" != *":$LOCAL_BIN:"* ]]; then
+    # Ensure PATH includes local bin (only needed for ~/.local/bin)
+    if [ "$LOCAL_BIN" = "$HOME/.local/bin" ] && [[ ":$PATH:" != *":$LOCAL_BIN:"* ]]; then
         export PATH="$LOCAL_BIN:$PATH"
         # Persist to CLAUDE_ENV_FILE if available
         if [ -n "$CLAUDE_ENV_FILE" ]; then
@@ -97,13 +101,14 @@ fi
 
 chmod +x "$LOCAL_BIN/gh"
 
-# Update PATH
-export PATH="$LOCAL_BIN:$PATH"
-
-# Persist PATH to CLAUDE_ENV_FILE if available
-if [ -n "$CLAUDE_ENV_FILE" ]; then
-    echo "export PATH=\"$LOCAL_BIN:\$PATH\"" >> "$CLAUDE_ENV_FILE"
-    log "PATH persisted to CLAUDE_ENV_FILE"
+# Update PATH (only needed for ~/.local/bin)
+if [ "$LOCAL_BIN" = "$HOME/.local/bin" ]; then
+    export PATH="$LOCAL_BIN:$PATH"
+    # Persist PATH to CLAUDE_ENV_FILE if available
+    if [ -n "$CLAUDE_ENV_FILE" ]; then
+        echo "export PATH=\"$LOCAL_BIN:\$PATH\"" >> "$CLAUDE_ENV_FILE"
+        log "PATH persisted to CLAUDE_ENV_FILE"
+    fi
 fi
 
 log "gh CLI installed successfully: $($LOCAL_BIN/gh --version | head -1)"
