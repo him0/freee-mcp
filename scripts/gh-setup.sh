@@ -64,8 +64,15 @@ case "$ARCH" in
         ;;
 esac
 
-# Download and install gh CLI
-GH_VERSION="2.62.0"
+# Get latest version from GitHub API
+log "Fetching latest gh CLI version..."
+GH_VERSION=$(curl -sL https://api.github.com/repos/cli/cli/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+
+if [ -z "$GH_VERSION" ]; then
+    log "Failed to get latest version, using fallback"
+    GH_VERSION="2.82.2"
+fi
+
 GH_TARBALL="gh_${GH_VERSION}_linux_${GH_ARCH}.tar.gz"
 GH_URL="https://github.com/cli/cli/releases/download/v${GH_VERSION}/${GH_TARBALL}"
 
