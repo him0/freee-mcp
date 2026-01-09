@@ -9,7 +9,3 @@
 - [ ] リファクタリング
 - [ ] ドキュメント
 - [ ] その他
-
-## テスト
-
-- [ ] `pnpm typecheck && pnpm lint && pnpm test:run && pnpm build` が通ることを確認
