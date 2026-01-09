@@ -11,12 +11,7 @@ log() {
     echo "$LOG_PREFIX $1" >&2
 }
 
-# Check if running in Claude Code environment (remote or with CLAUDE_ENV_FILE)
-if [ "$CLAUDE_CODE_REMOTE" != "true" ] && [ -z "$CLAUDE_ENV_FILE" ]; then
-    exit 0
-fi
-
-log "Claude Code session detected, checking gh CLI..."
+log "Checking gh CLI..."
 
 # Check if gh is already available
 if command -v gh &>/dev/null; then
