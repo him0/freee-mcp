@@ -1,0 +1,6 @@
+language: ja-JP
+
+reviews:
+  auto_review:
+    enabled: false
+  poem: false
