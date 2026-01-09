@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for f in $CLAUDE_FILE_PATHS; do case \"$f\" in *.js|*.ts|*.jsx|*.tsx) pnpm prettier --write \"$f\";; esac; done"
+          }
+        ]
+      }
+    ]
+  }
+}
