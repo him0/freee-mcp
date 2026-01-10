@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { makeApiRequest, BinaryFileResponse } from '../api/client.js';
 import { validatePathForService, listAllAvailablePaths, ApiType } from './schema-loader.js';
+import { createTextResponse, formatErrorMessage, TextResponse } from '../utils/error.js';
 
 /**
  * Check if result is a binary file response
@@ -41,12 +42,7 @@ function createMethodTool(method: string): (args: {
   path: string;
   query?: Record<string, unknown>;
   body?: Record<string, unknown>;
-}) => Promise<{
-  content: {
-    type: 'text';
-    text: string;
-  }[];
-}> {
+}) => Promise<TextResponse> {
   return async (args: {
     service: ApiType;
     path: string;
@@ -59,16 +55,10 @@ function createMethodTool(method: string): (args: {
       // Validate path against the specified service's OpenAPI schema
       const validation = validatePathForService(method, path, service);
       if (!validation.isValid) {
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text:
-                `パス検証エラー: ${validation.message}\n\n` +
-                `利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`,
-            },
-          ],
-        };
+        return createTextResponse(
+          `パス検証エラー: ${validation.message}\n\n` +
+          `利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`
+        );
       }
 
       // Make API request with the correct base URL
@@ -76,33 +66,12 @@ function createMethodTool(method: string): (args: {
 
       // Handle binary file response
       if (isBinaryFileResponse(result)) {
-        return {
-          content: [
-            {
-              type: 'text' as const,
-              text: formatBinaryResponse(result),
-            },
-          ],
-        };
+        return createTextResponse(formatBinaryResponse(result));
       }
 
-      return {
-        content: [
-          {
-            type: 'text' as const,
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      };
+      return createTextResponse(JSON.stringify(result, null, 2));
     } catch (error) {
-      return {
-        content: [
-          {
-            type: 'text' as const,
-            text: `APIリクエストエラー: ${error instanceof Error ? error.message : String(error)}`,
-          },
-        ],
-      };
+      return createTextResponse(`APIリクエストエラー: ${formatErrorMessage(error)}`);
     }
   };
 }
@@ -181,19 +150,13 @@ export function generateClientModeTool(server: McpServer): void {
     {},
     async () => {
       const pathsList = listAllAvailablePaths();
-      return {
-        content: [
-          {
-            type: 'text' as const,
-            text:
-              `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +
-              `使用例:\n` +
-              `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "limit": 10 } }\n` +
-              `freee_api_get { "service": "invoice", "path": "/invoices" }\n` +
-              `freee_api_post { "service": "accounting", "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }`,
-          },
-        ],
-      };
+      return createTextResponse(
+        `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +
+        `使用例:\n` +
+        `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "limit": 10 } }\n` +
+        `freee_api_get { "service": "invoice", "path": "/invoices" }\n` +
+        `freee_api_post { "service": "accounting", "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }`
+      );
     }
   );
 }
