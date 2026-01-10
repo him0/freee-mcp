@@ -16,6 +16,41 @@ MCP サーバー（API 呼び出し機能）と skill（API リファレンス�
 - OAuth 2.0 + PKCE: セキュアな認証フロー、トークン自動更新
 - 複数事業所対応: 事業所の動的切り替えが可能
 
+## SKILL と MCP の通信の流れ
+
+Claude Code では、SKILL（API リファレンス）と MCP サーバー（API 呼び出し）を組み合わせて利用します。
+
+```mermaid
+sequenceDiagram
+    participant User as ユーザー
+    participant Claude as Claude Code
+    participant Skill as Agent Skill<br/>(API リファレンス)
+    participant MCP as MCP サーバー<br/>(ローカル)
+    participant API as freee API
+
+    User->>Claude: リクエスト<br/>「取引一覧を取得して」
+
+    Note over Claude,Skill: 1. SKILL からリファレンスを取得
+    Claude->>Skill: freee-api-skill 呼び出し
+    Skill-->>Claude: API リファレンス注入<br/>(エンドポイント、パラメータ仕様)
+
+    Note over Claude,MCP: 2. MCP Tool で API を実行
+    Claude->>MCP: freee_api_get 呼び出し<br/>path: /api/1/deals
+    MCP->>MCP: OpenAPI スキーマで検証
+    MCP->>MCP: 認証トークン付与
+
+    Note over MCP,API: 3. freee API への通信
+    MCP->>API: GET /api/1/deals<br/>Authorization: Bearer xxx
+    API-->>MCP: JSON レスポンス
+
+    MCP-->>Claude: 取引データ
+    Claude-->>User: 結果を整形して表示
+```
+
+この仕組みにより：
+- SKILL: 必要な API リファレンスを段階的にコンテキストに注入（コンテキスト効率化）
+- MCP: 認証・リクエスト検証・API 呼び出しを担当
+
 ## クイックスタート
 
 ### 1. freee アプリケーションの登録
@@ -164,41 +199,6 @@ ISC
 質問や情報交換は Discord サーバーで行っています。お気軽にご参加ください。
 
 - [Discord サーバー](https://discord.gg/fPA75nHp)
-
-## SKILL と MCP の通信の流れ
-
-Claude Code では、SKILL（API リファレンス）と MCP サーバー（API 呼び出し）を組み合わせて利用します。
-
-```mermaid
-sequenceDiagram
-    participant User as ユーザー
-    participant Claude as Claude Code
-    participant Skill as Agent Skill<br/>(API リファレンス)
-    participant MCP as MCP サーバー<br/>(ローカル)
-    participant API as freee API
-
-    User->>Claude: リクエスト<br/>「取引一覧を取得して」
-
-    Note over Claude,Skill: 1. SKILL からリファレンスを取得
-    Claude->>Skill: freee-api-skill 呼び出し
-    Skill-->>Claude: API リファレンス注入<br/>(エンドポイント、パラメータ仕様)
-
-    Note over Claude,MCP: 2. MCP Tool で API を実行
-    Claude->>MCP: freee_api_get 呼び出し<br/>path: /api/1/deals
-    MCP->>MCP: OpenAPI スキーマで検証
-    MCP->>MCP: 認証トークン付与
-
-    Note over MCP,API: 3. freee API への通信
-    MCP->>API: GET /api/1/deals<br/>Authorization: Bearer xxx
-    API-->>MCP: JSON レスポンス
-
-    MCP-->>Claude: 取引データ
-    Claude-->>User: 結果を整形して表示
-```
-
-この仕組みにより：
-- SKILL: 必要な API リファレンスを段階的にコンテキストに注入（コンテキスト効率化）
-- MCP: 認証・リクエスト検証・API 呼び出しを担当
 
 ## 関連リンク
 
