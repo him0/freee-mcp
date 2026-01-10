@@ -1,8 +1,17 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { z } from 'zod';
 import { config } from '../config.js';
 import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 import { safeParseJson } from '../utils/error.js';
+
+export const TokenDataSchema = z.object({
+  access_token: z.string(),
+  refresh_token: z.string(),
+  expires_at: z.number(),
+  token_type: z.string(),
+  scope: z.string(),
+});
 
 export interface TokenData {
   access_token: string;
@@ -37,7 +46,13 @@ export async function loadTokens(): Promise<TokenData | null> {
 
   try {
     const data = await fs.readFile(tokenPath, 'utf8');
-    return JSON.parse(data) as TokenData;
+    const parsed = JSON.parse(data);
+    const result = TokenDataSchema.safeParse(parsed);
+    if (!result.success) {
+      console.error('[error] Invalid token file:', result.error.message);
+      return null;
+    }
+    return result.data;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       // Try to migrate from legacy company-specific token files
@@ -68,8 +83,14 @@ async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
       // Use the most recent token file
       const tokenFilePath = path.join(configDir, tokenFiles[0]);
       const data = await fs.readFile(tokenFilePath, 'utf8');
-      const tokens = JSON.parse(data) as TokenData;
-      
+      const parsed = JSON.parse(data);
+      const result = TokenDataSchema.safeParse(parsed);
+      if (!result.success) {
+        console.error('[error] Invalid legacy token file:', result.error.message);
+        return null;
+      }
+      const tokens = result.data;
+
       // Migrate to new format
       await saveTokens(tokens);
       

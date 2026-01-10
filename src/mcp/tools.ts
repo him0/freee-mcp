@@ -276,13 +276,25 @@ export function addAuthenticationTools(server: McpServer): void {
     {},
     async () => {
       try {
-        interface CompanyResponse {
-          companies?: Array<{
-            id: number;
-            name: string;
-          }>;
+        const CompanyResponseSchema = z.object({
+          companies: z.array(z.object({
+            id: z.number(),
+            name: z.string(),
+          })).optional(),
+        });
+        const rawResponse = await makeApiRequest('GET', '/api/1/companies');
+        const parseResult = CompanyResponseSchema.safeParse(rawResponse);
+        if (!parseResult.success) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `APIレスポンスの形式が不正です: ${parseResult.error.message}`,
+              },
+            ],
+          };
         }
-        const apiCompanies = await makeApiRequest('GET', '/api/1/companies') as CompanyResponse;
+        const apiCompanies = parseResult.data;
         const currentCompanyId = await getCurrentCompanyId();
 
         if (!apiCompanies?.companies?.length) {

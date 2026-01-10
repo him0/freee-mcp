@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   MinimalSchema,
+  MinimalSchemaSchema,
   MinimalPathItem,
   MinimalOperation,
 } from './minimal-types.js';
@@ -37,7 +38,14 @@ const schemasDir = getSchemasDir();
 function loadSchema(filename: string): MinimalSchema {
   const filePath = path.join(schemasDir, filename);
   const content = fs.readFileSync(filePath, 'utf-8');
-  return JSON.parse(content) as MinimalSchema;
+  const parsed = JSON.parse(content);
+  const result = MinimalSchemaSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new Error(
+      `Invalid schema file ${filename}: ${result.error.message}`
+    );
+  }
+  return result.data;
 }
 
 export type ApiType = 'accounting' | 'hr' | 'invoice' | 'pm' | 'sm';
