@@ -9,12 +9,12 @@ const TEST_ACCESS_TOKEN = 'test-access-token';
 const TEST_DOWNLOAD_DIR = '/tmp';
 
 vi.mock('../config.js', () => ({
-  config: {
+  getConfig: (): { freee: { apiUrl: string; companyId: string } } => ({
     freee: {
       apiUrl: 'https://api.freee.co.jp',
       companyId: '12345'
     }
-  }
+  })
 }));
 
 vi.mock('../config/companies.js', () => ({

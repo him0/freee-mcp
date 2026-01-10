@@ -5,7 +5,10 @@ import { addAuthenticationTools } from './tools.js';
 
 vi.mock('crypto');
 vi.mock('../config.js', () => ({
-  config: {
+  getConfig: (): {
+    freee: { clientId: string; clientSecret: string; companyId: string };
+    oauth: { redirectUri: string; callbackPort: number };
+  } => ({
     freee: {
       clientId: 'test-client-id',
       clientSecret: 'test-client-secret',
@@ -15,7 +18,7 @@ vi.mock('../config.js', () => ({
       redirectUri: 'http://127.0.0.1:54321/callback',
       callbackPort: 54321
     }
-  }
+  })
 }));
 
 vi.mock('../config/companies.js', () => ({

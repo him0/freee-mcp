@@ -4,7 +4,10 @@ import { generatePKCE, buildAuthUrl, exchangeCodeForTokens } from './oauth.js';
 
 vi.mock('crypto');
 vi.mock('../config.js', () => ({
-  config: {
+  getConfig: (): {
+    freee: { clientId: string; clientSecret: string };
+    oauth: { authorizationEndpoint: string; tokenEndpoint: string; redirectUri: string; scope: string };
+  } => ({
     freee: {
       clientId: 'test-client-id',
       clientSecret: 'test-client-secret'
@@ -15,7 +18,7 @@ vi.mock('../config.js', () => ({
       redirectUri: 'http://127.0.0.1:54321/callback',
       scope: 'read write'
     }
-  }
+  })
 }));
 
 vi.mock('./tokens.js', () => ({

@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { config } from '../config.js';
+import { getConfig } from '../config.js';
 import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 import { safeParseJson } from '../utils/error.js';
 
@@ -93,7 +93,8 @@ async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<TokenData> {
-  const response = await fetch(config.oauth.tokenEndpoint, {
+  const cfg = getConfig();
+  const response = await fetch(cfg.oauth.tokenEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -101,8 +102,8 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      client_id: config.freee.clientId,
-      client_secret: config.freee.clientSecret,
+      client_id: cfg.freee.clientId,
+      client_secret: cfg.freee.clientSecret,
     }),
   });
 
@@ -117,7 +118,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
     refresh_token: tokenResponse.refresh_token || refreshToken,
     expires_at: Date.now() + (tokenResponse.expires_in * 1000),
     token_type: tokenResponse.token_type || 'Bearer',
-    scope: tokenResponse.scope || config.oauth.scope,
+    scope: tokenResponse.scope || cfg.oauth.scope,
   };
 
   await saveTokens(tokens);
