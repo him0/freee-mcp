@@ -2,11 +2,11 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "bash scripts/gh-setup.sh"
+            "command": "bun x gh-setup-hooks",
+            "timeout": 120
           }
         ]
       }
