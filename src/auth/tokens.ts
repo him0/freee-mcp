@@ -16,10 +16,6 @@ function getTokenFilePath(): string {
   return path.join(getConfigDir(), 'tokens.json');
 }
 
-function getLegacyTokenFilePath(companyId: string): string {
-  return path.join(getConfigDir(), `tokens-${companyId}.json`);
-}
-
 export async function saveTokens(tokens: TokenData): Promise<void> {
   const tokenPath = getTokenFilePath();
   const configDir = path.dirname(tokenPath);
