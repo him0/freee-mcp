@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import crypto from 'crypto';
 import { z } from 'zod';
-import { config } from '../config.js';
+import { getConfig } from '../config.js';
 import { makeApiRequest } from '../api/client.js';
 import { loadTokens, clearTokens } from '../auth/tokens.js';
 import { generatePKCE, buildAuthUrl } from '../auth/oauth.js';
@@ -65,7 +65,7 @@ export function addAuthenticationTools(server: McpServer): void {
     {},
     async () => {
       try {
-        if (!config.freee.clientId) {
+        if (!getConfig().freee.clientId) {
           return {
             content: [
               {
@@ -78,7 +78,7 @@ export function addAuthenticationTools(server: McpServer): void {
           };
         }
 
-        if (!config.freee.clientSecret) {
+        if (!getConfig().freee.clientSecret) {
           return {
             content: [
               {

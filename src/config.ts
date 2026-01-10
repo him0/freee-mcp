@@ -102,15 +102,12 @@ export async function loadConfig(): Promise<Config> {
 }
 
 /**
- * Legacy export for backward compatibility
- * @deprecated Use loadConfig() or getConfig() instead
+ * Get cached configuration synchronously
+ * Throws if loadConfig() has not been called yet
  */
-export const config = new Proxy({} as Config, {
-  get(_target, prop): unknown {
-    if (!cachedConfig) {
-      throw new Error('Config not loaded. Call loadConfig() first in async context.');
-    }
-    return cachedConfig[prop as keyof Config];
-  },
-});
-
+export function getConfig(): Config {
+  if (!cachedConfig) {
+    throw new Error('Config not loaded. Call loadConfig() first in async context.');
+  }
+  return cachedConfig;
+}

@@ -1,7 +1,7 @@
 import http from 'http';
 import { URL } from 'url';
 import net from 'net';
-import { config } from '../config.js';
+import { getConfig } from '../config.js';
 import { TokenData } from './tokens.js';
 import { exchangeCodeForTokens } from './oauth.js';
 
@@ -33,7 +33,7 @@ export class AuthenticationManager {
     const timeout = setTimeout(() => {
       this.pendingAuthentications.delete(state);
       console.error(`Authentication timeout for state: ${state.substring(0, 10)}...`);
-    }, config.auth.timeoutMs);
+    }, getConfig().auth.timeoutMs);
 
     this.pendingAuthentications.set(state, {
       codeVerifier,
@@ -120,7 +120,7 @@ class CallbackServer {
       return;
     }
 
-    const preferredPort = config.oauth.callbackPort;
+    const preferredPort = getConfig().oauth.callbackPort;
     const port = await this.findAvailablePort(preferredPort);
     this.port = port;
 

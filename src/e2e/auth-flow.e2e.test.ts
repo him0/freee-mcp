@@ -20,7 +20,10 @@ let mockCompanyId: string = '12345';
 
 // Mock config module
 vi.mock('../config.js', () => ({
-  config: {
+  getConfig: (): {
+    freee: { clientId: string; clientSecret: string; apiUrl: string; companyId: string };
+    oauth: { callbackPort: number };
+  } => ({
     freee: {
       clientId: 'test-client-id',
       clientSecret: 'test-client-secret',
@@ -30,7 +33,7 @@ vi.mock('../config.js', () => ({
     oauth: {
       callbackPort: 54321,
     },
-  },
+  }),
 }));
 
 // Mock companies module
