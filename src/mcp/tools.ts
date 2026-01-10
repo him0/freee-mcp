@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import crypto from 'crypto';
 import { z } from 'zod';
-import { config } from '../config.js';
+import { getConfig } from '../config.js';
 import { makeApiRequest } from '../api/client.js';
 import { loadTokens, clearTokens } from '../auth/tokens.js';
 import { generatePKCE, buildAuthUrl } from '../auth/oauth.js';
@@ -47,7 +47,7 @@ export function addAuthenticationTools(server: McpServer): void {
     {},
     async () => {
       try {
-        if (!config.freee.clientId) {
+        if (!getConfig().freee.clientId) {
           return createTextResponse(
             'FREEE_CLIENT_ID環境変数が設定されていません。\n' +
             'OAuth認証を行うには、freee developersでアプリケーションを作成し、\n' +
@@ -55,7 +55,7 @@ export function addAuthenticationTools(server: McpServer): void {
           );
         }
 
-        if (!config.freee.clientSecret) {
+        if (!getConfig().freee.clientSecret) {
           return createTextResponse(
             'FREEE_CLIENT_SECRET環境変数が設定されていません。\n' +
             'OAuth認証を行うには、freee developersでアプリケーションを作成し、\n' +

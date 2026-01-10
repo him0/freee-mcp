@@ -1,4 +1,4 @@
-import { config } from '../config.js';
+import { getConfig } from '../config.js';
 import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
 import { safeParseJson } from '../utils/error.js';
@@ -60,7 +60,7 @@ export async function makeApiRequest(
   body?: Record<string, unknown>,
   baseUrl?: string,
 ): Promise<unknown | BinaryFileResponse> {
-  const apiUrl = baseUrl || config.freee.apiUrl;
+  const apiUrl = baseUrl || getConfig().freee.apiUrl;
   const companyId = await getCurrentCompanyId();
 
   const accessToken = await getValidAccessToken();
