@@ -151,12 +151,6 @@ describe('tools', () => {
         expect(result.content[0].text).toContain('https://auth.url');
       });
 
-      it('should handle missing client ID', async () => {
-        // Skip this test as it's hard to properly mock the config import in this test environment
-        // The main functionality is already tested in other tests
-        expect(true).toBe(true);
-      });
-
     });
 
     describe('freee_auth_status', () => {

@@ -23,10 +23,4 @@ describe('index', () => {
 
     expect(mockCreateAndStartServer.createAndStartServer).toHaveBeenCalled();
   });
-
-  it('should handle server startup error', async () => {
-    // This test is complex due to the module structure, but the main function is covered
-    // The error handling logic is simple and likely to work correctly
-    expect(true).toBe(true);
-  });
 });
