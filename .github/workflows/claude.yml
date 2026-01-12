@@ -62,10 +62,8 @@ jobs:
           allowed_tools: '"Bash(ls:*)",Bash(pnpm install),Bash(pnpm typecheck),Bash(pnpm test:*),Bash(pnpm lint),Bash(pnpm format),Bash(pnpm build)'
 
           # Optional: Add custom instructions for Claude to customize its behavior for your project
-          # custom_instructions: |
-          #   Follow our coding standards
-          #   Ensure all new code has tests
-          #   Use TypeScript for new files
+          custom_instructions: |
+            Always respond in Japanese.
 
           # Optional: Custom environment variables for Claude
           # claude_env: |
