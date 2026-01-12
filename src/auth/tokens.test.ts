@@ -18,7 +18,10 @@ const { tempDir, setup: setupTempDir, cleanup: cleanupTempDir } = setupTestTempD
 
 vi.mock('fs/promises');
 vi.mock('../config.js', () => ({
-  config: {
+  getConfig: (): {
+    oauth: { tokenEndpoint: string; scope: string };
+    freee: { clientId: string; clientSecret: string };
+  } => ({
     oauth: {
       tokenEndpoint: 'https://test.freee.co.jp/token',
       scope: 'read write'
@@ -27,7 +30,7 @@ vi.mock('../config.js', () => ({
       clientId: 'test-client-id',
       clientSecret: 'test-client-secret'
     }
-  }
+  })
 }));
 
 const mockFs = vi.mocked(fs);
