@@ -1,7 +1,16 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { z } from 'zod';
 import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
+
+export const CompanyConfigSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  addedAt: z.number(),
+  lastUsed: z.number().optional(),
+});
 
 export interface CompanyConfig {
   id: string;
@@ -10,6 +19,21 @@ export interface CompanyConfig {
   addedAt: number;
   lastUsed?: number;
 }
+
+export const FullConfigSchema = z.object({
+  // OAuth credentials
+  clientId: z.string().optional(),
+  clientSecret: z.string().optional(),
+  callbackPort: z.number().optional(),
+
+  // Company settings
+  defaultCompanyId: z.string(),
+  currentCompanyId: z.string(),
+  companies: z.record(z.string(), CompanyConfigSchema),
+
+  // Download settings
+  downloadDir: z.string().optional(),
+});
 
 export interface FullConfig {
   // OAuth credentials
@@ -91,7 +115,11 @@ export async function loadFullConfig(): Promise<FullConfig> {
       return migrated;
     }
 
-    return parsed as FullConfig;
+    const result = FullConfigSchema.safeParse(parsed);
+    if (!result.success) {
+      throw new Error(`Invalid config file: ${result.error.message}`);
+    }
+    return result.data;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       // Create default config
