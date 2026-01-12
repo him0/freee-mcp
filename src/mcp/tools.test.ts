@@ -227,11 +227,76 @@ describe('tools', () => {
 
         addAuthenticationTools(mockServer);
         const handler = mockTool.mock.calls.find(call => call[0] === 'freee_clear_auth')?.[3];
-        
+
         const result = await handler();
 
         expect(result.content[0].text).toContain('認証情報のクリアに失敗');
         expect(result.content[0].text).toContain('Permission denied');
+      });
+    });
+
+    describe('freee_list_companies', () => {
+      it('should return company list when API response is valid', async () => {
+        const mockMakeApiRequest = await import('../api/client.js');
+        const validResponse = {
+          companies: [
+            { id: 123, name: 'Company A' },
+            { id: 456, name: 'Company B' },
+          ],
+        };
+        vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(validResponse);
+
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_list_companies')?.[3];
+
+        const result = await handler();
+
+        expect(result.content[0].text).toContain('事業所一覧:');
+        expect(result.content[0].text).toContain('Company A');
+        expect(result.content[0].text).toContain('Company B');
+      });
+
+      it('should return error message for invalid API response structure', async () => {
+        const mockMakeApiRequest = await import('../api/client.js');
+        const invalidResponse = { invalid: 'data' };
+        vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(invalidResponse);
+
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_list_companies')?.[3];
+
+        const result = await handler();
+
+        expect(result.content[0].text).toContain('事業所情報を取得できませんでした');
+      });
+
+      it('should return error message when companies array has wrong types', async () => {
+        const mockMakeApiRequest = await import('../api/client.js');
+        const invalidResponse = {
+          companies: [
+            { id: 'string-id', name: 123 }, // id should be number, name should be string
+          ],
+        };
+        vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(invalidResponse);
+
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_list_companies')?.[3];
+
+        const result = await handler();
+
+        expect(result.content[0].text).toContain('APIレスポンスの形式が不正です');
+      });
+
+      it('should handle API error', async () => {
+        const mockMakeApiRequest = await import('../api/client.js');
+        vi.mocked(mockMakeApiRequest.makeApiRequest).mockRejectedValue(new Error('API Error'));
+
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_list_companies')?.[3];
+
+        const result = await handler();
+
+        expect(result.content[0].text).toContain('事業所一覧の取得に失敗');
+        expect(result.content[0].text).toContain('API Error');
       });
     });
   });

@@ -127,6 +127,46 @@ describe('tokens', () => {
 
       await expect(loadTokens()).rejects.toThrow('Permission denied');
     });
+
+    it('should return null for invalid token data structure', async () => {
+      const invalidData = { invalid: 'data' };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(invalidData));
+
+      const result = await loadTokens();
+
+      expect(result).toBeNull();
+      expect(console.error).toHaveBeenCalledWith(
+        '[error] Invalid token file:',
+        expect.any(String)
+      );
+    });
+
+    it('should return null when token data is missing required fields', async () => {
+      const incompleteData = {
+        access_token: 'test-token',
+        // missing refresh_token, expires_at, token_type, scope
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(incompleteData));
+
+      const result = await loadTokens();
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when token data has wrong field types', async () => {
+      const wrongTypeData = {
+        access_token: 123, // should be string
+        refresh_token: 'test',
+        expires_at: 'not-a-number', // should be number
+        token_type: 'Bearer',
+        scope: 'read'
+      };
+      mockFs.readFile.mockResolvedValue(JSON.stringify(wrongTypeData));
+
+      const result = await loadTokens();
+
+      expect(result).toBeNull();
+    });
   });
 
   describe('isTokenValid', () => {
