@@ -135,10 +135,8 @@ out
 .vscode
 !.vscode/settings.json
 
-# bin
-bin/*
-!bin/.keep
+# dist (all packages)
+**/dist/
 
-# dist
-dist/*
-!dist/.keep
+# bin build outputs (all packages)
+**/bin/cli.js
