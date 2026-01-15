@@ -2,24 +2,37 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Monorepo Structure
+
+This is a pnpm workspace monorepo with the following packages:
+
+- `packages/freee-mcp` - MCP server for freee API integration
+- `packages/freee-agent` - CLI agent for freee API operations
+
 ## Commands
 
-- `pnpm dev` - Start development server with watch mode
-- `pnpm build` - Full build (types + esbuild)
-- `pnpm typecheck` - TypeScript type checking
-- `pnpm lint` - Run ESLint
-- `pnpm inspector` - MCP inspector for debugging tools
-- `node scripts/test-tools.js` - Quick tool verification
-- `node scripts/test-mcp.js` - Full MCP protocol testing
+Root-level commands (run from repository root):
+
+- `pnpm build` - Build all packages
+- `pnpm typecheck` - TypeScript type checking for all packages
+- `pnpm lint` - Run ESLint for all packages
+- `pnpm test:run` - Run tests for all packages
 - `pnpm changeset` - Create a new changeset for version bumps
 - `pnpm version` - Apply changesets to update versions and CHANGELOG
-- `pnpm release` - Build and publish to npm
+- `pnpm release` - Build and publish all packages to npm
+
+Package-specific commands (run from package directory or with `--filter`):
+
+- `pnpm --filter @him0/freee-mcp dev` - Start freee-mcp development server
+- `pnpm --filter @him0/freee-mcp inspector` - MCP inspector for debugging tools
 
 ## Architecture
 
+### freee-mcp
+
 MCP server that exposes freee API endpoints as MCP tools:
 
-- Schema: Multiple OpenAPI schemas in `openapi/` directory
+- Schema: Multiple OpenAPI schemas in `packages/freee-mcp/openapi/` directory
   - `accounting-api-schema.json` - 会計API (https://api.freee.co.jp)
   - `hr-api-schema.json` - 人事労務API (https://api.freee.co.jp/hr)
   - `invoice-api-schema.json` - 請求書API (https://api.freee.co.jp/iv)
@@ -32,6 +45,10 @@ MCP server that exposes freee API endpoints as MCP tools:
   - Validates paths against all OpenAPI schemas before execution
   - Supports all 5 freee APIs seamlessly
 - Requests: `makeApiRequest()` in `src/api/client.ts` handles API calls with auto-auth and company_id injection
+
+### freee-agent
+
+CLI agent for freee API operations (under development).
 
 ### Configuration
 
@@ -75,7 +92,7 @@ After running `freee-mcp configure`:
 
 Configuration is automatically loaded from `~/.config/freee-mcp/config.json`.
 
-Development mode: Use `"command": "pnpm", "args": ["tsx", "src/index.ts"]` with `"cwd": "/path/to/freee-mcp"`
+Development mode: Use `"command": "pnpm", "args": ["tsx", "packages/freee-mcp/src/index.ts"]` with `"cwd": "/path/to/freee-mcp"`
 
 ## PR Creation Pre-flight Checklist
 

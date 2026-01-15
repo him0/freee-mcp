@@ -1,0 +1,47 @@
+{
+  "type": "module",
+  "name": "@him0/freee-agent",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "bin": {
+    "freee-agent": "./bin/cli.js"
+  },
+  "scripts": {
+    "build": "pnpm run build:types && pnpm run build:esbuild",
+    "build:esbuild": "tsx build.ts",
+    "build:types": "tsc --declaration --emitDeclarationOnly --declarationDir './dist'",
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint 'src/**/*.ts'",
+    "lint:fix": "eslint --fix 'src/**/*.ts'",
+    "format": "prettier --write 'src/**/*.{ts,tsx}'",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "author": "him0",
+  "license": "ISC",
+  "description": "CLI agent for freee API operations",
+  "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.4"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "keywords": [
+    "freee",
+    "api",
+    "agent",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/him0/freee-mcp.git",
+    "directory": "packages/freee-agent"
+  },
+  "files": [
+    "dist/",
+    "bin/",
+    "README.md"
+  ]
+}
