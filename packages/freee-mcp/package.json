@@ -2,7 +2,14 @@
   "type": "module",
   "name": "@him0/freee-mcp",
   "version": "0.6.0",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs"
+    }
+  },
   "bin": {
     "freee-mcp": "./bin/cli.js"
   },
