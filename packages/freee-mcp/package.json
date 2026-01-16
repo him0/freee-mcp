@@ -4,8 +4,10 @@
   "version": "0.6.0",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.esm.js",
       "require": "./dist/index.cjs"
     }
