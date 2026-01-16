@@ -2,23 +2,11 @@
   "type": "module",
   "name": "@him0/freee-mcp",
   "version": "0.6.0",
-  "main": "dist/index.cjs",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.esm.js",
-      "require": "./dist/index.cjs"
-    }
-  },
   "bin": {
     "freee-mcp": "./bin/cli.js"
   },
   "scripts": {
-    "build": "pnpm run build:types && pnpm run build:esbuild",
-    "build:esbuild": "tsx build.ts",
-    "build:types": "tsc --declaration --emitDeclarationOnly --declarationDir './dist'",
+    "build": "tsx build.ts",
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
     "typecheck": "tsc --noEmit",
