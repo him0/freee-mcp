@@ -1,6 +1,6 @@
 import { build } from 'esbuild';
 import { dependencies } from './package.json';
-import { chmod } from 'fs/promises';
+import { chmod, mkdir } from 'fs/promises';
 
 const entryFile = 'src/index.ts';
 const shared = {
@@ -28,6 +28,7 @@ await build({
 });
 
 const binFile = './bin/cli.js';
+await mkdir('./bin', { recursive: true });
 await build({
   bundle: true,
   entryPoints: [entryFile],
