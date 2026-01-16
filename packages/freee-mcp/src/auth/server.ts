@@ -37,7 +37,7 @@ export class AuthenticationManager {
 
     this.pendingAuthentications.set(state, {
       codeVerifier,
-      resolve: (tokens: TokenData) => {
+      resolve: (_tokens: TokenData) => {
         console.error('Authentication completed successfully!');
       },
       reject: (error: Error) => {
@@ -62,7 +62,7 @@ export class AuthenticationManager {
   }
 
   clearAllPending(): void {
-    for (const [state, auth] of this.pendingAuthentications) {
+    for (const [_state, auth] of this.pendingAuthentications) {
       clearTimeout(auth.timeout);
       auth.reject(new Error('Server shutdown'));
     }

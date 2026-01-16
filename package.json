@@ -1,78 +1,35 @@
 {
-  "type": "module",
-  "name": "@him0/freee-mcp",
-  "version": "0.6.1",
-  "main": "dist/index.js",
-  "bin": {
-    "freee-mcp": "./bin/cli.js"
-  },
+  "name": "freee-mcp-monorepo",
+  "private": true,
   "scripts": {
-    "build": "pnpm run build:types && pnpm run build:esbuild",
-    "build:esbuild": "tsx build.ts",
-    "build:types": "tsc --declaration --emitDeclarationOnly --declarationDir './dist'",
-    "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint 'src/**/*.ts'",
-    "lint:fix": "eslint --fix 'src/**/*.ts'",
-    "knip": "knip",
-    "format": "prettier --write 'src/**/*.{ts,tsx}'",
-    "inspector": "mcp-inspector pnpm run start",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui",
-    "generate:references": "tsx scripts/generate-references.ts",
-    "fetch:schemas": "tsx scripts/fetch-schemas.ts",
+    "build": "pnpm -r run build",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "pnpm -r run lint",
+    "lint:fix": "pnpm -r run lint:fix",
+    "format": "prettier --write 'packages/*/src/**/*.{ts,tsx}'",
+    "test": "pnpm -r run test",
+    "test:run": "pnpm -r run test:run",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && changeset publish"
   },
-  "author": "him0",
-  "license": "ISC",
-  "description": "Model Context Protocol (MCP) server for freee API integration",
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
-    "@modelcontextprotocol/inspector": "^0.17.2",
     "@types/node": "^24.10.1",
     "@types/prompts": "^2.4.9",
     "@typescript-eslint/eslint-plugin": "^8.48.1",
     "@typescript-eslint/parser": "^8.48.1",
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
     "esbuild": "^0.25.12",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
-    "jsdom": "^26.1.0",
-    "knip": "^5.78.0",
     "prettier": "^3.7.4",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4",
-    "yaml": "^2.8.2"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.24.3",
-    "open": "^10.2.0",
-    "prompts": "^2.4.2",
-    "zod": "^3.25.76"
+    "vitest": "^3.2.4"
   },
   "packageManager": "pnpm@10.27.0",
-  "keywords": [
-    "mcp",
-    "model-context-protocol",
-    "freee",
-    "api",
-    "accounting",
-    "claude"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/him0/freee-mcp.git"
-  },
-  "files": [
-    "dist/",
-    "bin/",
-    "README.md"
-  ]
+  }
 }

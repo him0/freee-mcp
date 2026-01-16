@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { loadConfig } from './config.js';
 import { AUTH_TIMEOUT_MS } from './constants.js';
 

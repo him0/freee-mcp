@@ -22,7 +22,7 @@ interface PromptsResponse {
 let mockPromptsResponses: PromptsResponse[] = [];
 let mockPromptsIndex = 0;
 let mockAuthCallback: ((code: string) => void) | null = null;
-let mockAuthReject: ((error: Error) => void) | null = null;
+let _mockAuthReject: ((error: Error) => void) | null = null;
 let consoleLogSpy: ReturnType<typeof vi.spyOn>;
 let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
@@ -86,7 +86,7 @@ vi.mock('../auth/server', () => ({
       codeVerifier: string;
     }) => {
       mockAuthCallback = handler.resolve;
-      mockAuthReject = handler.reject;
+      _mockAuthReject = handler.reject;
       // Simulate successful callback after a short delay
       setTimeout(() => {
         if (mockAuthCallback) {
@@ -126,7 +126,7 @@ describe('E2E: Configure Command', () => {
     mockPromptsResponses = [];
     mockPromptsIndex = 0;
     mockAuthCallback = null;
-    mockAuthReject = null;
+    _mockAuthReject = null;
 
     // Setup console spies
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

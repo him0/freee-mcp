@@ -10,7 +10,6 @@ import { setupMockApi, clearMockApi } from './mock-api.js';
 import {
   mockUserResponse,
   mockCompaniesResponse,
-  mockTokenResponse,
 } from './fixtures/api-responses.js';
 import { TokenData } from '../auth/tokens.js';
 
