@@ -100,9 +100,10 @@ npx @him0/freee-mcp configure
 Claude Code でプラグインとしてインストールすると、API リファレンス付きのスキルが利用できます:
 
 ```bash
-claude plugin marketplace add him0/freee-mcp
-claude plugin install freee-api
+npx add-skill him0/freee-mcp
 ```
+
+[add-skill](https://github.com/anthropics/add-skill) は Claude Code、Cursor、OpenCode など複数のコーディングエージェントに対応したスキルインストーラーです。グローバルインストール(`-g`)や特定スキルのみのインストール(`-s`)も可能です。
 
 ### 含まれるリファレンス
 
