@@ -41,7 +41,6 @@
     "@modelcontextprotocol/inspector": "^0.17.2",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
-    "jsdom": "^26.1.0",
     "knip": "^5.78.0",
     "yaml": "^2.8.2"
   },
