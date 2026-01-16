@@ -1,5 +1,25 @@
 # @him0/freee-mcp
 
+## 0.6.1
+
+### Patch Changes
+
+- a845326: Add operation guides for common API use cases
+  - docs/invoice-operations.md: 請求書・見積書・納品書の操作ガイドとWeb確認URLのtips
+  - docs/expense-application-operations.md: 経費申請の操作ガイド
+  - docs/deal-operations.md: 取引（収入・支出）の操作ガイド
+  - docs/hr-operations.md: 人事労務（従業員・勤怠）の操作ガイド
+  - SKILL.md: 使用例を操作ガイドへの参照に置き換えてスリム化
+
+- 0570cb6: fix: add Zod schema validation after JSON.parse to prevent runtime errors from invalid JSON data
+- 3b07493: refactor: migrate deprecated config export to getConfig() function
+- e0ecc8c: refactor: extract duplicate patterns into utility functions
+  - Add createTextResponse() for MCP text response wrapper pattern
+  - Add formatErrorMessage() for error message formatting
+  - Refactor tools.ts and client-mode.ts to use new utilities
+
+- 48c1582: Remove unused @types/crypto-js from devDependencies to reduce package size
+
 ## 0.6.0
 
 ### Minor Changes
