@@ -112,7 +112,7 @@ describe('handlers', () => {
 
       expect(mockProcessOn).toHaveBeenCalledWith('SIGINT', expect.any(Function));
       
-      const sigintHandler = mockProcessOn.mock.calls.find(call => call[0] === 'SIGINT')?.[1] as Function;
+      const sigintHandler = mockProcessOn.mock.calls.find(call => call[0] === 'SIGINT')?.[1] as () => void;
       expect(sigintHandler).toBeDefined();
       
       sigintHandler();
@@ -137,7 +137,7 @@ describe('handlers', () => {
 
       expect(mockProcessOn).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
       
-      const sigtermHandler = mockProcessOn.mock.calls.find(call => call[0] === 'SIGTERM')?.[1] as Function;
+      const sigtermHandler = mockProcessOn.mock.calls.find(call => call[0] === 'SIGTERM')?.[1] as () => void;
       expect(sigtermHandler).toBeDefined();
       
       sigtermHandler();

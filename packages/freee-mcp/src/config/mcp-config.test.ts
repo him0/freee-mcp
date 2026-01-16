@@ -7,7 +7,6 @@ import {
   checkMcpConfigStatus,
   addFreeeMcpConfig,
   removeFreeeMcpConfig,
-  type McpTarget,
 } from './mcp-config.js';
 
 vi.mock('node:fs/promises');
