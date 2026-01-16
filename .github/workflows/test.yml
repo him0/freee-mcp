@@ -108,7 +108,5 @@ jobs:
 
       - name: Check build artifacts
         run: |
-          ls -la packages/freee-mcp/dist/
-          test -f packages/freee-mcp/dist/index.esm.js
-          test -f packages/freee-mcp/dist/index.cjs
-          test -f packages/freee-mcp/dist/index.d.ts
+          test -f packages/freee-mcp/bin/cli.js
+          test -f packages/freee-agent/bin/cli.js
