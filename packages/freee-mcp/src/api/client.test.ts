@@ -39,6 +39,7 @@ interface MockJsonResponse {
   ok: true;
   headers: MockHeaders;
   json: () => Promise<unknown>;
+  text: () => Promise<string>;
 }
 
 interface MockErrorResponse {
@@ -69,7 +70,8 @@ function createJsonResponse(data: unknown): MockJsonResponse {
   return {
     ok: true,
     headers: createMockHeaders('application/json'),
-    json: () => Promise.resolve(data)
+    json: () => Promise.resolve(data),
+    text: () => Promise.resolve(JSON.stringify(data))
   };
 }
 

@@ -21,9 +21,13 @@ vi.mock('../config.js', () => ({
   })
 }));
 
-vi.mock('./tokens.js', () => ({
-  saveTokens: vi.fn()
-}));
+vi.mock('./tokens.js', async (importOriginal) => {
+  const actual = await importOriginal() as Record<string, unknown>;
+  return {
+    ...actual,
+    saveTokens: vi.fn()
+  };
+});
 
 const mockCrypto = vi.mocked(crypto);
 const mockFetch = vi.fn();
