@@ -81,6 +81,14 @@ vi.mock('../api/client.js', () => ({
 
     return {};
   }),
+  isBinaryFileResponse: vi.fn((result: unknown): boolean => {
+    return (
+      typeof result === 'object' &&
+      result !== null &&
+      'type' in result &&
+      (result as { type: string }).type === 'binary'
+    );
+  }),
 }));
 
 describe('E2E: Client Mode Tools', () => {
