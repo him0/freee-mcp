@@ -1,0 +1,12 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    "packages/freee-mcp": {
+      "entry": ["src/cli.ts", "scripts/*.ts"],
+      "project": ["src/**/*.ts", "scripts/**/*.ts"]
+    },
+    "packages/freee-agent": {
+      "project": ["src/**/*.ts"]
+    }
+  }
+}

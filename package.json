@@ -9,12 +9,14 @@
     "format": "prettier --write 'packages/*/src/**/*.{ts,tsx}'",
     "test": "pnpm -r run test",
     "test:run": "pnpm -r run test:run",
+    "knip": "knip",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
+    "knip": "^5.78.0",
     "@types/node": "^24.10.1",
     "@types/prompts": "^2.4.9",
     "@typescript-eslint/eslint-plugin": "^8.48.1",

@@ -32,6 +32,9 @@ importers:
       eslint-config-prettier:
         specifier: ^10.1.8
         version: 10.1.8(eslint@9.39.1(jiti@2.6.1))
+      knip:
+        specifier: ^5.78.0
+        version: 5.78.0(@types/node@24.10.1)(typescript@5.9.3)
       prettier:
         specifier: ^3.7.4
         version: 3.7.4
@@ -79,9 +82,6 @@ importers:
       '@vitest/ui':
         specifier: ^3.2.4
         version: 3.2.4(vitest@3.2.4)
-      knip:
-        specifier: ^5.78.0
-        version: 5.78.0(@types/node@24.10.1)(typescript@5.9.3)
       yaml:
         specifier: ^2.8.2
         version: 2.8.2
