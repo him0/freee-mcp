@@ -95,9 +95,28 @@ class CallbackServer {
   private server: http.Server | null = null;
   private port: number | null = null;
   private authManager: AuthenticationManager;
+  private autoStopTimeout: NodeJS.Timeout | null = null;
 
   constructor(authManager: AuthenticationManager) {
     this.authManager = authManager;
+  }
+
+  private clearAutoStopTimeout(): void {
+    if (this.autoStopTimeout) {
+      clearTimeout(this.autoStopTimeout);
+      this.autoStopTimeout = null;
+    }
+  }
+
+  /**
+   * Schedule auto-stop after specified timeout
+   */
+  scheduleAutoStop(timeoutMs: number): void {
+    this.clearAutoStopTimeout();
+    this.autoStopTimeout = setTimeout(() => {
+      console.error('OAuth callback server auto-stopping after timeout');
+      this.stop();
+    }, timeoutMs);
   }
 
   getRedirectUri(): string {
@@ -157,6 +176,8 @@ class CallbackServer {
   }
 
   stop(): void {
+    this.clearAutoStopTimeout();
+
     if (this.server) {
       this.authManager.clearAllPending();
 
@@ -283,6 +304,11 @@ export function getActualRedirectUri(): string {
 
 export async function startCallbackServer(): Promise<void> {
   return defaultCallbackServer.start();
+}
+
+export async function startCallbackServerWithAutoStop(timeoutMs: number): Promise<void> {
+  await defaultCallbackServer.start();
+  defaultCallbackServer.scheduleAutoStop(timeoutMs);
 }
 
 export function registerAuthenticationRequest(state: string, codeVerifier: string): void {

@@ -5,13 +5,14 @@ import { getConfig } from '../config.js';
 import { makeApiRequest } from '../api/client.js';
 import { loadTokens, clearTokens } from '../auth/tokens.js';
 import { generatePKCE, buildAuthUrl } from '../auth/oauth.js';
-import { registerAuthenticationRequest, getActualRedirectUri } from '../auth/server.js';
+import { registerAuthenticationRequest, getActualRedirectUri, startCallbackServerWithAutoStop } from '../auth/server.js';
 import {
   getCurrentCompanyId,
   setCurrentCompany,
   getCompanyInfo
 } from '../config/companies.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
+import { AUTH_TIMEOUT_MS } from '../constants.js';
 
 export function addAuthenticationTools(server: McpServer): void {
   server.tool(
@@ -62,6 +63,9 @@ export function addAuthenticationTools(server: McpServer): void {
             'クライアントシークレットを環境変数に設定してください。'
           );
         }
+
+        // Start callback server on-demand with auto-stop after timeout
+        await startCallbackServerWithAutoStop(AUTH_TIMEOUT_MS);
 
         const { codeVerifier, codeChallenge } = generatePKCE();
         const state = crypto.randomBytes(16).toString('hex');

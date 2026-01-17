@@ -48,7 +48,8 @@ vi.mock('../auth/oauth.js', () => ({
 
 vi.mock('../auth/server.js', () => ({
   registerAuthenticationRequest: vi.fn(),
-  getActualRedirectUri: vi.fn()
+  getActualRedirectUri: vi.fn(),
+  startCallbackServerWithAutoStop: vi.fn().mockResolvedValue(undefined)
 }));
 
 const mockCrypto = vi.mocked(crypto);
@@ -122,31 +123,33 @@ describe('tools', () => {
       it('should start OAuth authentication', async () => {
         const mockGeneratePKCE = await import('../auth/oauth.js');
         const mockBuildAuthUrl = await import('../auth/oauth.js');
-        const mockRegisterAuthenticationRequest = await import('../auth/server.js');
+        const mockServerModule = await import('../auth/server.js');
 
         vi.mocked(mockGeneratePKCE.generatePKCE).mockReturnValue({
           codeVerifier: 'test-verifier',
           codeChallenge: 'test-challenge'
         });
         vi.mocked(mockBuildAuthUrl.buildAuthUrl).mockReturnValue('https://auth.url');
-        vi.mocked(mockRegisterAuthenticationRequest.getActualRedirectUri).mockReturnValue('http://127.0.0.1:54321/callback');
+        vi.mocked(mockServerModule.getActualRedirectUri).mockReturnValue('http://127.0.0.1:54321/callback');
+        vi.mocked(mockServerModule.startCallbackServerWithAutoStop).mockResolvedValue(undefined);
         mockCrypto.randomBytes = vi.fn().mockReturnValue({
           toString: vi.fn().mockReturnValue('test-state-hex')
         });
 
         addAuthenticationTools(mockServer);
         const handler = mockTool.mock.calls.find(call => call[0] === 'freee_authenticate')?.[3];
-        
+
         const result = await handler();
 
+        expect(mockServerModule.startCallbackServerWithAutoStop).toHaveBeenCalledWith(300000); // AUTH_TIMEOUT_MS
         expect(mockGeneratePKCE.generatePKCE).toHaveBeenCalled();
-        expect(mockRegisterAuthenticationRequest.getActualRedirectUri).toHaveBeenCalled();
+        expect(mockServerModule.getActualRedirectUri).toHaveBeenCalled();
         expect(mockBuildAuthUrl.buildAuthUrl).toHaveBeenCalledWith(
           'test-challenge',
           'test-state-hex',
           'http://127.0.0.1:54321/callback'
         );
-        expect(mockRegisterAuthenticationRequest.registerAuthenticationRequest).toHaveBeenCalledWith(
+        expect(mockServerModule.registerAuthenticationRequest).toHaveBeenCalledWith(
           'test-state-hex',
           'test-verifier'
         );
