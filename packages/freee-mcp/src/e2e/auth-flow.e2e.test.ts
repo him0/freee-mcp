@@ -83,6 +83,7 @@ vi.mock('../auth/oauth.js', () => ({
 vi.mock('../auth/server.js', () => ({
   registerAuthenticationRequest: vi.fn(),
   getActualRedirectUri: vi.fn(() => 'http://127.0.0.1:54321/callback'),
+  startCallbackServerWithAutoStop: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock API client
