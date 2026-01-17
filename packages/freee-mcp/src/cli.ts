@@ -1,6 +1,7 @@
 import prompts from 'prompts';
 import crypto from 'node:crypto';
 import open from 'open';
+import { z } from 'zod';
 import {
   startCallbackServer,
   stopCallbackServer,
@@ -37,12 +38,18 @@ type SelectedCompany = {
   role: string;
 };
 
-type Company = {
-  id: number;
-  name: string;
-  display_name: string;
-  role: string;
-};
+const CompanySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  display_name: z.string(),
+  role: z.string(),
+});
+
+const CompaniesResponseSchema = z.object({
+  companies: z.array(CompanySchema).optional(),
+});
+
+type Company = z.infer<typeof CompanySchema>;
 
 async function fetchCompanies(accessToken: string): Promise<Company[]> {
   const response = await fetch(`${FREEE_API_URL}/api/1/companies`, {
@@ -59,8 +66,12 @@ async function fetchCompanies(accessToken: string): Promise<Company[]> {
     );
   }
 
-  const data = await response.json();
-  return data.companies || [];
+  const jsonData: unknown = await response.json();
+  const parseResult = CompaniesResponseSchema.safeParse(jsonData);
+  if (!parseResult.success) {
+    throw new Error(`Invalid companies response format: ${parseResult.error.message}`);
+  }
+  return parseResult.data.companies || [];
 }
 
 async function collectCredentials(): Promise<Credentials> {

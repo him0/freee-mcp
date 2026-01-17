@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { getConfig } from '../config.js';
-import { saveTokens, TokenData } from './tokens.js';
+import { saveTokens, TokenData, OAuthTokenResponseSchema } from './tokens.js';
 import { createTokenData } from './token-utils.js';
 import { safeParseJson } from '../utils/error.js';
 
@@ -47,8 +47,12 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string, 
     throw new Error(`Token exchange failed: ${response.status} ${JSON.stringify(errorData)}`);
   }
 
-  const tokenResponse = await response.json();
-  const tokens = createTokenData(tokenResponse, {
+  const jsonData: unknown = await response.json();
+  const parseResult = OAuthTokenResponseSchema.safeParse(jsonData);
+  if (!parseResult.success) {
+    throw new Error(`Invalid token response format: ${parseResult.error.message}`);
+  }
+  const tokens = createTokenData(parseResult.data, {
     scope: cfg.oauth.scope,
   });
 

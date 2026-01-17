@@ -195,5 +195,12 @@ export async function makeApiRequest(
     } as BinaryFileResponse;
   }
 
-  return response.json();
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(
+      `Failed to parse API response as JSON. Status: ${response.status}, Content-Type: ${contentType}, Body preview: ${text.slice(0, 200)}`
+    );
+  }
 }

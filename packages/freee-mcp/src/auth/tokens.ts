@@ -14,6 +14,17 @@ export const TokenDataSchema = z.object({
   scope: z.string(),
 });
 
+// OAuth token response schema (from freee API)
+export const OAuthTokenResponseSchema = z.object({
+  access_token: z.string(),
+  refresh_token: z.string().optional(),
+  expires_in: z.number(),
+  token_type: z.string().optional(),
+  scope: z.string().optional(),
+});
+
+export type OAuthTokenResponse = z.infer<typeof OAuthTokenResponseSchema>;
+
 export interface TokenData {
   access_token: string;
   refresh_token: string;
@@ -75,11 +86,11 @@ export function isTokenValid(tokens: TokenData): boolean {
 async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
   // Try to find and migrate legacy company-specific token files
   const configDir = getConfigDir();
-  
+
   try {
     const files = await fs.readdir(configDir);
     const tokenFiles = files.filter(file => file.startsWith('tokens-') && file.endsWith('.json'));
-    
+
     if (tokenFiles.length > 0) {
       // Use the most recent token file
       const tokenFilePath = path.join(configDir, tokenFiles[0]);
@@ -94,7 +105,7 @@ async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
 
       // Migrate to new format
       await saveTokens(tokens);
-      
+
       // Clean up all legacy token files
       await Promise.all(
         tokenFiles.map(file =>
@@ -103,7 +114,7 @@ async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
           })
         )
       );
-      
+
       console.error('[info] Migrated legacy company-specific tokens to user-based tokens');
       return tokens;
     }
@@ -134,8 +145,12 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
     throw new Error(`Token refresh failed: ${response.status} ${JSON.stringify(errorData)}`);
   }
 
-  const tokenResponse = await response.json();
-  const tokens = createTokenData(tokenResponse, {
+  const jsonData: unknown = await response.json();
+  const parseResult = OAuthTokenResponseSchema.safeParse(jsonData);
+  if (!parseResult.success) {
+    throw new Error(`Invalid token response format: ${parseResult.error.message}`);
+  }
+  const tokens = createTokenData(parseResult.data, {
     refreshToken,
     scope: cfg.oauth.scope,
   });
@@ -158,18 +173,18 @@ export async function clearTokens(): Promise<void> {
     console.error('[error] Failed to clear tokens:', error);
     throw error;
   }
-  
+
   // Also try to clear any legacy company-specific token files
   await clearLegacyTokens();
 }
 
 async function clearLegacyTokens(): Promise<void> {
   const configDir = getConfigDir();
-  
+
   try {
     const files = await fs.readdir(configDir);
     const tokenFiles = files.filter(file => file.startsWith('tokens-') && file.endsWith('.json'));
-    
+
     await Promise.all(
       tokenFiles.map(file =>
         fs.unlink(path.join(configDir, file)).catch((err) => {
@@ -177,7 +192,7 @@ async function clearLegacyTokens(): Promise<void> {
         })
       )
     );
-    
+
     if (tokenFiles.length > 0) {
       console.error('[info] Cleared legacy company-specific token files');
     }
