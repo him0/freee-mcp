@@ -284,7 +284,7 @@ describe('tokens', () => {
         ...mockTokenData,
         expires_at: Date.now() - 3600000
       };
-      
+
       mockFs.readFile.mockResolvedValue(JSON.stringify(expiredToken));
       mockFetch.mockResolvedValue({
         ok: true,
@@ -300,6 +300,22 @@ describe('tokens', () => {
       const result = await getValidAccessToken();
 
       expect(result).toBe('new-access-token');
+    });
+
+    it('should throw error when token refresh fails', async () => {
+      const expiredToken = {
+        ...mockTokenData,
+        expires_at: Date.now() - 3600000
+      };
+
+      mockFs.readFile.mockResolvedValue(JSON.stringify(expiredToken));
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: () => Promise.resolve({ error: 'invalid_grant' })
+      });
+
+      await expect(getValidAccessToken()).rejects.toThrow('Token refresh failed: 401');
     });
   });
 });

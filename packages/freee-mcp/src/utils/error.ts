@@ -1,12 +1,25 @@
 /**
- * Safely parses JSON from a Response object.
- * Returns an empty object if parsing fails.
+ * Result type for JSON parsing operations.
+ * Allows callers to distinguish between success and failure while preserving error context.
+ */
+export type JsonParseResult =
+  | { success: true; data: Record<string, unknown> }
+  | { success: false; error: string };
+
+/**
+ * Parses JSON from a Response object with Result type pattern.
+ * Preserves error context on failure instead of silently returning empty object.
  *
  * @param response - The fetch Response object to parse
- * @returns Parsed JSON data or empty object on failure
+ * @returns Result object with parsed data or error message
  */
-export async function safeParseJson(response: Response): Promise<Record<string, unknown>> {
-  return response.json().catch(() => ({}));
+export async function parseJsonResponse(response: Response): Promise<JsonParseResult> {
+  try {
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 /**
