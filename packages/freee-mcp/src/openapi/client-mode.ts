@@ -1,20 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { makeApiRequest, BinaryFileResponse } from '../api/client.js';
+import { makeApiRequest, BinaryFileResponse, isBinaryFileResponse } from '../api/client.js';
 import { validatePathForService, listAllAvailablePaths, ApiType } from './schema-loader.js';
 import { createTextResponse, formatErrorMessage, TextResponse } from '../utils/error.js';
-
-/**
- * Check if result is a binary file response
- */
-function isBinaryFileResponse(result: unknown): result is BinaryFileResponse {
-  return (
-    typeof result === 'object' &&
-    result !== null &&
-    'type' in result &&
-    (result as BinaryFileResponse).type === 'binary'
-  );
-}
 
 /**
  * Format binary file response for display

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { makeApiRequest, BinaryFileResponse } from './client.js';
+import { makeApiRequest, BinaryFileResponse, isBinaryFileResponse } from './client.js';
 import fs from 'fs/promises';
 
 // Test constants (defined after mocks due to hoisting)
@@ -309,15 +309,3 @@ describe('client', () => {
     });
   });
 });
-
-/**
- * Type guard for BinaryFileResponse
- */
-function isBinaryFileResponse(result: unknown): result is BinaryFileResponse {
-  return (
-    typeof result === 'object' &&
-    result !== null &&
-    'type' in result &&
-    (result as BinaryFileResponse).type === 'binary'
-  );
-}
