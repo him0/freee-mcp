@@ -5,6 +5,7 @@ import { getConfig } from '../config.js';
 import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 import { safeParseJson } from '../utils/error.js';
 import { createTokenData } from './token-utils.js';
+import { tryMigrateLegacyTokens, clearLegacyTokens } from './token-migration.js';
 
 export const TokenDataSchema = z.object({
   access_token: z.string(),
@@ -68,7 +69,7 @@ export async function loadTokens(): Promise<TokenData | null> {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       // Try to migrate from legacy company-specific token files
-      const legacyTokens = await tryMigrateLegacyTokens();
+      const legacyTokens = await tryMigrateLegacyTokens(saveTokens);
       if (legacyTokens) {
         return legacyTokens;
       }
@@ -81,48 +82,6 @@ export async function loadTokens(): Promise<TokenData | null> {
 
 export function isTokenValid(tokens: TokenData): boolean {
   return Date.now() < tokens.expires_at;
-}
-
-async function tryMigrateLegacyTokens(): Promise<TokenData | null> {
-  // Try to find and migrate legacy company-specific token files
-  const configDir = getConfigDir();
-
-  try {
-    const files = await fs.readdir(configDir);
-    const tokenFiles = files.filter(file => file.startsWith('tokens-') && file.endsWith('.json'));
-
-    if (tokenFiles.length > 0) {
-      // Use the most recent token file
-      const tokenFilePath = path.join(configDir, tokenFiles[0]);
-      const data = await fs.readFile(tokenFilePath, 'utf8');
-      const parsed = JSON.parse(data);
-      const result = TokenDataSchema.safeParse(parsed);
-      if (!result.success) {
-        console.error('[error] Invalid legacy token file:', result.error.message);
-        return null;
-      }
-      const tokens = result.data;
-
-      // Migrate to new format
-      await saveTokens(tokens);
-
-      // Clean up all legacy token files
-      await Promise.all(
-        tokenFiles.map(file =>
-          fs.unlink(path.join(configDir, file)).catch((err) => {
-            console.error(`[warn] Failed to clean up legacy token file ${file}:`, err);
-          })
-        )
-      );
-
-      console.error('[info] Migrated legacy company-specific tokens to user-based tokens');
-      return tokens;
-    }
-  } catch (error) {
-    console.error('[warn] Error during legacy token migration attempt:', error);
-  }
-
-  return null;
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<TokenData> {
@@ -176,29 +135,6 @@ export async function clearTokens(): Promise<void> {
 
   // Also try to clear any legacy company-specific token files
   await clearLegacyTokens();
-}
-
-async function clearLegacyTokens(): Promise<void> {
-  const configDir = getConfigDir();
-
-  try {
-    const files = await fs.readdir(configDir);
-    const tokenFiles = files.filter(file => file.startsWith('tokens-') && file.endsWith('.json'));
-
-    await Promise.all(
-      tokenFiles.map(file =>
-        fs.unlink(path.join(configDir, file)).catch((err) => {
-          console.error(`[warn] Failed to clear legacy token file ${file}:`, err);
-        })
-      )
-    );
-
-    if (tokenFiles.length > 0) {
-      console.error('[info] Cleared legacy company-specific token files');
-    }
-  } catch (error) {
-    console.error('[warn] Error during legacy token cleanup:', error);
-  }
 }
 
 export async function getValidAccessToken(): Promise<string | null> {
