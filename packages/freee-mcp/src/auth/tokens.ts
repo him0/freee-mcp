@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getConfig } from '../config.js';
 import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 import { safeParseJson } from '../utils/error.js';
+import { createTokenData } from './token-utils.js';
 
 export const TokenDataSchema = z.object({
   access_token: z.string(),
@@ -134,13 +135,10 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
   }
 
   const tokenResponse = await response.json();
-  const tokens: TokenData = {
-    access_token: tokenResponse.access_token,
-    refresh_token: tokenResponse.refresh_token || refreshToken,
-    expires_at: Date.now() + (tokenResponse.expires_in * 1000),
-    token_type: tokenResponse.token_type || 'Bearer',
-    scope: tokenResponse.scope || cfg.oauth.scope,
-  };
+  const tokens = createTokenData(tokenResponse, {
+    refreshToken,
+    scope: cfg.oauth.scope,
+  });
 
   await saveTokens(tokens);
   return tokens;

@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { getConfig } from '../config.js';
-import { TokenData, saveTokens } from './tokens.js';
+import { saveTokens, TokenData } from './tokens.js';
+import { createTokenData } from './token-utils.js';
 import { safeParseJson } from '../utils/error.js';
 
 export function generatePKCE(): { codeVerifier: string; codeChallenge: string } {
@@ -47,13 +48,9 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string, 
   }
 
   const tokenResponse = await response.json();
-  const tokens: TokenData = {
-    access_token: tokenResponse.access_token,
-    refresh_token: tokenResponse.refresh_token,
-    expires_at: Date.now() + (tokenResponse.expires_in * 1000),
-    token_type: tokenResponse.token_type || 'Bearer',
-    scope: tokenResponse.scope || cfg.oauth.scope,
-  };
+  const tokens = createTokenData(tokenResponse, {
+    scope: cfg.oauth.scope,
+  });
 
   await saveTokens(tokens);
   return tokens;
