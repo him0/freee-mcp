@@ -16,6 +16,18 @@ export interface BinaryFileResponse {
 }
 
 /**
+ * Type guard for BinaryFileResponse
+ */
+export function isBinaryFileResponse(result: unknown): result is BinaryFileResponse {
+  return (
+    typeof result === 'object' &&
+    result !== null &&
+    'type' in result &&
+    (result as BinaryFileResponse).type === 'binary'
+  );
+}
+
+/**
  * Check if Content-Type indicates binary response
  */
 function isBinaryContentType(contentType: string): boolean {
