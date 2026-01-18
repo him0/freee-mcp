@@ -271,7 +271,7 @@ describe('client', () => {
       });
 
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
-        'API request failed: 500\n\n詳細: {}'
+        'API request failed: 500\n\n詳細: (JSON parse failed: Invalid JSON)'
       );
     });
 

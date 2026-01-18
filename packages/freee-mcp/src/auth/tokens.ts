@@ -3,7 +3,7 @@ import path from 'path';
 import { z } from 'zod';
 import { getConfig } from '../config.js';
 import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
-import { safeParseJson } from '../utils/error.js';
+import { parseJsonResponse } from '../utils/error.js';
 import { createTokenData } from './token-utils.js';
 import { tryMigrateLegacyTokens, clearLegacyTokens } from './token-migration.js';
 
@@ -100,8 +100,11 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
   });
 
   if (!response.ok) {
-    const errorData = await safeParseJson(response);
-    throw new Error(`Token refresh failed: ${response.status} ${JSON.stringify(errorData)}`);
+    const result = await parseJsonResponse(response);
+    const errorInfo = result.success
+      ? JSON.stringify(result.data)
+      : `(JSON parse failed: ${result.error})`;
+    throw new Error(`Token refresh failed: ${response.status} ${errorInfo}`);
   }
 
   const jsonData: unknown = await response.json();
@@ -147,11 +150,7 @@ export async function getValidAccessToken(): Promise<string | null> {
     return tokens.access_token;
   }
 
-  try {
-    const newTokens = await refreshAccessToken(tokens.refresh_token);
-    return newTokens.access_token;
-  } catch (error) {
-    console.error('[warn] Failed to refresh token:', error);
-    return null;
-  }
+  // Let refresh errors propagate to caller for proper error handling
+  const newTokens = await refreshAccessToken(tokens.refresh_token);
+  return newTokens.access_token;
 }

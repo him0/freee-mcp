@@ -18,7 +18,7 @@ import {
   type McpTarget,
 } from './config/mcp-config.js';
 import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS, FREEE_API_URL } from './constants.js';
-import { safeParseJson } from './utils/error.js';
+import { parseJsonResponse } from './utils/error.js';
 
 type Credentials = {
   clientId: string;
@@ -60,9 +60,12 @@ async function fetchCompanies(accessToken: string): Promise<Company[]> {
   });
 
   if (!response.ok) {
-    const errorData = await safeParseJson(response);
+    const result = await parseJsonResponse(response);
+    const errorInfo = result.success
+      ? JSON.stringify(result.data)
+      : `(JSON parse failed: ${result.error})`;
     throw new Error(
-      `事業所一覧の取得に失敗しました: ${response.status} ${JSON.stringify(errorData)}`,
+      `事業所一覧の取得に失敗しました: ${response.status} ${errorInfo}`,
     );
   }
 
