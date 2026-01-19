@@ -139,13 +139,24 @@ class CallbackServer {
       return;
     }
 
-    const preferredPort = getConfig().oauth.callbackPort;
-    const port = await this.findAvailablePort(preferredPort);
-    this.port = port;
+    const port = getConfig().oauth.callbackPort;
+    const isAvailable = await this.checkPortAvailable(port);
 
-    if (port !== preferredPort) {
-      console.error(`Warning: Port ${preferredPort} is in use. Using fallback port ${port} for OAuth callback server.`);
+    if (!isAvailable) {
+      const redirectUri = `http://127.0.0.1:${port}/callback`;
+      throw new Error(
+        `ポート ${port} は既に使用されています。\n\n` +
+        `freee アプリにコールバックURL (${redirectUri}) を登録している場合、` +
+        `ポートを変更すると認証が失敗します。\n\n` +
+        `解決方法:\n` +
+        `  1. ポート ${port} を使用しているプロセスを終了する\n` +
+        `     (例: lsof -i :${port} でプロセスを確認)\n` +
+        `  2. または、設定でポートを変更し、freee アプリのコールバックURLも更新する\n` +
+        `     (freee-mcp configure を実行して再設定)`
+      );
     }
+
+    this.port = port;
 
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => {
@@ -203,15 +214,6 @@ class CallbackServer {
         resolve(false);
       });
     });
-  }
-
-  private async findAvailablePort(startPort: number, maxTries: number = 50): Promise<number> {
-    for (let port = startPort; port < startPort + maxTries; port++) {
-      if (await this.checkPortAvailable(port)) {
-        return port;
-      }
-    }
-    throw new Error(`No available port found after checking ${maxTries} ports starting from ${startPort}`);
   }
 
   private handleCallback(url: URL, res: http.ServerResponse): void {
