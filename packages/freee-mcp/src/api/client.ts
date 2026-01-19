@@ -124,7 +124,7 @@ export async function makeApiRequest(
     body: body ? JSON.stringify(typeof body === 'string' ? JSON.parse(body) : body) : undefined,
   });
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     const result = await parseJsonResponse(response);
     const errorInfo = result.success
       ? JSON.stringify(result.data)
@@ -138,6 +138,26 @@ export async function makeApiRequest(
       `2. freee側でアプリケーション設定が正しいか（リダイレクトURI等）\n` +
       `3. トークンの有効期限が切れていないか\n` +
       `4. 事業所IDが正しいか（freee_get_current_company で確認）`
+    );
+  }
+
+  if (response.status === 403) {
+    const result = await parseJsonResponse(response);
+    const errorInfo = result.success
+      ? JSON.stringify(result.data)
+      : `(JSON parse failed: ${result.error})`;
+    throw new Error(
+      `アクセスが拒否されました (403 Forbidden)。\n` +
+      `現在の事業所ID: ${companyId}\n` +
+      `エラー詳細: ${errorInfo}\n\n` +
+      `考えられる原因:\n` +
+      `1. APIレートリミットに達した可能性があります。しばらく時間を置いてから再度お試しください。\n` +
+      `2. このリソースへのアクセス権限がない可能性があります。\n` +
+      `3. アプリケーションに必要なスコープが付与されていない可能性があります。\n\n` +
+      `対処方法:\n` +
+      `- レートリミットの場合: 数分待ってからリトライしてください。\n` +
+      `- 権限の問題の場合: freeeの開発者ポータルでアプリケーションの権限設定を確認してください。\n` +
+      `- スコープの問題の場合: freee_authenticate で再認証して必要なスコープを付与してください。`
     );
   }
 
