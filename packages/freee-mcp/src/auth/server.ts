@@ -136,6 +136,7 @@ class CallbackServer {
 
   async start(): Promise<void> {
     if (this.server) {
+      console.error('OAuth callback server is already running. If authentication is not working, try restarting the MCP server.');
       return;
     }
 
@@ -175,8 +176,11 @@ class CallbackServer {
       });
 
       this.server.on('error', (error) => {
-        console.error(`Callback server error:`, error);
-        reject(error);
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`OAuth callback server failed to start: ${message}`);
+        this.server = null;
+        this.port = null;
+        reject(new Error(`Failed to start OAuth callback server: ${message}`));
       });
 
       this.server.listen(port, '127.0.0.1', () => {
