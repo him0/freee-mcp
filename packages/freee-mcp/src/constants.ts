@@ -44,3 +44,16 @@ export const CONFIG_FILE_PERMISSION = 0o600;
  * Base URL for freee API
  */
 export const FREEE_API_URL = 'https://api.freee.co.jp';
+
+/**
+ * Package version for freee-mcp
+ * This should be kept in sync with package.json version
+ */
+export const PACKAGE_VERSION = '0.6.0';
+
+/**
+ * User-Agent header value for API requests
+ * Format follows RFC 7231: ProductName/Version (comments)
+ * @see https://datatracker.ietf.org/doc/html/rfc7231#section-5.5.3
+ */
+export const USER_AGENT = `freee-mcp/${PACKAGE_VERSION} (MCP Server; +https://github.com/him0/freee-mcp)`;
