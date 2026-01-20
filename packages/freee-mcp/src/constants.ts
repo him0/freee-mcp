@@ -47,9 +47,11 @@ export const FREEE_API_URL = 'https://api.freee.co.jp';
 
 /**
  * Package version for freee-mcp
- * This should be kept in sync with package.json version
+ * Injected at build time from package.json via esbuild define
+ * Falls back to 'dev' for development/test environments
  */
-export const PACKAGE_VERSION = '0.6.0';
+declare const __PACKAGE_VERSION__: string | undefined;
+export const PACKAGE_VERSION = typeof __PACKAGE_VERSION__ !== 'undefined' ? __PACKAGE_VERSION__ : 'dev';
 
 /**
  * User-Agent header value for API requests
