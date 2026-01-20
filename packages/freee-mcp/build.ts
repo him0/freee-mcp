@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { dependencies } from './package.json';
+import { dependencies, version } from './package.json';
 import { chmod, copyFile, mkdir, readdir } from 'fs/promises';
 import { join } from 'path';
 
@@ -17,6 +17,9 @@ await build({
   target: ['ES2022'],
   banner: {
     js: '#! /usr/bin/env node\n',
+  },
+  define: {
+    __PACKAGE_VERSION__: JSON.stringify(version),
   },
 });
 await chmod(binFile, 0o755);

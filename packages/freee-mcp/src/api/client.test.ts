@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { makeApiRequest, BinaryFileResponse, isBinaryFileResponse } from './client.js';
+import { USER_AGENT } from '../constants.js';
 import fs from 'fs/promises';
 
 // Test constants (defined after mocks due to hoisting)
@@ -132,6 +133,7 @@ describe('client', () => {
           headers: {
             Authorization: `Bearer ${TEST_ACCESS_TOKEN}`,
             'Content-Type': 'application/json',
+            'User-Agent': USER_AGENT,
           },
           body: undefined,
         }
@@ -178,6 +180,7 @@ describe('client', () => {
           headers: {
             Authorization: `Bearer ${TEST_ACCESS_TOKEN}`,
             'Content-Type': 'application/json',
+            'User-Agent': USER_AGENT,
           },
           body: JSON.stringify(requestBody),
         }

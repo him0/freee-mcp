@@ -2,6 +2,7 @@ import { getConfig } from '../config.js';
 import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
 import { parseJsonResponse } from '../utils/error.js';
+import { USER_AGENT } from '../constants.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -120,6 +121,7 @@ export async function makeApiRequest(
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
+      'User-Agent': USER_AGENT,
     },
     body: body ? JSON.stringify(typeof body === 'string' ? JSON.parse(body) : body) : undefined,
   });
