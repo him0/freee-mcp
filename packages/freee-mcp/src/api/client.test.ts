@@ -247,12 +247,21 @@ describe('client', () => {
       );
     });
 
-    it('should throw authentication error for 403 response', async () => {
+    it('should throw rate limit / permission error for 403 response', async () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
       mockFetch.mockResolvedValue(createErrorResponse(403, { error: 'insufficient_scope' }));
 
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
-        '認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。'
+        'アクセス拒否 (403)'
+      );
+    });
+
+    it('should include rate limit hint in 403 error message', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue(createErrorResponse(403, { error: 'rate_limit_exceeded' }));
+
+      await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
+        'レートリミットの可能性があります'
       );
     });
 

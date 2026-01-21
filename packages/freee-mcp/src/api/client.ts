@@ -126,7 +126,7 @@ export async function makeApiRequest(
     body: body ? JSON.stringify(typeof body === 'string' ? JSON.parse(body) : body) : undefined,
   });
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     const result = await parseJsonResponse(response);
     const errorInfo = result.success
       ? JSON.stringify(result.data)
@@ -140,6 +140,19 @@ export async function makeApiRequest(
       `2. freee側でアプリケーション設定が正しいか（リダイレクトURI等）\n` +
       `3. トークンの有効期限が切れていないか\n` +
       `4. 事業所IDが正しいか（freee_get_current_company で確認）`
+    );
+  }
+
+  if (response.status === 403) {
+    const result = await parseJsonResponse(response);
+    const errorInfo = result.success
+      ? JSON.stringify(result.data)
+      : `(JSON parse failed: ${result.error})`;
+    throw new Error(
+      `アクセス拒否 (403): ${errorInfo}\n` +
+      `事業所ID: ${companyId}\n\n` +
+      `レートリミットの可能性があります。数分待ってから再試行してください。\n` +
+      `それでも解決しない場合は、アプリの権限設定を確認するか、freee_authenticate で再認証してください。`
     );
   }
 
