@@ -249,7 +249,7 @@ describe('client', () => {
       mockFetch.mockResolvedValue(createErrorResponse(403, { error: 'insufficient_scope' }));
 
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
-        'アクセスが拒否されました (403 Forbidden)'
+        'アクセス拒否 (403)'
       );
     });
 
@@ -258,7 +258,7 @@ describe('client', () => {
       mockFetch.mockResolvedValue(createErrorResponse(403, { error: 'rate_limit_exceeded' }));
 
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
-        'APIレートリミットに達した可能性があります'
+        'レートリミットの可能性があります'
       );
     });
 
