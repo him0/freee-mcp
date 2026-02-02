@@ -1,4 +1,5 @@
 {
+  "private": true,
   "type": "module",
   "name": "@him0/freee-agent",
   "version": "0.1.0",
