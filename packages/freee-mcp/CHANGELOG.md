@@ -1,5 +1,11 @@
 # @him0/freee-mcp
 
+## 0.6.3
+
+### Patch Changes
+
+- 8b27a9f: freee-agent パッケージを private に設定し、npm publish 対象から除外
+
 ## 0.6.2
 
 ### Patch Changes
