@@ -1,18 +1,15 @@
 name: Publish
 
 on:
-  pull_request:
-    types: [closed]
   workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   publish:
     name: Publish to npm
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.pull_request.merged == true &&
-       contains(github.event.pull_request.labels.*.name, 'release'))
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
       packages: write
