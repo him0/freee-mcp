@@ -1,5 +1,11 @@
 # @him0/freee-mcp
 
+## 0.6.4
+
+### Patch Changes
+
+- 74a2f5b: fix: エラーメッセージ内の誤ったツール名を修正 (freee_set_company → freee_set_current_company, 旧ツール名 → freee_api_get)
+
 ## 0.6.3
 
 ### Patch Changes

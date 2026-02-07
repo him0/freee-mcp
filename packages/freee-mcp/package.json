@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@him0/freee-mcp",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "bin": {
     "freee-mcp": "./bin/cli.js"
   },
