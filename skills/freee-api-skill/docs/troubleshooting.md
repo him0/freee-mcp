@@ -1,6 +1,6 @@
 # トラブルシューティング
 
-freee 経費申請作成スキル使用時の一般的な問題と解決方法。
+freee API スキル使用時の一般的な問題と解決方法。
 
 ## 認証関連
 
@@ -18,18 +18,20 @@ freee_authenticate
 
 ### 問題: "403 Forbidden"
 
-原因: 必要な権限がない
+原因: 必要な権限がない、またはレートリミット
 
 解決方法:
 
 1. freee 開発者ポータルでアプリケーションの権限を確認
-2. 必要な権限（経費申請の作成、閲覧など）が有効化されているか確認
+2. 必要な権限が有効化されているか確認
 3. 権限を追加した場合は再認証が必要
 
 ```
 freee_clear_auth
 freee_authenticate
 ```
+
+レートリミットの場合は数分待ってから再試行してください。
 
 ### 問題: OAuth 認証画面が表示されない
 
@@ -54,7 +56,7 @@ freee_authenticate
 freee_list_companies
 
 # 正しい事業所IDを設定
-freee_set_current_company [正しい事業所ID]
+freee_set_current_company { "company_id": 12345 }
 ```
 
 ### 問題: 事業所を切り替えたい
@@ -63,17 +65,17 @@ freee_set_current_company [正しい事業所ID]
 
 ```
 freee_list_companies
-freee_set_current_company [新しい事業所ID]
-freee_current_user  # 切り替わったことを確認
+freee_set_current_company { "company_id": 12345 }
+freee_get_current_company  # 切り替わったことを確認
 ```
 
 ### 問題: 複数事業所がある場合どれを選ぶべきか
 
 解決方法:
 
-- 経費申請を作成したい事業所を選択
+- 操作したい事業所を選択
 - 不明な場合は経理部門に確認
-- `freee_list_companies`で事業所の説明を確認
+- `freee_list_companies` で事業所の説明を確認
 
 ### 問題: "company_id の不整合"
 
@@ -86,7 +88,7 @@ freee_current_user  # 切り替わったことを確認
 freee_get_current_company
 
 # 方法1: 事業所を切り替える
-freee_set_company [リクエストで使用したい事業所ID]
+freee_set_current_company { "company_id": 12345 }
 
 # 方法2: リクエストの company_id を現在の事業所に合わせる
 ```
@@ -103,10 +105,10 @@ freee_set_company [リクエストで使用したい事業所ID]
 
 ```
 # 有効な経費科目IDを確認
-get_expense_application_line_templates
-  company_id: [事業所ID]
-
-# 正しいIDを使用して再実行
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/expense_application_line_templates"
+}
 ```
 
 詳細: 各事業所で利用可能な経費科目は異なります。必ず事前に確認してください。
@@ -118,11 +120,11 @@ get_expense_application_line_templates
 解決方法: 正の整数を指定
 
 ```json
-"amount": 5000     // ✅ 正しい
-"amount": -100     // ❌ 負の数
-"amount": 0        // ❌ ゼロ
-"amount": "5000"   // ❌ 文字列（JSONでは整数で指定）
-"amount": 5000.5   // ❌ 小数（整数のみ）
+"amount": 5000     // 正しい
+"amount": -100     // 負の数 - NG
+"amount": 0        // ゼロ - NG
+"amount": "5000"   // 文字列 - NG（JSONでは整数で指定）
+"amount": 5000.5   // 小数 - NG（整数のみ）
 ```
 
 ### 問題: "Invalid date format"
@@ -132,10 +134,10 @@ get_expense_application_line_templates
 解決方法: "yyyy-mm-dd" 形式を使用
 
 ```json
-"transaction_date": "2025-10-19"           // ✅ 正しい
-"transaction_date": "10/19/2025"           // ❌ スラッシュ区切り
-"transaction_date": "2025-10-19T00:00:00Z" // ❌ 時刻部分は不要
-"transaction_date": "20251019"             // ❌ ハイフンなし
+"transaction_date": "2025-10-19"           // 正しい
+"transaction_date": "10/19/2025"           // NG - スラッシュ区切り
+"transaction_date": "2025-10-19T00:00:00Z" // NG - 時刻部分は不要
+"transaction_date": "20251019"             // NG - ハイフンなし
 ```
 
 ### 問題: "issue_date must be after transaction_date"
@@ -146,7 +148,7 @@ get_expense_application_line_templates
 
 ```json
 "transaction_date": "2025-10-15",  // 発生日
-"issue_date": "2025-10-19"         // ✅ 申請日は発生日以降
+"issue_date": "2025-10-19"         // 申請日は発生日以降
 ```
 
 注意: 通常、申請日は「今日」または発生日以降の日付を指定します。
@@ -158,9 +160,9 @@ get_expense_application_line_templates
 解決方法: わかりやすいタイトルを設定
 
 ```json
-"title": "2025年10月 東京出張経費"  // ✅ 具体的
-"title": "経費申請"                  // ⚠️ 抽象的だが可
-"title": ""                         // ❌ 空文字
+"title": "2025年10月 東京出張経費"  // 具体的で推奨
+"title": "経費申請"                  // 抽象的だが可
+"title": ""                         // 空文字 - NG
 ```
 
 ### 問題: "expense_application_lines is required"
@@ -189,10 +191,10 @@ get_expense_application_line_templates
 
 ```
 # 部門一覧を確認
-get_sections
-  company_id: [事業所ID]
-
-# 有効な部門IDを使用
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/sections"
+}
 ```
 
 ### 問題: 申請作成後に内容を確認したい
@@ -200,16 +202,15 @@ get_sections
 解決方法:
 
 ```
-# 申請番号がわかる場合
-get_expense_applications
-  company_id: [事業所ID]
-  application_number: [申請番号]
-
 # 最近の申請を確認
-get_expense_applications
-  company_id: [事業所ID]
-  limit: 10
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/expense_applications",
+  "query": { "limit": 10 }
+}
 ```
+
+Web画面での確認: `https://secure.freee.co.jp/expense_applications/{id}`
 
 ## データ取得時の問題
 
@@ -227,15 +228,17 @@ get_expense_applications
 freee_get_current_company
 
 # 経費科目を取得
-get_expense_application_line_templates
-  company_id: [確認した事業所ID]
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/expense_application_line_templates"
+}
 ```
 
 ### 問題: "経費科目が多すぎてどれを選べばいいかわからない"
 
 解決方法:
 
-1. 経費科目の`name`と`description`を確認
+1. 経費科目の `name` と `description` を確認
 2. 一般的な科目:
    - 交通費: 電車、バス、タクシー
    - 宿泊費: ホテル、旅館
@@ -254,22 +257,22 @@ get_expense_application_line_templates
 
 解決方法:
 
-- `limit`パラメータで取得件数を制限
+- `limit` パラメータで取得件数を制限
 - 必要なデータのみ取得するよう条件を絞る
 
 ## よくある質問
 
 ### Q: 経費申請を下書き保存できますか？
 
-A: freee API では、申請作成時に自動的に申請されます。下書き保存したい場合は、ローカルでデータを保存しておき、後で`post_expense_applications`を実行してください。
+A: freee API では、申請作成時に自動的に申請されます。下書き保存したい場合は、ローカルでデータを保存しておき、後で API を実行してください。
 
 ### Q: 領収書画像を添付できますか？
 
-A: 領収書の添付は、現在の MCP サーバーではサポートされていない可能性があります。領収書添付が必要な場合は、freee Web UI を使用してください。
+A: ファイルボックス API (`/api/1/receipts`) を使用して証憑をアップロードし、`receipt_ids` で経費申請や取引に紐づけることができます。
 
 ### Q: 作成した申請を修正できますか？
 
-A: 申請作成後の修正は、現在の MCP サーバーではサポートされていない可能性があります。修正が必要な場合は、freee Web UI を使用するか、申請を削除して再作成してください。
+A: 下書き・差戻し状態の経費申請は PUT API で更新できます。申請中・承認済みの場合は freee Web UI を使用してください。
 
 ### Q: 複数の経費をまとめて申請すべきですか？
 
@@ -288,11 +291,10 @@ https://developer.freee.co.jp/docs
 
 ### GitHub Issues
 
-https://github.com/him0/freee-skill/issues
+https://github.com/him0/freee-mcp/issues
 
-### よくある質問の前に確認すること
+### 問い合わせ前に確認すること
 
-1. [ ] `freee_status`で状態を確認しましたか？
-2. [ ] `freee_auth_status`で認証を確認しましたか？
-3. [ ] `freee_get_current_company`で事業所を確認しましたか？
-4. [ ] エラーメッセージを正確にコピーしましたか？
+1. `freee_auth_status` で認証を確認しましたか？
+2. `freee_get_current_company` で事業所を確認しましたか？
+3. エラーメッセージを正確にコピーしましたか？

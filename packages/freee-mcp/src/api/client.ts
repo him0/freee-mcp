@@ -103,7 +103,7 @@ export async function makeApiRequest(
   if (paramsCompanyId !== undefined && String(paramsCompanyId) !== String(companyId)) {
     throw new Error(
       `company_id の不整合: リクエストの company_id (${paramsCompanyId}) と現在の事業所 (${companyId}) が異なります。\n` +
-      `freee_set_company で事業所を切り替えるか、リクエストの company_id を修正してください。`
+      `freee_set_current_company で事業所を切り替えるか、リクエストの company_id を修正してください。`
     );
   }
 
@@ -112,7 +112,7 @@ export async function makeApiRequest(
   if (bodyCompanyId !== undefined && String(bodyCompanyId) !== String(companyId)) {
     throw new Error(
       `company_id の不整合: リクエストボディの company_id (${bodyCompanyId}) と現在の事業所 (${companyId}) が異なります。\n` +
-      `freee_set_company で事業所を切り替えるか、リクエストの company_id を修正してください。`
+      `freee_set_current_company で事業所を切り替えるか、リクエストの company_id を修正してください。`
     );
   }
 
@@ -185,7 +185,7 @@ export async function makeApiRequest(
           if (response.status === 400) {
             errorMessage += `\n\nヒント: 不正なリクエストエラーが発生しました。`;
             errorMessage += `\n既存のデータを取得して正しい構造を確認することをお勧めします。`;
-            errorMessage += `\n例: get_items, get_partners, get_account_items などで既存データの構造を確認してください。`;
+            errorMessage += `\n例: freee_api_get で既存データを取得し、正しい構造を確認してください。`;
           }
         }
       }
