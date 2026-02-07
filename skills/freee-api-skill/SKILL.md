@@ -1,6 +1,6 @@
 ---
 name: freee-api-skill
-description: "freee 会計・人事労務 API を MCP 経由で操作するスキル。詳細なAPIリファレンスと使い方ガイドを提供。"
+description: "freee API を MCP 経由で操作するスキル。会計・人事労務・請求書・工数管理・販売の詳細APIリファレンスと使い方ガイドを提供。"
 ---
 
 # freee API スキル
@@ -39,13 +39,7 @@ Claude を再起動後、`freee_auth_status` ツールで認証状態を確認�
 
 API リファレンスが `references/` に含まれます。各リファレンスにはパラメータ、リクエストボディ、レスポンスの詳細情報があります。
 
-検索方法:
-
-```
-pattern: "経費"
-path: "skills/freee-api-skill/references"
-output_mode: "files_with_matches"
-```
+目的のAPIを探すには、`references/` ディレクトリ内のファイルをキーワード検索してください。
 
 主なリファレンス:
 
@@ -53,6 +47,7 @@ output_mode: "files_with_matches"
 - `accounting-expense-applications.md` - 経費申請
 - `hr-employees.md` - 従業員情報
 - `hr-attendances.md` - 勤怠
+- `invoice-invoices.md` - 請求書
 
 ## 使い方
 
@@ -62,8 +57,11 @@ output_mode: "files_with_matches"
 
 - `freee_authenticate` - OAuth 認証
 - `freee_auth_status` - 認証状態確認
+- `freee_clear_auth` - 認証情報クリア
+- `freee_current_user` - ログインユーザー情報取得
 - `freee_list_companies` - 事業所一覧
 - `freee_set_current_company` - 事業所切り替え
+- `freee_get_current_company` - 現在の事業所取得
 
 API 呼び出し:
 
@@ -72,21 +70,23 @@ API 呼び出し:
 - `freee_api_put` - PUT リクエスト
 - `freee_api_delete` - DELETE リクエスト
 - `freee_api_patch` - PATCH リクエスト
+- `freee_api_list_paths` - 利用可能なAPIパス一覧
 
 serviceパラメータ (必須):
 
 | service | 説明 | パス例 |
 |---------|------|--------|
 | `accounting` | freee会計 (取引、勘定科目、取引先など) | `/api/1/deals` |
-| `hr` | freee人事労務 (従業員、勤怠など) | `/api/1/employees` |
+| `hr` | freee人事労務 (従業員、勤怠など) | `/api/v1/employees` |
 | `invoice` | freee請求書 (請求書、見積書、納品書) | `/invoices` |
 | `pm` | freee工数管理 (プロジェクト、工数など) | `/api/1/projects` |
+| `sm` | freee販売 (見積、受注、売上など) | `/api/1/...` |
 
 ### company_id について
 
 リクエストに `company_id` を含める場合、現在設定されている事業所（`freee_get_current_company` で確認可能）と一致している必要があります。不一致の場合はエラーになります。
 
-- 事業所を変更する場合: 先に `freee_set_company` で切り替えてからリクエストを実行
+- 事業所を変更する場合: 先に `freee_set_current_company` で切り替えてからリクエストを実行
 - company_id を含まない API（例: `/api/1/companies`）: そのまま実行可能
 
 ### 基本ワークフロー
@@ -115,9 +115,10 @@ serviceパラメータ (必須):
 | service | ベースURL | パス形式 |
 |---------|-----------|----------|
 | `accounting` | `https://api.freee.co.jp` | `/api/1/...` |
-| `hr` | `https://api.freee.co.jp/hr` | `/api/1/...` |
+| `hr` | `https://api.freee.co.jp/hr` | `/api/v1/...` |
 | `invoice` | `https://api.freee.co.jp/iv` | `/invoices`, `/quotations`, `/delivery_slips` |
 | `pm` | `https://api.freee.co.jp/pm` | `/api/1/...` |
+| `sm` | `https://api.freee.co.jp/sm` | `/api/1/...` |
 
 ### 請求書 API について
 
