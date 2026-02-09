@@ -1,5 +1,11 @@
 # @him0/freee-mcp
 
+## 0.6.5
+
+### Patch Changes
+
+- 988121f: Add User-Agent header to OAuth token refresh and token exchange requests
+
 ## 0.6.4
 
 ### Patch Changes
