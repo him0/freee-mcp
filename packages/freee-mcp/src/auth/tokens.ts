@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { z } from 'zod';
 import { getConfig } from '../config.js';
-import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
+import { CONFIG_FILE_PERMISSION, getConfigDir, USER_AGENT } from '../constants.js';
 import { parseJsonResponse } from '../utils/error.js';
 import { createTokenData } from './token-utils.js';
 import { tryMigrateLegacyTokens, clearLegacyTokens } from './token-migration.js';
@@ -90,6 +90,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': USER_AGENT,
     },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
