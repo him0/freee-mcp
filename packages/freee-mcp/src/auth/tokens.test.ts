@@ -217,6 +217,7 @@ describe('tokens', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': expect.stringMatching(/^freee-mcp\//),
         },
         body: new URLSearchParams({
           grant_type: 'refresh_token',

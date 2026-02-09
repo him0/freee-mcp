@@ -3,6 +3,7 @@ import { getConfig } from '../config.js';
 import { saveTokens, TokenData, OAuthTokenResponseSchema } from './tokens.js';
 import { createTokenData } from './token-utils.js';
 import { parseJsonResponse } from '../utils/error.js';
+import { USER_AGENT } from '../constants.js';
 
 export function generatePKCE(): { codeVerifier: string; codeChallenge: string } {
   const codeVerifier = crypto.randomBytes(32).toString('base64url');
@@ -31,6 +32,7 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string, 
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': USER_AGENT,
     },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
