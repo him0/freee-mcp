@@ -20,7 +20,7 @@ export type SelectedCompany = {
 
 export const CompanySchema = z.object({
   id: z.number(),
-  name: z.string(),
+  name: z.string().nullable().transform((val) => val ?? '事業所の正式名称（未設定）'),
   display_name: z.string(),
   role: z.string(),
 });
