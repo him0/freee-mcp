@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: write
       packages: write
+      issues: read
       id-token: write
 
     steps:
@@ -20,6 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -78,6 +80,47 @@ jobs:
           zip -r ../../freee-skill.zip .
           echo "✅ Packaged skill"
 
+      - name: Collect contributors from community PRs
+        if: steps.check-release.outputs.skip != 'true'
+        id: contributors
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 前回のリリースタグを取得（現在のタグを除く）
+          PREV_TAG=$(git tag --sort=-v:refname | grep '^v' | sed -n '2p')
+
+          CONTRIBUTORS=""
+          if [ -n "$PREV_TAG" ]; then
+            PREV_DATE=$(git log -1 --format=%aI "$PREV_TAG")
+            echo "Previous tag: $PREV_TAG ($PREV_DATE)"
+
+            # 前回リリース以降に close された from-pr issue を検索
+            USERS=$(gh issue list \
+              --label "from-pr" \
+              --state closed \
+              --search "closed:>=$PREV_DATE" \
+              --json body \
+              --jq '.[].body' \
+            | grep -oP 'by @\K[^\s)+]+' \
+            | sort -u)
+
+            if [ -n "$USERS" ]; then
+              CONTRIBUTORS=$(echo "$USERS" | while read -r user; do
+                echo "- @${user}"
+              done)
+              echo "Found contributors: $USERS"
+            fi
+          else
+            echo "No previous tag found, skipping contributor collection"
+          fi
+
+          {
+            echo "list<<EOF"
+            echo "$CONTRIBUTORS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         if: steps.check-release.outputs.skip != 'true'
         uses: softprops/action-gh-release@v1
@@ -88,7 +131,7 @@ jobs:
             ## What's Changed
 
             See [CHANGELOG.md](./CHANGELOG.md) for details.
-
+            ${{ steps.contributors.outputs.list != '' && format('\n## Contributors\n\nThank you to the following contributors for their suggestions!\n\n{0}\n', steps.contributors.outputs.list) || '' }}
             ## Package
             - npm: https://www.npmjs.com/package/@him0/freee-mcp/v/${{ steps.version.outputs.version }}
             - Install: `npm install @him0/freee-mcp@${{ steps.version.outputs.version }}`
