@@ -86,9 +86,10 @@ jobs:
           COMMENT=$(cat <<EOF
           PR ありがとうございます！
 
-          このリポジトリでは、PR の内容を issue として管理し、メンテナー側で実装を進める運用をしています。
-          この PR の内容をもとに #${ISSUE_NUMBER} を作成しました。
+          このリポジトリでは AI を活用した開発フローを採用しており、issue をもとに実装することでコードの一貫性と品質を保っています。
+          そのため、PR を直接マージするのではなく、提案内容を issue として管理し、メンテナー側で実装を進める運用をしています。
 
+          この PR の内容をもとに #${ISSUE_NUMBER} を作成しました。
           提案いただいた内容は issue 上で検討・実装を進めます。
           引き続きご意見やフィードバックがありましたら、issue にてお願いします！
 
@@ -96,9 +97,10 @@ jobs:
 
           Thank you for your pull request!
 
-          In this repository, we convert PR proposals into issues and handle implementation on the maintainer side.
-          We've created #${ISSUE_NUMBER} based on your PR.
+          This repository uses an AI-assisted development workflow, where implementing from issues helps maintain code consistency and quality.
+          Rather than merging PRs directly, we convert proposals into issues and handle the implementation on the maintainer side.
 
+          We've created #${ISSUE_NUMBER} based on your PR.
           Your proposal will be reviewed and implemented via the issue.
           Feel free to share any further feedback or suggestions on the issue!
           EOF
