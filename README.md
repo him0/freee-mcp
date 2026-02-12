@@ -174,6 +174,15 @@ Issue での不具合報告や機能要望、フィードバックは大歓迎�
 そのため、ホワイトリストに登録されていないユーザーからの PR は自動的に close され、代わりに提案内容を反映した issue が作成されます。
 メンテナーが issue をもとに実装方針を検討し、対応を進めます。
 
+### Contributors
+
+<!-- CONTRIBUTORS-START -->
+- [@dais0n](https://github.com/dais0n)
+- [@HikaruEgashira](https://github.com/HikaruEgashira)
+- [@nakanoasaservice](https://github.com/nakanoasaservice)
+- [@worldscandy](https://github.com/worldscandy)
+<!-- CONTRIBUTORS-END -->
+
 ## 開発者向け
 
 ```bash
