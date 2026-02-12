@@ -1,0 +1,110 @@
+name: PR Triage
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check whitelist
+        id: whitelist
+        shell: bash
+        run: |
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          WHITELIST_FILE=".github/pr-whitelist.yml"
+
+          if [ ! -f "$WHITELIST_FILE" ]; then
+            echo "Whitelist file not found, proceeding with triage"
+            echo "allowed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          ALLOWED=false
+          while IFS= read -r line; do
+            user=$(echo "$line" | sed -n 's/^[[:space:]]*-[[:space:]]*//p' | xargs)
+            if [ -n "$user" ] && [ "$user" = "$PR_AUTHOR" ]; then
+              ALLOWED=true
+              break
+            fi
+          done < <(grep -A 100 'allowed_users:' "$WHITELIST_FILE")
+
+          echo "allowed=$ALLOWED" >> "$GITHUB_OUTPUT"
+          echo "PR author: $PR_AUTHOR, Allowed: $ALLOWED"
+
+      - name: Create issue and close PR
+        if: steps.whitelist.outputs.allowed == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          PR_BRANCH="${{ github.event.pull_request.head.ref }}"
+
+          PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""')
+          CHANGED_FILES=$(gh pr view "$PR_NUMBER" --json files --jq '.files[].path' | head -50)
+
+          # Ensure "from-pr" label exists
+          gh label create "from-pr" --description "Created from a pull request" --color "c5def5" 2>/dev/null || true
+
+          ISSUE_BODY=$(cat <<EOF
+          ## 概要
+
+          ${PR_BODY}
+
+          ## 元の PR / Original PR
+
+          - PR: #${PR_NUMBER} by @${PR_AUTHOR}
+          - Branch: \`${PR_BRANCH}\`
+
+          ## 変更されたファイル / Changed Files
+
+          \`\`\`
+          ${CHANGED_FILES}
+          \`\`\`
+          EOF
+          )
+
+          ISSUE_URL=$(gh issue create \
+            --title "$PR_TITLE" \
+            --body "$ISSUE_BODY" \
+            --label "from-pr")
+
+          ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -o '[0-9]*$')
+
+          COMMENT=$(cat <<EOF
+          PR ありがとうございます！
+
+          このリポジトリでは、PR の内容を issue として管理し、メンテナー側で実装を進める運用をしています。
+          この PR の内容をもとに #${ISSUE_NUMBER} を作成しました。
+
+          提案いただいた内容は issue 上で検討・実装を進めます。
+          引き続きご意見やフィードバックがありましたら、issue にてお願いします！
+
+          ---
+
+          Thank you for your pull request!
+
+          In this repository, we convert PR proposals into issues and handle implementation on the maintainer side.
+          We've created #${ISSUE_NUMBER} based on your PR.
+
+          Your proposal will be reviewed and implemented via the issue.
+          Feel free to share any further feedback or suggestions on the issue!
+          EOF
+          )
+
+          gh pr comment "$PR_NUMBER" --body "$COMMENT"
+          gh pr close "$PR_NUMBER"
+
+          echo "Created issue #${ISSUE_NUMBER} and closed PR #${PR_NUMBER}"

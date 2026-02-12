@@ -6,7 +6,7 @@ MCP サーバー（API 呼び出し機能）と skill（API リファレンス�
 
 [![npm version](https://badge.fury.io/js/@him0%2Ffreee-mcp.svg)](https://www.npmjs.com/package/@him0/freee-mcp)
 
-> Note: このプロジェクトは開発中であり、予期せぬ不具合が発生する可能性があります。問題を発見された場合は [Issue](https://github.com/him0/freee-mcp/issues) として報告していただけると幸いです。プルリクエストも歓迎しています。
+> Note: このプロジェクトは開発中であり、予期せぬ不具合が発生する可能性があります。問題を発見された場合は [Issue](https://github.com/him0/freee-mcp/issues) として報告していただけると幸いです。コントリビューションについては「[コントリビューション](#コントリビューション)」セクションをご覧ください。
 
 ## 特徴
 
@@ -165,6 +165,14 @@ HTTPメソッドごとのシンプルなツール構成:
 - 事業所の確認: `freee_get_current_company`
 - 事業所の切り替え: `freee_set_company`
 - company_id を含まない API（例: `/api/1/companies`）はそのまま実行可能
+
+## コントリビューション
+
+Issue での不具合報告や機能要望、フィードバックは大歓迎です！
+
+PR については、このリポジトリでは自動トリアージの仕組みを導入しています。
+ホワイトリストに登録されていないユーザーからの PR は自動的に close され、代わりに提案内容を反映した issue が作成されます。
+メンテナーが issue をもとに実装方針を検討し、対応を進めます。
 
 ## 開発者向け
 
