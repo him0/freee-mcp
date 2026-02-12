@@ -6,7 +6,7 @@ MCP サーバー（API 呼び出し機能）と skill（API リファレンス�
 
 [![npm version](https://badge.fury.io/js/@him0%2Ffreee-mcp.svg)](https://www.npmjs.com/package/@him0/freee-mcp)
 
-> Note: このプロジェクトは開発中であり、予期せぬ不具合が発生する可能性があります。問題を発見された場合は [Issue](https://github.com/him0/freee-mcp/issues) として報告していただけると幸いです。コントリビューションについては「[コントリビューション](#コントリビューション)」セクションをご覧ください。
+> Note: このプロジェクトは開発中であり、予期せぬ不具合が発生する可能性があります。問題を発見された場合は [Issue](https://github.com/him0/freee-mcp/issues) として報告していただけると幸いです。
 
 ## 特徴
 
