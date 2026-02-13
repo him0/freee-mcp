@@ -199,7 +199,7 @@ ISC
 
 質問や情報交換は Discord サーバーで行っています。お気軽にご参加ください。
 
-- [Discord サーバー](https://discord.gg/fPA75nHp)
+- [Discord サーバー](https://discord.gg/9ddTPGyxPw)
 
 ## 関連リンク
 
