@@ -59,7 +59,7 @@ successful operation
     - issue_date (必須): string(date) - 申請日 (パターン: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$)
     - comment (任意): string - 申請理由 例: `申請理由`
     - status (必須): string - 申請ステータス。（draft:下書き、in_progress:申請中、approved:承認済、feedback:差戻し） (選択肢: draft, in_progress, approved, feedback) 例: `in_progress`
-    - revoke_status (必須): string - 取消申請ステータス。（null:取消申請されてない、revoking:取消中、revoked:取消済） (選択肢: revoking, revoked) 例: `revoking`
+    - revoke_status (必須): string - 取消申請ステータス。（null:取消申請されてない、revoking:取消中、revoked:取消済） (選択肢: revoking, revoked) 例: `null`
     - passed_auto_check (必須): boolean - 自動チェック結果 例: `true`
 - total_count (必須): integer(int32) - 合計件数 例: `1` (最小: 0, 最大: 2147483647)
 
@@ -106,7 +106,7 @@ successful operation
   - issue_date (必須): string(date) - 申請日 (パターン: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$)
   - comment (任意): string - 申請理由 例: `申請理由`
   - status (必須): string - 申請ステータス。（draft:下書き、in_progress:申請中、approved:承認済、feedback:差戻し） (選択肢: draft, in_progress, approved, feedback) 例: `in_progress`
-  - revoke_status (必須): string - 取消申請ステータス。（null:取消申請されてない、revoking:取消中、revoked:取消済） (選択肢: revoking, revoked) 例: `revoking`
+  - revoke_status (必須): string - 取消申請ステータス。（null:取消申請されてない、revoking:取消中、revoked:取消済） (選択肢: revoking, revoked) 例: `null`
   - passed_auto_check (必須): boolean - 自動チェック結果 例: `true`
   - approval_flow_route_id (必須): integer - 申請経路ID 例: `1` (最小: 1, 最大: 2147483647)
   - approval_flow_route_name (必須): string - 申請経路名 例: `申請経路`
@@ -147,7 +147,7 @@ successful operation
   - issue_date (必須): string(date) - 申請日 (パターン: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$)
   - comment (任意): string - 申請理由 例: `申請理由`
   - status (必須): string - 申請ステータス。（draft:下書き、in_progress:申請中、approved:承認済、feedback:差戻し） (選択肢: draft, in_progress, approved, feedback) 例: `in_progress`
-  - revoke_status (必須): string - 取消申請ステータス。（null:取消申請されてない、revoking:取消中、revoked:取消済） (選択肢: revoking, revoked) 例: `revoking`
+  - revoke_status (必須): string - 取消申請ステータス。（null:取消申請されてない、revoking:取消中、revoked:取消済） (選択肢: revoking, revoked) 例: `null`
   - passed_auto_check (必須): boolean - 自動チェック結果 例: `true`
   - approval_flow_route_id (必須): integer - 申請経路ID 例: `1` (最小: 1, 最大: 2147483647)
   - approval_flow_route_name (必須): string - 申請経路名 例: `申請経路`
@@ -205,7 +205,7 @@ successful operation
   - issue_date (必須): string(date) - 申請日 (パターン: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$)
   - comment (任意): string - 申請理由 例: `申請理由`
   - status (必須): string - 申請ステータス。（draft:下書き、in_progress:申請中、approved:承認済、feedback:差戻し） (選択肢: draft, in_progress, approved, feedback) 例: `in_progress`
-  - revoke_status (必須): string - 取消申請ステータス。（null:取消申請されてない、revoking:取消中、revoked:取消済） (選択肢: revoking, revoked) 例: `revoking`
+  - revoke_status (必須): string - 取消申請ステータス。（null:取消申請されてない、revoking:取消中、revoked:取消済） (選択肢: revoking, revoked) 例: `null`
   - passed_auto_check (必須): boolean - 自動チェック結果 例: `true`
   - approval_flow_route_id (必須): integer - 申請経路ID 例: `1` (最小: 1, 最大: 2147483647)
   - approval_flow_route_name (必須): string - 申請経路名 例: `申請経路`
@@ -270,7 +270,7 @@ successful operation
   - issue_date (必須): string(date) - 申請日 (パターン: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$)
   - comment (任意): string - 申請理由 例: `申請理由`
   - status (必須): string - 申請ステータス。（draft:下書き、in_progress:申請中、approved:承認済、feedback:差戻し） (選択肢: draft, in_progress, approved, feedback) 例: `in_progress`
-  - revoke_status (必須): string - 取消申請ステータス。（null:取消申請されてない、revoking:取消中、revoked:取消済） (選択肢: revoking, revoked) 例: `revoking`
+  - revoke_status (必須): string - 取消申請ステータス。（null:取消申請されてない、revoking:取消中、revoked:取消済） (選択肢: revoking, revoked) 例: `null`
   - passed_auto_check (必須): boolean - 自動チェック結果 例: `true`
   - approval_flow_route_id (必須): integer - 申請経路ID 例: `1` (最小: 1, 最大: 2147483647)
   - approval_flow_route_name (必須): string - 申請経路名 例: `申請経路`

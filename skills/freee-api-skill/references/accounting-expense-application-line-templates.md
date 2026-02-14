@@ -25,6 +25,7 @@
 - expense_application_line_templates (必須): array[object]
   配列の要素:
     - id (必須): integer(int64) - 経費科目ID 例: `1` (最小: 1)
+    - source_line_template_id (必須): integer(int64) - 経費科目の元となるテンプレートを識別するID。経費科目の設定を変更しても変わらない固定値 例: `1` (最小: 0)
     - name (必須): string - 経費科目名 例: `交通費`
     - account_item_id (任意): integer(int64) - 勘定科目ID 例: `1` (最小: 1)
     - account_item_name (必須): string - 勘定科目名 例: `旅費交通費`
@@ -58,6 +59,7 @@ trueを指定した時は申請時の領収書の添付を必須とします。<
 
 - expense_application_line_template (必須): object
   - id (必須): integer(int64) - 経費科目ID 例: `1` (最小: 1)
+  - source_line_template_id (必須): integer(int64) - 経費科目の元となるテンプレートを識別するID。経費科目の設定を変更しても変わらない固定値 例: `1` (最小: 0)
   - name (必須): string - 経費科目名 例: `交通費`
   - account_item_id (任意): integer(int64) - 勘定科目ID 例: `1` (最小: 1)
   - account_item_name (必須): string - 勘定科目名 例: `旅費交通費`
@@ -82,6 +84,7 @@ trueを指定した時は申請時の領収書の添付を必須とします。<
 
 - expense_application_line_template (必須): object
   - id (必須): integer(int64) - 経費科目ID 例: `1` (最小: 1)
+  - source_line_template_id (必須): integer(int64) - 経費科目の元となるテンプレートを識別するID。経費科目の設定を変更しても変わらない固定値 例: `1` (最小: 0)
   - name (必須): string - 経費科目名 例: `交通費`
   - account_item_id (任意): integer(int64) - 勘定科目ID 例: `1` (最小: 1)
   - account_item_name (必須): string - 勘定科目名 例: `旅費交通費`
@@ -121,6 +124,7 @@ trueを指定した時は申請時の領収書の添付を必須とします。<
 
 - expense_application_line_template (必須): object
   - id (必須): integer(int64) - 経費科目ID 例: `1` (最小: 1)
+  - source_line_template_id (必須): integer(int64) - 経費科目の元となるテンプレートを識別するID。経費科目の設定を変更しても変わらない固定値 例: `1` (最小: 0)
   - name (必須): string - 経費科目名 例: `交通費`
   - account_item_id (任意): integer(int64) - 勘定科目ID 例: `1` (最小: 1)
   - account_item_name (必須): string - 勘定科目名 例: `旅費交通費`
