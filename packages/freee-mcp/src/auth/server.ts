@@ -91,7 +91,7 @@ export class AuthenticationManager {
  * CallbackServer - manages the OAuth callback HTTP server
  * Encapsulates server state that was previously global
  */
-class CallbackServer {
+export class CallbackServer {
   private server: http.Server | null = null;
   private port: number | null = null;
   private authManager: AuthenticationManager;
@@ -220,7 +220,7 @@ class CallbackServer {
     });
   }
 
-  private handleCallback(url: URL, res: http.ServerResponse): void {
+  private async handleCallback(url: URL, res: http.ServerResponse): Promise<void> {
     const code = url.searchParams.get('code');
     const state = url.searchParams.get('state');
     const error = url.searchParams.get('error');
@@ -282,20 +282,22 @@ class CallbackServer {
     }
 
     console.error(`Valid callback received, exchanging code for tokens...`);
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてください。</p>');
 
     this.authManager.removePendingAuthentication(state);
 
-    exchangeCodeForTokens(code, pendingAuth.codeVerifier, this.getRedirectUri())
-      .then((tokens) => {
-        console.error(`Token exchange successful!`);
-        pendingAuth.resolve(tokens);
-      })
-      .catch((exchangeError) => {
-        console.error(`Token exchange failed:`, exchangeError);
-        pendingAuth.reject(exchangeError);
-      });
+    try {
+      const tokens = await exchangeCodeForTokens(code, pendingAuth.codeVerifier, this.getRedirectUri());
+      console.error(`Token exchange successful!`);
+      pendingAuth.resolve(tokens);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてください。</p>');
+    } catch (exchangeError) {
+      console.error(`Token exchange failed:`, exchangeError);
+      pendingAuth.reject(exchangeError instanceof Error ? exchangeError : new Error(String(exchangeError)));
+      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+      const errorMessage = exchangeError instanceof Error ? exchangeError.message : String(exchangeError);
+      res.end(`<h1>認証エラー</h1><p>トークンの取得に失敗しました: ${errorMessage}</p><p>再度認証を行ってください。</p>`);
+    }
   }
 }
 
