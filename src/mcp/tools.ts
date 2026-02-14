@@ -50,17 +50,15 @@ export function addAuthenticationTools(server: McpServer): void {
       try {
         if (!getConfig().freee.clientId) {
           return createTextResponse(
-            'FREEE_CLIENT_ID環境変数が設定されていません。\n' +
-            'OAuth認証を行うには、freee developersでアプリケーションを作成し、\n' +
-            'クライアントIDを環境変数に設定してください。'
+            '認証情報が設定されていません。\n' +
+            '`freee-mcp configure` を実行してセットアップしてください。'
           );
         }
 
         if (!getConfig().freee.clientSecret) {
           return createTextResponse(
-            'FREEE_CLIENT_SECRET環境変数が設定されていません。\n' +
-            'OAuth認証を行うには、freee developersでアプリケーションを作成し、\n' +
-            'クライアントシークレットを環境変数に設定してください。'
+            '認証情報が設定されていません。\n' +
+            '`freee-mcp configure` を実行してセットアップしてください。'
           );
         }
 

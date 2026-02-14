@@ -237,7 +237,7 @@ describe('E2E: Configure Command', () => {
       await configure();
 
       expect(process.exit).toHaveBeenCalledWith(1);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('CLIENT_SECRET'));
+      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Client Secret'));
     });
   });
 

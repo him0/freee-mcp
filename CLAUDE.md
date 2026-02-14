@@ -34,21 +34,10 @@ MCP server that exposes freee API endpoints as MCP tools:
 
 ### Configuration
 
-#### Recommended Setup (Config File)
-
 Run `freee-mcp configure` to set up configuration interactively:
 
 - Creates `~/.config/freee-mcp/config.json` with OAuth credentials and company settings
-- No environment variables needed
-- More secure (file permissions 0600)
-
-#### Environment Variables (Deprecated)
-
-⚠️ Environment variables are deprecated and will be removed in a future version.
-
-- `FREEE_CLIENT_ID` - OAuth client ID (deprecated, use config file)
-- `FREEE_CLIENT_SECRET` - OAuth client secret (deprecated, use config file)
-- `FREEE_CALLBACK_PORT` - OAuth callback port (deprecated, set in config file)
+- Secure file permissions (0600)
 
 ### CLI Subcommands
 

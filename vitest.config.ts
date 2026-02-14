@@ -13,10 +13,6 @@ export default defineConfig({
     // テスト実行時の環境変数設定
     env: {
       NODE_ENV: 'test',
-      // テスト用のデフォルト値を設定
-      FREEE_CLIENT_ID: 'test-client-id',
-      FREEE_CLIENT_SECRET: 'test-client-secret',
-      FREEE_CALLBACK_PORT: '54321'
     },
     // テスト実行時のセットアップ
     setupFiles: ['src/test-utils/setup.ts'],
