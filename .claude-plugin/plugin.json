@@ -1,6 +1,6 @@
 {
   "name": "freee-api",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "freee API を MCP 経由で操作するためのスキル。詳細なAPIリファレンスと freee-mcp を使用した API 呼び出しガイドを提供。",
   "author": {
     "name": "him0"
