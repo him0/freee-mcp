@@ -12165,7 +12165,7 @@
               "revoked"
             ],
             "nullable": true,
-            "example": "revoking"
+            "example": null
           },
           "passed_auto_check": {
             "type": "boolean",
@@ -12298,7 +12298,7 @@
               "revoked"
             ],
             "nullable": true,
-            "example": "revoking"
+            "example": null
           },
           "passed_auto_check": {
             "type": "boolean",
@@ -12447,7 +12447,7 @@
               "revoked"
             ],
             "nullable": true,
-            "example": "revoking"
+            "example": null
           },
           "passed_auto_check": {
             "type": "boolean",
@@ -12620,7 +12620,7 @@
               "revoked"
             ],
             "nullable": true,
-            "example": "revoking"
+            "example": null
           },
           "passed_auto_check": {
             "type": "boolean",
@@ -12774,7 +12774,7 @@
               "revoked"
             ],
             "nullable": true,
-            "example": "revoking"
+            "example": null
           },
           "passed_auto_check": {
             "type": "boolean",
@@ -12896,7 +12896,7 @@
               "revoked"
             ],
             "nullable": true,
-            "example": "revoking"
+            "example": null
           },
           "passed_auto_check": {
             "type": "boolean",
@@ -14473,6 +14473,11 @@
             "description": "所定内法定外労働時間（裁量労働制の場合はみなしベース）",
             "format": "int32"
           },
+          "total_prescribed_holiday_work_mins": {
+            "type": "integer",
+            "description": "所定休日労働時間（分）",
+            "format": "int32"
+          },
           "total_holiday_work_mins": {
             "type": "integer",
             "description": "法定休日労働時間（分）",
@@ -14742,6 +14747,11 @@
             "description": "時間外労働時間（分）（Webの勤怠登録画面にて詳細項目の「勤務時間の長さを自動で計算しない」にチェックを入れた場合0が返却されます。時間外労働時間はtotal_overtime_except_normal_work_minsを参照してください。）",
             "format": "int32"
           },
+          "total_prescribed_holiday_work_mins": {
+            "type": "integer",
+            "description": "所定休日労働時間（分）",
+            "format": "int32"
+          },
           "total_holiday_work_mins": {
             "type": "integer",
             "description": "法定休日労働時間（分）",
@@ -14927,6 +14937,11 @@
           "total_overtime_work_mins": {
             "type": "integer",
             "description": "時間外労働時間（分）（Webの勤怠登録画面にて詳細項目の「勤務時間の長さを自動で計算しない」にチェックを入れた場合0が返却されます。時間外労働時間はtotal_overtime_except_normal_work_minsを参照してください。）",
+            "format": "int32"
+          },
+          "total_prescribed_holiday_work_mins": {
+            "type": "integer",
+            "description": "所定休日労働時間（分）",
             "format": "int32"
           },
           "total_holiday_work_mins": {
@@ -16603,6 +16618,12 @@
           "total_overtime_work_mins": {
             "type": "integer",
             "description": "時間外労働時間（分）",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "total_prescribed_holiday_work_mins": {
+            "type": "integer",
+            "description": "所定休日労働時間（分）",
             "minimum": 0,
             "maximum": 2147483647
           },

@@ -84,7 +84,10 @@
             "description": "入金ステータス（unsettled: 入金待ち, settled: 入金済み）",
             "schema": {
               "type": "string",
-              "enum": ["settled", "unsettled"]
+              "enum": [
+                "settled",
+                "unsettled"
+              ]
             }
           },
           {
@@ -94,7 +97,10 @@
             "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）",
             "schema": {
               "type": "string",
-              "enum": ["registered", "unregistered"]
+              "enum": [
+                "registered",
+                "unregistered"
+              ]
             }
           },
           {
@@ -104,7 +110,10 @@
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）",
             "schema": {
               "type": "string",
-              "enum": ["sent", "unsent"]
+              "enum": [
+                "sent",
+                "unsent"
+              ]
             }
           },
           {
@@ -114,7 +123,10 @@
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）",
             "schema": {
               "type": "string",
-              "enum": ["canceled", "uncanceled"]
+              "enum": [
+                "canceled",
+                "uncanceled"
+              ]
             }
           },
           {
@@ -219,7 +231,9 @@
             }
           }
         },
-        "tags": ["DeliverySlips"]
+        "tags": [
+          "DeliverySlips"
+        ]
       },
       "post": {
         "operationId": "delivery_slips/create",
@@ -283,7 +297,9 @@
             }
           }
         },
-        "tags": ["DeliverySlips"],
+        "tags": [
+          "DeliverySlips"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -372,7 +388,9 @@
             }
           }
         },
-        "tags": ["DeliverySlips"]
+        "tags": [
+          "DeliverySlips"
+        ]
       }
     },
     "/delivery_slips/{id}": {
@@ -472,7 +490,9 @@
             }
           }
         },
-        "tags": ["DeliverySlips"]
+        "tags": [
+          "DeliverySlips"
+        ]
       },
       "put": {
         "operationId": "delivery_slips/update",
@@ -558,7 +578,9 @@
             }
           }
         },
-        "tags": ["DeliverySlips"],
+        "tags": [
+          "DeliverySlips"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -627,7 +649,10 @@
             "description": "入金ステータス（unsettled: 入金待ち, settled: 入金済み）",
             "schema": {
               "type": "string",
-              "enum": ["settled", "unsettled"]
+              "enum": [
+                "settled",
+                "unsettled"
+              ]
             }
           },
           {
@@ -637,7 +662,10 @@
             "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）",
             "schema": {
               "type": "string",
-              "enum": ["registered", "unregistered"]
+              "enum": [
+                "registered",
+                "unregistered"
+              ]
             }
           },
           {
@@ -647,7 +675,10 @@
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）",
             "schema": {
               "type": "string",
-              "enum": ["sent", "unsent"]
+              "enum": [
+                "sent",
+                "unsent"
+              ]
             }
           },
           {
@@ -657,7 +688,10 @@
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）",
             "schema": {
               "type": "string",
-              "enum": ["canceled", "uncanceled"]
+              "enum": [
+                "canceled",
+                "uncanceled"
+              ]
             }
           },
           {
@@ -784,7 +818,9 @@
             }
           }
         },
-        "tags": ["Invoices"]
+        "tags": [
+          "Invoices"
+        ]
       },
       "post": {
         "operationId": "invoices/create",
@@ -848,7 +884,9 @@
             }
           }
         },
-        "tags": ["Invoices"],
+        "tags": [
+          "Invoices"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -937,7 +975,9 @@
             }
           }
         },
-        "tags": ["Invoices"]
+        "tags": [
+          "Invoices"
+        ]
       }
     },
     "/invoices/{id}": {
@@ -1037,7 +1077,9 @@
             }
           }
         },
-        "tags": ["Invoices"]
+        "tags": [
+          "Invoices"
+        ]
       },
       "put": {
         "operationId": "invoices/update",
@@ -1123,7 +1165,9 @@
             }
           }
         },
-        "tags": ["Invoices"],
+        "tags": [
+          "Invoices"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1192,7 +1236,10 @@
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）",
             "schema": {
               "type": "string",
-              "enum": ["sent", "unsent"]
+              "enum": [
+                "sent",
+                "unsent"
+              ]
             }
           },
           {
@@ -1202,7 +1249,10 @@
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）",
             "schema": {
               "type": "string",
-              "enum": ["canceled", "uncanceled"]
+              "enum": [
+                "canceled",
+                "uncanceled"
+              ]
             }
           },
           {
@@ -1329,7 +1379,9 @@
             }
           }
         },
-        "tags": ["Quotations"]
+        "tags": [
+          "Quotations"
+        ]
       },
       "post": {
         "operationId": "quotations/create",
@@ -1393,7 +1445,9 @@
             }
           }
         },
-        "tags": ["Quotations"],
+        "tags": [
+          "Quotations"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1482,7 +1536,9 @@
             }
           }
         },
-        "tags": ["Quotations"]
+        "tags": [
+          "Quotations"
+        ]
       }
     },
     "/quotations/{id}": {
@@ -1582,7 +1638,9 @@
             }
           }
         },
-        "tags": ["Quotations"]
+        "tags": [
+          "Quotations"
+        ]
       },
       "put": {
         "operationId": "quotations/update",
@@ -1668,7 +1726,9 @@
             }
           }
         },
-        "tags": ["Quotations"],
+        "tags": [
+          "Quotations"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1684,14 +1744,19 @@
   },
   "security": [
     {
-      "OAuth2Auth": ["write", "read"]
+      "OAuth2Auth": [
+        "write",
+        "read"
+      ]
     }
   ],
   "components": {
     "schemas": {
       "DeliverySlipIndexResponse": {
         "type": "object",
-        "required": ["delivery_slips"],
+        "required": [
+          "delivery_slips"
+        ],
         "properties": {
           "delivery_slips": {
             "type": "array",
@@ -1772,22 +1837,34 @@
           },
           "sending_status": {
             "type": "string",
-            "enum": ["sent", "unsent"],
+            "enum": [
+              "sent",
+              "unsent"
+            ],
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
           },
           "payment_status": {
             "type": "string",
-            "enum": ["settled", "unsettled"],
+            "enum": [
+              "settled",
+              "unsettled"
+            ],
             "description": "入金ステータス（unsettled: 入金待ち, settled: 入金済み）"
           },
           "cancel_status": {
             "type": "string",
-            "enum": ["canceled", "uncanceled"],
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
           },
           "deal_status": {
             "type": "string",
-            "enum": ["registered", "unregistered"],
+            "enum": [
+              "registered",
+              "unregistered"
+            ],
             "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）"
           },
           "deal_id": {
@@ -1857,7 +1934,10 @@
           },
           "email_url_file_downloaded_status": {
             "type": "string",
-            "enum": ["downloaded", "undownloaded"],
+            "enum": [
+              "downloaded",
+              "undownloaded"
+            ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
           }
@@ -1920,23 +2000,37 @@
           },
           "tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
           },
           "tax_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "line_amount_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "withholding_tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
           },
           "delivery_slip_note": {
@@ -1964,7 +2058,12 @@
           },
           "partner_title": {
             "type": "string",
-            "enum": ["御中", "様", "(空白)", "（空白）"],
+            "enum": [
+              "御中",
+              "様",
+              "(空白)",
+              "（空白）"
+            ],
             "description": "敬称（御中、様、(空白)の3つから選択）\n- [非推奨]全角カッコの（空白）は削除予定です。\n- 全角カッコの（空白）を指定した場合、はレスポンスは、半角カッコの(空白)になります。"
           },
           "partner_address_zipcode": {
@@ -2023,7 +2122,11 @@
           },
           "partner_sending_method": {
             "type": "string",
-            "enum": ["email", "posting", "email_and_posting"],
+            "enum": [
+              "email",
+              "posting",
+              "email_and_posting"
+            ],
             "nullable": true,
             "description": "取引先への送付方法"
           },
@@ -2056,7 +2159,10 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["item", "text"],
+            "enum": [
+              "item",
+              "text"
+            ],
             "description": "明細の種類\n- item: 品目行\n- tax_rate、quantityは必須になります。\n- text: テキスト行\n- descriptionのみ入力可能です。\n- 入力がない場合、itemが利用されます。",
             "default": "item"
           },
@@ -2085,7 +2191,11 @@
           },
           "tax_rate": {
             "type": "number",
-            "enum": [0, 8, 10],
+            "enum": [
+              0,
+              8,
+              10
+            ],
             "description": "税率（%）（帳票の税額計算に用います。）"
           },
           "reduced_tax_rate": {
@@ -2151,7 +2261,9 @@
       },
       "DeliverySlipResponse": {
         "type": "object",
-        "required": ["delivery_slip"],
+        "required": [
+          "delivery_slip"
+        ],
         "properties": {
           "delivery_slip": {
             "$ref": "#/components/schemas/DeliverySlipResponse_delivery_slip"
@@ -2246,7 +2358,10 @@
           },
           "payment_type": {
             "type": "string",
-            "enum": ["transfer", "direct_debit"],
+            "enum": [
+              "transfer",
+              "direct_debit"
+            ],
             "description": "入金方法 (振込: transfer, 振替: direct_debit)"
           },
           "delivery_slip_note": {
@@ -2261,22 +2376,34 @@
           },
           "sending_status": {
             "type": "string",
-            "enum": ["sent", "unsent"],
+            "enum": [
+              "sent",
+              "unsent"
+            ],
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
           },
           "payment_status": {
             "type": "string",
-            "enum": ["settled", "unsettled"],
+            "enum": [
+              "settled",
+              "unsettled"
+            ],
             "description": "入金ステータス（unsettled: 入金待ち, settled: 入金済み）"
           },
           "cancel_status": {
             "type": "string",
-            "enum": ["canceled", "uncanceled"],
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
           },
           "deal_status": {
             "type": "string",
-            "enum": ["registered", "unregistered"],
+            "enum": [
+              "registered",
+              "unregistered"
+            ],
             "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）"
           },
           "deal_id": {
@@ -2289,25 +2416,39 @@
           },
           "tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
           },
           "tax_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "line_amount_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "withholding_tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
           },
@@ -2430,7 +2571,11 @@
           },
           "partner_title": {
             "type": "string",
-            "enum": ["御中", "様", "(空白)"],
+            "enum": [
+              "御中",
+              "様",
+              "(空白)"
+            ],
             "description": "敬称（御中、様、(空白)の3つから選択）"
           },
           "partner_address_zipcode": {
@@ -2486,7 +2631,11 @@
           },
           "partner_sending_method": {
             "type": "string",
-            "enum": ["email", "posting", "email_and_posting"],
+            "enum": [
+              "email",
+              "posting",
+              "email_and_posting"
+            ],
             "nullable": true,
             "description": "取引先への送付方法"
           },
@@ -2518,7 +2667,12 @@
       },
       "DeliverySlipResponse_delivery_slip_lines": {
         "type": "object",
-        "required": ["id", "type", "description", "withholding"],
+        "required": [
+          "id",
+          "type",
+          "description",
+          "withholding"
+        ],
         "properties": {
           "id": {
             "type": "integer",
@@ -2529,7 +2683,10 @@
           },
           "type": {
             "type": "string",
-            "enum": ["item", "text"],
+            "enum": [
+              "item",
+              "text"
+            ],
             "description": "明細の種類\n- item: 品目行\n- text: テキスト行\n- textの時はquantity、unit_price、tax_rate、amount_excluding_tax、account_item_id、tax_code、item_id、section_id、segment_1_tag_id、segment_2_tag_id、segment_3_tag_idはnullになります。"
           },
           "description": {
@@ -2556,7 +2713,11 @@
           },
           "tax_rate": {
             "type": "number",
-            "enum": [0, 8, 10],
+            "enum": [
+              0,
+              8,
+              10
+            ],
             "nullable": true,
             "description": "税率（%）"
           },
@@ -2662,7 +2823,9 @@
       },
       "DeliverySlipShowResponse": {
         "type": "object",
-        "required": ["delivery_slip"],
+        "required": [
+          "delivery_slip"
+        ],
         "properties": {
           "delivery_slip": {
             "$ref": "#/components/schemas/DeliverySlipShowResponse_delivery_slip"
@@ -2760,22 +2923,34 @@
           },
           "sending_status": {
             "type": "string",
-            "enum": ["sent", "unsent"],
+            "enum": [
+              "sent",
+              "unsent"
+            ],
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
           },
           "payment_status": {
             "type": "string",
-            "enum": ["settled", "unsettled"],
+            "enum": [
+              "settled",
+              "unsettled"
+            ],
             "description": "入金ステータス（unsettled: 入金待ち, settled: 入金済み）"
           },
           "cancel_status": {
             "type": "string",
-            "enum": ["canceled", "uncanceled"],
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
           },
           "deal_status": {
             "type": "string",
-            "enum": ["registered", "unregistered"],
+            "enum": [
+              "registered",
+              "unregistered"
+            ],
             "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）"
           },
           "deal_id": {
@@ -2788,25 +2963,39 @@
           },
           "tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
           },
           "tax_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "line_amount_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "withholding_tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
           },
@@ -2929,7 +3118,11 @@
           },
           "partner_title": {
             "type": "string",
-            "enum": ["御中", "様", "(空白)"],
+            "enum": [
+              "御中",
+              "様",
+              "(空白)"
+            ],
             "description": "敬称（御中、様、(空白)の3つから選択）"
           },
           "partner_address_zipcode": {
@@ -3002,7 +3195,10 @@
           },
           "email_url_file_downloaded_status": {
             "type": "string",
-            "enum": ["downloaded", "undownloaded"],
+            "enum": [
+              "downloaded",
+              "undownloaded"
+            ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
           }
@@ -3010,7 +3206,12 @@
       },
       "DeliverySlipShowResponse_delivery_slip_lines": {
         "type": "object",
-        "required": ["id", "type", "description", "withholding"],
+        "required": [
+          "id",
+          "type",
+          "description",
+          "withholding"
+        ],
         "properties": {
           "id": {
             "type": "integer",
@@ -3021,7 +3222,10 @@
           },
           "type": {
             "type": "string",
-            "enum": ["item", "text"],
+            "enum": [
+              "item",
+              "text"
+            ],
             "description": "明細の種類\n- item: 品目行\n- text: テキスト行\n- textの時はquantity、unit_price、tax_rate、amount_excluding_taxはnullになります。"
           },
           "description": {
@@ -3048,7 +3252,11 @@
           },
           "tax_rate": {
             "type": "number",
-            "enum": [0, 8, 10],
+            "enum": [
+              0,
+              8,
+              10
+            ],
             "nullable": true,
             "description": "税率（%）"
           },
@@ -3070,7 +3278,9 @@
       },
       "InvoiceIndexResponse": {
         "type": "object",
-        "required": ["invoices"],
+        "required": [
+          "invoices"
+        ],
         "properties": {
           "invoices": {
             "type": "array",
@@ -3154,7 +3364,11 @@
           },
           "payment_type": {
             "type": "string",
-            "enum": ["transfer", "direct_debit", "card"],
+            "enum": [
+              "transfer",
+              "direct_debit",
+              "card"
+            ],
             "description": "入金方法 (振込: transfer, 振替: direct_debit, カード: card)"
           },
           "memo": {
@@ -3164,22 +3378,34 @@
           },
           "sending_status": {
             "type": "string",
-            "enum": ["sent", "unsent"],
+            "enum": [
+              "sent",
+              "unsent"
+            ],
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
           },
           "payment_status": {
             "type": "string",
-            "enum": ["settled", "unsettled"],
+            "enum": [
+              "settled",
+              "unsettled"
+            ],
             "description": "入金ステータス（unsettled: 入金待ち, settled: 入金済み）"
           },
           "cancel_status": {
             "type": "string",
-            "enum": ["canceled", "uncanceled"],
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
           },
           "deal_status": {
             "type": "string",
-            "enum": ["registered", "unregistered"],
+            "enum": [
+              "registered",
+              "unregistered"
+            ],
             "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）"
           },
           "deal_id": {
@@ -3257,7 +3483,10 @@
           },
           "email_url_file_downloaded_status": {
             "type": "string",
-            "enum": ["downloaded", "undownloaded"],
+            "enum": [
+              "downloaded",
+              "undownloaded"
+            ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
           }
@@ -3320,7 +3549,10 @@
           },
           "payment_type": {
             "type": "string",
-            "enum": ["transfer", "direct_debit"],
+            "enum": [
+              "transfer",
+              "direct_debit"
+            ],
             "description": "入金方法 (振込: transfer, 振替: direct_debit)",
             "default": "transfer"
           },
@@ -3332,23 +3564,37 @@
           },
           "tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
           },
           "tax_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "line_amount_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "withholding_tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
           },
           "include_amount_brought_forward": {
@@ -3387,7 +3633,12 @@
           },
           "partner_title": {
             "type": "string",
-            "enum": ["御中", "様", "(空白)", "（空白）"],
+            "enum": [
+              "御中",
+              "様",
+              "(空白)",
+              "（空白）"
+            ],
             "description": "敬称（御中、様、(空白)の3つから選択）\n- [非推奨]全角カッコの（空白）は削除予定です。\n- 全角カッコの（空白）を指定した場合、はレスポンスは、半角カッコの(空白)になります。"
           },
           "partner_address_zipcode": {
@@ -3446,7 +3697,11 @@
           },
           "partner_sending_method": {
             "type": "string",
-            "enum": ["email", "posting", "email_and_posting"],
+            "enum": [
+              "email",
+              "posting",
+              "email_and_posting"
+            ],
             "nullable": true,
             "description": "取引先への送付方法\n- 一括送付時に取引先マスタに登録された送付方法以外を利用したい場合に指定します。\n- 入力がない場合、取引先マスタに登録された送付方法で一括送付を行います。"
           },
@@ -3489,7 +3744,10 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["item", "text"],
+            "enum": [
+              "item",
+              "text"
+            ],
             "description": "明細の種類\n- item: 品目行\n- tax_rate、quantityは必須になります。\n- text: テキスト行\n- descriptionのみ入力可能です。\n- 入力がない場合、itemが利用されます。",
             "default": "item"
           },
@@ -3524,7 +3782,11 @@
           },
           "tax_rate": {
             "type": "number",
-            "enum": [0, 8, 10],
+            "enum": [
+              0,
+              8,
+              10
+            ],
             "description": "税率（%）（帳票の税額計算に用います。）"
           },
           "reduced_tax_rate": {
@@ -3590,7 +3852,9 @@
       },
       "InvoiceResponse": {
         "type": "object",
-        "required": ["invoice"],
+        "required": [
+          "invoice"
+        ],
         "properties": {
           "invoice": {
             "$ref": "#/components/schemas/InvoiceResponse_invoice"
@@ -3686,7 +3950,10 @@
           },
           "payment_type": {
             "type": "string",
-            "enum": ["transfer", "direct_debit"],
+            "enum": [
+              "transfer",
+              "direct_debit"
+            ],
             "description": "入金方法 (振込: transfer, 振替: direct_debit)"
           },
           "invoice_note": {
@@ -3701,22 +3968,34 @@
           },
           "sending_status": {
             "type": "string",
-            "enum": ["sent", "unsent"],
+            "enum": [
+              "sent",
+              "unsent"
+            ],
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
           },
           "payment_status": {
             "type": "string",
-            "enum": ["settled", "unsettled"],
+            "enum": [
+              "settled",
+              "unsettled"
+            ],
             "description": "入金ステータス（unsettled: 入金待ち, settled: 入金済み）"
           },
           "cancel_status": {
             "type": "string",
-            "enum": ["canceled", "uncanceled"],
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
           },
           "deal_status": {
             "type": "string",
-            "enum": ["registered", "unregistered"],
+            "enum": [
+              "registered",
+              "unregistered"
+            ],
             "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）"
           },
           "deal_id": {
@@ -3729,25 +4008,39 @@
           },
           "tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
           },
           "tax_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "line_amount_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "withholding_tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
           },
@@ -3878,7 +4171,11 @@
           },
           "partner_title": {
             "type": "string",
-            "enum": ["御中", "様", "(空白)"],
+            "enum": [
+              "御中",
+              "様",
+              "(空白)"
+            ],
             "description": "敬称（御中、様、(空白)の3つから選択）"
           },
           "partner_address_zipcode": {
@@ -3934,7 +4231,11 @@
           },
           "partner_sending_method": {
             "type": "string",
-            "enum": ["email", "posting", "email_and_posting"],
+            "enum": [
+              "email",
+              "posting",
+              "email_and_posting"
+            ],
             "nullable": true,
             "description": "取引先への送付方法"
           },
@@ -3970,7 +4271,12 @@
       },
       "InvoiceResponse_invoice_lines": {
         "type": "object",
-        "required": ["id", "type", "description", "withholding"],
+        "required": [
+          "id",
+          "type",
+          "description",
+          "withholding"
+        ],
         "properties": {
           "id": {
             "type": "integer",
@@ -3981,7 +4287,10 @@
           },
           "type": {
             "type": "string",
-            "enum": ["item", "text"],
+            "enum": [
+              "item",
+              "text"
+            ],
             "description": "明細の種類\n- item: 品目行\n- text: テキスト行\n- textの時はsales_date、quantity、unit_price、tax_rate、amount_excluding_tax、account_item_id、tax_code、item_id、section_id、segment_1_tag_id、segment_2_tag_id、segment_3_tag_idはnullになります。"
           },
           "description": {
@@ -4015,7 +4324,11 @@
           },
           "tax_rate": {
             "type": "number",
-            "enum": [0, 8, 10],
+            "enum": [
+              0,
+              8,
+              10
+            ],
             "nullable": true,
             "description": "税率（%）"
           },
@@ -4125,7 +4438,9 @@
       },
       "InvoiceShowResponse": {
         "type": "object",
-        "required": ["invoice"],
+        "required": [
+          "invoice"
+        ],
         "properties": {
           "invoice": {
             "$ref": "#/components/schemas/InvoiceShowResponse_invoice"
@@ -4221,7 +4536,11 @@
           },
           "payment_type": {
             "type": "string",
-            "enum": ["transfer", "direct_debit", "card"],
+            "enum": [
+              "transfer",
+              "direct_debit",
+              "card"
+            ],
             "description": "入金方法 (振込: transfer, 振替: direct_debit, カード: card)"
           },
           "invoice_note": {
@@ -4236,22 +4555,34 @@
           },
           "sending_status": {
             "type": "string",
-            "enum": ["sent", "unsent"],
+            "enum": [
+              "sent",
+              "unsent"
+            ],
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
           },
           "payment_status": {
             "type": "string",
-            "enum": ["settled", "unsettled"],
+            "enum": [
+              "settled",
+              "unsettled"
+            ],
             "description": "入金ステータス（unsettled: 入金待ち, settled: 入金済み）"
           },
           "cancel_status": {
             "type": "string",
-            "enum": ["canceled", "uncanceled"],
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
           },
           "deal_status": {
             "type": "string",
-            "enum": ["registered", "unregistered"],
+            "enum": [
+              "registered",
+              "unregistered"
+            ],
             "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）"
           },
           "deal_id": {
@@ -4264,25 +4595,39 @@
           },
           "tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
           },
           "tax_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "line_amount_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "withholding_tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
           },
@@ -4413,7 +4758,11 @@
           },
           "partner_title": {
             "type": "string",
-            "enum": ["御中", "様", "(空白)"],
+            "enum": [
+              "御中",
+              "様",
+              "(空白)"
+            ],
             "description": "敬称（御中、様、(空白)の3つから選択）"
           },
           "partner_address_zipcode": {
@@ -4494,7 +4843,10 @@
           },
           "email_url_file_downloaded_status": {
             "type": "string",
-            "enum": ["downloaded", "undownloaded"],
+            "enum": [
+              "downloaded",
+              "undownloaded"
+            ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
           }
@@ -4502,7 +4854,12 @@
       },
       "InvoiceShowResponse_invoice_lines": {
         "type": "object",
-        "required": ["id", "type", "description", "withholding"],
+        "required": [
+          "id",
+          "type",
+          "description",
+          "withholding"
+        ],
         "properties": {
           "id": {
             "type": "integer",
@@ -4513,7 +4870,10 @@
           },
           "type": {
             "type": "string",
-            "enum": ["item", "text"],
+            "enum": [
+              "item",
+              "text"
+            ],
             "description": "明細の種類\n- item: 品目行\n- text: テキスト行\n- textの時はsales_date、quantity、unit_price、tax_rate、amount_excluding_taxはnullになります。"
           },
           "description": {
@@ -4547,7 +4907,11 @@
           },
           "tax_rate": {
             "type": "number",
-            "enum": [0, 8, 10],
+            "enum": [
+              0,
+              8,
+              10
+            ],
             "nullable": true,
             "description": "税率（%）"
           },
@@ -4569,7 +4933,9 @@
       },
       "QuotationIndexResponse": {
         "type": "object",
-        "required": ["quotations"],
+        "required": [
+          "quotations"
+        ],
         "properties": {
           "quotations": {
             "type": "array",
@@ -4648,12 +5014,18 @@
           },
           "sending_status": {
             "type": "string",
-            "enum": ["sent", "unsent"],
+            "enum": [
+              "sent",
+              "unsent"
+            ],
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
           },
           "cancel_status": {
             "type": "string",
-            "enum": ["canceled", "uncanceled"],
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
           },
           "total_amount": {
@@ -4715,7 +5087,10 @@
           },
           "email_url_file_downloaded_status": {
             "type": "string",
-            "enum": ["downloaded", "undownloaded"],
+            "enum": [
+              "downloaded",
+              "undownloaded"
+            ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
           }
@@ -4790,23 +5165,37 @@
           },
           "tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
           },
           "tax_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "line_amount_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "withholding_tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
           },
           "quotation_note": {
@@ -4834,7 +5223,12 @@
           },
           "partner_title": {
             "type": "string",
-            "enum": ["御中", "様", "(空白)", "（空白）"],
+            "enum": [
+              "御中",
+              "様",
+              "(空白)",
+              "（空白）"
+            ],
             "description": "敬称（御中、様、(空白)の3つから選択）\n- [非推奨]全角カッコの（空白）は削除予定です。\n- 全角カッコの（空白）を指定した場合、はレスポンスは、半角カッコの(空白)になります。"
           },
           "partner_address_zipcode": {
@@ -4893,7 +5287,11 @@
           },
           "partner_sending_method": {
             "type": "string",
-            "enum": ["email", "posting", "email_and_posting"],
+            "enum": [
+              "email",
+              "posting",
+              "email_and_posting"
+            ],
             "nullable": true,
             "description": "取引先への送付方法\n- 一括送付時に取引先マスタに登録された送付方法以外を利用したい場合に指定します。\n- 入力がない場合、取引先マスタに登録された送付方法で一括送付を行います。"
           },
@@ -4926,7 +5324,10 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["item", "text"],
+            "enum": [
+              "item",
+              "text"
+            ],
             "description": "明細の種類\n- item: 品目行\n- tax_rate、quantityは必須になります。\n- text: テキスト行\n- descriptionのみ入力可能です。\n- 入力がない場合、itemが利用されます。",
             "default": "item"
           },
@@ -4955,7 +5356,11 @@
           },
           "tax_rate": {
             "type": "number",
-            "enum": [0, 8, 10],
+            "enum": [
+              0,
+              8,
+              10
+            ],
             "description": "税率（%）（帳票の税率計算に用います。）"
           },
           "reduced_tax_rate": {
@@ -4970,7 +5375,9 @@
       },
       "QuotationResponse": {
         "type": "object",
-        "required": ["quotation"],
+        "required": [
+          "quotation"
+        ],
         "properties": {
           "quotation": {
             "$ref": "#/components/schemas/QuotationResponse_quotation"
@@ -5078,35 +5485,55 @@
           },
           "sending_status": {
             "type": "string",
-            "enum": ["sent", "unsent"],
+            "enum": [
+              "sent",
+              "unsent"
+            ],
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
           },
           "cancel_status": {
             "type": "string",
-            "enum": ["canceled", "uncanceled"],
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
           },
           "tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
           },
           "tax_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "line_amount_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "withholding_tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
           },
@@ -5229,7 +5656,11 @@
           },
           "partner_title": {
             "type": "string",
-            "enum": ["御中", "様", "(空白)"],
+            "enum": [
+              "御中",
+              "様",
+              "(空白)"
+            ],
             "description": "敬称（御中、様、(空白)の3つから選択）"
           },
           "partner_address_zipcode": {
@@ -5280,7 +5711,11 @@
           },
           "partner_sending_method": {
             "type": "string",
-            "enum": ["email", "posting", "email_and_posting"],
+            "enum": [
+              "email",
+              "posting",
+              "email_and_posting"
+            ],
             "nullable": true,
             "description": "取引先への送付方法"
           },
@@ -5313,7 +5748,12 @@
       },
       "QuotationResponse_quotation_lines": {
         "type": "object",
-        "required": ["id", "type", "description", "withholding"],
+        "required": [
+          "id",
+          "type",
+          "description",
+          "withholding"
+        ],
         "properties": {
           "id": {
             "type": "integer",
@@ -5324,7 +5764,10 @@
           },
           "type": {
             "type": "string",
-            "enum": ["item", "text"],
+            "enum": [
+              "item",
+              "text"
+            ],
             "description": "明細の種類\n- item: 品目行\n- text: テキスト行"
           },
           "description": {
@@ -5351,7 +5794,11 @@
           },
           "tax_rate": {
             "type": "number",
-            "enum": [0, 8, 10],
+            "enum": [
+              0,
+              8,
+              10
+            ],
             "nullable": true,
             "description": "税率（%）"
           },
@@ -5395,7 +5842,9 @@
       },
       "QuotationShowResponse": {
         "type": "object",
-        "required": ["quotation"],
+        "required": [
+          "quotation"
+        ],
         "properties": {
           "quotation": {
             "$ref": "#/components/schemas/QuotationShowResponse_quotation"
@@ -5503,35 +5952,55 @@
           },
           "sending_status": {
             "type": "string",
-            "enum": ["sent", "unsent"],
+            "enum": [
+              "sent",
+              "unsent"
+            ],
             "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
           },
           "cancel_status": {
             "type": "string",
-            "enum": ["canceled", "uncanceled"],
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
             "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
           },
           "tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
           },
           "tax_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "line_amount_fraction": {
             "type": "string",
-            "enum": ["omit", "round_up", "round"],
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
             "nullable": true,
             "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
           },
           "withholding_tax_entry_method": {
             "type": "string",
-            "enum": ["in", "out"],
+            "enum": [
+              "in",
+              "out"
+            ],
             "nullable": true,
             "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
           },
@@ -5654,7 +6123,11 @@
           },
           "partner_title": {
             "type": "string",
-            "enum": ["御中", "様", "(空白)"],
+            "enum": [
+              "御中",
+              "様",
+              "(空白)"
+            ],
             "description": "敬称（御中、様、(空白)の3つから選択）"
           },
           "partner_address_zipcode": {
@@ -5727,7 +6200,10 @@
           },
           "email_url_file_downloaded_status": {
             "type": "string",
-            "enum": ["downloaded", "undownloaded"],
+            "enum": [
+              "downloaded",
+              "undownloaded"
+            ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
           }
@@ -5735,7 +6211,12 @@
       },
       "QuotationShowResponse_quotation_lines": {
         "type": "object",
-        "required": ["id", "type", "description", "withholding"],
+        "required": [
+          "id",
+          "type",
+          "description",
+          "withholding"
+        ],
         "properties": {
           "id": {
             "type": "integer",
@@ -5746,7 +6227,10 @@
           },
           "type": {
             "type": "string",
-            "enum": ["item", "text"],
+            "enum": [
+              "item",
+              "text"
+            ],
             "description": "明細の種類\n- item: 品目行\n- text: テキスト行\n- textの時はsales_date、quantity、unit_price、tax_rate、amount_excluding_taxはnullになります。"
           },
           "description": {
@@ -5773,7 +6257,11 @@
           },
           "tax_rate": {
             "type": "number",
-            "enum": [0, 8, 10],
+            "enum": [
+              0,
+              8,
+              10
+            ],
             "nullable": true,
             "description": "税率（%）"
           },
@@ -5795,7 +6283,9 @@
       },
       "TemplateIndexResponse": {
         "type": "object",
-        "required": ["templates"],
+        "required": [
+          "templates"
+        ],
         "properties": {
           "templates": {
             "type": "array",
@@ -5807,7 +6297,10 @@
       },
       "TemplateIndexResponse_templates": {
         "type": "object",
-        "required": ["id", "name"],
+        "required": [
+          "id",
+          "name"
+        ],
         "properties": {
           "id": {
             "type": "integer",

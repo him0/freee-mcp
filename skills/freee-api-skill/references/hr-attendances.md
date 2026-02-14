@@ -90,6 +90,7 @@ successful operation
 - use_default_work_pattern (任意): boolean - デフォルトの勤務時間設定を使っているかどうか
 - use_half_compensatory_holiday (任意): boolean - 代休の半休を利用したかどうか 例: `false`
 - total_overtime_work_mins (任意): integer(int32) - 時間外労働時間（分）（Webの勤怠登録画面にて詳細項目の「勤務時間の長さを自動で計算しない」にチェックを入れた場合0が返却されます。時間外労働時間はtotal_overtime_except_normal_work_minsを参照してください。）
+- total_prescribed_holiday_work_mins (任意): integer(int32) - 所定休日労働時間（分）
 - total_holiday_work_mins (任意): integer(int32) - 法定休日労働時間（分）
 - total_latenight_work_mins (任意): integer(int32) - 深夜労働時間（分）
 - not_auto_calc_work_time (任意): boolean - 勤怠登録時に勤務時間の長さを自動で計算しないかどうか 例: `false`

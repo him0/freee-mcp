@@ -36,6 +36,7 @@ successful operation
 - total_excess_statutory_work_mins (任意): integer(int32) - 給与計算に用いられる法定内残業時間（分）
 - total_overtime_except_normal_work_mins (任意): integer(int32) - 所定外法定外労働時間
 - total_overtime_within_normal_work_mins (任意): integer(int32) - 所定内法定外労働時間（裁量労働制の場合はみなしベース）
+- total_prescribed_holiday_work_mins (任意): integer(int32) - 所定休日労働時間（分）
 - total_holiday_work_mins (任意): integer(int32) - 法定休日労働時間（分）
 - total_latenight_work_mins (任意): integer(int32) - 深夜労働allow(company)時間（分）
 - num_absences (任意): number(float) - 欠勤日数
@@ -91,6 +92,7 @@ successful operation
 - total_latenight_work_mins (任意): integer - 深夜労働時間（分） (最小: 0, 最大: 2147483647)
 - total_actual_excess_statutory_work_mins (任意): integer - 実労働時間ベースの法定内残業時間（分） (最小: 0, 最大: 2147483647)
 - total_overtime_work_mins (任意): integer - 時間外労働時間（分） (最小: 0, 最大: 2147483647)
+- total_prescribed_holiday_work_mins (任意): integer - 所定休日労働時間（分） (最小: 0, 最大: 2147483647)
 - num_absences (任意): number(float) - 欠勤日数 (最小: 0, 最大: 31)
 - num_absences_for_deduction (任意): number(float) - 控除対象の欠勤日数
 
@@ -122,6 +124,7 @@ successful operation
 - total_excess_statutory_work_mins (任意): integer(int32) - 給与計算に用いられる法定内残業時間（分）
 - total_overtime_except_normal_work_mins (任意): integer(int32) - 所定外法定外労働時間
 - total_overtime_within_normal_work_mins (任意): integer(int32) - 所定内法定外労働時間（裁量労働制の場合はみなしベース）
+- total_prescribed_holiday_work_mins (任意): integer(int32) - 所定休日労働時間（分）
 - total_holiday_work_mins (任意): integer(int32) - 法定休日労働時間（分）
 - total_latenight_work_mins (任意): integer(int32) - 深夜労働allow(company)時間（分）
 - num_absences (任意): number(float) - 欠勤日数
