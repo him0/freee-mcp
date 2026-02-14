@@ -121,6 +121,27 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+          # README の Contributors セクションに新しいユーザーを追加
+          if [ -n "$USERS" ]; then
+            while read -r user; do
+              if ! grep -q "github.com/${user}" README.md; then
+                sed -i "s|<!-- CONTRIBUTORS-END -->|<a href=\"https://github.com/${user}\"><img src=\"https://github.com/${user}.png\" width=\"40\" height=\"40\" alt=\"@${user}\"></a>\n<!-- CONTRIBUTORS-END -->|" README.md
+                echo "Added $user to README contributors"
+              fi
+            done <<< "$USERS"
+
+            if git diff --quiet README.md; then
+              echo "No new contributors to add to README"
+            else
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git add README.md
+              git commit -m "docs: add new contributors to README"
+              git push
+              echo "Pushed README contributor updates"
+            fi
+          fi
+
       - name: Create GitHub Release
         if: steps.check-release.outputs.skip != 'true'
         uses: softprops/action-gh-release@v1

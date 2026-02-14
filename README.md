@@ -177,10 +177,10 @@ Issue での不具合報告や機能要望、フィードバックは大歓迎�
 ### Contributors
 
 <!-- CONTRIBUTORS-START -->
-- [@dais0n](https://github.com/dais0n)
-- [@HikaruEgashira](https://github.com/HikaruEgashira)
-- [@nakanoasaservice](https://github.com/nakanoasaservice)
-- [@worldscandy](https://github.com/worldscandy)
+<a href="https://github.com/dais0n"><img src="https://github.com/dais0n.png" width="40" height="40" alt="@dais0n"></a>
+<a href="https://github.com/HikaruEgashira"><img src="https://github.com/HikaruEgashira.png" width="40" height="40" alt="@HikaruEgashira"></a>
+<a href="https://github.com/nakanoasaservice"><img src="https://github.com/nakanoasaservice.png" width="40" height="40" alt="@nakanoasaservice"></a>
+<a href="https://github.com/worldscandy"><img src="https://github.com/worldscandy.png" width="40" height="40" alt="@worldscandy"></a>
 <!-- CONTRIBUTORS-END -->
 
 ## 開発者向け
