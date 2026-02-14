@@ -220,7 +220,7 @@ class CallbackServer {
     });
   }
 
-  private handleCallback(url: URL, res: http.ServerResponse): void {
+  private async handleCallback(url: URL, res: http.ServerResponse): Promise<void> {
     const code = url.searchParams.get('code');
     const state = url.searchParams.get('state');
     const error = url.searchParams.get('error');
@@ -282,20 +282,27 @@ class CallbackServer {
     }
 
     console.error(`Valid callback received, exchanging code for tokens...`);
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてください。</p>');
 
-    this.authManager.removePendingAuthentication(state);
+    // トークン交換を待ってから、結果に応じてブラウザに応答を返す
+    try {
+      const tokens = await exchangeCodeForTokens(code, pendingAuth.codeVerifier, this.getRedirectUri());
+      console.error(`Token exchange successful!`);
+      pendingAuth.resolve(tokens);
 
-    exchangeCodeForTokens(code, pendingAuth.codeVerifier, this.getRedirectUri())
-      .then((tokens) => {
-        console.error(`Token exchange successful!`);
-        pendingAuth.resolve(tokens);
-      })
-      .catch((exchangeError) => {
-        console.error(`Token exchange failed:`, exchangeError);
-        pendingAuth.reject(exchangeError);
-      });
+      // 成功時のみ「認証完了」を表示
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてください。</p>');
+    } catch (exchangeError) {
+      console.error(`Token exchange failed:`, exchangeError);
+      pendingAuth.reject(exchangeError as Error);
+
+      // エラー時は「認証エラー」を表示
+      const errorMessage = exchangeError instanceof Error ? exchangeError.message : String(exchangeError);
+      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(`<h1>認証エラー</h1><p>トークン交換に失敗しました: ${errorMessage}</p>`);
+    } finally {
+      this.authManager.removePendingAuthentication(state);
+    }
   }
 }
 
