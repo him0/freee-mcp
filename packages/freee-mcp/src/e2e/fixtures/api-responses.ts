@@ -36,6 +36,26 @@ export const mockCompaniesResponse = {
   ],
 };
 
+// Companies list response with nullable name fields
+export const mockCompaniesWithNullNameResponse = {
+  companies: [
+    {
+      id: 12345,
+      name: 'テスト株式会社',
+      name_kana: 'テストカブシキガイシャ',
+      display_name: 'テスト株式会社',
+      role: 'admin',
+    },
+    {
+      id: 34567,
+      name: null,
+      name_kana: null,
+      display_name: 'テスト事業所',
+      role: 'admin',
+    },
+  ],
+};
+
 // Deals list response
 export const mockDealsResponse = {
   deals: [

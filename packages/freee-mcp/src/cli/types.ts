@@ -13,14 +13,15 @@ export type OAuthResult = {
 
 export type SelectedCompany = {
   id: number;
-  name: string;
+  name: string | null;
   displayName: string;
   role: string;
 };
 
 export const CompanySchema = z.object({
   id: z.number(),
-  name: z.string(),
+  name: z.string().nullable(),
+  name_kana: z.string().nullable().optional(),
   display_name: z.string(),
   role: z.string(),
 });

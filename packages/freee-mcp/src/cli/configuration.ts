@@ -18,7 +18,7 @@ export async function saveConfig(
   allCompanies.forEach((company) => {
     fullConfig.companies[String(company.id)] = {
       id: String(company.id),
-      name: company.display_name || company.name,
+      name: company.display_name || company.name || undefined,
       description: `Role: ${company.role}`,
       addedAt: Date.now(),
       lastUsed: company.id === selectedCompany.id ? Date.now() : undefined,
