@@ -42,7 +42,7 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION=$(node -e "console.log(require('./packages/freee-mcp/package.json').version)")
+          VERSION=$(node -e "console.log(require('./package.json').version)")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Version: $VERSION"
 
