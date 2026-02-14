@@ -6,7 +6,7 @@ MCP サーバー（API 呼び出し機能）と skill（API リファレンス�
 
 [![npm version](https://badge.fury.io/js/@him0%2Ffreee-mcp.svg)](https://www.npmjs.com/package/@him0/freee-mcp)
 
-> Note: このプロジェクトは開発中であり、予期せぬ不具合が発生する可能性があります。問題を発見された場合は [Issue](https://github.com/him0/freee-mcp/issues) として報告していただけると幸いです。プルリクエストも歓迎しています。
+> Note: このプロジェクトは開発中であり、予期せぬ不具合が発生する可能性があります。問題を発見された場合は [Issue](https://github.com/him0/freee-mcp/issues) として報告していただけると幸いです。
 
 ## 特徴
 
@@ -165,6 +165,23 @@ HTTPメソッドごとのシンプルなツール構成:
 - 事業所の確認: `freee_get_current_company`
 - 事業所の切り替え: `freee_set_company`
 - company_id を含まない API（例: `/api/1/companies`）はそのまま実行可能
+
+## コントリビューション
+
+Issue での不具合報告や機能要望、フィードバックは大歓迎です！
+
+このリポジトリでは AI を活用した開発フローを採用しており、issue をもとに実装することでコードの一貫性と品質を保っています。
+そのため、ホワイトリストに登録されていないユーザーからの PR は自動的に close され、代わりに提案内容を反映した issue が作成されます。
+メンテナーが issue をもとに実装方針を検討し、対応を進めます。
+
+### Contributors
+
+<!-- CONTRIBUTORS-START -->
+<a href="https://github.com/dais0n"><img src="https://github.com/dais0n.png" width="40" height="40" alt="@dais0n"></a>
+<a href="https://github.com/HikaruEgashira"><img src="https://github.com/HikaruEgashira.png" width="40" height="40" alt="@HikaruEgashira"></a>
+<a href="https://github.com/nakanoasaservice"><img src="https://github.com/nakanoasaservice.png" width="40" height="40" alt="@nakanoasaservice"></a>
+<a href="https://github.com/worldscandy"><img src="https://github.com/worldscandy.png" width="40" height="40" alt="@worldscandy"></a>
+<!-- CONTRIBUTORS-END -->
 
 ## 開発者向け
 

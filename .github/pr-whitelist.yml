@@ -1,0 +1,5 @@
+# PR 自動 close の対象外ユーザー / Users exempt from auto-close
+# ここに追加されたユーザーの PR は自動 close されません
+# PRs from users listed here will not be automatically closed
+allowed_users:
+  - him0
