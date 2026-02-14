@@ -102,7 +102,7 @@ jobs:
               --search "closed:>=$PREV_DATE" \
               --json body \
               --jq '.[].body' \
-            | grep -oP 'by @\K[^\s)+]+' \
+            | { grep -oP 'by @\K[^\s)+]+' || true; } \
             | sort -u)
 
             if [ -n "$USERS" ]; then
