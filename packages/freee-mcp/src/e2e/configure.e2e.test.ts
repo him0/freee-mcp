@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { FullConfig } from '../config/companies';
-import { mockCompaniesResponse, mockTokenResponse } from './fixtures/api-responses';
+import { mockCompaniesResponse, mockCompaniesWithNullNameResponse, mockTokenResponse } from './fixtures/api-responses';
 
 // Track mock state - isolated from real config
 let mockSavedConfig: FullConfig | null = null;
@@ -393,6 +393,37 @@ describe('E2E: Configure Command', () => {
       await configure();
 
       expect(process.exit).toHaveBeenCalledWith(1);
+    });
+
+    it('should handle companies with null name fields', async () => {
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes('/api/1/companies')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockCompaniesWithNullNameResponse),
+          });
+        }
+        return Promise.resolve({ ok: false, status: 404 });
+      });
+
+      mockPromptsResponses = [
+        {
+          clientId: 'test-client-id',
+          clientSecret: 'test-client-secret',
+          callbackPort: '54321',
+        },
+        {
+          companyId: 34567,
+        },
+      ];
+
+      const { configure } = await import('../cli');
+      await configure();
+
+      expect(mockSavedConfig).not.toBeNull();
+      expect(mockSavedConfig?.defaultCompanyId).toBe('34567');
+      expect(mockSavedConfig?.companies['34567'].name).toBe('テスト事業所');
+      expect(process.exit).not.toHaveBeenCalled();
     });
 
     it('should handle no available companies', async () => {

@@ -108,7 +108,7 @@ export async function selectCompany(accessToken: string): Promise<{ selected: Se
     selected: {
       id: selectedCompany.id,
       name: selectedCompany.name,
-      displayName: selectedCompany.display_name || selectedCompany.name,
+      displayName: selectedCompany.display_name || selectedCompany.name || '',
       role: selectedCompany.role,
     },
     all: companies,
