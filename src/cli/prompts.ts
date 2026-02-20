@@ -7,11 +7,12 @@ import {
   type McpTarget,
 } from '../config/mcp-config.js';
 import { DEFAULT_CALLBACK_PORT } from '../constants.js';
+import { loadFullConfig, saveFullConfig } from '../config/companies.js';
 import type { Credentials, SelectedCompany, Company } from './types.js';
 import { fetchCompanies } from './api-client.js';
 
 export async function collectCredentials(): Promise<Credentials> {
-  const existingConfig = await import('../config/companies.js').then((m) => m.loadFullConfig());
+  const existingConfig = await loadFullConfig();
   const hasExistingCredentials = !!(existingConfig.clientId && existingConfig.clientSecret);
 
   if (hasExistingCredentials) {
@@ -25,28 +26,28 @@ export async function collectCredentials(): Promise<Credentials> {
     {
       type: 'text',
       name: 'clientId',
-      message: 'FREEE_CLIENT_ID:',
+      message: 'Client ID:',
       initial: existingConfig.clientId || undefined,
       validate: (value: string): string | boolean =>
-        value.trim() ? true : 'CLIENT_ID は必須です',
+        value.trim() ? true : 'Client ID は必須です',
     },
     {
       type: 'password',
       name: 'clientSecret',
       message: hasExistingCredentials
-        ? 'FREEE_CLIENT_SECRET (変更しない場合は空欄):'
-        : 'FREEE_CLIENT_SECRET:',
+        ? 'Client Secret (変更しない場合は空欄):'
+        : 'Client Secret:',
       validate: (value: string): string | boolean => {
         if (hasExistingCredentials && !value.trim()) {
           return true;
         }
-        return value.trim() ? true : 'CLIENT_SECRET は必須です';
+        return value.trim() ? true : 'Client Secret は必須です';
       },
     },
     {
       type: 'text',
       name: 'callbackPort',
-      message: 'FREEE_CALLBACK_PORT:',
+      message: 'Callback Port:',
       initial: String(existingConfig.callbackPort || DEFAULT_CALLBACK_PORT),
     },
   ]);
@@ -60,12 +61,14 @@ export async function collectCredentials(): Promise<Credentials> {
   const callbackPort = parseInt(credentials.callbackPort.trim(), 10);
 
   if (!clientSecret) {
-    throw new Error('CLIENT_SECRET は必須です。');
+    throw new Error('Client Secret は必須です。');
   }
 
-  process.env.FREEE_CLIENT_ID = clientId;
-  process.env.FREEE_CLIENT_SECRET = clientSecret;
-  process.env.FREEE_CALLBACK_PORT = String(callbackPort);
+  // Save credentials to config file for subsequent OAuth flow
+  existingConfig.clientId = clientId;
+  existingConfig.clientSecret = clientSecret;
+  existingConfig.callbackPort = callbackPort;
+  await saveFullConfig(existingConfig);
 
   console.log('\n認証情報を受け取りました。\n');
 
