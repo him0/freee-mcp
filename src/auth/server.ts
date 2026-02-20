@@ -184,7 +184,7 @@ class CallbackServer {
       });
 
       this.server.listen(port, '127.0.0.1', () => {
-        console.error(`OAuth callback server listening on http://127.0.0.1:${port}`);
+        console.error(`OAuth callback server listening on http://127.0.0.1:${port} (callback URL: http://127.0.0.1:${port}/callback)`);
         resolve();
       });
     });
