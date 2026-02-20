@@ -1,5 +1,15 @@
 # @him0/freee-mcp
 
+## 0.7.0
+
+### Minor Changes
+
+- c47692c: configure 完了後に Skill インストールの案内を表示するように改善。Claude Code には `npx add-skill` コマンド、Claude Desktop には Releases から freee-skill.zip をダウンロードする手順を案内。
+
+### Patch Changes
+
+- e91f75f: configure コマンドでコールバックURLを分かりやすく表示するように改善
+
 ## 0.6.7
 
 ### Patch Changes
