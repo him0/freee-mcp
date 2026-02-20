@@ -171,7 +171,7 @@ function showSkillInstallGuide(claudeCodeConfigured: boolean, claudeDesktopConfi
 
   if (claudeCodeConfigured) {
     console.log('[Claude Code]');
-    console.log('  以下のコマンドを実行してください:\n');
+    console.log('  以下のコマンドで freee API スキルをインストールできます:\n');
     console.log('  npx add-skill him0/freee-mcp\n');
   }
 
@@ -179,8 +179,8 @@ function showSkillInstallGuide(claudeCodeConfigured: boolean, claudeDesktopConfi
     console.log('[Claude Desktop]');
     console.log('  1. 以下の URL から freee-skill.zip をダウンロード:');
     console.log(`     ${SKILL_RELEASES_URL}\n`);
-    console.log('  2. zip を展開して、Claude Desktop の設定画面からインストール:');
-    console.log('     Settings > Plugins > Add Plugin から展開したフォルダを選択\n');
+    console.log('  2. Claude Desktop でスキルをアップロード:');
+    console.log('     Settings > Features > Skills > 「Upload skill」から zip ファイルを選択\n');
   }
 }
 
