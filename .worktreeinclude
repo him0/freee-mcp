@@ -1,0 +1,11 @@
+# Claude Code local settings
+.claude/settings.local.json
+
+# Local project memory
+CLAUDE.local.md
+
+# mise local config
+mise.local.toml
+
+# VSCode settings
+.vscode/settings.json
