@@ -21,6 +21,9 @@ export async function collectCredentials(): Promise<Credentials> {
 
   console.log('ステップ 1/3: OAuth認証情報の入力\n');
 
+  const defaultPort = existingConfig.callbackPort || DEFAULT_CALLBACK_PORT;
+  console.log(`freee アプリのコールバックURLには http://127.0.0.1:${defaultPort}/callback を設定してください。\n`);
+
   const credentials = await prompts([
     {
       type: 'text',
@@ -46,8 +49,8 @@ export async function collectCredentials(): Promise<Credentials> {
     {
       type: 'text',
       name: 'callbackPort',
-      message: 'FREEE_CALLBACK_PORT:',
-      initial: String(existingConfig.callbackPort || DEFAULT_CALLBACK_PORT),
+      message: `コールバックポート (コールバックURL: http://127.0.0.1:<port>/callback):`,
+      initial: String(defaultPort),
     },
   ]);
 
