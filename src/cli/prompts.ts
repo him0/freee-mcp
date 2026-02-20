@@ -118,7 +118,7 @@ export async function selectCompany(accessToken: string): Promise<{ selected: Se
   };
 }
 
-async function configureMcpTarget(target: McpTarget): Promise<void> {
+async function configureMcpTarget(target: McpTarget): Promise<boolean> {
   const displayName = getTargetDisplayName(target);
   const status = await checkMcpConfigStatus(target);
 
@@ -137,8 +137,10 @@ async function configureMcpTarget(target: McpTarget): Promise<void> {
     if (action === 'remove') {
       await removeFreeeMcpConfig(target);
       console.log(`  ✓ ${displayName} から freee-mcp を削除しました。`);
+      return false;
     } else {
       console.log(`  - ${displayName} の設定は変更しません。`);
+      return true;
     }
   } else {
     const { shouldAdd } = await prompts({
@@ -152,9 +154,36 @@ async function configureMcpTarget(target: McpTarget): Promise<void> {
       await addFreeeMcpConfig(target);
       console.log(`  ✓ ${displayName} に freee-mcp を追加しました。`);
       console.log(`    設定ファイル: ${status.path}`);
+      return true;
     } else {
       console.log(`  - ${displayName} への追加をスキップしました。`);
+      return false;
     }
+  }
+}
+
+const SKILL_RELEASES_URL = 'https://github.com/him0/freee-mcp/releases/latest';
+
+function showSkillInstallGuide(claudeCodeConfigured: boolean, claudeDesktopConfigured: boolean): void {
+  if (!claudeCodeConfigured && !claudeDesktopConfigured) {
+    return;
+  }
+
+  console.log('=== Skill (API リファレンス) のインストール ===\n');
+  console.log('MCP サーバーと合わせて Skill をインストールすると、API リファレンスが利用可能になります。\n');
+
+  if (claudeCodeConfigured) {
+    console.log('[Claude Code]');
+    console.log('  以下のコマンドで freee API スキルをインストールできます:\n');
+    console.log('  npx add-skill him0/freee-mcp\n');
+  }
+
+  if (claudeDesktopConfigured) {
+    console.log('[Claude Desktop]');
+    console.log('  1. 以下の URL から freee-skill.zip をダウンロード:');
+    console.log(`     ${SKILL_RELEASES_URL}\n`);
+    console.log('  2. Claude Desktop でスキルをアップロード:');
+    console.log('     Settings > Features > Skills > 「Upload skill」から zip ファイルを選択\n');
   }
 }
 
@@ -162,11 +191,13 @@ export async function configureMcpIntegration(): Promise<void> {
   console.log('=== MCP設定 ===\n');
   console.log('Claude Code / Claude Desktop に freee-mcp を設定できます。\n');
 
-  await configureMcpTarget('claude-code');
+  const claudeCodeConfigured = await configureMcpTarget('claude-code');
   console.log('');
 
-  await configureMcpTarget('claude-desktop');
+  const claudeDesktopConfigured = await configureMcpTarget('claude-desktop');
   console.log('');
+
+  showSkillInstallGuide(claudeCodeConfigured, claudeDesktopConfigured);
 
   console.log('セットアップ完了!');
   console.log('変更を反映するには、Claude Code / Claude Desktop を再起動してください。\n');
