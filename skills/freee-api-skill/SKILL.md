@@ -26,7 +26,12 @@ npx freee-mcp configure
 
 ブラウザで freee にログインし、事業所を選択します。設定は `~/.config/freee-mcp/config.json` に保存されます。
 
-### 2. 再起動して確認
+### 2. プラグインをインストール
+
+- Claude Code: コマンドパレット → "Claude: Install Plugin" → このリポジトリのパス
+- Claude Desktop: 設定 → Plugins → Add Plugin → このリポジトリのパス
+
+### 3. 再起動して確認
 
 Claude を再起動後、`freee_auth_status` ツールで認証状態を確認。
 
@@ -69,24 +74,26 @@ API 呼び出し:
 
 serviceパラメータ (必須):
 
-| service | 説明 | ベースURL | パス例 |
-|---------|------|-----------|--------|
-| `accounting` | freee会計 (取引、勘定科目、取引先など) | `https://api.freee.co.jp` | `/api/1/deals` |
-| `hr` | freee人事労務 (従業員、勤怠など) | `https://api.freee.co.jp/hr` | `/api/v1/employees` |
-| `invoice` | freee請求書 (請求書、見積書、納品書) | `https://api.freee.co.jp/iv` | `/invoices` |
-| `pm` | freee工数管理 (プロジェクト、工数など) | `https://api.freee.co.jp/pm` | `/projects` |
-| `sm` | freee販売 (見積、受注、売上など) | `https://api.freee.co.jp/sm` | `/businesses` |
+| service | 説明 | パス例 |
+|---------|------|--------|
+| `accounting` | freee会計 (取引、勘定科目、取引先など) | `/api/1/deals` |
+| `hr` | freee人事労務 (従業員、勤怠など) | `/api/v1/employees` |
+| `invoice` | freee請求書 (請求書、見積書、納品書) | `/invoices` |
+| `pm` | freee工数管理 (プロジェクト、工数など) | `/api/1/projects` |
+| `sm` | freee販売 (見積、受注、売上など) | `/api/1/...` |
+
+### company_id について
+
+リクエストに `company_id` を含める場合、現在設定されている事業所（`freee_get_current_company` で確認可能）と一致している必要があります。不一致の場合はエラーになります。
+
+- 事業所を変更する場合: 先に `freee_set_current_company` で切り替えてからリクエストを実行
+- company_id を含まない API（例: `/api/1/companies`）: そのまま実行可能
 
 ### 基本ワークフロー
 
-1. 事業所を確認: `freee_get_current_company` で現在の事業所IDを取得する（初回は必須。セッション内で1回取得すれば以降は使い回せる）
-2. レシピを確認: `recipes/` 内の該当レシピを読む
-3. リファレンスを検索: 必要に応じて `references/` を参照
-4. API を呼び出す: `freee_api_*` ツールを使用（company_id が必要なエンドポイントでは手順1で取得した値を使う）
-
-注意:
-- `company_id` は現在設定されている事業所と一致している必要がある。不一致の場合はエラーになる
-- 事業所を変更する場合: 先に `freee_set_current_company` で切り替えてからリクエストを実行
+1. レシピを確認: `recipes/` 内の該当レシピを読む
+2. リファレンスを検索: 必要に応じて `references/` を参照
+3. API を呼び出す: `freee_api_*` ツールを使用
 
 ### レシピ
 
@@ -103,6 +110,22 @@ serviceパラメータ (必須):
 - 認証エラー: `freee_auth_status` で確認 → `freee_clear_auth` → `freee_authenticate`
 - 事業所エラー: `freee_list_companies` → `freee_set_current_company`
 - 詳細: `recipes/troubleshooting.md` 参照
+
+## 対応 API
+
+| service | ベースURL | パス形式 |
+|---------|-----------|----------|
+| `accounting` | `https://api.freee.co.jp` | `/api/1/...` |
+| `hr` | `https://api.freee.co.jp/hr` | `/api/v1/...` |
+| `invoice` | `https://api.freee.co.jp/iv` | `/invoices`, `/quotations`, `/delivery_slips` |
+| `pm` | `https://api.freee.co.jp/pm` | `/api/1/...` |
+| `sm` | `https://api.freee.co.jp/sm` | `/api/1/...` |
+
+### 請求書 API について
+
+請求書・見積書・納品書の操作については `recipes/invoice-operations.md` を参照してください。
+
+注意: 会計 API の `/api/1/invoices` は過去の API であり、現在は請求書 API (`service: "invoice"`) を使用してください。
 
 ## 関連リンク
 
