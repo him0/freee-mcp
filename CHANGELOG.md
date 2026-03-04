@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.9.1
+
+### Patch Changes
+
+- 69622a3: スキルドキュメントを整理し company_id の扱いを明確化
+
 ## 0.9.0
 
 ### Minor Changes
