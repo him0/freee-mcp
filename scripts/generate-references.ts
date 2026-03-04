@@ -510,6 +510,85 @@ ${endpointsMd}
 }
 
 /**
+ * Check if a string contains non-ASCII characters (e.g. Japanese)
+ */
+function containsNonAscii(text: string): boolean {
+  return /[^\x00-\x7F]/.test(text);
+}
+
+/**
+ * Convert a tag name to a kebab-case English name for use as filename.
+ * Handles PascalCase, snake_case, space-separated, and other common patterns.
+ * Returns null for non-ASCII tag names (e.g. Japanese) that need manual mapping.
+ */
+function tagNameToEnglishName(tagName: string): string | null {
+  if (containsNonAscii(tagName)) {
+    return null;
+  }
+  // Insert hyphens before uppercase letters in PascalCase (e.g. UnitCosts -> Unit-Costs)
+  let name = tagName.replace(/([a-z0-9])([A-Z])/g, "$1-$2");
+  // Replace underscores and spaces with hyphens
+  name = name.replace(/[_\s]+/g, "-");
+  return name.toLowerCase();
+}
+
+/**
+ * Extract all tags actually used in paths of an OpenAPI schema
+ */
+function extractAllTags(schema: OpenAPISchema): string[] {
+  const tags = new Set<string>();
+  for (const pathItem of Object.values(schema.paths)) {
+    for (const [key, operation] of Object.entries(pathItem)) {
+      if (key === "parameters") continue;
+      if (operation.tags) {
+        for (const tag of operation.tags) {
+          tags.add(tag);
+        }
+      }
+    }
+  }
+  return Array.from(tags).sort();
+}
+
+/**
+ * Sync tag mappings: add any tags found in schemas but missing from mappings.
+ * Returns true if mappings were updated.
+ */
+async function syncTagMappings(
+  mappings: TagMappings,
+  apiConfigs: Array<{ apiKey: string; schemaFile: string }>
+): Promise<boolean> {
+  let updated = false;
+
+  for (const { apiKey, schemaFile } of apiConfigs) {
+    if (!existsSync(schemaFile)) continue;
+
+    const schemaText = await readFile(schemaFile, "utf-8");
+    const schema: OpenAPISchema = JSON.parse(schemaText);
+    const tags = extractAllTags(schema);
+
+    if (!mappings[apiKey]) {
+      mappings[apiKey] = {};
+    }
+
+    for (const tag of tags) {
+      if (!(tag in mappings[apiKey])) {
+        const englishName = tagNameToEnglishName(tag);
+        if (englishName === null) {
+          console.warn(`  Warning: ${apiKey} tag "${tag}" contains non-ASCII characters and needs manual mapping in tag-mappings.json`);
+          continue;
+        }
+        mappings[apiKey][tag] = englishName;
+        console.log(`  Added mapping: ${apiKey} "${tag}" -> "${englishName}"`);
+        updated = true;
+      }
+    }
+  }
+
+  return updated;
+}
+
+/**
  * Process an API
  */
 async function processApi(
@@ -544,6 +623,15 @@ async function processApi(
   console.log(`Generated ${count} files for ${apiKey}`);
 }
 
+// API configurations
+const API_CONFIGS = [
+  { apiKey: "accounting-api", schemaFile: join(OPENAPI_DIR, "accounting-api-schema.json"), prefix: "accounting" },
+  { apiKey: "hr-api", schemaFile: join(OPENAPI_DIR, "hr-api-schema.json"), prefix: "hr" },
+  { apiKey: "invoice-api", schemaFile: join(OPENAPI_DIR, "invoice-api-schema.json"), prefix: "invoice" },
+  { apiKey: "pm-api", schemaFile: join(OPENAPI_DIR, "pm-api-schema.json"), prefix: "pm" },
+  { apiKey: "sm-api", schemaFile: join(OPENAPI_DIR, "sm-api-schema.json"), prefix: "sm" },
+];
+
 /**
  * Main execution
  */
@@ -552,44 +640,34 @@ async function main(): Promise<void> {
     console.log("Starting reference document generation...");
     console.log("========================================");
 
-    // Check if mappings file exists
+    // Check if mappings file exists, create empty if not
     if (!existsSync(MAPPINGS_FILE)) {
-      console.error(`Error: Tag mappings file not found: ${MAPPINGS_FILE}`);
-      process.exit(1);
+      console.log("Tag mappings file not found, creating empty mappings...");
+      await writeFile(MAPPINGS_FILE, JSON.stringify({}, null, 2), "utf-8");
     }
 
     // Read mappings
     const mappingsText = await readFile(MAPPINGS_FILE, "utf-8");
     const mappings: TagMappings = JSON.parse(mappingsText);
 
+    // Sync tag mappings from schemas
+    console.log("");
+    console.log("Syncing tag mappings...");
+    const updated = await syncTagMappings(mappings, API_CONFIGS);
+    if (updated) {
+      await writeFile(MAPPINGS_FILE, JSON.stringify(mappings, null, 2) + "\n", "utf-8");
+      console.log(`Updated ${MAPPINGS_FILE}`);
+    } else {
+      console.log("Tag mappings are up to date.");
+    }
+
     // Create output directory
     await mkdir(OUTPUT_DIR, { recursive: true });
 
     // Process each API
-    await processApi(
-      "accounting-api",
-      join(OPENAPI_DIR, "accounting-api-schema.json"),
-      "accounting",
-      mappings
-    );
-    await processApi(
-      "hr-api",
-      join(OPENAPI_DIR, "hr-api-schema.json"),
-      "hr",
-      mappings
-    );
-    await processApi(
-      "invoice-api",
-      join(OPENAPI_DIR, "invoice-api-schema.json"),
-      "invoice",
-      mappings
-    );
-    await processApi(
-      "pm-api",
-      join(OPENAPI_DIR, "pm-api-schema.json"),
-      "pm",
-      mappings
-    );
+    for (const { apiKey, schemaFile, prefix } of API_CONFIGS) {
+      await processApi(apiKey, schemaFile, prefix, mappings);
+    }
 
     console.log("");
     console.log("========================================");
