@@ -59,7 +59,8 @@
     "特別休暇申請": "special-holiday-requests",
     "残業申請": "overtime-requests",
     "申請経路": "approval-flow-routes",
-    "年末調整": "year-end-adjustments"
+    "年末調整": "year-end-adjustments",
+    "有給休暇申請": "paid-leave-requests"
   },
   "invoice-api": {
     "Invoices": "invoices",
@@ -67,6 +68,17 @@
     "DeliverySlips": "delivery-slips"
   },
   "pm-api": {
-    "Users": "users"
+    "Users": "users",
+    "Partners": "partners",
+    "People": "people",
+    "Projects": "projects",
+    "Teams": "teams",
+    "UnitCosts": "unit-costs",
+    "Workloads": "workloads"
+  },
+  "sm-api": {
+    "businesses": "businesses",
+    "master": "master",
+    "sales_orders": "sales-orders"
   }
 }
