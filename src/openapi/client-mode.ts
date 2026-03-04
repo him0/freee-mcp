@@ -74,7 +74,7 @@ export function generateClientModeTool(server: McpServer): void {
     `freee API GET。${SERVICE_HINT}`,
     {
       service: serviceSchema,
-      path: z.string().describe('APIパス (例: /api/1/deals, /invoices)'),
+      path: z.string().describe('APIパス (例: /api/1/deals)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
     createMethodTool('GET')
@@ -86,7 +86,7 @@ export function generateClientModeTool(server: McpServer): void {
     `freee API POST。${SERVICE_HINT}`,
     {
       service: serviceSchema,
-      path: z.string().describe('APIパス (例: /api/1/deals, /invoices)'),
+      path: z.string().describe('APIパス (例: /api/1/deals)'),
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
@@ -99,7 +99,7 @@ export function generateClientModeTool(server: McpServer): void {
     `freee API PUT。${SERVICE_HINT}`,
     {
       service: serviceSchema,
-      path: z.string().describe('APIパス (例: /api/1/deals/123, /invoices/123)'),
+      path: z.string().describe('APIパス (例: /api/1/deals/123)'),
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
@@ -142,7 +142,7 @@ export function generateClientModeTool(server: McpServer): void {
         `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +
         `使用例:\n` +
         `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "limit": 10 } }\n` +
-        `freee_api_get { "service": "invoice", "path": "/invoices" }\n` +
+        `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "type": "income", "limit": 5 } }\n` +
         `freee_api_post { "service": "accounting", "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }`
       );
     }
