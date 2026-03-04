@@ -19,6 +19,11 @@ freee請求書APIを使った帳票操作のガイド。
 | `/delivery_slips`      | 納品書一覧 |
 | `/delivery_slips/{id}` | 納品書詳細 |
 
+## 注意: company_id は必須
+
+請求書APIの一覧取得（GET）では、クエリパラメータに `company_id` が必須です。省略すると認証エラーになります。
+作成（POST）でもリクエストボディに `company_id` が必須です。
+
 ## 使用例
 
 請求書一覧を取得:
@@ -26,7 +31,8 @@ freee請求書APIを使った帳票操作のガイド。
 ```
 freee_api_get {
   "service": "invoice",
-  "path": "/invoices"
+  "path": "/invoices",
+  "query": { "company_id": 123456 }
 }
 ```
 
