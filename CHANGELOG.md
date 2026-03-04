@@ -1,5 +1,15 @@
 # freee-mcp
 
+## 0.9.0
+
+### Minor Changes
+
+- 3fb6f22: 人事労務(有給申請)・工数管理・販売 API のリファレンスドキュメントを追加し、リファレンス生成スクリプトを改善
+
+### Patch Changes
+
+- dab48e3: ツールの説明文や使用例から invoice API の例示を deal 一覧取得の例に置き換え
+
 ## 0.8.1
 
 ### Patch Changes
