@@ -10,19 +10,14 @@ freee請求書APIを使った帳票操作のガイド。
 
 ## 利用可能なパス
 
-| パス | 説明 |
-|------|------|
-| `/invoices` | 請求書一覧 |
-| `/invoices/{id}` | 請求書詳細 |
-| `/quotations` | 見積書一覧 |
-| `/quotations/{id}` | 見積書詳細 |
-| `/delivery_slips` | 納品書一覧 |
+| パス                   | 説明       |
+| ---------------------- | ---------- |
+| `/invoices`            | 請求書一覧 |
+| `/invoices/{id}`       | 請求書詳細 |
+| `/quotations`          | 見積書一覧 |
+| `/quotations/{id}`     | 見積書詳細 |
+| `/delivery_slips`      | 納品書一覧 |
 | `/delivery_slips/{id}` | 納品書詳細 |
-
-## 注意: company_id は必須
-
-請求書APIの一覧取得（GET）では、クエリパラメータに `company_id` が必須です。省略すると認証エラーになります。
-作成（POST）でもリクエストボディに `company_id` が必須です。
 
 ## 使用例
 
@@ -31,8 +26,7 @@ freee請求書APIを使った帳票操作のガイド。
 ```
 freee_api_get {
   "service": "invoice",
-  "path": "/invoices",
-  "query": { "company_id": 123456 }
+  "path": "/invoices"
 }
 ```
 
@@ -68,10 +62,10 @@ freee_api_post {
 
 請求書・見積書・納品書を作成・更新した後、以下のURLでWeb画面から確認できます:
 
-| 種類 | URL形式 |
-|------|---------|
-| 請求書 | `https://invoice.secure.freee.co.jp/reports/invoices/{id}` |
-| 見積書 | `https://invoice.secure.freee.co.jp/reports/quotations/{id}` |
+| 種類   | URL形式                                                          |
+| ------ | ---------------------------------------------------------------- |
+| 請求書 | `https://invoice.secure.freee.co.jp/reports/invoices/{id}`       |
+| 見積書 | `https://invoice.secure.freee.co.jp/reports/quotations/{id}`     |
 | 納品書 | `https://invoice.secure.freee.co.jp/reports/delivery_slips/{id}` |
 
 `{id}` は API レスポンスで返されるID（`invoice.id`など）を使用します。
