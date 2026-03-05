@@ -89,15 +89,23 @@ npx freee-mcp configure
   }
 }
 ```
-## Claude Plugin として使う
+## Claude Code Plugin として使う
 
-Claude Code でプラグインとしてインストールすると、API リファレンス付きのスキルが利用できます:
+Claude Code でプラグインとしてインストールすると、MCP サーバーと API リファレンス付きのスキルがまとめて利用できます。
+
+```bash
+claude plugin add freee/freee-mcp
+```
+
+## Skill のみインストールする
+
+Claude Code 以外のコーディングエージェント（Cursor, OpenCode など）で API リファレンス付きスキルを利用する場合は、[skills](https://www.npmjs.com/package/skills) でインストールできます。
 
 ```bash
 npx skills add freee/freee-mcp
 ```
 
-[skills](https://www.npmjs.com/package/skills) は Claude Code、Cursor、OpenCode など複数のコーディングエージェントに対応したスキルインストーラーです。グローバルインストール(`-g`)や特定スキルのみのインストール(`-s`)も可能です。
+グローバルインストール(`-g`)や特定スキルのみのインストール(`-s`)も可能です。
 
 ### 含まれるリファレンス
 
