@@ -6,6 +6,7 @@
  */
 
 import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -55,6 +56,12 @@ export function getMcpConfigPath(target: McpTarget): string {
       'claude_desktop_config.json'
     );
   } else if (platform === 'win32') {
+    // Windows Store (MSIX) version uses a sandboxed path
+    const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
+    const storeDir = path.join(localAppData, 'Packages', 'Claude_pzs8sxrjxfjjc');
+    if (existsSync(storeDir)) {
+      return path.join(storeDir, 'LocalCache', 'Roaming', 'Claude', 'claude_desktop_config.json');
+    }
     const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
     return path.join(appData, 'Claude', 'claude_desktop_config.json');
   } else {

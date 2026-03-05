@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import os from 'node:os';
 import {
   getMcpConfigPath,
@@ -10,9 +11,14 @@ import {
 } from './mcp-config.js';
 
 vi.mock('node:fs/promises');
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs')>();
+  return { ...actual, existsSync: vi.fn(() => false) };
+});
 vi.mock('node:os');
 
 const mockFs = vi.mocked(fs);
+const mockExistsSync = vi.mocked(existsSync);
 const mockOs = vi.mocked(os);
 
 describe('mcp-config', () => {
@@ -69,6 +75,54 @@ describe('mcp-config', () => {
 
       if (originalAppData !== undefined) {
         process.env.APPDATA = originalAppData;
+      }
+    });
+
+    it('should return Windows Store path when Store package directory exists', () => {
+      mockOs.platform.mockReturnValue('win32');
+      const originalAppData = process.env.APPDATA;
+      const originalLocalAppData = process.env.LOCALAPPDATA;
+      process.env.APPDATA = 'C:\\Users\\testuser\\AppData\\Roaming';
+      process.env.LOCALAPPDATA = 'C:\\Users\\testuser\\AppData\\Local';
+      mockExistsSync.mockReturnValue(true);
+
+      const path = getMcpConfigPath('claude-desktop');
+      expect(path).toBe(
+        'C:\\Users\\testuser\\AppData\\Local/Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude/claude_desktop_config.json'
+      );
+
+      if (originalAppData !== undefined) {
+        process.env.APPDATA = originalAppData;
+      } else {
+        delete process.env.APPDATA;
+      }
+      if (originalLocalAppData !== undefined) {
+        process.env.LOCALAPPDATA = originalLocalAppData;
+      } else {
+        delete process.env.LOCALAPPDATA;
+      }
+    });
+
+    it('should return standard Windows path when Store package directory does not exist', () => {
+      mockOs.platform.mockReturnValue('win32');
+      const originalAppData = process.env.APPDATA;
+      const originalLocalAppData = process.env.LOCALAPPDATA;
+      process.env.APPDATA = 'C:\\Users\\testuser\\AppData\\Roaming';
+      process.env.LOCALAPPDATA = 'C:\\Users\\testuser\\AppData\\Local';
+      mockExistsSync.mockReturnValue(false);
+
+      const path = getMcpConfigPath('claude-desktop');
+      expect(path).toBe('C:\\Users\\testuser\\AppData\\Roaming/Claude/claude_desktop_config.json');
+
+      if (originalAppData !== undefined) {
+        process.env.APPDATA = originalAppData;
+      } else {
+        delete process.env.APPDATA;
+      }
+      if (originalLocalAppData !== undefined) {
+        process.env.LOCALAPPDATA = originalLocalAppData;
+      } else {
+        delete process.env.LOCALAPPDATA;
       }
     });
   });
