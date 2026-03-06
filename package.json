@@ -2,6 +2,18 @@
   "type": "module",
   "name": "freee-mcp",
   "version": "0.9.1",
+  "main": "./dist/core.js",
+  "types": "./dist/core.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/core.js",
+      "types": "./dist/core.d.ts"
+    },
+    "./core": {
+      "import": "./dist/core.js",
+      "types": "./dist/core.d.ts"
+    }
+  },
   "bin": {
     "freee-mcp": "./bin/cli.js"
   },
