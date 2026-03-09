@@ -13,7 +13,7 @@ freee-mcp adopts an issue-based contribution model.
 - バグ報告 / Bug Reports: 再現手順を含めた Issue の作成 / File an issue with reproduction steps
 - 機能要望 / Feature Requests: ユースケースを含めた提案 Issue の作成 / File a proposal issue with use cases
 - フィードバック / Feedback: 使い勝手や改善点についてのコメント / Comments on usability and improvements
-- 質問・議論 / Questions: Issue や [Discord サーバー](https://discord.gg/9ddTPGyxPw) での質問 / Ask on Issues or [Discord](https://discord.gg/9ddTPGyxPw)
+- 質問・議論 / Questions: Issue での質問 / Ask via Issues
 
 ### Pull Request について / About Pull Requests
 
@@ -40,38 +40,11 @@ This approach allows us to develop rapidly while maintaining code consistency an
 
 ## Issue の書き方 / How to Write Issues
 
-### バグ報告 / Bug Reports
+Issue を作成する際は、テンプレートに沿って記入してください。
+When creating an issue, please follow the provided templates.
 
-バグ報告の際は、以下の情報を含めてください。
-Please include the following information when reporting a bug:
-
-- 環境情報 / Environment: OS、Node.js バージョン、freee-mcp バージョン、MCP クライアント
-- 再現手順 / Steps to Reproduce: 問題が発生するまでの具体的な操作手順
-- 期待される動作 / Expected Behavior: 本来どう動くべきか
-- 実際の動作 / Actual Behavior: 実際に何が起こったか
-- エラーメッセージ / Error Messages: ログやエラー出力（機密情報は除去してください / Remove sensitive information）
-
-### 機能要望 / Feature Requests
-
-機能要望の際は、以下を含めてください。
-Please include the following when requesting a feature:
-
-- ユースケース / Use Case: どんな場面でその機能が必要か
-- 期待する動作 / Expected Behavior: 具体的にどう動いてほしいか
-- 代替手段 / Alternatives: 現状の回避策があれば
-
-## コミュニティ / Community
-
-質問や情報交換は Discord サーバーで行っています。お気軽にご参加ください。
-Join our Discord server for questions and discussions.
-
-- [Discord サーバー / Discord Server](https://discord.gg/9ddTPGyxPw)
-
-## 関連リンク / Related Links
-
-- [freee-mcp README](./README.md)
-- [freee API ドキュメント / freee API Documentation](https://developer.freee.co.jp/docs)
-- [Model Context Protocol](https://modelcontextprotocol.io)
+- [Bug Report / バグ報告](https://github.com/freee/freee-mcp/issues/new?template=bug_report.md)
+- [Feature Request / 機能要望](https://github.com/freee/freee-mcp/issues/new?template=feature_request.md)
 
 ## ライセンス / License
 
