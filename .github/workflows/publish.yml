@@ -160,7 +160,7 @@ jobs:
             ## Claude Plugin
             This repository can also be used as a Claude Code plugin:
             ```bash
-            claude plugin add freee/freee-mcp
+            claude plugin install freee/freee-mcp
             ```
           files: freee-skill.zip
           draft: false
