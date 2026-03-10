@@ -1,5 +1,17 @@
 # freee-mcp
 
+## 0.10.0
+
+### Minor Changes
+
+- d93e78b: ファイルボックスへのファイルアップロード用カスタムツール (freee_file_upload) を追加
+
+### Patch Changes
+
+- 78d94ed: Claude Desktop のスキルアップロード手順の UI パスを最新のものに更新
+- b94976d: Fix `claude plugin add` to `claude plugin install` in README and publish workflow
+- 87abec4: Windows Store (MSIX) 版 Claude Desktop の設定ファイルパスに対応。Store 版のパッケージディレクトリが存在する場合、自動的に正しいパスを使用します。
+
 ## 0.9.1
 
 ### Patch Changes
