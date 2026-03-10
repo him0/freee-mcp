@@ -19,6 +19,7 @@ function formatBinaryResponse(response: BinaryFileResponse): string {
 
 // 簡略化: 詳細はfreee_api_list_pathsで確認可能
 const SERVICE_HINT = 'service: accounting/hr/invoice/pm/sm';
+const SKILL_HINT = '詳細ガイドはfreee-api-skill skillを参照';
 
 const serviceSchema = z.enum(['accounting', 'hr', 'invoice', 'pm', 'sm']).describe('対象のfreeeサービス');
 
@@ -71,7 +72,7 @@ export function generateClientModeTool(server: McpServer): void {
   // GET tool
   server.tool(
     'freee_api_get',
-    `freee API GET。${SERVICE_HINT}`,
+    `freee API GET。${SERVICE_HINT}。${SKILL_HINT}`,
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals)'),
@@ -83,7 +84,7 @@ export function generateClientModeTool(server: McpServer): void {
   // POST tool
   server.tool(
     'freee_api_post',
-    `freee API POST。${SERVICE_HINT}`,
+    `freee API POST。${SERVICE_HINT}。${SKILL_HINT}`,
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals)'),
@@ -96,7 +97,7 @@ export function generateClientModeTool(server: McpServer): void {
   // PUT tool
   server.tool(
     'freee_api_put',
-    `freee API PUT。${SERVICE_HINT}`,
+    `freee API PUT。${SERVICE_HINT}。${SKILL_HINT}`,
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
@@ -109,7 +110,7 @@ export function generateClientModeTool(server: McpServer): void {
   // DELETE tool
   server.tool(
     'freee_api_delete',
-    `freee API DELETE。${SERVICE_HINT}`,
+    `freee API DELETE。${SERVICE_HINT}。${SKILL_HINT}`,
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
@@ -121,7 +122,7 @@ export function generateClientModeTool(server: McpServer): void {
   // PATCH tool
   server.tool(
     'freee_api_patch',
-    `freee API PATCH。${SERVICE_HINT}`,
+    `freee API PATCH。${SERVICE_HINT}。${SKILL_HINT}`,
     {
       service: serviceSchema,
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
@@ -134,7 +135,7 @@ export function generateClientModeTool(server: McpServer): void {
   // Add helper tool to list available paths
   server.tool(
     'freee_api_list_paths',
-    'freee API エンドポイント一覧。詳細なガイドはfreee-mcp skillを参照。',
+    'freee API エンドポイント一覧。詳細ガイドはfreee-api-skill skillを参照。',
     {},
     async () => {
       const pathsList = listAllAvailablePaths();

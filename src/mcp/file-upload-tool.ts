@@ -6,7 +6,7 @@ import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 export function addFileUploadTool(server: McpServer): void {
   server.tool(
     'freee_file_upload',
-    'ファイルボックスにファイルをアップロード (POST /api/1/receipts)。ローカルファイルパスを指定。',
+    'ファイルボックスにファイルをアップロード (POST /api/1/receipts)。ローカルファイルパスを指定。詳細ガイドはfreee-api-skill skillを参照。',
     {
       file_path: z.string().describe('アップロードするファイルのローカルパス'),
       description: z.string().max(255).optional().describe('メモ (最大255文字)'),

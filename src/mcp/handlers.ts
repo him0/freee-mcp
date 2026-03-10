@@ -9,10 +9,15 @@ export async function createAndStartServer(): Promise<void> {
   // Load config first
   const config = await loadConfig();
 
-  const server = new McpServer({
-    name: config.server.name,
-    version: config.server.version,
-  });
+  const server = new McpServer(
+    {
+      name: config.server.name,
+      version: config.server.version,
+    },
+    {
+      instructions: config.server.instructions,
+    },
+  );
 
   addAuthenticationTools(server);
   addFileUploadTool(server);
