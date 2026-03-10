@@ -183,7 +183,7 @@ function showSkillInstallGuide(claudeCodeConfigured: boolean, claudeDesktopConfi
     console.log('  1. 以下の URL から freee-skill.zip をダウンロード:');
     console.log(`     ${SKILL_RELEASES_URL}\n`);
     console.log('  2. Claude Desktop でスキルをアップロード:');
-    console.log('     Settings > Features > Skills > 「Upload skill」から zip ファイルを選択\n');
+    console.log('     カスタマイズ > スキル > 「スキルをアップロード」から zip ファイルを選択\n');
   }
 }
 
