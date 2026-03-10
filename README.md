@@ -173,11 +173,7 @@ HTTPメソッドごとのシンプルなツール構成:
 
 ## コントリビューション
 
-Issue での不具合報告や機能要望、フィードバックは大歓迎です！
-
-このリポジトリでは AI を活用した開発フローを採用しており、issue をもとに実装することでコードの一貫性と品質を保っています。
-そのため、現在 Pull Request は受け付けておりません。提案や変更の希望がある場合は、Issue にて投稿をお願いします。
-メンテナーが issue をもとに実装方針を検討し、対応を進めます。
+詳しくは [CONTRIBUTING.md](./CONTRIBUTING.md) をご覧ください。
 
 ### Contributors
 
@@ -221,9 +217,9 @@ TypeScript / Model Context Protocol SDK / OAuth 2.0 + PKCE / Zod / esbuild
 
 プロジェクトのアーキテクチャ、内部構造、開発ガイドラインについては [CLAUDE.md](./CLAUDE.md) を参照してください。
 
-## ライセンス
+## License / ライセンス
 
-Apache-2.0
+[Apache-2.0](./LICENSE)
 
 ## コミュニティ
 

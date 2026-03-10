@@ -13,3 +13,11 @@ assignees: ""
 ## Use Case / ユースケース
 
 <!-- What problem does this solve? / どんな課題を解決しますか？ -->
+
+## Expected Behavior / 期待する動作
+
+<!-- How should it work? / 具体的にどう動いてほしいか -->
+
+## Alternatives / 代替手段
+
+<!-- Any workarounds you currently use / 現状の回避策があれば -->
