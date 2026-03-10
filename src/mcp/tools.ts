@@ -17,7 +17,7 @@ import { AUTH_TIMEOUT_MS } from '../constants.js';
 export function addAuthenticationTools(server: McpServer): void {
   server.tool(
     'freee_current_user',
-    '現在のユーザー情報を取得。詳細ガイドはfreee-mcp skillを参照。',
+    '現在のユーザー情報を取得 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
     async () => {
       try {
@@ -44,7 +44,7 @@ export function addAuthenticationTools(server: McpServer): void {
 
   server.tool(
     'freee_authenticate',
-    'OAuth認証を開始。初回のみ必要。',
+    'OAuth認証を開始、初回のみ必要 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
     async () => {
       try {
@@ -82,7 +82,7 @@ export function addAuthenticationTools(server: McpServer): void {
 
   server.tool(
     'freee_auth_status',
-    '認証状態を確認。',
+    '認証状態を確認 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
     async () => {
       try {
@@ -106,7 +106,7 @@ export function addAuthenticationTools(server: McpServer): void {
 
   server.tool(
     'freee_clear_auth',
-    '認証情報をクリア。',
+    '認証情報をクリア (詳細ガイドはfreee-api-skill skillを参照)',
     {},
     async () => {
       try {
@@ -121,7 +121,7 @@ export function addAuthenticationTools(server: McpServer): void {
   // Company management tools
   server.tool(
     'freee_set_current_company',
-    '事業所を設定・切り替え。',
+    '事業所を設定・切り替え (詳細ガイドはfreee-api-skill skillを参照)',
     {
       company_id: z.string().describe('事業所ID'),
       name: z.string().optional().describe('事業所名'),
@@ -144,7 +144,7 @@ export function addAuthenticationTools(server: McpServer): void {
 
   server.tool(
     'freee_get_current_company',
-    '現在の事業所情報を表示。',
+    '現在の事業所情報を表示 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
     async () => {
       try {
@@ -164,7 +164,7 @@ export function addAuthenticationTools(server: McpServer): void {
 
   server.tool(
     'freee_list_companies',
-    '事業所一覧を表示。',
+    '事業所一覧を表示 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
     async () => {
       try {

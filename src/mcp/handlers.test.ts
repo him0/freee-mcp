@@ -16,7 +16,8 @@ vi.mock('../config.js', () => ({
   loadConfig: vi.fn(() => Promise.resolve({
     server: {
       name: 'freee',
-      version: '1.0.0'
+      version: '1.0.0',
+      instructions: 'freee APIと連携するMCPサーバー。',
     },
     oauth: {
       callbackPort: 54321
@@ -64,10 +65,15 @@ describe('handlers', () => {
 
       await createAndStartServer();
 
-      expect(mockMcpServer.McpServer).toHaveBeenCalledWith({
-        name: 'freee',
-        version: '1.0.0'
-      });
+      expect(mockMcpServer.McpServer).toHaveBeenCalledWith(
+        {
+          name: 'freee',
+          version: '1.0.0',
+        },
+        {
+          instructions: expect.any(String),
+        },
+      );
       expect(mockAddAuthenticationTools.addAuthenticationTools).toHaveBeenCalledWith(mockServerInstance);
       expect(mockAddFileUploadTool.addFileUploadTool).toHaveBeenCalledWith(mockServerInstance);
       expect(mockGenerateClientModeTool.generateClientModeTool).toHaveBeenCalledWith(mockServerInstance);

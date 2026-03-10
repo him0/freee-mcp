@@ -80,7 +80,7 @@ describe('config', () => {
   it('should have correct server configuration', async () => {
     const config = await loadConfig();
     expect(config.server.name).toBe('freee');
-    expect(config.server.version).toBe('1.0.0');
+    expect(config.server.version).toMatch(/^\d+\.\d+\.\d+/);
   });
 
   it('should have correct auth timeout', async () => {
