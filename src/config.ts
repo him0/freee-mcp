@@ -138,7 +138,7 @@ export async function loadConfig(): Promise<Config> {
     server: {
       name: 'freee',
       version: packageVersion,
-      instructions: 'freee APIと連携するMCPサーバー。会計・人事労務・請求書・工数管理・販売APIをサポート。詳細ガイドはfreee-api-skill skillを参照。skillが未インストールの場合は npx skills add で追加',
+      instructions: 'freee APIと連携するMCPサーバー。会計・人事労務・請求書・工数管理・販売APIをサポート。詳細ガイドはfreee-api-skill skillを参照。skillが未インストールの場合は npx skills add freee/freee-mcp で追加',
     },
     auth: {
       timeoutMs: AUTH_TIMEOUT_MS,
