@@ -28,6 +28,10 @@ vi.mock('./tools.js', () => ({
   addAuthenticationTools: vi.fn()
 }));
 
+vi.mock('./file-upload-tool.js', () => ({
+  addFileUploadTool: vi.fn()
+}));
+
 vi.mock('../openapi/client-mode.js', () => ({
   generateClientModeTool: vi.fn()
 }));
@@ -47,6 +51,7 @@ describe('handlers', () => {
       const mockMcpServer = await import('@modelcontextprotocol/sdk/server/mcp.js');
       const mockStdioTransport = await import('@modelcontextprotocol/sdk/server/stdio.js');
       const mockAddAuthenticationTools = await import('./tools.js');
+      const mockAddFileUploadTool = await import('./file-upload-tool.js');
       const mockGenerateClientModeTool = await import('../openapi/client-mode.js');
 
       const mockServerInstance = {
@@ -64,6 +69,7 @@ describe('handlers', () => {
         version: '1.0.0'
       });
       expect(mockAddAuthenticationTools.addAuthenticationTools).toHaveBeenCalledWith(mockServerInstance);
+      expect(mockAddFileUploadTool.addFileUploadTool).toHaveBeenCalledWith(mockServerInstance);
       expect(mockGenerateClientModeTool.generateClientModeTool).toHaveBeenCalledWith(mockServerInstance);
       expect(mockServerInstance.connect).toHaveBeenCalledWith(mockTransportInstance);
     });
