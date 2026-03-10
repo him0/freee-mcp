@@ -217,9 +217,9 @@ TypeScript / Model Context Protocol SDK / OAuth 2.0 + PKCE / Zod / esbuild
 
 プロジェクトのアーキテクチャ、内部構造、開発ガイドラインについては [CLAUDE.md](./CLAUDE.md) を参照してください。
 
-## ライセンス
+## License / ライセンス
 
-Apache-2.0
+[Apache-2.0](./LICENSE)
 
 ## コミュニティ
 
