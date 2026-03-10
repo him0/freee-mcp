@@ -1,5 +1,9 @@
+import { createRequire } from 'module';
 import { loadFullConfig } from './config/companies.js';
 import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS, FREEE_API_URL } from './constants.js';
+
+const require = createRequire(import.meta.url);
+const { version: packageVersion } = require('../package.json') as { version: string };
 
 /**
  * Validate and parse a callback port value.
@@ -133,8 +137,8 @@ export async function loadConfig(): Promise<Config> {
     },
     server: {
       name: 'freee',
-      version: '1.0.0',
-      instructions: 'freee APIと連携するMCPサーバー。会計・人事労務・請求書・工数管理・販売APIをサポート。詳細ガイドはfreee-api-skill skillを参照。skillが未インストールの場合は npx skills add で追加してください。',
+      version: packageVersion,
+      instructions: 'freee APIと連携するMCPサーバー。会計・人事労務・請求書・工数管理・販売APIをサポート。詳細ガイドはfreee-api-skill skillを参照。skillが未インストールの場合は npx skills add で追加',
     },
     auth: {
       timeoutMs: AUTH_TIMEOUT_MS,
