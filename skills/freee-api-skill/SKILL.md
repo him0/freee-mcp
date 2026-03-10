@@ -101,6 +101,7 @@ serviceパラメータ (必須):
 - `recipes/hr-employee-operations.md` - 人事労務（従業員・給与）
 - `recipes/hr-attendance-operations.md` - 勤怠（出退勤・打刻・休憩の登録）
 - `recipes/invoice-operations.md` - 請求書・見積書・納品書
+- `recipes/receipt-operations.md` - ファイルボックス（証憑ファイルのアップロード・管理）
 
 ## エラー対応
 
