@@ -77,7 +77,7 @@ jobs:
         if: steps.check-release.outputs.skip != 'true'
         run: |
           cd skills/freee-api-skill
-          zip -r ../../freee-skill.zip .
+          zip -r ../../freee-api-skill.zip .
           echo "✅ Packaged skill"
 
       - name: Collect contributors from community PRs
@@ -162,7 +162,7 @@ jobs:
             ```bash
             claude plugin install freee/freee-mcp
             ```
-          files: freee-skill.zip
+          files: freee-api-skill.zip
           draft: false
           prerelease: false
         env:
