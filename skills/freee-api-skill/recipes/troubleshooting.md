@@ -291,20 +291,44 @@ A: 以下を考慮してください:
 - 異なる種類の経費: 別々に申請することを推奨
 - 会社の方針に従ってください
 
+## API の機能制限に関する問題
+
+freee API 自体が対応していない操作については、freee-mcp（クライアント）側では解決できません。
+
+以下のようなケースは API の機能制限に該当します:
+
+- 特定の承認経路（部門・役職ベース等）で API から申請ができない
+- 特定の条件（外貨を含む等）のデータが API で取得できない
+- Web UI では可能な操作が API では提供されていない
+- 特定のエンドポイントやフィールドが存在しない
+
+このような場合は、freee プロダクトへのフィードバックとして要望を送信してください:
+
+- freee のヘルプページから「ご意見・ご要望」として送信: https://support.freee.co.jp
+
+API の機能制限を freee-mcp の GitHub Issues に報告いただいても、クライアント側では対応できません。
+
 ## サポートが必要な場合
 
 ### freee API 公式ドキュメント
 
 https://developer.freee.co.jp/docs
 
-### GitHub Issues
+### freee プロダクトへのフィードバック
+
+API の機能拡充や改善の要望は、freee プロダクトのフィードバックとして送信してください:
+
+- https://support.freee.co.jp
+
+### GitHub Issues（freee-mcp の不具合・改善要望）
 
 https://github.com/freee/freee-mcp/issues
 
-freee-mcp に関する不具合や要望は、上記リポジトリの Issue で報告してください。freee サポートでは freee-mcp に関するお問い合わせは受け付けておりません。
+freee-mcp（MCP サーバー）自体の不具合や改善要望は、上記リポジトリの Issue で報告してください。freee API が提供していない機能のリクエストは、プロダクトフィードバックへお願いします。freee サポートでは freee-mcp に関するお問い合わせは受け付けておりません。
 
 ### 問い合わせ前に確認すること
 
 1. `freee_auth_status` で認証を確認しましたか？
 2. `freee_get_current_company` で事業所を確認しましたか？
 3. エラーメッセージを正確にコピーしましたか？
+4. API の機能制限ではなく、freee-mcp の問題であることを確認しましたか？

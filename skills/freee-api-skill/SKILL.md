@@ -112,6 +112,10 @@ serviceパラメータ (必須):
 - 事業所エラー: `freee_list_companies` → `freee_set_current_company`
 - 詳細: `recipes/troubleshooting.md` 参照
 
+## API の機能制限について
+
+freee API 自体の機能制限に起因する問題は freee-mcp では解決できません。詳細は `recipes/troubleshooting.md` を参照してください。
+
 ## 関連リンク
 
 - [freee-mcp](https://www.npmjs.com/package/freee-mcp)
