@@ -103,6 +103,7 @@ serviceパラメータ (必須):
 - `recipes/invoice-operations.md` - 請求書・見積書・納品書
 - `recipes/receipt-operations.md` - ファイルボックス（証憑ファイルのアップロード・管理）
 - `recipes/pm-operations.md` - 工数管理（プロジェクト・工数実績）
+- `recipes/pm-workload-registration.md` - 工数の安全な登録（PM・HR連携ワークフロー）
 - `recipes/sm-operations.md` - 販売管理（案件・受注）
 
 ## エラー対応

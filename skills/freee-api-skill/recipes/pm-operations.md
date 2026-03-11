@@ -11,12 +11,17 @@ freee工数管理APIを使ったプロジェクト・工数の管理ガイド。
 
 ## 利用可能なパス
 
-| パス | 説明 |
-|------|------|
-| `/projects` | プロジェクト一覧・作成 |
-| `/projects/{id}` | プロジェクト詳細 |
-| `/workloads` | 工数実績一覧・登録 |
-| `/workload_summaries` | 工数サマリ取得 |
+| パス | メソッド | 説明 |
+|------|---------|------|
+| `/projects` | GET, POST | プロジェクト一覧・作成 |
+| `/projects/{id}` | GET, PUT, DELETE, PATCH | プロジェクト詳細・更新・削除 |
+| `/workloads` | GET, POST | 工数実績一覧・登録 |
+| `/workload_summaries` | GET | 工数サマリ取得 |
+| `/people` | GET | 従業員一覧（payroll_employee_id でHR連携可） |
+| `/teams` | GET | チーム一覧 |
+| `/partners` | GET | 取引先一覧 |
+| `/unit_costs` | GET | 単価マスタ |
+| `/users/me` | GET | ログインユーザー情報 |
 
 ## 使用例
 
@@ -28,31 +33,6 @@ freee_api_get {
   "path": "/projects",
   "query": {
     "company_id": 123456
-  }
-}
-```
-
-### プロジェクト詳細を取得
-
-```
-freee_api_get {
-  "service": "pm",
-  "path": "/projects/1",
-  "query": {
-    "company_id": 123456
-  }
-}
-```
-
-### 運用ステータスで絞り込み
-
-```
-freee_api_get {
-  "service": "pm",
-  "path": "/projects",
-  "query": {
-    "company_id": 123456,
-    "operational_status": "in_progress"
   }
 }
 ```
@@ -137,6 +117,11 @@ freee_api_get {
 | `employee` | 従業員単位（person_ids で絞り込み） |
 | 未指定 | ログインユーザーのみ |
 
+### 人事労務APIとの連携
+
+`/people` レスポンスの `payroll_employee_id` が人事労務側の `employee_id` に対応します。
+安全な工数登録ワークフロー（勤怠チェック・重複確認・承認フロー）については `recipes/pm-workload-registration.md` を参照してください。
+
 ## リファレンス
 
 詳細なAPIパラメータは以下を参照:
@@ -147,3 +132,4 @@ freee_api_get {
 - `references/pm-teams.md` - チーム
 - `references/pm-partners.md` - 取引先
 - `references/pm-unit-costs.md` - 単価
+- `references/pm-users.md` - ログインユーザー
