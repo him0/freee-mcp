@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.11.1
+
+### Patch Changes
+
+- 8c964bf: API の機能制限に関する問い合わせを freee プロダクトのフィードバックに誘導するガイダンスを SKILL とトラブルシューティングに追加
+
 ## 0.11.0
 
 ### Minor Changes
