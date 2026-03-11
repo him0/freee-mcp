@@ -1,5 +1,18 @@
 # freee-mcp
 
+## 0.11.0
+
+### Minor Changes
+
+- 32fab73: 工数管理レシピの拡充: 全PMエンドポイントのカバレッジ追加と、PM・HR連携による安全な工数登録ワークフローレシピの新規追加
+
+### Patch Changes
+
+- cc24426: MCPサーバーにinstructionsを追加し、全ツールのdescriptionにfreee-api-skill skillへのガイド参照を追加
+- ace37e0: PM/SM API操作レシピを追加しcompany_id指定方法を明記、取引URLフォーマットを修正
+- cc24426: publish workflowのskill zipファイル名をfreee-api-skill.zipに修正
+- cc24426: サーバーバージョンをハードコードからpackage.jsonの値に同期するよう変更
+
 ## 0.10.0
 
 ### Minor Changes
