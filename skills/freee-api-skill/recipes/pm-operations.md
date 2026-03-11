@@ -2,18 +2,12 @@
 
 freee工数管理APIを使ったプロジェクト・工数の管理ガイド。
 
-## 概要
+## 重要: company_id の指定方法
 
-工数管理APIを使ってプロジェクトの作成・管理、工数実績の登録・取得を行います。
-
-## 重要: company_id は必須
-
-freee工数管理APIでは、すべてのエンドポイントで `company_id` が必須です。
+すべてのエンドポイントで `company_id` が必須です。
 
 - GETリクエスト: `query` に `company_id` を含める
 - POSTリクエスト: `body` に `company_id` を含める
-
-`company_id` を省略すると 500 エラーが発生します。事前に `freee_get_current_company` で事業所IDを取得してください。
 
 ## 利用可能なパス
 

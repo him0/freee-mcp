@@ -101,47 +101,7 @@ freee_set_current_company { "company_id": 12345 }
 
 原因: `company_id` がリクエストに含まれていない
 
-解決方法:
-
-freee工数管理（pm）とfreee販売（sm）のAPIでは `company_id` が必須です。
-
-```
-# 事業所IDを確認
-freee_get_current_company
-
-# 工数管理API - GETリクエストでは query に company_id を含める
-freee_api_get {
-  "service": "pm",
-  "path": "/projects",
-  "query": {
-    "company_id": 123456
-  }
-}
-
-# 工数管理API - POSTリクエストでは body に company_id を含める
-freee_api_post {
-  "service": "pm",
-  "path": "/workloads",
-  "body": {
-    "company_id": 123456,
-    "project_id": 1,
-    "date": "2025-03-10",
-    "minutes": 120
-  }
-}
-
-# 販売API - POSTリクエストでは body に company_id を含める
-freee_api_post {
-  "service": "sm",
-  "path": "/businesses",
-  "body": {
-    "company_id": 123456,
-    "name": "案件名"
-  }
-}
-```
-
-詳細: `recipes/pm-operations.md` および `recipes/sm-operations.md` を参照してください。
+解決方法: `recipes/pm-operations.md` および `recipes/sm-operations.md` の company_id 指定方法を参照。
 
 ## 経費申請作成時のエラー
 

@@ -2,17 +2,11 @@
 
 freee販売APIを使った案件・受注の管理ガイド。
 
-## 概要
+## 重要: company_id の指定方法
 
-販売APIを使って案件の作成・管理、受注の登録・取得を行います。
-
-## 重要: company_id は必須
-
-freee販売APIでは、データ作成時に `company_id` が必須です。
+データ作成時に `company_id` が必須です。
 
 - POSTリクエスト: `body` に `company_id` を含める
-
-`company_id` を省略すると 500 エラーが発生します。事前に `freee_get_current_company` で事業所IDを取得してください。
 
 ## 利用可能なパス
 
