@@ -102,7 +102,7 @@ freee_api_post {
 取引を作成した後、以下のURLでWeb画面から確認できます:
 
 ```
-https://secure.freee.co.jp/deals/{id}
+https://secure.freee.co.jp/deals#deal_id={id}
 ```
 
 `{id}` は API レスポンスで返される取引ID（`deal.id`）を使用します。

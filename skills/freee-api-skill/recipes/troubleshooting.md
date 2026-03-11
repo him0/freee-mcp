@@ -95,6 +95,14 @@ freee_set_current_company { "company_id": 12345 }
 
 注意: company_id を含むリクエストは、必ず現在の事業所と一致している必要があります。
 
+## 工数管理・販売API関連
+
+### 問題: freee工数管理またはfreee販売APIで "500 Internal Server Error"
+
+原因: `company_id` がリクエストに含まれていない
+
+解決方法: `recipes/pm-operations.md` および `recipes/sm-operations.md` の company_id 指定方法を参照。
+
 ## 経費申請作成時のエラー
 
 ### 問題: "expense_application_line_template_id が無効"
