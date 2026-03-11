@@ -84,37 +84,12 @@ freee_api_get {
 }
 ```
 
-以下のフィールドを確認します:
-
-| フィールド | ブロック条件 | 理由 |
-|------------|------------|------|
-| day_pattern | `prescribed_holiday` or `legal_holiday` | 休日のため登録不可 |
-| is_absence | `true` | 欠勤日のため登録不可 |
-| paid_holidays | 配列が空でない | 有給取得日のため登録不可 |
-| is_editable | `false` | 勤怠データが締め済み |
-
-すべてのチェックを通過した場合のみ次のステップに進みます。
-
+レスポンスのフィールドを「安全チェック一覧」テーブルに基づいて確認し、すべてのチェックを通過した場合のみ次のステップに進みます。
 勤怠APIの詳細は `recipes/hr-attendance-operations.md` を参照してください。
 
 ### Step 3: 既存工数の重複チェック
 
-対象月の既存工数を取得し、同じ日・同じプロジェクトに登録済みでないか確認します。
-
-```
-freee_api_get {
-  "service": "pm",
-  "path": "/workloads",
-  "query": {
-    "company_id": 123456,
-    "year_month": "2025-03",
-    "employees_scope": "employee",
-    "person_ids[]": [1]
-  }
-}
-```
-
-レスポンスから対象日・対象プロジェクトの工数が既にあれば、重複として報告します。
+PM `GET /workloads` で対象月の既存工数を取得し、同じ日・同じプロジェクトに登録済みでないか確認します（工数取得の例は `recipes/pm-operations.md` 参照）。
 
 ### Step 4: ユーザー承認（Human-in-the-Loop）
 
@@ -133,40 +108,11 @@ freee_api_get {
 
 ### Step 5: 工数登録の実行
 
-```
-freee_api_post {
-  "service": "pm",
-  "path": "/workloads",
-  "body": {
-    "company_id": 123456,
-    "project_id": 1,
-    "date": "2025-03-10",
-    "minutes": 120,
-    "memo": "設計作業"
-  }
-}
-```
-
-工数登録の詳細パラメータは `recipes/pm-operations.md` を参照してください。
+PM `POST /workloads` で工数を登録します（登録例は `recipes/pm-operations.md` 参照）。
 
 ### Step 6: 登録結果の検証
 
-登録した工数を GET で確認し、意図通り登録されたことを検証します。
-
-```
-freee_api_get {
-  "service": "pm",
-  "path": "/workloads",
-  "query": {
-    "company_id": 123456,
-    "year_month": "2025-03",
-    "employees_scope": "employee",
-    "person_ids[]": [1]
-  }
-}
-```
-
-登録した日・プロジェクト・時間が正しいことを確認してユーザーに報告します。
+PM `GET /workloads` で登録した工数を取得し、日・プロジェクト・時間が正しいことを確認してユーザーに報告します。
 
 ## 安全チェック一覧
 
@@ -184,13 +130,6 @@ freee_api_get {
 
 複数日分の工数を一括登録する場合は、各日ごとに Step 2〜4 を繰り返します。
 安全チェックでブロック条件に該当した日はスキップし、ユーザーに報告してください。
-
-### ID対応表
-
-| PM API | HR API | 備考 |
-|--------|--------|------|
-| person_id（/people の id） | payroll_employee_id（/people）→ employee_id（HR） | /people レスポンスで確認 |
-| /users/me の person_me.id | /api/v1/users/me の employee_id | ログインユーザーのみ |
 
 ### 権限に関する注意
 
