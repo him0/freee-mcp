@@ -11,12 +11,17 @@ freee工数管理APIを使ったプロジェクト・工数の管理ガイド。
 
 ## 利用可能なパス
 
-| パス | 説明 |
-|------|------|
-| `/projects` | プロジェクト一覧・作成 |
-| `/projects/{id}` | プロジェクト詳細 |
-| `/workloads` | 工数実績一覧・登録 |
-| `/workload_summaries` | 工数サマリ取得 |
+| パス | メソッド | 説明 |
+|------|---------|------|
+| `/projects` | GET, POST | プロジェクト一覧・作成 |
+| `/projects/{id}` | GET, PUT, DELETE, PATCH | プロジェクト詳細・更新・削除 |
+| `/workloads` | GET, POST | 工数実績一覧・登録 |
+| `/workload_summaries` | GET | 工数サマリ取得 |
+| `/people` | GET | 従業員一覧（payroll_employee_id でHR連携可） |
+| `/teams` | GET | チーム一覧 |
+| `/partners` | GET | 取引先一覧 |
+| `/unit_costs` | GET | 単価マスタ |
+| `/users/me` | GET | ログインユーザー情報 |
 
 ## 使用例
 
@@ -116,6 +121,55 @@ freee_api_get {
 }
 ```
 
+### プロジェクトを更新
+
+```
+freee_api_put {
+  "service": "pm",
+  "path": "/projects/1",
+  "body": {
+    "company_id": 123456,
+    "name": "プロジェクト名変更",
+    "operational_status": "done"
+  }
+}
+```
+
+### ログインユーザー情報を取得
+
+```
+freee_api_get {
+  "service": "pm",
+  "path": "/users/me"
+}
+```
+
+レスポンスの `companies[].person_me` からログインユーザーの person_id を取得できます。
+
+### 従業員一覧を取得
+
+```
+freee_api_get {
+  "service": "pm",
+  "path": "/people",
+  "query": {
+    "company_id": 123456
+  }
+}
+```
+
+### チーム一覧を取得
+
+```
+freee_api_get {
+  "service": "pm",
+  "path": "/teams",
+  "query": {
+    "company_id": 123456
+  }
+}
+```
+
 ## Tips
 
 ### 運用ステータス
@@ -137,6 +191,18 @@ freee_api_get {
 | `employee` | 従業員単位（person_ids で絞り込み） |
 | 未指定 | ログインユーザーのみ |
 
+### 人事労務APIとの連携
+
+`/people` レスポンスの `payroll_employee_id` が人事労務側の `employee_id` に対応します。
+これを使って勤怠情報の確認や工数登録の安全チェックが可能です。
+
+安全な工数登録ワークフロー（勤怠チェック・重複確認・承認フロー）については `recipes/pm-workload-registration.md` を参照してください。
+
+### ログインユーザーの特定
+
+`/users/me` で取得した `companies[].person_me.id` が PM 側の person_id です。
+`/people` で自分の `payroll_employee_id` を取得すれば、HR 側の employee_id と紐付けられます。
+
 ## リファレンス
 
 詳細なAPIパラメータは以下を参照:
@@ -147,3 +213,4 @@ freee_api_get {
 - `references/pm-teams.md` - チーム
 - `references/pm-partners.md` - 取引先
 - `references/pm-unit-costs.md` - 単価
+- `references/pm-users.md` - ログインユーザー
