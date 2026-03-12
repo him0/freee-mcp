@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.11.2
+
+### Patch Changes
+
+- bc135be: API 要望の案内先を freee サポートページから freee Public API リクエストフォームに変更
+
 ## 0.11.1
 
 ### Patch Changes
