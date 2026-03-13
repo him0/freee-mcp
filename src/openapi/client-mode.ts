@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { makeApiRequest, type BinaryFileResponse, isBinaryFileResponse } from '../api/client.js';
 import { validatePathForService, listAllAvailablePaths, type ApiType } from './schema-loader.js';
 import { createTextResponse, formatErrorMessage, type TextResponse } from '../utils/error.js';
+import { extractTokenContext } from '../storage/context.js';
+import type { AuthExtra } from '../storage/context.js';
 
 /**
  * Format binary file response for display
@@ -30,15 +32,16 @@ function createMethodTool(method: string): (args: {
   path: string;
   query?: Record<string, unknown>;
   body?: Record<string, unknown>;
-}) => Promise<TextResponse> {
+}, extra?: AuthExtra) => Promise<TextResponse> {
   return async (args: {
     service: ApiType;
     path: string;
     query?: Record<string, unknown>;
     body?: Record<string, unknown>;
-  }) => {
+  }, extra?: AuthExtra) => {
     try {
       const { service, path, query, body } = args;
+      const { tokenStore, userId } = extractTokenContext(extra);
 
       // Validate path against the specified service's OpenAPI schema
       const validation = validatePathForService(method, path, service);
@@ -51,7 +54,7 @@ function createMethodTool(method: string): (args: {
 
       // Make API request with the correct base URL
       // biome-ignore lint/style/noNonNullAssertion: actualPath is set when isValid is true
-      const result = await makeApiRequest(method, validation.actualPath!, query, body, validation.baseUrl);
+      const result = await makeApiRequest(method, validation.actualPath!, query, body, validation.baseUrl, { tokenStore, userId });
 
       // Handle binary file response
       if (isBinaryFileResponse(result)) {
