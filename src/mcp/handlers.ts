@@ -5,7 +5,9 @@ import { addAuthenticationTools } from './tools.js';
 import { addFileUploadTool } from './file-upload-tool.js';
 import { generateClientModeTool } from '../openapi/client-mode.js';
 
-export async function createAndStartServer(): Promise<void> {
+export async function createAndStartServer(options?: {
+  remote?: boolean;
+}): Promise<void> {
   // Load config first
   const config = await loadConfig();
 
@@ -20,7 +22,9 @@ export async function createAndStartServer(): Promise<void> {
   );
 
   addAuthenticationTools(server);
-  addFileUploadTool(server);
+  if (!options?.remote) {
+    addFileUploadTool(server);
+  }
   generateClientModeTool(server);
 
   const transport = new StdioServerTransport();
