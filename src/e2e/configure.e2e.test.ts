@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { FullConfig } from '../config/companies';
-import { mockCompaniesResponse, mockCompaniesWithNullNameResponse, mockTokenResponse } from './fixtures/api-responses';
+import { mockCompaniesResponse, mockCompaniesWithNullNameResponse, mockHrUsersMeResponse, mockTokenResponse } from './fixtures/api-responses';
 
 // Track mock state - isolated from real config
 let mockSavedConfig: FullConfig | null = null;
@@ -144,6 +144,12 @@ describe('E2E: Configure Command', () => {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockCompaniesResponse),
+        });
+      }
+      if (url.includes('/hr/api/v1/users/me')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockHrUsersMeResponse),
         });
       }
       return Promise.resolve({
@@ -426,12 +432,57 @@ describe('E2E: Configure Command', () => {
       expect(process.exit).not.toHaveBeenCalled();
     });
 
+    it('should fall back to HR API when accounting API fails', async () => {
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes('/api/1/companies')) {
+          return Promise.resolve({
+            ok: false,
+            status: 403,
+            json: () => Promise.resolve({ error: 'access_denied' }),
+          });
+        }
+        if (url.includes('/hr/api/v1/users/me')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockHrUsersMeResponse),
+          });
+        }
+        return Promise.resolve({ ok: false, status: 404 });
+      });
+
+      mockPromptsResponses = [
+        {
+          clientId: 'test-client-id',
+          clientSecret: 'test-client-secret',
+          callbackPort: '54321',
+        },
+        {
+          companyId: 12345,
+        },
+      ];
+
+      const { configure } = await import('../cli');
+      await configure();
+
+      expect(mockSavedConfig).not.toBeNull();
+      expect(mockSavedConfig?.defaultCompanyId).toBe('12345');
+      // HR API's display_name (employee name) should NOT be used as the company display name
+      expect(mockSavedConfig?.companies['12345'].name).toBe('テスト株式会社');
+      expect(process.exit).not.toHaveBeenCalled();
+    });
+
     it('should handle no available companies', async () => {
       mockFetch.mockImplementation((url: string) => {
         if (url.includes('/api/1/companies')) {
           return Promise.resolve({
             ok: true,
             json: () => Promise.resolve({ companies: [] }),
+          });
+        }
+        if (url.includes('/hr/api/v1/users/me')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ id: 1, companies: [] }),
           });
         }
         return Promise.resolve({ ok: false, status: 404 });
@@ -511,6 +562,13 @@ describe('E2E: Configure Command', () => {
     it('should handle API errors when fetching companies', async () => {
       mockFetch.mockImplementation((url: string) => {
         if (url.includes('/api/1/companies')) {
+          return Promise.resolve({
+            ok: false,
+            status: 401,
+            json: () => Promise.resolve({ error: 'unauthorized' }),
+          });
+        }
+        if (url.includes('/hr/api/v1/users/me')) {
           return Promise.resolve({
             ok: false,
             status: 401,

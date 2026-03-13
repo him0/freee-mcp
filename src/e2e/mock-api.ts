@@ -14,6 +14,7 @@ import {
   mockInvoicesResponse,
   mockEmployeesResponse,
   mockProjectsResponse,
+  mockHrUsersMeResponse,
   mockUnauthorizedResponse,
   mockNotFoundResponse,
 } from './fixtures/api-responses.js';
@@ -129,6 +130,10 @@ function routeRequest(method: string, pathname: string, _url: URL): MockResponse
   }
 
   // HR API routes (base: /hr)
+  if (pathname === '/hr/api/v1/users/me') {
+    return createMockResponse(200, mockHrUsersMeResponse);
+  }
+
   if (pathname.match(/^\/hr\/api\/v1\/employees/)) {
     return createMockResponse(200, mockEmployeesResponse);
   }
