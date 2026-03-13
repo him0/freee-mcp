@@ -1,5 +1,5 @@
 import { FREEE_API_URL } from '../constants.js';
-import { parseJsonResponse } from '../utils/error.js';
+import { formatResponseErrorInfo } from '../utils/error.js';
 import { Company, CompaniesResponseSchema, HrUsersMeResponseSchema } from './types.js';
 
 export async function fetchCompanies(accessToken: string): Promise<Company[]> {
@@ -29,10 +29,7 @@ async function fetchAccountingCompanies(accessToken: string): Promise<Company[]>
   });
 
   if (!response.ok) {
-    const result = await parseJsonResponse(response);
-    const errorInfo = result.success
-      ? JSON.stringify(result.data)
-      : `(JSON parse failed: ${result.error})`;
+    const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(
       `事業所一覧の取得に失敗しました: ${response.status} ${errorInfo}`,
     );
@@ -55,10 +52,7 @@ async function fetchHrCompanies(accessToken: string): Promise<Company[]> {
   });
 
   if (!response.ok) {
-    const result = await parseJsonResponse(response);
-    const errorInfo = result.success
-      ? JSON.stringify(result.data)
-      : `(JSON parse failed: ${result.error})`;
+    const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(
       `事業所一覧の取得に失敗しました（HR API）: ${response.status} ${errorInfo}`,
     );

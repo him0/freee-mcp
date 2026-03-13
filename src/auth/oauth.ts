@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { getConfig } from '../config.js';
 import { saveTokens, TokenData, OAuthTokenResponseSchema } from './tokens.js';
 import { createTokenData } from './token-utils.js';
-import { parseJsonResponse } from '../utils/error.js';
+import { formatResponseErrorInfo } from '../utils/error.js';
 import { USER_AGENT } from '../constants.js';
 
 export function generatePKCE(): { codeVerifier: string; codeChallenge: string } {
@@ -45,10 +45,7 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string, 
   });
 
   if (!response.ok) {
-    const result = await parseJsonResponse(response);
-    const errorInfo = result.success
-      ? JSON.stringify(result.data)
-      : `(JSON parse failed: ${result.error})`;
+    const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(`Token exchange failed: ${response.status} ${errorInfo}`);
   }
 

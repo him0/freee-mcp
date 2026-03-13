@@ -1,7 +1,7 @@
 import { getConfig } from '../config.js';
 import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
-import { parseJsonResponse } from '../utils/error.js';
+import { formatResponseErrorInfo, formatApiErrorMessage } from '../utils/error.js';
 import { USER_AGENT } from '../constants.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -127,10 +127,7 @@ export async function makeApiRequest(
   });
 
   if (response.status === 401) {
-    const result = await parseJsonResponse(response);
-    const errorInfo = result.success
-      ? JSON.stringify(result.data)
-      : `(JSON parse failed: ${result.error})`;
+    const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(
       `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
       `現在の事業所ID: ${companyId}\n` +
@@ -143,10 +140,7 @@ export async function makeApiRequest(
   }
 
   if (response.status === 403) {
-    const result = await parseJsonResponse(response);
-    const errorInfo = result.success
-      ? JSON.stringify(result.data)
-      : `(JSON parse failed: ${result.error})`;
+    const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(
       `アクセス拒否 (403): ${errorInfo}\n` +
       `事業所ID: ${companyId}\n\n` +
@@ -156,47 +150,7 @@ export async function makeApiRequest(
   }
 
   if (!response.ok) {
-    const result = await parseJsonResponse(response);
-
-    // Extract detailed error messages from freee API response
-    let errorMessage = `API request failed: ${response.status}`;
-
-    if (result.success) {
-      const errorData = result.data;
-      if (errorData && errorData.errors && Array.isArray(errorData.errors)) {
-        const allMessages: string[] = [];
-
-        for (const error of errorData.errors) {
-          if (
-            error &&
-            typeof error === 'object' &&
-            'messages' in error &&
-            Array.isArray(error.messages)
-          ) {
-            allMessages.push(...error.messages);
-          }
-        }
-
-        if (allMessages.length > 0) {
-          errorMessage += `\n\nエラー詳細:\n${allMessages.join('\n')}`;
-
-          // Add helpful guidance for bad request errors
-          if (response.status === 400) {
-            errorMessage += `\n\nヒント: 不正なリクエストエラーが発生しました。`;
-            errorMessage += `\n既存のデータを取得して正しい構造を確認することをお勧めします。`;
-            errorMessage += `\n例: freee_api_get で既存データを取得し、正しい構造を確認してください。`;
-          }
-        }
-      }
-
-      // Fallback to raw error data if no structured errors found
-      if (!errorData?.errors) {
-        errorMessage += `\n\n詳細: ${JSON.stringify(errorData)}`;
-      }
-    } else {
-      errorMessage += `\n\n詳細: (JSON parse failed: ${result.error})`;
-    }
-
+    const errorMessage = await formatApiErrorMessage(response, response.status);
     throw new Error(errorMessage);
   }
 
