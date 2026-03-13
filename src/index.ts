@@ -4,7 +4,8 @@ import { configure } from './cli.js';
 const main = async (): Promise<void> => {
   // Parse command line arguments
   const args = process.argv.slice(2);
-  const subcommand = args[0];
+  const remote = args.includes('--remote');
+  const subcommand = args.find((arg) => !arg.startsWith('--'));
 
   // Handle configure subcommand
   if (subcommand === 'configure') {
@@ -15,13 +16,14 @@ const main = async (): Promise<void> => {
   // Handle unknown subcommands
   if (subcommand && subcommand !== 'client') {
     console.error(`Unknown subcommand: ${subcommand}`);
-    console.error('Usage: freee-mcp [configure]');
+    console.error('Usage: freee-mcp [configure] [--remote]');
     console.error('  configure - Interactive configuration setup');
+    console.error('  --remote  - remote MCP サーバーとして動作（ファイルアップロード機能を無効化）');
     process.exit(1);
   }
 
   console.error('Starting freee MCP server');
-  await createAndStartServer();
+  await createAndStartServer({ remote });
 };
 
 main().catch((error) => {
