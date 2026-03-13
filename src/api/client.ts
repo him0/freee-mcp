@@ -3,6 +3,7 @@ import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
 import { parseJsonResponse } from '../utils/error.js';
 import { USER_AGENT } from '../constants.js';
+import type { TokenContext } from '../storage/context.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -73,11 +74,18 @@ export async function makeApiRequest(
   params?: Record<string, unknown>,
   body?: Record<string, unknown>,
   baseUrl?: string,
+  tokenContext?: TokenContext,
 ): Promise<unknown | BinaryFileResponse> {
   const apiUrl = baseUrl || getConfig().freee.apiUrl;
-  const companyId = await getCurrentCompanyId();
-
-  const accessToken = await getValidAccessToken();
+  const [companyId, accessToken] = tokenContext
+    ? await Promise.all([
+        tokenContext.tokenStore.getCurrentCompanyId(tokenContext.userId),
+        tokenContext.tokenStore.getValidAccessToken(tokenContext.userId),
+      ])
+    : await Promise.all([
+        getCurrentCompanyId(),
+        getValidAccessToken(),
+      ]);
 
   if (!accessToken) {
     throw new Error(

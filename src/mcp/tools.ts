@@ -3,14 +3,10 @@ import crypto from 'crypto';
 import { z } from 'zod';
 import { getConfig } from '../config.js';
 import { makeApiRequest } from '../api/client.js';
-import { loadTokens, clearTokens } from '../auth/tokens.js';
 import { generatePKCE, buildAuthUrl } from '../auth/oauth.js';
 import { registerAuthenticationRequest, getActualRedirectUri, startCallbackServerWithAutoStop } from '../auth/server.js';
-import {
-  getCurrentCompanyId,
-  setCurrentCompany,
-  getCompanyInfo
-} from '../config/companies.js';
+import { extractTokenContext } from '../storage/context.js';
+import type { AuthExtra } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 import { AUTH_TIMEOUT_MS } from '../constants.js';
 
@@ -19,16 +15,17 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_current_user',
     '現在のユーザー情報を取得 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
-    async () => {
+    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
-        const companyId = await getCurrentCompanyId();
-        const companyInfo = await getCompanyInfo(companyId);
+        const { tokenStore, userId } = extractTokenContext(extra);
+        const companyId = await tokenStore.getCurrentCompanyId(userId);
+        const companyInfo = await tokenStore.getCompanyInfo(userId, companyId);
 
         if (!companyId) {
           return createTextResponse('会社IDが設定されていません。freee_set_current_company で設定してください。');
         }
 
-        const userInfo = await makeApiRequest('GET', '/api/1/users/me');
+        const userInfo = await makeApiRequest('GET', '/api/1/users/me', undefined, undefined, undefined, { tokenStore, userId });
 
         return createTextResponse(
           `現在のユーザー情報:\n` +
@@ -84,9 +81,10 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_auth_status',
     '認証状態を確認 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
-    async () => {
+    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
-        const tokens = await loadTokens();
+        const { tokenStore, userId } = extractTokenContext(extra);
+        const tokens = await tokenStore.loadTokens(userId);
         if (!tokens) {
           return createTextResponse('未認証。freee_authenticate で認証してください。');
         }
@@ -108,9 +106,10 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_clear_auth',
     '認証情報をクリア (詳細ガイドはfreee-api-skill skillを参照)',
     {},
-    async () => {
+    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
-        await clearTokens();
+        const { tokenStore, userId } = extractTokenContext(extra);
+        await tokenStore.clearTokens(userId);
         return createTextResponse('認証情報をクリアしました。再認証するには freee_authenticate を使用。');
       } catch (error) {
         return createTextResponse(`認証情報のクリアに失敗: ${formatErrorMessage(error)}`);
@@ -127,13 +126,14 @@ export function addAuthenticationTools(server: McpServer): void {
       name: z.string().optional().describe('事業所名'),
       description: z.string().optional().describe('説明'),
     },
-    async (args: { company_id: string; name?: string; description?: string }) => {
+    async (args: { company_id: string; name?: string; description?: string }, extra?: AuthExtra) => {
       try {
         const { company_id, name, description } = args;
+        const { tokenStore, userId } = extractTokenContext(extra);
 
-        await setCurrentCompany(company_id, name, description);
+        await tokenStore.setCurrentCompany(userId, company_id, name, description);
 
-        const companyInfo = await getCompanyInfo(company_id);
+        const companyInfo = await tokenStore.getCompanyInfo(userId, company_id);
 
         return createTextResponse(`事業所を設定: ${companyInfo?.name || company_id}`);
       } catch (error) {
@@ -146,10 +146,11 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_get_current_company',
     '現在の事業所情報を表示 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
-    async () => {
+    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
-        const companyId = await getCurrentCompanyId();
-        const companyInfo = await getCompanyInfo(companyId);
+        const { tokenStore, userId } = extractTokenContext(extra);
+        const companyId = await tokenStore.getCurrentCompanyId(userId);
+        const companyInfo = await tokenStore.getCompanyInfo(userId, companyId);
 
         if (!companyInfo) {
           return createTextResponse(`事業所ID: ${companyId} (詳細情報なし)`);
@@ -166,15 +167,16 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_list_companies',
     '事業所一覧を表示 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
-    async () => {
+    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
+        const { tokenStore, userId } = extractTokenContext(extra);
         const CompanyResponseSchema = z.object({
           companies: z.array(z.object({
             id: z.number(),
             name: z.string(),
           })).optional(),
         });
-        const rawResponse = await makeApiRequest('GET', '/api/1/companies');
+        const rawResponse = await makeApiRequest('GET', '/api/1/companies', undefined, undefined, undefined, { tokenStore, userId });
         const parseResult = CompanyResponseSchema.safeParse(rawResponse);
         if (!parseResult.success) {
           return {
@@ -187,7 +189,7 @@ export function addAuthenticationTools(server: McpServer): void {
           };
         }
         const apiCompanies = parseResult.data;
-        const currentCompanyId = await getCurrentCompanyId();
+        const currentCompanyId = await tokenStore.getCurrentCompanyId(userId);
 
         if (!apiCompanies?.companies?.length) {
           return createTextResponse('事業所情報を取得できませんでした。');
