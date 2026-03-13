@@ -88,7 +88,7 @@ export async function selectCompany(accessToken: string): Promise<{ selected: Se
   const companySelection = await prompts({
     type: 'select',
     name: 'companyId',
-    message: 'デフォルトの事業所を選択してください（↑↓で選択、Enterで確定）:',
+    message: 'デフォルト事業所を選択してください（↑↓で選択、Enterで確定）:',
     choices: companies.map((company) => ({
       title: `${company.display_name || company.name} (ID: ${company.id}) - ${company.role}`,
       value: company.id,
