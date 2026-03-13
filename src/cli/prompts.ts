@@ -76,7 +76,7 @@ export async function collectCredentials(): Promise<Credentials> {
 }
 
 export async function selectCompany(accessToken: string): Promise<{ selected: SelectedCompany; all: Company[] }> {
-  console.log('ステップ 3/3: デフォルト事業所の選択\n');
+  console.log('ステップ 3/3: 現在の事業所の選択\n');
   console.log('事業所一覧を取得中...');
 
   const companies = await fetchCompanies(accessToken);
@@ -88,7 +88,7 @@ export async function selectCompany(accessToken: string): Promise<{ selected: Se
   const companySelection = await prompts({
     type: 'select',
     name: 'companyId',
-    message: 'デフォルト事業所を選択してください（↑↓で選択、Enterで確定）:',
+    message: '現在の事業所を選択してください（↑↓で選択、Enterで確定）:',
     choices: companies.map((company) => ({
       title: `${company.display_name || company.name} (ID: ${company.id}) - ${company.role}`,
       value: company.id,
