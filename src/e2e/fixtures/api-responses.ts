@@ -212,6 +212,31 @@ export const mockProjectsResponse = {
   ],
 };
 
+// HR users/me response (for company listing fallback)
+export const mockHrUsersMeResponse = {
+  id: 1,
+  companies: [
+    {
+      id: 12345,
+      name: 'テスト株式会社',
+      name_kana: 'テストカブシキガイシャ',
+      display_name: '山田 太郎',
+      role: 'company_admin',
+      external_cid: '0000000001',
+      employee_id: 501,
+    },
+    {
+      id: 67890,
+      name: 'サンプル合同会社',
+      name_kana: 'サンプルゴウドウガイシャ',
+      display_name: '山田 太郎',
+      role: 'self_only',
+      external_cid: '0000000002',
+      employee_id: 502,
+    },
+  ],
+};
+
 // Error responses
 export const mockUnauthorizedResponse = {
   error: 'invalid_token',

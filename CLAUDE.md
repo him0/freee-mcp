@@ -71,11 +71,12 @@ Always run before creating a PR:
 pnpm typecheck && pnpm lint && pnpm test:run && pnpm build
 ```
 
-Changeset requirement:
+Changeset requirement (必須):
 
-- Run `pnpm changeset` to create a changeset file for any user-facing changes
-- Select the appropriate bump type: `patch` (bug fixes), `minor` (new features), `major` (breaking changes)
-- Write a concise description of what changed for the CHANGELOG
+- コミット時に changeset ファイルを必ず作成すること（忘れやすいので注意）
+- `pnpm changeset` が対話モードで使えない場合は `.changeset/<短い説明>.md` を直接作成する
+- フォーマット: frontmatter に `"freee-mcp": patch|minor|major`、本文に変更内容の説明（日本語）
+- bump type: `patch`（バグ修正）、`minor`（新機能）、`major`（破壊的変更）
 
 Contributor の追加:
 
