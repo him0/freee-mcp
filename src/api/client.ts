@@ -176,7 +176,16 @@ export async function makeApiRequest(
     } as BinaryFileResponse;
   }
 
+  // Handle empty responses (e.g., 204 No Content from DELETE)
+  if (response.status === 204) {
+    return null;
+  }
+
   const text = await response.text();
+  if (!text) {
+    return null;
+  }
+
   try {
     return JSON.parse(text);
   } catch {
