@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-- `pnpm build` - Build the project
-- `pnpm typecheck` - TypeScript type checking
-- `pnpm lint` - Run ESLint
-- `pnpm test:run` - Run tests
-- `pnpm dev` - Start development server
-- `pnpm inspector` - MCP inspector for debugging tools
-- `pnpm changeset` - Create a new changeset for version bumps
-- `pnpm version` - Apply changesets to update versions and CHANGELOG
-- `pnpm release` - Build and publish to npm
+- `bun run build` - Build the project (uses Bun.build)
+- `bun run typecheck` - TypeScript type checking
+- `bun run lint` - Run ESLint
+- `bun run test:run` - Run tests (vitest)
+- `bun run dev` - Start development server
+- `bun run inspector` - MCP inspector for debugging tools
+- `bun run changeset` - Create a new changeset for version bumps
+- `bun run version` - Apply changesets to update versions and CHANGELOG
+- `bun run release` - Build and publish to npm
 
 ## Architecture
 
@@ -61,20 +61,20 @@ After running `freee-mcp configure`:
 
 Configuration is automatically loaded from `~/.config/freee-mcp/config.json`.
 
-Development mode: Use `"command": "pnpm", "args": ["tsx", "src/index.ts"]` with `"cwd": "/path/to/freee-mcp"`
+Development mode: Use `"command": "bun", "args": ["run", "src/index.ts"]` with `"cwd": "/path/to/freee-mcp"`
 
 ## PR Creation Pre-flight Checklist
 
 Always run before creating a PR:
 
 ```bash
-pnpm typecheck && pnpm lint && pnpm test:run && pnpm build
+bun run typecheck && bun run lint && bun run test:run && bun run build
 ```
 
 Changeset requirement (必須):
 
 - コミット時に changeset ファイルを必ず作成すること（忘れやすいので注意）
-- `pnpm changeset` が対話モードで使えない場合は `.changeset/<短い説明>.md` を直接作成する
+- `bun run changeset` が対話モードで使えない場合は `.changeset/<短い説明>.md` を直接作成する
 - フォーマット: frontmatter に `"freee-mcp": patch|minor|major`、本文に変更内容の説明（日本語）
 - bump type: `patch`（バグ修正）、`minor`（新機能）、`major`（破壊的変更）
 

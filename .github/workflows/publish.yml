@@ -23,21 +23,20 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: .tool-versions
-          cache: 'pnpm'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Build project
-        run: pnpm build
+        run: bun run build
 
       - name: Get version
         id: version
@@ -183,7 +182,7 @@ jobs:
 
       - name: Publish to npm (Trusted Publishing)
         if: steps.check-npm.outputs.skip != 'true'
-        run: pnpm run release
+        run: bun run release
         env:
           NPM_CONFIG_PROVENANCE: true
 
