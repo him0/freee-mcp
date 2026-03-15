@@ -57,6 +57,11 @@ function createMethodTool(method: string): (args: {
         return createTextResponse(formatBinaryResponse(result));
       }
 
+      // Handle empty response (e.g., 204 No Content)
+      if (result === null) {
+        return createTextResponse('リクエストが正常に完了しました。');
+      }
+
       return createTextResponse(JSON.stringify(result, null, 2));
     } catch (error) {
       return createTextResponse(`APIリクエストエラー: ${formatErrorMessage(error)}`);

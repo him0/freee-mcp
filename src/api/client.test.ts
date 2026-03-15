@@ -287,6 +287,33 @@ describe('client', () => {
       );
     });
 
+    it('should return null for 204 No Content response', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 204,
+        headers: createMockHeaders(''),
+      });
+
+      const result = await makeApiRequest('DELETE', '/api/1/deals/123');
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null for empty response body', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: createMockHeaders('application/json'),
+        text: () => Promise.resolve(''),
+      });
+
+      const result = await makeApiRequest('DELETE', '/api/1/deals/123');
+
+      expect(result).toBeNull();
+    });
+
     it('should save binary response to file and return file info', async () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
 
