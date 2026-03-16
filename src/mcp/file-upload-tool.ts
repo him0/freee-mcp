@@ -2,6 +2,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { uploadReceipt } from '../api/file-upload.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
+import { extractTokenContext } from '../storage/context.js';
+import type { AuthExtra } from '../storage/context.js';
 
 export function addFileUploadTool(server: McpServer): void {
   server.tool(
@@ -24,10 +26,11 @@ export function addFileUploadTool(server: McpServer): void {
       receipt_metadatum_amount?: number;
       qualified_invoice?: 'qualified' | 'not_qualified' | 'unselected';
       document_type?: 'receipt' | 'invoice' | 'other';
-    }) => {
+    }, extra?: AuthExtra) => {
       try {
         const { file_path, ...options } = args;
-        const result = await uploadReceipt(file_path, options);
+        const { tokenStore, userId } = extractTokenContext(extra);
+        const result = await uploadReceipt(file_path, options, { tokenStore, userId });
 
         const receipt = result as Record<string, unknown>;
         const receiptData = (receipt.receipt || receipt) as Record<string, unknown>;

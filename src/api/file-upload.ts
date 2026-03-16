@@ -5,6 +5,7 @@ import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
 import { parseJsonResponse } from '../utils/error.js';
 import { USER_AGENT } from '../constants.js';
+import type { TokenContext } from '../storage/context.js';
 
 const MAX_FILE_SIZE_BYTES = 64 * 1024 * 1024; // 64MB
 
@@ -36,6 +37,7 @@ function getMimeType(filePath: string): string {
 export async function uploadReceipt(
   filePath: string,
   options?: UploadReceiptOptions,
+  tokenContext?: TokenContext,
 ): Promise<unknown> {
   const resolvedPath = path.resolve(filePath);
 
@@ -60,8 +62,15 @@ export async function uploadReceipt(
     throw new Error(`ファイルサイズが上限(64MB)を超えています: ${sizeMB}MB`);
   }
 
-  const companyId = await getCurrentCompanyId();
-  const accessToken = await getValidAccessToken();
+  const [companyId, accessToken] = tokenContext
+    ? await Promise.all([
+        tokenContext.tokenStore.getCurrentCompanyId(tokenContext.userId),
+        tokenContext.tokenStore.getValidAccessToken(tokenContext.userId),
+      ])
+    : await Promise.all([
+        getCurrentCompanyId(),
+        getValidAccessToken(),
+      ]);
 
   if (!accessToken) {
     throw new Error(
