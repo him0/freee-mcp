@@ -193,6 +193,7 @@ HTTPメソッドごとのシンプルなツール構成:
 <a href="https://github.com/inoue2002"><img src="https://github.com/inoue2002.png" width="40" height="40" alt="@inoue2002"></a>
 <a href="https://github.com/jacknocode"><img src="https://github.com/jacknocode.png" width="40" height="40" alt="@jacknocode"></a>
 <a href="https://github.com/tnj"><img src="https://github.com/tnj.png" width="40" height="40" alt="@tnj"></a>
+<a href="https://github.com/jaxx2104"><img src="https://github.com/jaxx2104.png" width="40" height="40" alt="@jaxx2104"></a>
 <!-- CONTRIBUTORS-END -->
 
 ## 開発者向け
