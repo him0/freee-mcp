@@ -19,13 +19,15 @@ export function addAuthenticationTools(server: McpServer): void {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const companyId = await tokenStore.getCurrentCompanyId(userId);
-        const companyInfo = await tokenStore.getCompanyInfo(userId, companyId);
 
         if (!companyId) {
           return createTextResponse('会社IDが設定されていません。freee_set_current_company で設定してください。');
         }
 
-        const userInfo = await makeApiRequest('GET', '/api/1/users/me', undefined, undefined, undefined, { tokenStore, userId });
+        const [companyInfo, userInfo] = await Promise.all([
+          tokenStore.getCompanyInfo(userId, companyId),
+          makeApiRequest('GET', '/api/1/users/me', undefined, undefined, undefined, { tokenStore, userId }),
+        ]);
 
         return createTextResponse(
           `現在のユーザー情報:\n` +
