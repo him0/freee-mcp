@@ -1,15 +1,24 @@
 # freee-mcp
 
+## 0.12.1
+
+### Patch Changes
+
+- f8873e4: エラーハンドリングの共通ヘルパー関数抽出とスキーマパス検証の regex キャッシュ化によるリファクタリング
+- ff3e506: freee_api_delete が HTTP 204 No Content レスポンスで JSON パースエラーとなる問題を修正
+- 83251cb: freee-api-skill の description に具体的な操作キーワードを追加してトリガー率を改善
+- fb11574: ESLint + Prettier を Biome に移行
+
 ## 0.12.0
 
 ### Minor Changes
 
 - 441d1e4: --remote オプションを追加。リモート MCP サーバーとして動作させる際にファイルアップロード機能を無効化
-- 564777b: configure コマンドで会計APIから事業所一覧を取得できない場合に、人事労務APIへフォールバックするように改善。人事労務のみ利用しているユーザーでも事業所を選択できるようになりました。
+- 564777b: configure コマンドで会計 API から事業所一覧を取得できない場合に、人事労務 API へフォールバックするように改善。人事労務のみ利用しているユーザーでも事業所を選択できるようになりました。
 
 ### Patch Changes
 
-- 42255f2: configure コマンドの事業所選択プロンプトに操作ヒント（↑↓で選択、Enterで確定）を追加し、表現を「操作対象の事業所」に統一
+- 42255f2: configure コマンドの事業所選択プロンプトに操作ヒント（↑↓ で選択、Enter で確定）を追加し、表現を「操作対象の事業所」に統一
 
 ## 0.11.2
 
@@ -27,14 +36,14 @@
 
 ### Minor Changes
 
-- 32fab73: 工数管理レシピの拡充: 全PMエンドポイントのカバレッジ追加と、PM・HR連携による安全な工数登録ワークフローレシピの新規追加
+- 32fab73: 工数管理レシピの拡充: 全 PM エンドポイントのカバレッジ追加と、PM・HR 連携による安全な工数登録ワークフローレシピの新規追加
 
 ### Patch Changes
 
-- cc24426: MCPサーバーにinstructionsを追加し、全ツールのdescriptionにfreee-api-skill skillへのガイド参照を追加
-- ace37e0: PM/SM API操作レシピを追加しcompany_id指定方法を明記、取引URLフォーマットを修正
-- cc24426: publish workflowのskill zipファイル名をfreee-api-skill.zipに修正
-- cc24426: サーバーバージョンをハードコードからpackage.jsonの値に同期するよう変更
+- cc24426: MCP サーバーに instructions を追加し、全ツールの description に freee-api-skill skill へのガイド参照を追加
+- ace37e0: PM/SM API 操作レシピを追加し company_id 指定方法を明記、取引 URL フォーマットを修正
+- cc24426: publish workflow の skill zip ファイル名を freee-api-skill.zip に修正
+- cc24426: サーバーバージョンをハードコードから package.json の値に同期するよう変更
 
 ## 0.10.0
 
@@ -68,7 +77,7 @@
 
 ### Patch Changes
 
-- 62e8483: CSVレスポンスがJSONとして処理される不整合を修正。isBinaryContentType に text/csv を追加し、CSVレスポンスが正しくファイルとして保存されるようにしました。
+- 62e8483: CSV レスポンスが JSON として処理される不整合を修正。isBinaryContentType に text/csv を追加し、CSV レスポンスが正しくファイルとして保存されるようにしました。
 - aa42fef: refresh_token が欠落している場合に空文字列を保存する代わりにエラーを返すようにし、再認証を促すメッセージを表示するようにした
 - cb2e717: 環境変数の部分設定（FREEE_CLIENT_ID または FREEE_CLIENT_SECRET の片方のみ）でエラーを返すように修正
 - 3a3346e: FREEE_CALLBACK_PORT の値検証を追加し、不正な値（NaN、範囲外）の場合はデフォルトポートにフォールバックするようにした
@@ -88,7 +97,7 @@
 
 ### Patch Changes
 
-- 7d84fd6: 勤怠操作ガイド(hr-attendance-operations.md)を新設し、hr-operations.mdをhr-employee-operations.mdにリネーム・整理
+- 7d84fd6: 勤怠操作ガイド(hr-attendance-operations.md)を新設し、hr-operations.md を hr-employee-operations.md にリネーム・整理
 
 ## 0.7.2
 
@@ -110,13 +119,13 @@
 
 ### Patch Changes
 
-- e91f75f: configure コマンドでコールバックURLを分かりやすく表示するように改善
+- e91f75f: configure コマンドでコールバック URL を分かりやすく表示するように改善
 
 ## 0.6.7
 
 ### Patch Changes
 
-- a3766e0: OpenAPIスキーマを最新版に更新: 会計APIに経費申請制限事項とテンプレートIDフィールド追加、人事労務APIに所定休日労働時間フィールド追加、販売APIに案件更新・受注更新エンドポイント追加
+- a3766e0: OpenAPI スキーマを最新版に更新: 会計 API に経費申請制限事項とテンプレート ID フィールド追加、人事労務 API に所定休日労働時間フィールド追加、販売 API に案件更新・受注更新エンドポイント追加
 
 ## 0.6.6
 
@@ -149,33 +158,36 @@
 
 ### Patch Changes
 
-- 9ab8bc6: 0.6.2 リリース: 1/17以降の変更を含む
+- 9ab8bc6: 0.6.2 リリース: 1/17 以降の変更を含む
 
   このリリースには以下の改善が含まれています（CHANGELOG 0.6.1 に既に記載済みの内容）:
-  - 外部APIへのリクエストにUser-Agentヘッダーを追加
-  - 外部APIレスポンスのZodバリデーション追加
-  - OAuthコールバックサーバーのエラーハンドリング改善
-  - 403エラーのハンドリング改善（レートリミット対応）
-  - トークンエラーハンドリングの改善（Result型パターン）
-  - OAuthコールバックサーバーのオンデマンド起動
+
+  - 外部 API へのリクエストに User-Agent ヘッダーを追加
+  - 外部 API レスポンスの Zod バリデーション追加
+  - OAuth コールバックサーバーのエラーハンドリング改善
+  - 403 エラーのハンドリング改善（レートリミット対応）
+  - トークンエラーハンドリングの改善（Result 型パターン）
+  - OAuth コールバックサーバーのオンデマンド起動
   - ポート使用中時のエラーメッセージ改善
 
 ## 0.6.1
 
 ### Patch Changes
 
-- 4b941b6: 外部APIへのリクエストにUser-Agentヘッダーを追加し、MCPサーバーからのリクエストであることを識別可能に
+- 4b941b6: 外部 API へのリクエストに User-Agent ヘッダーを追加し、MCP サーバーからのリクエストであることを識別可能に
 - a803a3e: Add Zod validation for external API responses to prevent silent failures from invalid response formats
 - f79175d: fix: improve error handling for OAuth callback server startup failures
+
   - Add explicit error messages when OAuth callback server fails to start
   - Log when server is already running instead of silently returning
   - Clean up server state properly on error
 
-- a6b4a4c: fix: 403エラーのハンドリングを改善し、レートリミットの可能性を示すメッセージを追加
+- a6b4a4c: fix: 403 エラーのハンドリングを改善し、レートリミットの可能性を示すメッセージを追加
 - 230cbf8: fix: improve token error handling with Result type pattern
+
   - Replace safeParseJson with parseJsonResponse that returns a Result type, preserving error context instead of silently returning empty object
   - Propagate token refresh errors in getValidAccessToken instead of returning null, allowing callers to understand failure reasons
   - Add comprehensive tests for parseJsonResponse and token refresh failure scenarios
 
-- b2ac012: OAuthコールバックサーバーをMCPサーバー起動時ではなく、認証時にオンデマンドで起動するように変更
+- b2ac012: OAuth コールバックサーバーを MCP サーバー起動時ではなく、認証時にオンデマンドで起動するように変更
 - d4f96c0: ポートが使用中の場合にフォールバックせず、具体的な解決方法を含むエラーメッセージを表示するように変更
