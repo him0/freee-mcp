@@ -1,5 +1,5 @@
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { getConfig } from '../config.js';
 import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';

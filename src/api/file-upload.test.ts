@@ -23,7 +23,7 @@ vi.mock('../config/companies.js', () => ({
   getCurrentCompanyId: vi.fn().mockResolvedValue('12345'),
 }));
 
-const mockFs = await import('fs/promises');
+const mockFs = await import('node:fs/promises');
 const { getValidAccessToken } = await import('../auth/tokens.js');
 
 describe('uploadReceipt', () => {

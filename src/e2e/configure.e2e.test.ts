@@ -80,7 +80,7 @@ vi.mock('../auth/server', () => ({
   stopCallbackServer: vi.fn(),
   getActualRedirectUri: vi.fn(() => 'http://127.0.0.1:54321/callback'),
   getDefaultAuthManager: vi.fn(() => ({
-    registerCliAuthHandler: vi.fn((state: string, handler: {
+    registerCliAuthHandler: vi.fn((_state: string, handler: {
       resolve: (code: string) => void;
       reject: (error: Error) => void;
       codeVerifier: string;

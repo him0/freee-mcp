@@ -3,8 +3,8 @@ import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
 import { formatResponseErrorInfo, formatApiErrorMessage } from '../utils/error.js';
 import { USER_AGENT } from '../constants.js';
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 /**
  * Response type for binary file downloads
@@ -87,7 +87,7 @@ export async function makeApiRequest(
   }
 
   // Properly join baseUrl and path, preserving baseUrl's path component
-  const normalizedBase = apiUrl.endsWith('/') ? apiUrl : apiUrl + '/';
+  const normalizedBase = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
   const normalizedPath = apiPath.startsWith('/') ? apiPath.slice(1) : apiPath;
   const url = new URL(normalizedPath, normalizedBase);
   if (params) {

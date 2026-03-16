@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import crypto from 'crypto';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import crypto from 'node:crypto';
 import { addAuthenticationTools } from './tools.js';
 
 vi.mock('crypto');

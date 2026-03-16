@@ -4,14 +4,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { addAuthenticationTools } from '../mcp/tools.js';
 import { setupMockApi, clearMockApi } from './mock-api.js';
 import {
   mockUserResponse,
   mockCompaniesResponse,
 } from './fixtures/api-responses.js';
-import { TokenData } from '../auth/tokens.js';
+import type { TokenData } from '../auth/tokens.js';
 
 // Track mock function state
 let mockTokenData: TokenData | null = null;
@@ -88,7 +88,7 @@ vi.mock('../auth/server.js', () => ({
 
 // Mock API client
 vi.mock('../api/client.js', () => ({
-  makeApiRequest: vi.fn((method: string, path: string) => {
+  makeApiRequest: vi.fn((_method: string, path: string) => {
     if (path === '/api/1/users/me') {
       return Promise.resolve(mockUserResponse);
     }
@@ -151,7 +151,7 @@ describe('E2E: Authentication Flow', () => {
 
   describe('freee_authenticate', () => {
     it('should return authentication URL', async () => {
-      const handler = registeredTools.get('freee_authenticate')!.handler;
+      const handler = registeredTools.get('freee_authenticate')?.handler;
 
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
@@ -161,7 +161,7 @@ describe('E2E: Authentication Flow', () => {
     });
 
     it('should include PKCE code challenge in URL', async () => {
-      const handler = registeredTools.get('freee_authenticate')!.handler;
+      const handler = registeredTools.get('freee_authenticate')?.handler;
 
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
@@ -169,7 +169,7 @@ describe('E2E: Authentication Flow', () => {
     });
 
     it('should include state parameter in URL', async () => {
-      const handler = registeredTools.get('freee_authenticate')!.handler;
+      const handler = registeredTools.get('freee_authenticate')?.handler;
 
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
@@ -181,7 +181,7 @@ describe('E2E: Authentication Flow', () => {
     it('should return unauthenticated status when no tokens', async () => {
       mockTokenData = null;
 
-      const handler = registeredTools.get('freee_auth_status')!.handler;
+      const handler = registeredTools.get('freee_auth_status')?.handler;
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('未認証');
@@ -196,7 +196,7 @@ describe('E2E: Authentication Flow', () => {
         scope: 'read write',
       };
 
-      const handler = registeredTools.get('freee_auth_status')!.handler;
+      const handler = registeredTools.get('freee_auth_status')?.handler;
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('有効');
@@ -211,7 +211,7 @@ describe('E2E: Authentication Flow', () => {
         scope: 'read write',
       };
 
-      const handler = registeredTools.get('freee_auth_status')!.handler;
+      const handler = registeredTools.get('freee_auth_status')?.handler;
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('期限切れ');
@@ -228,7 +228,7 @@ describe('E2E: Authentication Flow', () => {
         scope: 'read write',
       };
 
-      const handler = registeredTools.get('freee_clear_auth')!.handler;
+      const handler = registeredTools.get('freee_clear_auth')?.handler;
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('クリアしました');
@@ -246,7 +246,7 @@ describe('E2E: Authentication Flow', () => {
         scope: 'read write',
       };
 
-      const handler = registeredTools.get('freee_current_user')!.handler;
+      const handler = registeredTools.get('freee_current_user')?.handler;
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('ユーザー情報');
@@ -256,7 +256,7 @@ describe('E2E: Authentication Flow', () => {
 
   describe('freee_set_current_company', () => {
     it('should set current company', async () => {
-      const handler = registeredTools.get('freee_set_current_company')!.handler;
+      const handler = registeredTools.get('freee_set_current_company')?.handler;
 
       const result = await handler({
         company_id: '67890',
@@ -268,7 +268,7 @@ describe('E2E: Authentication Flow', () => {
     });
 
     it('should set company without name', async () => {
-      const handler = registeredTools.get('freee_set_current_company')!.handler;
+      const handler = registeredTools.get('freee_set_current_company')?.handler;
 
       const result = await handler({
         company_id: '99999',
@@ -280,7 +280,7 @@ describe('E2E: Authentication Flow', () => {
 
   describe('freee_get_current_company', () => {
     it('should return current company info', async () => {
-      const handler = registeredTools.get('freee_get_current_company')!.handler;
+      const handler = registeredTools.get('freee_get_current_company')?.handler;
 
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
@@ -299,7 +299,7 @@ describe('E2E: Authentication Flow', () => {
         scope: 'read write',
       };
 
-      const handler = registeredTools.get('freee_list_companies')!.handler;
+      const handler = registeredTools.get('freee_list_companies')?.handler;
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('事業所一覧');
@@ -315,7 +315,7 @@ describe('E2E: Authentication Flow', () => {
         scope: 'read write',
       };
 
-      const handler = registeredTools.get('freee_list_companies')!.handler;
+      const handler = registeredTools.get('freee_list_companies')?.handler;
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
       // Current company should be marked
@@ -326,12 +326,12 @@ describe('E2E: Authentication Flow', () => {
   describe('Full Authentication Flow', () => {
     it('should handle complete auth -> check status -> use API -> clear flow', async () => {
       // Step 1: Initial status should be unauthenticated
-      let handler = registeredTools.get('freee_auth_status')!.handler;
+      let handler = registeredTools.get('freee_auth_status')?.handler;
       let result = await handler({}) as { content: Array<{ type: string; text: string }> };
       expect(result.content[0].text).toContain('未認証');
 
       // Step 2: Start authentication
-      handler = registeredTools.get('freee_authenticate')!.handler;
+      handler = registeredTools.get('freee_authenticate')?.handler;
       result = await handler({}) as { content: Array<{ type: string; text: string }> };
       expect(result.content[0].text).toContain('認証URL');
 
@@ -345,22 +345,22 @@ describe('E2E: Authentication Flow', () => {
       };
 
       // Step 4: Check status should now be authenticated
-      handler = registeredTools.get('freee_auth_status')!.handler;
+      handler = registeredTools.get('freee_auth_status')?.handler;
       result = await handler({}) as { content: Array<{ type: string; text: string }> };
       expect(result.content[0].text).toContain('有効');
 
       // Step 5: Get current user
-      handler = registeredTools.get('freee_current_user')!.handler;
+      handler = registeredTools.get('freee_current_user')?.handler;
       result = await handler({}) as { content: Array<{ type: string; text: string }> };
       expect(result.content[0].text).toContain('ユーザー情報');
 
       // Step 6: Clear authentication
-      handler = registeredTools.get('freee_clear_auth')!.handler;
+      handler = registeredTools.get('freee_clear_auth')?.handler;
       result = await handler({}) as { content: Array<{ type: string; text: string }> };
       expect(result.content[0].text).toContain('クリア');
 
       // Step 7: Status should be unauthenticated again
-      handler = registeredTools.get('freee_auth_status')!.handler;
+      handler = registeredTools.get('freee_auth_status')?.handler;
       result = await handler({}) as { content: Array<{ type: string; text: string }> };
       expect(result.content[0].text).toContain('未認証');
     });

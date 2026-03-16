@@ -1,5 +1,5 @@
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { z } from 'zod';
 import { getConfig } from '../config.js';
 import { CONFIG_FILE_PERMISSION, getConfigDir, USER_AGENT } from '../constants.js';
