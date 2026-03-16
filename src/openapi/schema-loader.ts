@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  MinimalSchema,
+  type MinimalSchema,
   MinimalSchemaSchema,
-  MinimalPathItem,
-  MinimalOperation,
+  type MinimalPathItem,
+  type MinimalOperation,
 } from './minimal-types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -101,6 +101,19 @@ const API_METADATA: Record<ApiType, ApiMetadata> = {
 // Per-API lazy loading: only load schemas when accessed
 const _loadedConfigs: Partial<Record<ApiType, ApiConfig>> = {};
 
+// Cached compiled regex patterns for path matching (per schema path)
+const _pathRegexCache = new Map<string, RegExp>();
+
+function getPathRegex(schemaPath: string): RegExp {
+  let regex = _pathRegexCache.get(schemaPath);
+  if (!regex) {
+    const pattern = schemaPath.replace(/\{[^}]+\}/g, '[^/]+');
+    regex = new RegExp(`^${pattern}$`);
+    _pathRegexCache.set(schemaPath, regex);
+  }
+  return regex;
+}
+
 /**
  * Resolve the base URL for a given API type.
  * Priority: per-service env var (FREEE_API_BASE_URL_{SERVICE}) > hardcoded default.
@@ -124,6 +137,7 @@ function getApiConfig(apiType: ApiType): ApiConfig {
       name: metadata.name,
     };
   }
+  // biome-ignore lint/style/noNonNullAssertion: config is guaranteed to be set by the if block above
   return _loadedConfigs[apiType]!;
 }
 
@@ -135,6 +149,8 @@ export function _resetApiConfigs(): void {
   for (const key of Object.keys(_loadedConfigs)) {
     delete _loadedConfigs[key as ApiType];
   }
+  _pathRegexCache.clear();
+  _cachedPathList = null;
 }
 
 export const API_CONFIGS: Record<ApiType, ApiConfig> = new Proxy(
@@ -200,9 +216,7 @@ function findPathInSchema(
 
   // Try pattern matching for paths with parameters
   for (const schemaPath of Object.keys(paths)) {
-    // Convert OpenAPI path pattern to regex
-    const pattern = schemaPath.replace(/\{[^}]+\}/g, '[^/]+');
-    const regex = new RegExp(`^${pattern}$`);
+    const regex = getPathRegex(schemaPath);
 
     if (regex.test(path)) {
       const pathItem = paths[schemaPath];
@@ -263,10 +277,17 @@ export function validatePathForService(
   };
 }
 
+// Cached result of listAllAvailablePaths (schemas don't change at runtime)
+let _cachedPathList: string | null = null;
+
 /**
  * Lists all available paths across all API schemas, grouped by API type
  */
 export function listAllAvailablePaths(): string {
+  if (_cachedPathList !== null) {
+    return _cachedPathList;
+  }
+
   const sections: string[] = [];
 
   for (const [, config] of Object.entries(API_CONFIGS) as [ApiType, ApiConfig][]) {
@@ -288,5 +309,6 @@ export function listAllAvailablePaths(): string {
     }
   }
 
-  return sections.join('\n');
+  _cachedPathList = sections.join('\n');
+  return _cachedPathList;
 }

@@ -1,8 +1,8 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { makeApiRequest, BinaryFileResponse, isBinaryFileResponse } from '../api/client.js';
-import { validatePathForService, listAllAvailablePaths, ApiType } from './schema-loader.js';
-import { createTextResponse, formatErrorMessage, TextResponse } from '../utils/error.js';
+import { makeApiRequest, type BinaryFileResponse, isBinaryFileResponse } from '../api/client.js';
+import { validatePathForService, listAllAvailablePaths, type ApiType } from './schema-loader.js';
+import { createTextResponse, formatErrorMessage, type TextResponse } from '../utils/error.js';
 
 /**
  * Format binary file response for display
@@ -50,11 +50,17 @@ function createMethodTool(method: string): (args: {
       }
 
       // Make API request with the correct base URL
+      // biome-ignore lint/style/noNonNullAssertion: actualPath is set when isValid is true
       const result = await makeApiRequest(method, validation.actualPath!, query, body, validation.baseUrl);
 
       // Handle binary file response
       if (isBinaryFileResponse(result)) {
         return createTextResponse(formatBinaryResponse(result));
+      }
+
+      // Handle empty response (e.g., 204 No Content)
+      if (result === null) {
+        return createTextResponse('リクエストが正常に完了しました。');
       }
 
       return createTextResponse(JSON.stringify(result, null, 2));

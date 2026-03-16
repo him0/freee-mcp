@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `bun run build` - Build the project (uses Bun.build)
 - `bun run typecheck` - TypeScript type checking
-- `bun run lint` - Run ESLint
+- `bun run lint` - Run Biome linter
+- `bun run format` - Run Biome formatter
+- `bun run check` - Run Biome lint + format (recommended before PR)
 - `bun run test:run` - Run tests (vitest)
 - `bun run dev` - Start development server
 - `bun run inspector` - MCP inspector for debugging tools
@@ -62,6 +64,16 @@ After running `freee-mcp configure`:
 Configuration is automatically loaded from `~/.config/freee-mcp/config.json`.
 
 Development mode: Use `"command": "bun", "args": ["run", "src/index.ts"]` with `"cwd": "/path/to/freee-mcp"`
+
+### API Base URL の上書き（開発用）
+
+環境変数 `FREEE_API_BASE_URL_{SERVICE}` でAPIの向き先を変更できる（`src/openapi/schema-loader.ts` の `resolveBaseUrl` で処理）。
+
+- `FREEE_API_BASE_URL_ACCOUNTING` - 会計API
+- `FREEE_API_BASE_URL_HR` - 人事労務API
+- `FREEE_API_BASE_URL_INVOICE` - 請求書API
+- `FREEE_API_BASE_URL_PM` - 工数管理API
+- `FREEE_API_BASE_URL_SM` - 販売API
 
 ## PR Creation Pre-flight Checklist
 

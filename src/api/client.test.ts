@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { makeApiRequest, BinaryFileResponse, isBinaryFileResponse } from './client.js';
+import { makeApiRequest, type BinaryFileResponse, isBinaryFileResponse } from './client.js';
 import { USER_AGENT } from '../constants.js';
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 
 // Test constants (defined after mocks due to hoisting)
 const TEST_API_URL = 'https://api.freee.co.jp';
@@ -285,6 +285,33 @@ describe('client', () => {
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
         'API request failed: 500\n\n詳細: (JSON parse failed: Invalid JSON)'
       );
+    });
+
+    it('should return null for 204 No Content response', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 204,
+        headers: createMockHeaders(''),
+      });
+
+      const result = await makeApiRequest('DELETE', '/api/1/deals/123');
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null for empty response body', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: createMockHeaders('application/json'),
+        text: () => Promise.resolve(''),
+      });
+
+      const result = await makeApiRequest('DELETE', '/api/1/deals/123');
+
+      expect(result).toBeNull();
     });
 
     it('should save binary response to file and return file info', async () => {

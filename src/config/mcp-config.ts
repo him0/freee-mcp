@@ -97,7 +97,7 @@ async function readMcpConfig(configPath: string): Promise<McpConfig | null> {
 async function writeMcpConfig(configPath: string, config: McpConfig): Promise<void> {
   const dir = path.dirname(configPath);
   await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(configPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+  await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
 }
 
 /**

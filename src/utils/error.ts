@@ -59,3 +59,65 @@ export function createTextResponse(text: string): TextResponse {
 export function formatErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
+
+/**
+ * Formats error info from an HTTP response for error messages.
+ * Parses JSON body and returns a human-readable string.
+ *
+ * @param response - The fetch Response object
+ * @returns Formatted error info string
+ */
+export async function formatResponseErrorInfo(response: Response): Promise<string> {
+  const result = await parseJsonResponse(response);
+  return result.success
+    ? JSON.stringify(result.data)
+    : `(JSON parse failed: ${result.error})`;
+}
+
+/**
+ * Extracts structured error messages from freee API error responses.
+ * Handles the common { errors: [{ messages: [...] }] } pattern.
+ *
+ * @param response - The fetch Response object
+ * @param statusCode - The HTTP status code
+ * @returns Formatted error message string
+ */
+export async function formatApiErrorMessage(response: Response, statusCode: number): Promise<string> {
+  const result = await parseJsonResponse(response);
+
+  let errorMessage = `API request failed: ${statusCode}`;
+
+  if (result.success) {
+    const errorData = result.data;
+    if (errorData?.errors && Array.isArray(errorData.errors)) {
+      const allMessages: string[] = [];
+      for (const error of errorData.errors) {
+        if (
+          error &&
+          typeof error === 'object' &&
+          'messages' in error &&
+          Array.isArray((error as { messages: string[] }).messages)
+        ) {
+          allMessages.push(...(error as { messages: string[] }).messages);
+        }
+      }
+      if (allMessages.length > 0) {
+        errorMessage += `\n\nエラー詳細:\n${allMessages.join('\n')}`;
+
+        if (statusCode === 400) {
+          errorMessage += `\n\nヒント: 不正なリクエストエラーが発生しました。`;
+          errorMessage += `\n既存のデータを取得して正しい構造を確認することをお勧めします。`;
+          errorMessage += `\n例: freee_api_get で既存データを取得し、正しい構造を確認してください。`;
+        }
+      }
+    }
+
+    if (!errorData?.errors) {
+      errorMessage += `\n\n詳細: ${JSON.stringify(errorData)}`;
+    }
+  } else {
+    errorMessage += `\n\n詳細: (JSON parse failed: ${result.error})`;
+  }
+
+  return errorMessage;
+}

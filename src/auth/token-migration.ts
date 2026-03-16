@@ -1,7 +1,7 @@
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { getConfigDir } from '../constants.js';
-import { TokenData, TokenDataSchema } from './tokens.js';
+import { type TokenData, TokenDataSchema } from './tokens.js';
 
 // Find legacy company-specific token files (e.g., tokens-12345.json)
 export async function findLegacyTokenFiles(): Promise<string[]> {

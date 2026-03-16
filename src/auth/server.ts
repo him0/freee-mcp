@@ -1,8 +1,8 @@
-import http from 'http';
-import { URL } from 'url';
-import net from 'net';
+import http from 'node:http';
+import { URL } from 'node:url';
+import net from 'node:net';
 import { getConfig } from '../config.js';
-import { TokenData } from './tokens.js';
+import type { TokenData } from './tokens.js';
 import { exchangeCodeForTokens } from './oauth.js';
 
 interface PendingAuthentication {
@@ -162,6 +162,7 @@ class CallbackServer {
     return new Promise((resolve, reject) => {
       this.server = http.createServer((req, res) => {
         console.error(`Callback request: ${req.method} ${req.url}`);
+        // biome-ignore lint/style/noNonNullAssertion: req.url is always defined for HTTP/1.1 requests
         const url = new URL(req.url!, `http://127.0.0.1:${port}`);
 
         if (url.pathname === '/callback') {

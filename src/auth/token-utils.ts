@@ -1,4 +1,4 @@
-import { TokenData } from './tokens.js';
+import type { TokenData } from './tokens.js';
 
 export interface TokenResponse {
   access_token: string;

@@ -1,9 +1,9 @@
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { z } from 'zod';
 import { getConfig } from '../config.js';
 import { CONFIG_FILE_PERMISSION, getConfigDir, USER_AGENT } from '../constants.js';
-import { parseJsonResponse } from '../utils/error.js';
+import { formatResponseErrorInfo } from '../utils/error.js';
 import { createTokenData } from './token-utils.js';
 import { tryMigrateLegacyTokens, clearLegacyTokens } from './token-migration.js';
 
@@ -101,10 +101,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
   });
 
   if (!response.ok) {
-    const result = await parseJsonResponse(response);
-    const errorInfo = result.success
-      ? JSON.stringify(result.data)
-      : `(JSON parse failed: ${result.error})`;
+    const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(`Token refresh failed: ${response.status} ${errorInfo}`);
   }
 
