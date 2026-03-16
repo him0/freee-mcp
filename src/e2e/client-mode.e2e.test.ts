@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { generateClientModeTool } from '../openapi/client-mode.js';
 import {
   mockDealsResponse,
@@ -130,7 +130,7 @@ describe('E2E: Client Mode Tools', () => {
 
   describe('freee_api_get', () => {
     it('should successfully fetch deals list', async () => {
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       const result = await handler({
         service: 'accounting',
@@ -146,7 +146,7 @@ describe('E2E: Client Mode Tools', () => {
     });
 
     it('should pass query parameters correctly', async () => {
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       await handler({
         service: 'accounting',
@@ -161,7 +161,7 @@ describe('E2E: Client Mode Tools', () => {
     });
 
     it('should fetch single deal by ID', async () => {
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       const result = await handler({
         service: 'accounting',
@@ -173,7 +173,7 @@ describe('E2E: Client Mode Tools', () => {
     });
 
     it('should fetch user info', async () => {
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       const result = await handler({
         service: 'accounting',
@@ -185,7 +185,7 @@ describe('E2E: Client Mode Tools', () => {
     });
 
     it('should handle invalid path with error message', async () => {
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       const result = await handler({
         service: 'accounting',
@@ -199,7 +199,7 @@ describe('E2E: Client Mode Tools', () => {
 
   describe('freee_api_post', () => {
     it('should create a new deal', async () => {
-      const handler = registeredTools.get('freee_api_post')!.handler;
+      const handler = registeredTools.get('freee_api_post')?.handler;
 
       const result = await handler({
         service: 'accounting',
@@ -228,7 +228,7 @@ describe('E2E: Client Mode Tools', () => {
     });
 
     it('should include request body in POST request', async () => {
-      const handler = registeredTools.get('freee_api_post')!.handler;
+      const handler = registeredTools.get('freee_api_post')?.handler;
       const requestBody = {
         issue_date: '2024-01-15',
         type: 'income',
@@ -243,13 +243,13 @@ describe('E2E: Client Mode Tools', () => {
 
       const postCall = apiCalls.find((call) => call.method === 'POST');
       expect(postCall).toBeDefined();
-      expect(postCall!.body).toEqual(requestBody);
+      expect(postCall?.body).toEqual(requestBody);
     });
   });
 
   describe('freee_api_put', () => {
     it('should update an existing deal', async () => {
-      const handler = registeredTools.get('freee_api_put')!.handler;
+      const handler = registeredTools.get('freee_api_put')?.handler;
 
       const result = await handler({
         service: 'accounting',
@@ -271,7 +271,7 @@ describe('E2E: Client Mode Tools', () => {
 
   describe('freee_api_delete', () => {
     it('should delete a deal', async () => {
-      const handler = registeredTools.get('freee_api_delete')!.handler;
+      const handler = registeredTools.get('freee_api_delete')?.handler;
 
       await handler({
         service: 'accounting',
@@ -286,7 +286,7 @@ describe('E2E: Client Mode Tools', () => {
 
   describe('freee_api_list_paths', () => {
     it('should return available API paths', async () => {
-      const handler = registeredTools.get('freee_api_list_paths')!.handler;
+      const handler = registeredTools.get('freee_api_list_paths')?.handler;
 
       const result = await handler({}) as { content: Array<{ type: string; text: string }> };
 
@@ -299,7 +299,7 @@ describe('E2E: Client Mode Tools', () => {
     it('should handle authentication error', async () => {
       mockApiError = new Error('認証エラー: トークンが無効です');
 
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       const result = await handler({
         service: 'accounting',
@@ -312,7 +312,7 @@ describe('E2E: Client Mode Tools', () => {
     it('should handle network error', async () => {
       mockApiError = new Error('Network error: Failed to fetch');
 
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       const result = await handler({
         service: 'accounting',
@@ -325,7 +325,7 @@ describe('E2E: Client Mode Tools', () => {
     it('should handle API error responses', async () => {
       mockApiError = new Error('API request failed: 400\n\n詳細: {"errors":[{"type":"validation","messages":["issue_date is required"]}]}');
 
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       const result = await handler({
         service: 'accounting',
@@ -338,7 +338,7 @@ describe('E2E: Client Mode Tools', () => {
 
   describe('Multi-API Support', () => {
     it('should handle HR API requests', async () => {
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       const result = await handler({
         service: 'hr',
@@ -350,7 +350,7 @@ describe('E2E: Client Mode Tools', () => {
     });
 
     it('should include correct base URL for each service', async () => {
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       // Test accounting API
       await handler({
@@ -366,7 +366,7 @@ describe('E2E: Client Mode Tools', () => {
     it('should use different base URL for invoice API', async () => {
       mockApiResponse = { invoices: [] };
 
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       await handler({
         service: 'invoice',
@@ -381,7 +381,7 @@ describe('E2E: Client Mode Tools', () => {
 
   describe('Service Validation', () => {
     it('should validate path against correct service schema', async () => {
-      const handler = registeredTools.get('freee_api_get')!.handler;
+      const handler = registeredTools.get('freee_api_get')?.handler;
 
       // Using accounting path with invoice service should fail
       const result = await handler({

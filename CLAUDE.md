@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `pnpm build` - Build the project
 - `pnpm typecheck` - TypeScript type checking
-- `pnpm lint` - Run ESLint
+- `pnpm lint` - Run Biome linter
+- `pnpm format` - Run Biome formatter
+- `pnpm check` - Run Biome lint + format (recommended before PR)
 - `pnpm test:run` - Run tests
 - `pnpm dev` - Start development server
 - `pnpm inspector` - MCP inspector for debugging tools

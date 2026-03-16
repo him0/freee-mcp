@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import {
   API_CONFIGS,
-  ApiType,
+  type ApiType,
   validatePathForService,
   listAllAvailablePaths,
   _resetApiConfigs,
@@ -23,8 +23,8 @@ describe('schema-loader', () => {
     });
 
     it('should return undefined for unknown API type', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const config = (API_CONFIGS as any)['unknown'];
+      // biome-ignore lint/suspicious/noExplicitAny: testing access with unknown key
+      const config = (API_CONFIGS as any).unknown;
       expect(config).toBeUndefined();
     });
 

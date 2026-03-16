@@ -1,5 +1,5 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import crypto from 'crypto';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import crypto from 'node:crypto';
 import { z } from 'zod';
 import { getConfig } from '../config.js';
 import { makeApiRequest } from '../api/client.js';
@@ -195,7 +195,7 @@ export function addAuthenticationTools(server: McpServer): void {
 
         const companyList = apiCompanies.companies
           .map((company) => {
-            const current = company.id === parseInt(currentCompanyId) ? ' *' : '';
+            const current = company.id === parseInt(currentCompanyId, 10) ? ' *' : '';
             return `${company.name} (${company.id})${current}`;
           })
           .join('\n');

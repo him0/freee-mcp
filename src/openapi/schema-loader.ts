@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  MinimalSchema,
+  type MinimalSchema,
   MinimalSchemaSchema,
-  MinimalPathItem,
-  MinimalOperation,
+  type MinimalPathItem,
+  type MinimalOperation,
 } from './minimal-types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -137,6 +137,7 @@ function getApiConfig(apiType: ApiType): ApiConfig {
       name: metadata.name,
     };
   }
+  // biome-ignore lint/style/noNonNullAssertion: config is guaranteed to be set by the if block above
   return _loadedConfigs[apiType]!;
 }
 

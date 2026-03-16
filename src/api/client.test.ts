@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { makeApiRequest, BinaryFileResponse, isBinaryFileResponse } from './client.js';
+import { makeApiRequest, type BinaryFileResponse, isBinaryFileResponse } from './client.js';
 import { USER_AGENT } from '../constants.js';
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 
 // Test constants (defined after mocks due to hoisting)
 const TEST_API_URL = 'https://api.freee.co.jp';

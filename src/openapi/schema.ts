@@ -1,9 +1,10 @@
 import { z } from 'zod';
-import { MinimalParameter } from './minimal-types.js';
+import type { MinimalParameter } from './minimal-types.js';
 
 export function convertParameterToZodSchema(parameter: MinimalParameter): z.ZodType {
   const { type, description, required } = parameter;
 
+  // biome-ignore lint/suspicious/noImplicitAnyLet: assigned in every switch branch
   let schema;
 
   switch (type) {

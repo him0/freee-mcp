@@ -1,6 +1,6 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { getConfig } from '../config.js';
-import { saveTokens, TokenData, OAuthTokenResponseSchema } from './tokens.js';
+import { saveTokens, type TokenData, OAuthTokenResponseSchema } from './tokens.js';
 import { createTokenData } from './token-utils.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
 import { USER_AGENT } from '../constants.js';

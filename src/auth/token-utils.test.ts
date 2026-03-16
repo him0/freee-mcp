@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createTokenData, TokenResponse, TokenFallbacks } from './token-utils.js';
+import { createTokenData, type TokenResponse, type TokenFallbacks } from './token-utils.js';
 
 describe('token-utils', () => {
   beforeEach(() => {

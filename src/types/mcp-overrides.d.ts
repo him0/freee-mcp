@@ -7,7 +7,7 @@ import '@modelcontextprotocol/sdk/server/mcp.js';
 declare module '@modelcontextprotocol/sdk/server/mcp.js' {
   interface McpServer {
     // Override tool method with simplified signature to avoid OOM
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: intentional override to prevent deep type inference OOM
     tool(name: string, description: string, schema: any, handler: any): void;
   }
 }

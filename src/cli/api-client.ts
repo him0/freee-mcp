@@ -1,6 +1,6 @@
 import { FREEE_API_URL } from '../constants.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
-import { Company, CompaniesResponseSchema, HrUsersMeResponseSchema } from './types.js';
+import { type Company, CompaniesResponseSchema, HrUsersMeResponseSchema } from './types.js';
 
 export async function fetchCompanies(accessToken: string): Promise<Company[]> {
   let companies: Company[] = [];
