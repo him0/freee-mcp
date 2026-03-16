@@ -63,6 +63,16 @@ Configuration is automatically loaded from `~/.config/freee-mcp/config.json`.
 
 Development mode: Use `"command": "pnpm", "args": ["tsx", "src/index.ts"]` with `"cwd": "/path/to/freee-mcp"`
 
+### API Base URL の上書き（開発用）
+
+環境変数 `FREEE_API_BASE_URL_{SERVICE}` でAPIの向き先を変更できる（`src/openapi/schema-loader.ts` の `resolveBaseUrl` で処理）。
+
+- `FREEE_API_BASE_URL_ACCOUNTING` - 会計API
+- `FREEE_API_BASE_URL_HR` - 人事労務API
+- `FREEE_API_BASE_URL_INVOICE` - 請求書API
+- `FREEE_API_BASE_URL_PM` - 工数管理API
+- `FREEE_API_BASE_URL_SM` - 販売API
+
 ## PR Creation Pre-flight Checklist
 
 Always run before creating a PR:
