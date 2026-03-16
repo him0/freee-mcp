@@ -27,18 +27,13 @@ const serviceSchema = z.enum(['accounting', 'hr', 'invoice', 'pm', 'sm']).descri
 /**
  * Creates a tool handler for a specific HTTP method
  */
-function createMethodTool(method: string): (args: {
-  service: ApiType;
-  path: string;
-  query?: Record<string, unknown>;
-  body?: Record<string, unknown>;
-}, extra?: AuthExtra) => Promise<TextResponse> {
+function createMethodTool(method: string) {
   return async (args: {
     service: ApiType;
     path: string;
     query?: Record<string, unknown>;
     body?: Record<string, unknown>;
-  }, extra?: AuthExtra) => {
+  }, extra?: AuthExtra): Promise<TextResponse> => {
     try {
       const { service, path, query, body } = args;
       const { tokenStore, userId } = extractTokenContext(extra);
