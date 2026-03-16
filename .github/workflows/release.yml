@@ -19,29 +19,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: "pnpm"
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Build project
-        run: pnpm build
-        env:
-          NODE_OPTIONS: "--max-old-space-size=6144"
+        run: bun run build
 
       - name: Create Release Pull Request
         id: changesets
         uses: changesets/action@v1
         with:
-          version: pnpm run version
+          version: bun run version
           title: "chore: release packages"
           commit: "chore: release packages"
           setupGitUser: true

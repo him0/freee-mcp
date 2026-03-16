@@ -47,7 +47,7 @@ export const FREEE_API_URL = 'https://api.freee.co.jp';
 
 /**
  * Package version for freee-mcp
- * Injected at build time from package.json via esbuild define
+ * Injected at build time from package.json via Bun.build define
  * Falls back to 'dev' for development/test environments
  */
 declare const __PACKAGE_VERSION__: string | undefined;

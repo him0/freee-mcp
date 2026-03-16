@@ -201,21 +201,21 @@ HTTPメソッドごとのシンプルなツール構成:
 ```bash
 git clone https://github.com/freee/freee-mcp.git
 cd freee-mcp
-pnpm install
+bun install
 
-pnpm dev           # 開発サーバー（ウォッチモード）
-pnpm build         # ビルド
-pnpm typecheck    # 型チェック
-pnpm lint          # リント
-pnpm test:run      # テスト
+bun run dev           # 開発サーバー（ウォッチモード）
+bun run build         # ビルド
+bun run typecheck    # 型チェック
+bun run lint          # リント
+bun run test:run      # テスト
 
 # API リファレンスの再生成
-pnpm generate:references
+bun run generate:references
 ```
 
 ### 技術スタック
 
-TypeScript / Model Context Protocol SDK / OAuth 2.0 + PKCE / Zod / esbuild
+TypeScript / Model Context Protocol SDK / OAuth 2.0 + PKCE / Zod / Bun
 
 ### アーキテクチャ詳細
 
