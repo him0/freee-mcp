@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { Config, loadConfig } from '../config.js';
+import { type Config, loadConfig } from '../config.js';
 import { addAuthenticationTools } from './tools.js';
 import { addFileUploadTool } from './file-upload-tool.js';
 import { generateClientModeTool } from '../openapi/client-mode.js';
@@ -27,9 +27,11 @@ export function createMcpServer(config: Config, options?: {
   return server;
 }
 
-export async function createAndStartServer(): Promise<void> {
+export async function createAndStartServer(options?: {
+  remote?: boolean;
+}): Promise<void> {
   const config = await loadConfig();
-  const server = createMcpServer(config);
+  const server = createMcpServer(config, options);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
