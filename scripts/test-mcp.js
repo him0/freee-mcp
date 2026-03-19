@@ -25,7 +25,7 @@ async function testMcpTools() {
   console.log('🚀 freee MCP Server 動作確認を開始します...\n');
 
   // MCP serverプロセスを起動
-  const mcpProcess = spawn('pnpm', ['tsx', 'src/index.ts'], {
+  const mcpProcess = spawn('bun', ['run', 'src/index.ts'], {
     stdio: 'pipe',
     cwd: process.cwd()
   });

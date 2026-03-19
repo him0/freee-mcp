@@ -1,4 +1,4 @@
 {
-  "command": "pnpm",
-  "args": ["start", "client"]
+  "command": "bun",
+  "args": ["run", "src/index.ts"]
 }

@@ -64,7 +64,7 @@ async function testFreeeTools() {
 
   console.log('\n=== 実際の動作確認方法 ===');
   console.log('1. MCP Inspector を使用:');
-  console.log('   pnpm inspector');
+  console.log('   bun run inspector');
   console.log('   → ブラウザでツールをGUIで操作可能');
   console.log('');
   console.log('2. 本格的なMCPクライアントテスト:');
@@ -78,8 +78,8 @@ async function testFreeeTools() {
   console.log(JSON.stringify({
     "mcpServers": {
       "freee": {
-        "command": "pnpm",
-        "args": ["tsx", "src/index.ts"],
+        "command": "bun",
+        "args": ["run", "src/index.ts"],
         "cwd": process.cwd()
       }
     }
