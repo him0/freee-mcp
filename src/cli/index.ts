@@ -1,10 +1,37 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { stopCallbackServer } from '../auth/server.js';
+import { clearTokens } from '../auth/tokens.js';
+import { getConfigDir } from '../constants.js';
 import { collectCredentials, selectCompany, configureMcpIntegration } from './prompts.js';
 import { performOAuth } from './oauth-flow.js';
 import { saveConfig } from './configuration.js';
 
-export async function configure(): Promise<void> {
+export interface ConfigureOptions {
+  force?: boolean;
+}
+
+async function clearConfig(): Promise<void> {
+  const configPath = path.join(getConfigDir(), 'config.json');
+  try {
+    await fs.unlink(configPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+      throw error;
+    }
+  }
+}
+
+export async function configure(options: ConfigureOptions = {}): Promise<void> {
   console.log('\n=== freee-mcp Configuration Setup ===\n');
+
+  if (options.force) {
+    console.log('保存済みのログイン情報をリセットしています...');
+    await clearTokens();
+    await clearConfig();
+    console.log('リセットが完了しました。\n');
+  }
+
   console.log('このウィザードでは、freee-mcpの設定と認証を対話式で行います。');
   console.log('freee OAuth認証情報が必要です。\n');
 
