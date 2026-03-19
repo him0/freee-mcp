@@ -51,6 +51,13 @@ export async function collectCredentials(): Promise<Credentials> {
       name: 'callbackPort',
       message: `コールバックポート (コールバックURL: http://127.0.0.1:<port>/callback):`,
       initial: String(defaultPort),
+      validate: (value: string): string | boolean => {
+        const port = parseInt(value.trim(), 10);
+        if (Number.isNaN(port) || !Number.isInteger(port) || port < 1 || port > 65535) {
+          return '有効なポート番号を入力してください (1〜65535)';
+        }
+        return true;
+      },
     },
   ]);
 

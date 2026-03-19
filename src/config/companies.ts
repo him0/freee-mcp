@@ -24,7 +24,7 @@ export const FullConfigSchema = z.object({
   // OAuth credentials
   clientId: z.string().optional(),
   clientSecret: z.string().optional(),
-  callbackPort: z.number().optional(),
+  callbackPort: z.preprocess((val) => (val === null ? undefined : val), z.number().optional()),
 
   // Company settings
   defaultCompanyId: z.string(),
