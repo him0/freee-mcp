@@ -9,16 +9,18 @@ const main = async (): Promise<void> => {
 
   // Handle configure subcommand
   if (subcommand === 'configure') {
-    await configure();
+    const force = args.includes('--force');
+    await configure({ force });
     return;
   }
 
   // Handle unknown subcommands
   if (subcommand && subcommand !== 'client') {
     console.error(`Unknown subcommand: ${subcommand}`);
-    console.error('Usage: freee-mcp [configure] [--remote]');
-    console.error('  configure - Interactive configuration setup');
-    console.error('  --remote  - remote MCP サーバーとして動作（ファイルアップロード機能を無効化）');
+    console.error('Usage: freee-mcp [configure] [--force] [--remote]');
+    console.error('  configure  - Interactive configuration setup');
+    console.error('  --force    - 保存済みのログイン情報をリセットして再設定');
+    console.error('  --remote   - remote MCP サーバーとして動作（ファイルアップロード機能を無効化）');
     process.exit(1);
   }
 
