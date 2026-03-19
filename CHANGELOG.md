@@ -1,5 +1,17 @@
 # freee-mcp
 
+## 0.13.0
+
+### Minor Changes
+
+- c7d55a3: `configure --force` オプションを追加。保存済みのログイン情報（トークン・設定ファイル）をリセットして再設定できるようにした。
+- 37edff1: 開発ツールチェーンを bun に移行: パッケージマネージャ (pnpm → bun)、バンドラ (esbuild → Bun.build)、スクリプト実行 (tsx → bun)。テストは vitest を維持。CI/CD を bun ベースに更新。
+
+### Patch Changes
+
+- 6ca07dc: configure コマンドでポート番号に不正な値を入力した場合に、次回 configure が起動しなくなるバグを修正。入力時のバリデーション追加と、config.json の読み込み時に null 値を許容するよう修正。
+- 5903d74: TokenStore インターフェースを導入。将来のリモートデプロイ（Redis 等）に向けた内部構造の改善で、stdio モードの動作変更はありません。
+
 ## 0.12.1
 
 ### Patch Changes
