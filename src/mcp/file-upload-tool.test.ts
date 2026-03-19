@@ -48,7 +48,7 @@ describe('file-upload-tool', () => {
 
       const result = await handler({ file_path: '/path/to/test.pdf' });
 
-      expect(uploadReceipt).toHaveBeenCalledWith('/path/to/test.pdf', {});
+      expect(uploadReceipt).toHaveBeenCalledWith('/path/to/test.pdf', {}, expect.objectContaining({ tokenStore: expect.any(Object), userId: 'local' }));
       expect(result.content[0].text).toContain('ファイルをアップロードしました');
       expect(result.content[0].text).toContain('ファイルボックスID: 123');
       expect(result.content[0].text).toContain('ステータス: uploaded');
@@ -77,7 +77,7 @@ describe('file-upload-tool', () => {
         receipt_metadatum_amount: 5000,
         qualified_invoice: 'qualified',
         document_type: 'receipt',
-      });
+      }, expect.objectContaining({ tokenStore: expect.any(Object), userId: 'local' }));
     });
 
     it('should return error message on failure', async () => {
