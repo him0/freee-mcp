@@ -24,8 +24,16 @@ const main = async (): Promise<void> => {
     process.exit(1);
   }
 
+  // --remote: start HTTP server mode
+  if (remote) {
+    const { startHttpServer } = await import('./server/http-server.js');
+    await startHttpServer();
+    return;
+  }
+
+  // Default: start stdio MCP server
   console.error('Starting freee MCP server');
-  await createAndStartServer({ remote });
+  await createAndStartServer();
 };
 
 main().catch((error) => {

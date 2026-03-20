@@ -1,27 +1,26 @@
 import { createRequire } from 'node:module';
 import { loadFullConfig } from './config/companies.js';
-import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS, FREEE_API_URL } from './constants.js';
+import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS, FREEE_API_URL, FREEE_AUTHORIZATION_ENDPOINT, FREEE_TOKEN_ENDPOINT, FREEE_OAUTH_SCOPE, SERVER_INSTRUCTIONS } from './constants.js';
 
 const require = createRequire(import.meta.url);
 const { version: packageVersion } = require('../package.json') as { version: string };
 
 /**
- * Validate and parse a callback port value.
- * Returns DEFAULT_CALLBACK_PORT with a warning if the value is invalid.
+ * Validate and parse a port value.
+ * Returns defaultPort with a warning if the value is invalid.
  */
-export function parseCallbackPort(value: string | number | undefined): number {
+export function parsePort(value: string | number | undefined, defaultPort: number): number {
   if (value === undefined || value === null) {
-    return DEFAULT_CALLBACK_PORT;
+    return defaultPort;
   }
 
   const port = typeof value === 'string' ? parseInt(value, 10) : value;
 
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     console.error(
-      `Warning: FREEE_CALLBACK_PORT の値が不正です (${String(value)})。` +
-      `デフォルトポート ${DEFAULT_CALLBACK_PORT} を使用します。`
+      `Warning: ポートの値が不正です (${String(value)})。デフォルトポート ${defaultPort} を使用します。`
     );
-    return DEFAULT_CALLBACK_PORT;
+    return defaultPort;
   }
 
   return port;
@@ -106,7 +105,7 @@ export async function loadConfig(): Promise<Config> {
 
     clientId = process.env.FREEE_CLIENT_ID || '';
     clientSecret = process.env.FREEE_CLIENT_SECRET || '';
-    callbackPort = parseCallbackPort(process.env.FREEE_CALLBACK_PORT);
+    callbackPort = parsePort(process.env.FREEE_CALLBACK_PORT, DEFAULT_CALLBACK_PORT);
   } else {
     // Load from config file
     if (!fullConfig.clientId || !fullConfig.clientSecret) {
@@ -118,7 +117,7 @@ export async function loadConfig(): Promise<Config> {
 
     clientId = fullConfig.clientId;
     clientSecret = fullConfig.clientSecret;
-    callbackPort = parseCallbackPort(fullConfig.callbackPort);
+    callbackPort = parsePort(fullConfig.callbackPort, DEFAULT_CALLBACK_PORT);
   }
 
   cachedConfig = {
@@ -131,14 +130,14 @@ export async function loadConfig(): Promise<Config> {
     oauth: {
       callbackPort,
       redirectUri: `http://127.0.0.1:${callbackPort}/callback`,
-      authorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
-      tokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
-      scope: 'read write',
+      authorizationEndpoint: FREEE_AUTHORIZATION_ENDPOINT,
+      tokenEndpoint: FREEE_TOKEN_ENDPOINT,
+      scope: FREEE_OAUTH_SCOPE,
     },
     server: {
       name: 'freee',
       version: packageVersion,
-      instructions: 'freee APIと連携するMCPサーバー。会計・人事労務・請求書・工数管理・販売APIをサポート。詳細ガイドはfreee-api-skill skillを参照。skillが未インストールの場合は npx skills add freee/freee-mcp で追加',
+      instructions: SERVER_INSTRUCTIONS,
     },
     auth: {
       timeoutMs: AUTH_TIMEOUT_MS,
@@ -157,4 +156,67 @@ export function getConfig(): Config {
     throw new Error('Config not loaded. Call loadConfig() first in async context.');
   }
   return cachedConfig;
+}
+
+export interface RemoteServerConfig {
+  port: number;
+  bearerToken: string;
+  freeeClientId: string;
+  freeeClientSecret: string;
+  tokenEndpoint: string;
+  scope: string;
+  redisUrl: string;
+}
+
+export function loadRemoteServerConfig(): RemoteServerConfig {
+  const bearerToken = process.env.API_BEARER_TOKEN;
+  if (!bearerToken) {
+    throw new Error('API_BEARER_TOKEN environment variable is required for serve mode.');
+  }
+
+  const freeeClientId = process.env.FREEE_CLIENT_ID;
+  const freeeClientSecret = process.env.FREEE_CLIENT_SECRET;
+
+  if (!freeeClientId || !freeeClientSecret) {
+    throw new Error(
+      'FREEE_CLIENT_ID and FREEE_CLIENT_SECRET environment variables are required for serve mode.',
+    );
+  }
+
+  return {
+    port: parsePort(process.env.PORT, 3000),
+    bearerToken,
+    freeeClientId,
+    freeeClientSecret,
+    tokenEndpoint: process.env.FREEE_TOKEN_ENDPOINT || FREEE_TOKEN_ENDPOINT,
+    scope: process.env.FREEE_SCOPE || FREEE_OAUTH_SCOPE,
+    redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+  };
+}
+
+// Initialize cachedConfig for remote mode so getConfig() works without loadConfig()
+export function initRemoteConfig(remoteConfig: RemoteServerConfig): void {
+  cachedConfig = {
+    freee: {
+      clientId: remoteConfig.freeeClientId,
+      clientSecret: remoteConfig.freeeClientSecret,
+      companyId: '0',
+      apiUrl: FREEE_API_URL,
+    },
+    oauth: {
+      callbackPort: DEFAULT_CALLBACK_PORT,
+      redirectUri: `http://127.0.0.1:${DEFAULT_CALLBACK_PORT}/callback`,
+      authorizationEndpoint: FREEE_AUTHORIZATION_ENDPOINT,
+      tokenEndpoint: remoteConfig.tokenEndpoint,
+      scope: remoteConfig.scope,
+    },
+    server: {
+      name: 'freee',
+      version: packageVersion,
+      instructions: SERVER_INSTRUCTIONS,
+    },
+    auth: {
+      timeoutMs: AUTH_TIMEOUT_MS,
+    },
+  };
 }

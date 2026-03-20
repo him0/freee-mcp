@@ -1,70 +1,74 @@
 import { describe, it, expect, vi } from 'vitest';
-import { loadConfig, parseCallbackPort } from './config.js';
+import { loadConfig, parsePort } from './config.js';
 import { AUTH_TIMEOUT_MS, DEFAULT_CALLBACK_PORT } from './constants.js';
 
-describe('parseCallbackPort', () => {
+describe('parsePort', () => {
   it('should return default port when value is undefined', () => {
-    expect(parseCallbackPort(undefined)).toBe(DEFAULT_CALLBACK_PORT);
+    expect(parsePort(undefined, DEFAULT_CALLBACK_PORT)).toBe(DEFAULT_CALLBACK_PORT);
   });
 
   it('should parse valid string port', () => {
-    expect(parseCallbackPort('8080')).toBe(8080);
+    expect(parsePort('8080', DEFAULT_CALLBACK_PORT)).toBe(8080);
   });
 
   it('should return valid number port as-is', () => {
-    expect(parseCallbackPort(3000)).toBe(3000);
+    expect(parsePort(3000, DEFAULT_CALLBACK_PORT)).toBe(3000);
   });
 
   it('should accept port 1 (minimum)', () => {
-    expect(parseCallbackPort(1)).toBe(1);
+    expect(parsePort(1, DEFAULT_CALLBACK_PORT)).toBe(1);
   });
 
   it('should accept port 65535 (maximum)', () => {
-    expect(parseCallbackPort(65535)).toBe(65535);
+    expect(parsePort(65535, DEFAULT_CALLBACK_PORT)).toBe(65535);
   });
 
   it('should fallback to default for NaN string', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(parseCallbackPort('not-a-number')).toBe(DEFAULT_CALLBACK_PORT);
+    expect(parsePort('not-a-number', DEFAULT_CALLBACK_PORT)).toBe(DEFAULT_CALLBACK_PORT);
     expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining('FREEE_CALLBACK_PORT の値が不正です')
+      expect.stringContaining('ポートの値が不正です')
     );
     spy.mockRestore();
   });
 
   it('should fallback to default for empty string', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(parseCallbackPort('')).toBe(DEFAULT_CALLBACK_PORT);
+    expect(parsePort('', DEFAULT_CALLBACK_PORT)).toBe(DEFAULT_CALLBACK_PORT);
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
 
   it('should fallback to default for port 0', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(parseCallbackPort(0)).toBe(DEFAULT_CALLBACK_PORT);
+    expect(parsePort(0, DEFAULT_CALLBACK_PORT)).toBe(DEFAULT_CALLBACK_PORT);
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
 
   it('should fallback to default for negative port', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(parseCallbackPort(-1)).toBe(DEFAULT_CALLBACK_PORT);
+    expect(parsePort(-1, DEFAULT_CALLBACK_PORT)).toBe(DEFAULT_CALLBACK_PORT);
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
 
   it('should fallback to default for port exceeding 65535', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(parseCallbackPort(70000)).toBe(DEFAULT_CALLBACK_PORT);
+    expect(parsePort(70000, DEFAULT_CALLBACK_PORT)).toBe(DEFAULT_CALLBACK_PORT);
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
 
   it('should fallback to default for floating point number', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect(parseCallbackPort(3000.5)).toBe(DEFAULT_CALLBACK_PORT);
+    expect(parsePort(3000.5, DEFAULT_CALLBACK_PORT)).toBe(DEFAULT_CALLBACK_PORT);
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
+  });
+
+  it('should use custom default port', () => {
+    expect(parsePort(undefined, 3000)).toBe(3000);
   });
 });
 

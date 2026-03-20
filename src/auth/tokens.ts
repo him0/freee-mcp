@@ -84,9 +84,18 @@ export function isTokenValid(tokens: TokenData): boolean {
   return Date.now() < tokens.expires_at;
 }
 
-export async function refreshAccessToken(refreshToken: string): Promise<TokenData> {
-  const cfg = getConfig();
-  const response = await fetch(cfg.oauth.tokenEndpoint, {
+export interface OAuthClientConfig {
+  clientId: string;
+  clientSecret: string;
+  tokenEndpoint: string;
+  scope: string;
+}
+
+export async function refreshFreeeTokenRaw(
+  refreshToken: string,
+  oauthConfig: OAuthClientConfig,
+): Promise<TokenData> {
+  const response = await fetch(oauthConfig.tokenEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -95,8 +104,8 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      client_id: cfg.freee.clientId,
-      client_secret: cfg.freee.clientSecret,
+      client_id: oauthConfig.clientId,
+      client_secret: oauthConfig.clientSecret,
     }),
   });
 
@@ -110,8 +119,18 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenDat
   if (!parseResult.success) {
     throw new Error(`Invalid token response format: ${parseResult.error.message}`);
   }
-  const tokens = createTokenData(parseResult.data, {
+  return createTokenData(parseResult.data, {
     refreshToken,
+    scope: oauthConfig.scope,
+  });
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<TokenData> {
+  const cfg = getConfig();
+  const tokens = await refreshFreeeTokenRaw(refreshToken, {
+    clientId: cfg.freee.clientId,
+    clientSecret: cfg.freee.clientSecret,
+    tokenEndpoint: cfg.oauth.tokenEndpoint,
     scope: cfg.oauth.scope,
   });
 

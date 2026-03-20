@@ -27,11 +27,9 @@ export function createMcpServer(config: Config, options?: {
   return server;
 }
 
-export async function createAndStartServer(options?: {
-  remote?: boolean;
-}): Promise<void> {
+export async function createAndStartServer(): Promise<void> {
   const config = await loadConfig();
-  const server = createMcpServer(config, options);
+  const server = createMcpServer(config);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
