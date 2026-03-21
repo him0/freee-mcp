@@ -8,6 +8,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "bun run build.ts",
+    "prepare": "npm run build",
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
     "typecheck": "tsc --noEmit",
