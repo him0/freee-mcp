@@ -138,5 +138,6 @@ out
 # dist (all packages)
 **/dist/
 
-# bin build outputs (all packages)
-**/bin/cli.js
+# bin build outputs
+**/bin/freee-mcp.js
+**/bin/freee-cli.js

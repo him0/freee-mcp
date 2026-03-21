@@ -3,10 +3,11 @@
   "name": "freee-mcp",
   "version": "0.13.1",
   "bin": {
-    "freee-mcp": "./bin/cli.js"
+    "freee-mcp": "./bin/freee-mcp.js",
+    "freee-cli": "./bin/freee-cli.js"
   },
   "scripts": {
-    "clean": "rm -rf dist bin/cli.js",
+    "clean": "rm -rf dist bin/freee-mcp.js bin/freee-cli.js",
     "build": "bun run build.ts",
     "prepare": "bun run build",
     "start": "bun run src/index.ts",
