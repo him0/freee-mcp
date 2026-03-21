@@ -101,6 +101,11 @@ Common issues:
 - Missing return type annotations on exported functions
 - Undefined environment variables in tests
 
+## Skill について
+
+- `skills/freee-api-skill/` 内の `VERSION.md` は npm publish 時に自動生成されるため、開発環境（ローカル）には存在しない
+- 開発環境では `freee_server_info` のバージョンが `dev` と返る（正常動作）。実際のバージョンは `package.json` の `version` を参照する
+
 ## Writing Style
 
 - Do not use markdown bold syntax (`**`)  in any files
