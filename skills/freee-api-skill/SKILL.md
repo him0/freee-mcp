@@ -112,7 +112,7 @@ serviceパラメータ (必須):
 
 ## エラー対応
 
-- バージョン確認: まず `VERSION.md` を読んでスキルのバージョンを確認し、`freee_server_version` でサーバーバージョンを確認してください。スキルのバージョンがサーバーより古い場合、スキルの情報が最新のサーバーに対応していない可能性があります。`npx skills add freee/freee-mcp` でスキルを更新するか、最新の SKILL zip をダウンロードして再インストールしてから再度お試しください。
+- バージョン確認: まず `VERSION.md` を読んでスキルのバージョンを確認し、`freee_server_version` でサーバーバージョンを確認してください。スキルのバージョンがサーバーより古い場合、スキルの情報が最新のサーバーに対応していない可能性があります。スキルを最新版に更新してから再度お試しください。
 - 認証エラー: `freee_auth_status` で確認 → `freee_clear_auth` → `freee_authenticate`
 - 事業所エラー: `freee_list_companies` → `freee_set_current_company`
 - 詳細: `recipes/troubleshooting.md` 参照
