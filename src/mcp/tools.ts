@@ -212,11 +212,11 @@ export function addAuthenticationTools(server: McpServer): void {
   );
 
   server.tool(
-    'freee_server_version',
-    'freee-mcp サーバーのバージョン情報を取得',
+    'freee_server_info',
+    'freee-mcp サーバーの情報を取得（バージョンなど）',
     {},
     async () => {
-      return createTextResponse(`freee-mcp version: ${PACKAGE_VERSION}`);
+      return createTextResponse(`freee-mcp server info:\n- version: ${PACKAGE_VERSION}`);
     }
   );
 
