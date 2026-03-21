@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.14.0
+
+### Minor Changes
+
+- 89a26b5: freee_server_info ツールを追加。サーバーの情報（バージョンなど）を取得できるようになりました。リリース時にスキル ZIP に VERSION.md を同梱し、スキルとサーバーのバージョン比較が可能に。
+
 ## 0.13.1
 
 ### Patch Changes
