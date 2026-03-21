@@ -140,3 +140,8 @@ out
 
 # bin build outputs (all packages)
 **/bin/cli.js
+
+# Local Docker build helpers
+Dockerfile.local
+Dockerfile.local.dockerignore
+docker-compose.override.yml
