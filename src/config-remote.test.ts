@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('loadRemoteServerConfig', () => {
   const originalEnv = { ...process.env };
@@ -6,7 +6,8 @@ describe('loadRemoteServerConfig', () => {
   beforeEach(() => {
     vi.resetModules();
     // Set required env vars
-    process.env.API_BEARER_TOKEN = 'test-bearer';
+    process.env.ISSUER_URL = 'https://mcp.example.com';
+    process.env.JWT_SECRET = 'a-test-secret-that-is-at-least-32-characters-long';
     process.env.FREEE_CLIENT_ID = 'test-client-id';
     process.env.FREEE_CLIENT_SECRET = 'test-client-secret';
   });
@@ -21,20 +22,36 @@ describe('loadRemoteServerConfig', () => {
 
     expect(config).toEqual({
       port: 3000,
-      bearerToken: 'test-bearer',
+      issuerUrl: 'https://mcp.example.com',
+      jwtSecret: 'a-test-secret-that-is-at-least-32-characters-long',
       freeeClientId: 'test-client-id',
       freeeClientSecret: 'test-client-secret',
-      tokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
-      scope: 'read write',
+      freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
+      freeeTokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
+      freeeScope: 'read write',
       redisUrl: 'redis://localhost:6379',
     });
   });
 
-  it('should throw when API_BEARER_TOKEN is missing', async () => {
-    delete process.env.API_BEARER_TOKEN;
+  it('should throw when ISSUER_URL is missing', async () => {
+    delete process.env.ISSUER_URL;
     const { loadRemoteServerConfig } = await import('./config.js');
 
-    expect(() => loadRemoteServerConfig()).toThrow('API_BEARER_TOKEN');
+    expect(() => loadRemoteServerConfig()).toThrow('ISSUER_URL');
+  });
+
+  it('should throw when JWT_SECRET is missing', async () => {
+    delete process.env.JWT_SECRET;
+    const { loadRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadRemoteServerConfig()).toThrow('JWT_SECRET');
+  });
+
+  it('should throw when JWT_SECRET is too short', async () => {
+    process.env.JWT_SECRET = 'short';
+    const { loadRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadRemoteServerConfig()).toThrow('at least 32 characters');
   });
 
   it('should throw when FREEE_CLIENT_ID and FREEE_CLIENT_SECRET are missing', async () => {
@@ -44,7 +61,6 @@ describe('loadRemoteServerConfig', () => {
 
     expect(() => loadRemoteServerConfig()).toThrow('FREEE_CLIENT_ID');
   });
-
 
   it('should use custom PORT', async () => {
     process.env.PORT = '8080';
@@ -77,11 +93,13 @@ describe('initRemoteConfig', () => {
 
     initRemoteConfig({
       port: 3000,
-      bearerToken: 'test',
+      issuerUrl: 'https://mcp.example.com',
+      jwtSecret: 'a-test-secret-that-is-at-least-32-characters-long',
       freeeClientId: 'cid',
       freeeClientSecret: 'csec',
-      tokenEndpoint: 'https://test.freee.co.jp/token',
-      scope: 'read write',
+      freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
+      freeeTokenEndpoint: 'https://test.freee.co.jp/token',
+      freeeScope: 'read write',
       redisUrl: 'redis://localhost:6379',
     });
 
@@ -89,6 +107,9 @@ describe('initRemoteConfig', () => {
     expect(config.freee.clientId).toBe('cid');
     expect(config.freee.clientSecret).toBe('csec');
     expect(config.oauth.tokenEndpoint).toBe('https://test.freee.co.jp/token');
+    expect(config.oauth.authorizationEndpoint).toBe(
+      'https://accounts.secure.freee.co.jp/public_api/authorize',
+    );
     expect(config.server.name).toBe('freee');
   });
 });

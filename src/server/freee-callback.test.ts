@@ -207,4 +207,59 @@ describe('createFreeeCallbackHandler', () => {
     expect(parsed.searchParams.get('error')).toBe('server_error');
     expect(parsed.searchParams.get('state')).toBe('original-state-xyz');
   });
+
+  it('redirects freee OAuth error back to client redirect_uri', async () => {
+    const oauthStore = createMockOAuthStore();
+    const handler = createFreeeCallbackHandler({
+      oauthStore,
+      tokenStore: createMockTokenStore(),
+      freeeClientId: 'id',
+      freeeClientSecret: 'secret',
+      freeeTokenEndpoint: 'https://token.example.com',
+      freeeScope: 'read write',
+      callbackBaseUrl: 'https://mcp.example.com',
+    });
+
+    const { req, res } = createMockReqRes({
+      error: 'access_denied',
+      error_description: 'User denied consent',
+      state: 'session-id',
+    });
+    handler(req, res);
+
+    await vi.waitFor(() => {
+      expect(res.redirect).toHaveBeenCalled();
+    });
+
+    const redirectUrl = (res.redirect as ReturnType<typeof vi.fn>).mock.calls[0][1] as string;
+    const parsed = new URL(redirectUrl);
+    expect(parsed.searchParams.get('error')).toBe('access_denied');
+    expect(parsed.searchParams.get('error_description')).toBe('User denied consent');
+    expect(parsed.searchParams.get('state')).toBe('original-state-xyz');
+  });
+
+  it('returns 400 for freee OAuth error without valid session', async () => {
+    const oauthStore = createMockOAuthStore(null);
+    const handler = createFreeeCallbackHandler({
+      oauthStore,
+      tokenStore: createMockTokenStore(),
+      freeeClientId: 'id',
+      freeeClientSecret: 'secret',
+      freeeTokenEndpoint: 'https://token.example.com',
+      freeeScope: 'read write',
+      callbackBaseUrl: 'https://mcp.example.com',
+    });
+
+    const { req, res } = createMockReqRes({
+      error: 'access_denied',
+      state: 'unknown-session',
+    });
+    handler(req, res);
+
+    await vi.waitFor(() => {
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    expect(res.send).toHaveBeenCalledWith('freee OAuth error: access_denied');
+  });
 });

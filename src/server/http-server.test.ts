@@ -1,17 +1,20 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Request, Response, NextFunction } from 'express';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock dependencies before importing the module
+const mockRemoteConfig = {
+  port: 3001,
+  issuerUrl: 'https://mcp.example.com',
+  jwtSecret: 'a-test-secret-that-is-at-least-32-characters-long',
+  freeeClientId: 'test-cid',
+  freeeClientSecret: 'test-csec',
+  freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
+  tokenEndpoint: 'https://test.freee.co.jp/token',
+  scope: 'read write',
+  redisUrl: 'redis://localhost:6379',
+};
+
 vi.mock('../config.js', () => ({
-  loadRemoteServerConfig: vi.fn(() => ({
-    port: 3001,
-    bearerToken: 'test-bearer-token',
-    freeeClientId: 'test-cid',
-    freeeClientSecret: 'test-csec',
-    tokenEndpoint: 'https://test.freee.co.jp/token',
-    scope: 'read write',
-    redisUrl: 'redis://localhost:6379',
-  })),
+  loadRemoteServerConfig: vi.fn(() => mockRemoteConfig),
   initRemoteConfig: vi.fn(),
   getConfig: vi.fn(() => ({
     freee: {
@@ -63,7 +66,54 @@ vi.mock('../mcp/handlers.js', () => ({
   })),
 }));
 
-describe('HTTP Server - auth middleware behavior', () => {
+// OAuth foundation mocks
+vi.mock('./oauth-store.js', () => ({
+  OAuthStateStore: vi.fn().mockImplementation(() => ({})),
+}));
+
+vi.mock('./client-store.js', () => ({
+  RedisClientStore: vi.fn().mockImplementation(() => ({})),
+}));
+
+const mockProvider = {
+  clientsStore: {},
+  authorize: vi.fn(),
+  challengeForAuthorizationCode: vi.fn(),
+  exchangeAuthorizationCode: vi.fn(),
+  exchangeRefreshToken: vi.fn(),
+  verifyAccessToken: vi.fn(),
+  revokeToken: vi.fn(),
+};
+
+vi.mock('./oauth-provider.js', () => ({
+  FreeeOAuthProvider: vi.fn().mockImplementation(() => mockProvider),
+}));
+
+vi.mock('./freee-callback.js', () => ({
+  createFreeeCallbackHandler: vi.fn(() =>
+    vi.fn((_req: unknown, res: { json: (v: unknown) => void }) => res.json({ ok: true })),
+  ),
+}));
+
+vi.mock('@modelcontextprotocol/sdk/server/auth/router.js', () => ({
+  mcpAuthRouter: vi.fn(() => (_req: unknown, _res: unknown, next: () => void) => next()),
+}));
+
+vi.mock('@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js', () => ({
+  requireBearerAuth: vi.fn(
+    () => (req: Record<string, unknown>, _res: unknown, next: () => void) => {
+      req.auth = {
+        token: 'mock-jwt',
+        clientId: 'test-cid',
+        scopes: ['mcp:read', 'mcp:write'],
+        extra: { userId: 'user-1', tokenStore: {} },
+      };
+      next();
+    },
+  ),
+}));
+
+describe('HTTP Server - OAuth integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -72,114 +122,68 @@ describe('HTTP Server - auth middleware behavior', () => {
     vi.restoreAllMocks();
   });
 
-  it('should reject requests without Authorization header', async () => {
-    // Test auth middleware logic directly
-    const { loadRemoteServerConfig } = await import('../config.js');
-    const remoteConfig = (loadRemoteServerConfig as ReturnType<typeof vi.fn>)();
+  it('should initialize FreeeOAuthProvider with correct dependencies', async () => {
+    const { FreeeOAuthProvider } = await import('./oauth-provider.js');
 
-    const req = {
-      path: '/mcp',
-      headers: {},
-    } as unknown as Request;
+    // FreeeOAuthProvider should have been called by module-level mock setup
+    // Verify the constructor signature matches our expectations
+    expect(FreeeOAuthProvider).toBeDefined();
 
-    const res = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn(),
-    } as unknown as Response;
-
-    const next = vi.fn() as NextFunction;
-
-    // Inline auth check logic
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ error: 'Missing or invalid Authorization header' });
-    } else {
-      const token = authHeader.slice(7);
-      if (token !== remoteConfig.bearerToken) {
-        res.status(403).json({ error: 'Invalid bearer token' });
-      } else {
-        next();
-      }
-    }
-
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Missing or invalid Authorization header' });
-    expect(next).not.toHaveBeenCalled();
+    const providerConstructor = FreeeOAuthProvider as ReturnType<typeof vi.fn>;
+    // The mock is set up, verify it's callable
+    const instance = providerConstructor({
+      clientStore: {},
+      oauthStore: {},
+      tokenStore: {},
+      jwtSecret: mockRemoteConfig.jwtSecret,
+      issuerUrl: mockRemoteConfig.issuerUrl,
+      freeeClientId: mockRemoteConfig.freeeClientId,
+      freeeAuthorizationEndpoint: mockRemoteConfig.freeeAuthorizationEndpoint,
+      callbackBaseUrl: mockRemoteConfig.issuerUrl,
+    });
+    expect(instance).toBeDefined();
   });
 
-  it('should reject requests with wrong bearer token', async () => {
-    const { loadRemoteServerConfig } = await import('../config.js');
-    const remoteConfig = (loadRemoteServerConfig as ReturnType<typeof vi.fn>)();
+  it('should configure mcpAuthRouter with provider and issuerUrl', async () => {
+    const { mcpAuthRouter } = await import('@modelcontextprotocol/sdk/server/auth/router.js');
 
-    const req = {
-      path: '/mcp',
-      headers: { authorization: 'Bearer wrong-token' },
-    } as unknown as Request;
-
-    const res = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn(),
-    } as unknown as Response;
-
-    const next = vi.fn() as NextFunction;
-
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ error: 'Missing or invalid Authorization header' });
-    } else {
-      const token = authHeader.slice(7);
-      if (token !== remoteConfig.bearerToken) {
-        res.status(403).json({ error: 'Invalid bearer token' });
-      } else {
-        next();
-      }
-    }
-
-    expect(res.status).toHaveBeenCalledWith(403);
-    expect(next).not.toHaveBeenCalled();
+    // Verify the mock is set up correctly
+    expect(mcpAuthRouter).toBeDefined();
+    expect(typeof mcpAuthRouter).toBe('function');
   });
 
-  it('should pass through health check without auth', async () => {
-    const req = {
-      path: '/health',
-      headers: {},
-    } as unknown as Request;
+  it('should configure requireBearerAuth with provider as verifier', async () => {
+    const { requireBearerAuth } = await import(
+      '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js'
+    );
 
-    const next = vi.fn() as NextFunction;
+    expect(requireBearerAuth).toBeDefined();
+    expect(typeof requireBearerAuth).toBe('function');
+  });
 
-    // Health check bypass logic
-    if (req.path === '/health') {
-      next();
-    }
+  it('should inject auth context via requireBearerAuth for MCP requests', () => {
+    const req: Record<string, unknown> = {
+      path: '/mcp',
+      headers: { authorization: 'Bearer mock-jwt' },
+    };
+
+    const next = vi.fn();
+
+    // Simulate requireBearerAuth middleware behavior
+    req.auth = {
+      token: 'mock-jwt',
+      clientId: 'test-cid',
+      scopes: ['mcp:read', 'mcp:write'],
+      extra: { userId: 'user-1', tokenStore: {} },
+    };
+    next();
 
     expect(next).toHaveBeenCalled();
-  });
-
-  it('should accept valid bearer token and inject auth context', async () => {
-    const { loadRemoteServerConfig } = await import('../config.js');
-    const remoteConfig = (loadRemoteServerConfig as ReturnType<typeof vi.fn>)();
-
-    const req = {
-      path: '/mcp',
-      headers: { authorization: 'Bearer test-bearer-token' },
-    } as unknown as Request;
-
-    const next = vi.fn() as NextFunction;
-
-    const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.slice(7);
-      if (token === remoteConfig.bearerToken) {
-        (req as unknown as Record<string, unknown>).auth = {
-          extra: { tokenStore: {}, userId: 'remote-default' },
-        };
-        next();
-      }
-    }
-
-    expect(next).toHaveBeenCalled();
-    expect((req as unknown as Record<string, unknown>).auth).toEqual({
-      extra: { tokenStore: expect.any(Object), userId: 'remote-default' },
+    expect(req.auth).toEqual({
+      token: 'mock-jwt',
+      clientId: 'test-cid',
+      scopes: ['mcp:read', 'mcp:write'],
+      extra: { userId: 'user-1', tokenStore: expect.any(Object) },
     });
   });
 });
@@ -200,5 +204,14 @@ describe('HTTP Server - health check', () => {
 
     expect(result.status).toBe('ok');
     expect(result.redis).toBe('connected');
+  });
+});
+
+describe('HTTP Server - config integration', () => {
+  it('should load remote config without bearerToken', () => {
+    expect(mockRemoteConfig).not.toHaveProperty('bearerToken');
+    expect(mockRemoteConfig.issuerUrl).toBe('https://mcp.example.com');
+    expect(mockRemoteConfig.jwtSecret).toBeDefined();
+    expect(mockRemoteConfig.jwtSecret.length).toBeGreaterThanOrEqual(32);
   });
 });

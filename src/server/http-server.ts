@@ -1,11 +1,14 @@
-import type { Request, Response, NextFunction } from 'express';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import type { Request, Response } from 'express';
+import { getConfig, initRemoteConfig, loadRemoteServerConfig } from '../config.js';
 import { createMcpServer } from '../mcp/handlers.js';
-import { loadRemoteServerConfig, initRemoteConfig, getConfig } from '../config.js';
-import { getRedisClient, closeRedisClient } from '../storage/redis-client.js';
+import { closeRedisClient, getRedisClient } from '../storage/redis-client.js';
 import { RedisTokenStore } from '../storage/redis-token-store.js';
-import type { TokenStore } from '../storage/token-store.js';
+import { OAuthStateStore } from './oauth-store.js';
+import { RedisClientStore } from './client-store.js';
+import { FreeeOAuthProvider } from './oauth-provider.js';
+import { createFreeeCallbackHandler } from './freee-callback.js';
 
 interface SessionEntry {
   transport: StreamableHTTPServerTransport;
@@ -31,11 +34,35 @@ export async function startHttpServer(): Promise<void> {
     process.exit(1);
   }
 
-  const tokenStore: TokenStore = new RedisTokenStore(redis, {
+  const tokenStore = new RedisTokenStore(redis, {
     clientId: remoteConfig.freeeClientId,
     clientSecret: remoteConfig.freeeClientSecret,
-    tokenEndpoint: remoteConfig.tokenEndpoint,
-    scope: remoteConfig.scope,
+    tokenEndpoint: remoteConfig.freeeTokenEndpoint,
+    scope: remoteConfig.freeeScope,
+  });
+
+  // OAuth 2.1 AS dependencies
+  const oauthStore = new OAuthStateStore(redis);
+  const clientStore = new RedisClientStore({ redis });
+  const provider = new FreeeOAuthProvider({
+    clientStore,
+    oauthStore,
+    tokenStore,
+    jwtSecret: remoteConfig.jwtSecret,
+    issuerUrl: remoteConfig.issuerUrl,
+    freeeClientId: remoteConfig.freeeClientId,
+    freeeAuthorizationEndpoint: remoteConfig.freeeAuthorizationEndpoint,
+    callbackBaseUrl: remoteConfig.issuerUrl,
+  });
+
+  const freeeCallbackHandler = createFreeeCallbackHandler({
+    oauthStore,
+    tokenStore,
+    freeeClientId: remoteConfig.freeeClientId,
+    freeeClientSecret: remoteConfig.freeeClientSecret,
+    freeeTokenEndpoint: remoteConfig.freeeTokenEndpoint,
+    freeeScope: remoteConfig.freeeScope,
+    callbackBaseUrl: remoteConfig.issuerUrl,
   });
 
   const config = getConfig();
@@ -56,49 +83,22 @@ export async function startHttpServer(): Promise<void> {
     }
   }, CLEANUP_INTERVAL_MS);
 
-  // Bearer token authentication middleware
-  function authMiddleware(req: Request, res: Response, next: NextFunction): void {
-    // Skip auth for health check
-    if (req.path === '/health') {
-      next();
-      return;
-    }
-
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ error: 'Missing or invalid Authorization header' });
-      return;
-    }
-
-    const token = authHeader.slice(7);
-    const expected = remoteConfig.bearerToken;
-    const tokenBuf = Buffer.from(token);
-    const expectedBuf = Buffer.from(expected);
-    if (tokenBuf.length !== expectedBuf.length || !timingSafeEqual(tokenBuf, expectedBuf)) {
-      res.status(403).json({ error: 'Invalid bearer token' });
-      return;
-    }
-
-    // TODO(PR 3): Replace fixed userId with JWT sub claim
-    const userId = 'remote-default';
-
-    // Inject auth context for MCP transport
-    // StreamableHTTPServerTransport reads req.auth and passes it as authInfo
-    (req as unknown as Record<string, unknown>).auth = {
-      extra: { tokenStore, userId },
-    };
-
-    next();
-  }
-
   // Dynamic import of express (only loaded in serve mode)
   const express = (await import('express')).default;
   const app = express();
+  // Trust first proxy (required for express-rate-limit behind reverse proxy / tunnel)
+  app.set('trust proxy', 1);
+  // No global express.json() -- mcpAuthRouter installs per-route body parsers
+  // (urlencoded for /token, /authorize, /revoke; json for /register),
+  // and StreamableHTTPServerTransport reads the raw request stream directly.
 
-  app.use(express.json());
-  app.use(authMiddleware);
+  // Request logger for debugging OAuth flow
+  app.use((req: Request, _res: Response, next: () => void) => {
+    console.error(`[debug] ${req.method} ${req.path}`);
+    next();
+  });
 
-  // Health check endpoint
+  // Health check endpoint (no auth required)
   app.get('/health', async (_req: Request, res: Response) => {
     try {
       await redis.ping();
@@ -116,6 +116,35 @@ export async function startHttpServer(): Promise<void> {
     }
   });
 
+  // freee OAuth callback (browser redirect, no MCP auth required)
+  app.get('/oauth/freee-callback', freeeCallbackHandler);
+
+  // MCP Auth Router: /.well-known/*, /authorize, /token, /register, /revoke
+  const { mcpAuthRouter } = await import('@modelcontextprotocol/sdk/server/auth/router.js');
+  const issuerUrl = new URL(remoteConfig.issuerUrl);
+  const mcpResourceUrl = new URL('/mcp', issuerUrl);
+  app.use(
+    mcpAuthRouter({
+      provider,
+      issuerUrl,
+      resourceServerUrl: mcpResourceUrl,
+      scopesSupported: ['mcp:read', 'mcp:write'],
+      resourceName: 'freee MCP Server',
+    }),
+  );
+
+  // MCP endpoints (Bearer JWT auth required)
+  const { requireBearerAuth } = await import(
+    '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js'
+  );
+  const { getOAuthProtectedResourceMetadataUrl } = await import(
+    '@modelcontextprotocol/sdk/server/auth/router.js'
+  );
+  const bearerAuth = requireBearerAuth({
+    verifier: provider,
+    resourceMetadataUrl: getOAuthProtectedResourceMetadataUrl(mcpResourceUrl),
+  });
+
   // MCP endpoint handler
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
@@ -123,7 +152,7 @@ export async function startHttpServer(): Promise<void> {
     const existingEntry = sessionId ? sessions.get(sessionId) : undefined;
     if (existingEntry) {
       existingEntry.lastActivity = Date.now();
-      await existingEntry.transport.handleRequest(req, res, req.body);
+      await existingEntry.transport.handleRequest(req, res);
       return;
     }
 
@@ -143,7 +172,7 @@ export async function startHttpServer(): Promise<void> {
       await server.connect(transport);
 
       // handleRequest first so that the transport gets its sessionId assigned
-      await transport.handleRequest(req, res, req.body);
+      await transport.handleRequest(req, res);
 
       const newSessionId = transport.sessionId;
       if (newSessionId) {
@@ -174,10 +203,10 @@ export async function startHttpServer(): Promise<void> {
     });
   }
 
-  app.post('/mcp', mcpHandler);
-  app.get('/mcp', mcpHandler);
+  app.post('/mcp', bearerAuth, mcpHandler);
+  app.get('/mcp', bearerAuth, mcpHandler);
 
-  app.delete('/mcp', async (req: Request, res: Response) => {
+  app.delete('/mcp', bearerAuth, async (req: Request, res: Response) => {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     const entry = sessionId ? sessions.get(sessionId) : undefined;
     if (!sessionId || !entry) {
@@ -194,6 +223,16 @@ export async function startHttpServer(): Promise<void> {
       sessions.delete(sessionId);
       res.status(500).json({ error: 'Failed to terminate session' });
     }
+  });
+
+  // Express error handler (must be after all routes)
+  app.use((err: unknown, _req: Request, res: Response, next: (err?: unknown) => void) => {
+    console.error('[error] Unhandled middleware error:', err);
+    if (res.headersSent) {
+      next(err);
+      return;
+    }
+    res.status(500).json({ error: 'Internal server error' });
   });
 
   const server = app.listen(remoteConfig.port, () => {

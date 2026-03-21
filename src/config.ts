@@ -1,6 +1,14 @@
 import { createRequire } from 'node:module';
 import { loadFullConfig } from './config/companies.js';
-import { DEFAULT_CALLBACK_PORT, AUTH_TIMEOUT_MS, FREEE_API_URL, FREEE_AUTHORIZATION_ENDPOINT, FREEE_TOKEN_ENDPOINT, FREEE_OAUTH_SCOPE, SERVER_INSTRUCTIONS } from './constants.js';
+import {
+  AUTH_TIMEOUT_MS,
+  DEFAULT_CALLBACK_PORT,
+  FREEE_API_URL,
+  FREEE_AUTHORIZATION_ENDPOINT,
+  FREEE_OAUTH_SCOPE,
+  FREEE_TOKEN_ENDPOINT,
+  SERVER_INSTRUCTIONS,
+} from './constants.js';
 
 const require = createRequire(import.meta.url);
 const { version: packageVersion } = require('../package.json') as { version: string };
@@ -18,7 +26,7 @@ export function parsePort(value: string | number | undefined, defaultPort: numbe
 
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     console.error(
-      `Warning: ポートの値が不正です (${String(value)})。デフォルトポート ${defaultPort} を使用します。`
+      `Warning: ポートの値が不正です (${String(value)})。デフォルトポート ${defaultPort} を使用します。`,
     );
     return defaultPort;
   }
@@ -65,16 +73,16 @@ function hasEnvCredentials(): boolean {
   if (hasClientId && !hasClientSecret) {
     throw new Error(
       '環境変数 FREEE_CLIENT_SECRET が設定されていません。\n' +
-      '`freee-mcp configure` を実行して設定ファイルへ移行することを推奨します。\n' +
-      '環境変数を使う場合は FREEE_CLIENT_ID と FREEE_CLIENT_SECRET の両方を設定してください。'
+        '`freee-mcp configure` を実行して設定ファイルへ移行することを推奨します。\n' +
+        '環境変数を使う場合は FREEE_CLIENT_ID と FREEE_CLIENT_SECRET の両方を設定してください。',
     );
   }
 
   if (!hasClientId && hasClientSecret) {
     throw new Error(
       '環境変数 FREEE_CLIENT_ID が設定されていません。\n' +
-      '`freee-mcp configure` を実行して設定ファイルへ移行することを推奨します。\n' +
-      '環境変数を使う場合は FREEE_CLIENT_ID と FREEE_CLIENT_SECRET の両方を設定してください。'
+        '`freee-mcp configure` を実行して設定ファイルへ移行することを推奨します。\n' +
+        '環境変数を使う場合は FREEE_CLIENT_ID と FREEE_CLIENT_SECRET の両方を設定してください。',
     );
   }
 
@@ -111,7 +119,7 @@ export async function loadConfig(): Promise<Config> {
     if (!fullConfig.clientId || !fullConfig.clientSecret) {
       throw new Error(
         '認証情報が設定されていません。\n' +
-        '`freee-mcp configure` を実行してセットアップしてください。'
+          '`freee-mcp configure` を実行してセットアップしてください。',
       );
     }
 
@@ -160,18 +168,30 @@ export function getConfig(): Config {
 
 export interface RemoteServerConfig {
   port: number;
-  bearerToken: string;
+  issuerUrl: string;
+  jwtSecret: string;
   freeeClientId: string;
   freeeClientSecret: string;
-  tokenEndpoint: string;
-  scope: string;
+  freeeAuthorizationEndpoint: string;
+  freeeTokenEndpoint: string;
+  freeeScope: string;
   redisUrl: string;
 }
 
 export function loadRemoteServerConfig(): RemoteServerConfig {
-  const bearerToken = process.env.API_BEARER_TOKEN;
-  if (!bearerToken) {
-    throw new Error('API_BEARER_TOKEN environment variable is required for serve mode.');
+  const issuerUrl = process.env.ISSUER_URL;
+  if (!issuerUrl) {
+    throw new Error('ISSUER_URL environment variable is required for serve mode.');
+  }
+
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is required for serve mode.');
+  }
+  if (jwtSecret.length < 32) {
+    throw new Error(
+      'JWT_SECRET must be at least 32 characters. Use a cryptographically random value: openssl rand -hex 32',
+    );
   }
 
   const freeeClientId = process.env.FREEE_CLIENT_ID;
@@ -185,11 +205,14 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
 
   return {
     port: parsePort(process.env.PORT, 3000),
-    bearerToken,
+    issuerUrl,
+    jwtSecret,
     freeeClientId,
     freeeClientSecret,
-    tokenEndpoint: process.env.FREEE_TOKEN_ENDPOINT || FREEE_TOKEN_ENDPOINT,
-    scope: process.env.FREEE_SCOPE || FREEE_OAUTH_SCOPE,
+    freeeAuthorizationEndpoint:
+      process.env.FREEE_AUTHORIZATION_ENDPOINT || FREEE_AUTHORIZATION_ENDPOINT,
+    freeeTokenEndpoint: process.env.FREEE_TOKEN_ENDPOINT || FREEE_TOKEN_ENDPOINT,
+    freeeScope: process.env.FREEE_SCOPE || FREEE_OAUTH_SCOPE,
     redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   };
 }
@@ -206,9 +229,9 @@ export function initRemoteConfig(remoteConfig: RemoteServerConfig): void {
     oauth: {
       callbackPort: DEFAULT_CALLBACK_PORT,
       redirectUri: `http://127.0.0.1:${DEFAULT_CALLBACK_PORT}/callback`,
-      authorizationEndpoint: FREEE_AUTHORIZATION_ENDPOINT,
-      tokenEndpoint: remoteConfig.tokenEndpoint,
-      scope: remoteConfig.scope,
+      authorizationEndpoint: remoteConfig.freeeAuthorizationEndpoint,
+      tokenEndpoint: remoteConfig.freeeTokenEndpoint,
+      scope: remoteConfig.freeeScope,
     },
     server: {
       name: 'freee',

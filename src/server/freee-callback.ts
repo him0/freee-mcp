@@ -115,6 +115,25 @@ async function handleCallback(
 ): Promise<void> {
   const code = req.query.code as string | undefined;
   const state = req.query.state as string | undefined;
+  const error = req.query.error as string | undefined;
+
+  // Handle freee OAuth error (e.g., user denied consent)
+  if (error) {
+    const session = state ? await deps.oauthStore.consumeSession(state) : null;
+    if (!session) {
+      res.status(400).send(`freee OAuth error: ${error}`);
+      return;
+    }
+
+    const errorDescription =
+      (req.query.error_description as string) || 'freee authentication failed';
+    const redirectTarget = buildRedirectUrl(session.redirectUri, session.state, {
+      error,
+      error_description: errorDescription,
+    });
+    res.redirect(302, redirectTarget);
+    return;
+  }
 
   if (!code || !state) {
     res.status(400).send('Missing code or state parameter');
