@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { stopCallbackServer } from '../auth/server.js';
 import { clearTokens } from '../auth/tokens.js';
-import { getConfigDir } from '../constants.js';
+import { getConfigDir, PACKAGE_VERSION } from '../constants.js';
 import { collectCredentials, selectCompany, configureMcpIntegration } from './prompts.js';
 import { performOAuth } from './oauth-flow.js';
 import { saveConfig } from './configuration.js';
@@ -23,7 +23,7 @@ async function clearConfig(): Promise<void> {
 }
 
 export async function configure(options: ConfigureOptions = {}): Promise<void> {
-  console.log('\n=== freee-mcp Configuration Setup ===\n');
+  console.log(`\n=== freee-mcp v${PACKAGE_VERSION} Configuration Setup ===\n`);
 
   if (options.force) {
     console.log('保存済みのログイン情報をリセットしています...');
