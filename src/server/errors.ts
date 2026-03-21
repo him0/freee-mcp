@@ -9,3 +9,16 @@ export class RedisUnavailableError extends Error {
     this.cause = cause;
   }
 }
+
+/**
+ * Execute a Redis operation, wrapping any thrown error as RedisUnavailableError.
+ * Eliminates repetitive try/catch boilerplate in Redis-backed stores.
+ */
+export async function withRedis<T>(operation: string, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err instanceof RedisUnavailableError) throw err;
+    throw new RedisUnavailableError(operation, err as Error);
+  }
+}

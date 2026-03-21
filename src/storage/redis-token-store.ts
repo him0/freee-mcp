@@ -8,7 +8,8 @@ import {
 } from '../auth/tokens.js';
 import type { CompanyConfig } from '../config/companies.js';
 import type { TokenStore } from './token-store.js';
-import { RedisUnavailableError } from '../server/errors.js';
+import { withRedis } from '../server/errors.js';
+import { getLogger } from '../server/logger.js';
 
 const TOKEN_KEY_PREFIX = 'freee-mcp:tokens:';
 const COMPANY_KEY_PREFIX = 'freee-mcp:company:';
@@ -24,12 +25,7 @@ export class RedisTokenStore implements TokenStore {
   }
 
   async loadTokens(userId: string): Promise<TokenData | null> {
-    let raw: string | null;
-    try {
-      raw = await this.redis.get(this.tokenKey(userId));
-    } catch (err) {
-      throw new RedisUnavailableError('loadTokens', err as Error);
-    }
+    const raw = await withRedis('loadTokens', () => this.redis.get(this.tokenKey(userId)));
     if (!raw) {
       return null;
     }
@@ -38,33 +34,24 @@ export class RedisTokenStore implements TokenStore {
       const parsed = JSON.parse(raw);
       const result = TokenDataSchema.safeParse(parsed);
       if (!result.success) {
-        console.error(
-          `[error] Invalid token data in Redis for user ${userId}:`,
-          result.error.message,
-        );
+        getLogger().error({ userId, error: result.error.message }, 'Invalid token data in Redis');
         return null;
       }
       return result.data;
     } catch {
-      console.error(`[error] Failed to parse token data from Redis for user ${userId}`);
+      getLogger().error({ userId }, 'Failed to parse token data from Redis');
       return null;
     }
   }
 
   async saveTokens(userId: string, tokens: TokenData): Promise<void> {
-    try {
-      await this.redis.set(this.tokenKey(userId), JSON.stringify(tokens), 'EX', TOKEN_TTL_SECONDS);
-    } catch (err) {
-      throw new RedisUnavailableError('saveTokens', err as Error);
-    }
+    await withRedis('saveTokens', () =>
+      this.redis.set(this.tokenKey(userId), JSON.stringify(tokens), 'EX', TOKEN_TTL_SECONDS),
+    );
   }
 
   async clearTokens(userId: string): Promise<void> {
-    try {
-      await this.redis.del(this.tokenKey(userId));
-    } catch (err) {
-      throw new RedisUnavailableError('clearTokens', err as Error);
-    }
+    await withRedis('clearTokens', () => this.redis.del(this.tokenKey(userId)));
   }
 
   async getValidAccessToken(userId: string): Promise<string | null> {
@@ -85,12 +72,10 @@ export class RedisTokenStore implements TokenStore {
   }
 
   async getCurrentCompanyId(userId: string): Promise<string> {
-    try {
-      const companyId = await this.redis.hget(this.companyKey(userId), 'currentCompanyId');
-      return companyId || '0';
-    } catch (err) {
-      throw new RedisUnavailableError('getCurrentCompanyId', err as Error);
-    }
+    const companyId = await withRedis('getCurrentCompanyId', () =>
+      this.redis.hget(this.companyKey(userId), 'currentCompanyId'),
+    );
+    return companyId || '0';
   }
 
   async setCurrentCompany(
@@ -105,20 +90,13 @@ export class RedisTokenStore implements TokenStore {
       name: name ?? '',
       description: description ?? '',
     };
-    try {
-      await this.redis.hset(this.companyKey(userId), fields);
-    } catch (err) {
-      throw new RedisUnavailableError('setCurrentCompany', err as Error);
-    }
+    await withRedis('setCurrentCompany', () => this.redis.hset(this.companyKey(userId), fields));
   }
 
   async getCompanyInfo(userId: string, companyId: string): Promise<CompanyConfig | null> {
-    let data: Record<string, string>;
-    try {
-      data = await this.redis.hgetall(this.companyKey(userId));
-    } catch (err) {
-      throw new RedisUnavailableError('getCompanyInfo', err as Error);
-    }
+    const data = await withRedis('getCompanyInfo', () =>
+      this.redis.hgetall(this.companyKey(userId)),
+    );
     if (!data || data.currentCompanyId !== companyId) {
       return null;
     }

@@ -283,9 +283,7 @@ describe('RedisTokenStore', () => {
 
     it('should throw RedisUnavailableError on getCurrentCompanyId failure', async () => {
       mockRedis.hget.mockRejectedValue(redisError);
-      await expect(tokenStore.getCurrentCompanyId('user-1')).rejects.toThrow(
-        RedisUnavailableError,
-      );
+      await expect(tokenStore.getCurrentCompanyId('user-1')).rejects.toThrow(RedisUnavailableError);
     });
 
     it('should throw RedisUnavailableError on setCurrentCompany failure', async () => {

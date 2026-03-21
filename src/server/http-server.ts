@@ -4,14 +4,23 @@ import type { Request, Response } from 'express';
 import { getConfig, initRemoteConfig, loadRemoteServerConfig } from '../config.js';
 import { createMcpServer } from '../mcp/handlers.js';
 import { closeRedisClient, getRedisClient } from '../storage/redis-client.js';
+import type { Redis } from '../storage/redis-client.js';
 import { RedisTokenStore } from '../storage/redis-token-store.js';
 import { OAuthStateStore } from './oauth-store.js';
 import { RedisClientStore } from './client-store.js';
 import { FreeeOAuthProvider } from './oauth-provider.js';
 import { createFreeeCallbackHandler } from './freee-callback.js';
 import { RedisUnavailableError } from './errors.js';
+import { initLogger } from './logger.js';
 
 const BODY_SIZE_LIMIT = 1_048_576; // 1 MB
+
+// Extend Express Request with request ID
+declare module 'express' {
+  interface Request {
+    requestId?: string;
+  }
+}
 
 interface SessionEntry {
   transport: StreamableHTTPServerTransport;
@@ -26,15 +35,19 @@ export async function startHttpServer(): Promise<void> {
   const remoteConfig = loadRemoteServerConfig();
   initRemoteConfig(remoteConfig);
 
+  const logger = initLogger(remoteConfig.logLevel);
+
   const redis = getRedisClient(remoteConfig.redisUrl);
 
   // Verify Redis connection before starting the server
   try {
     await redis.ping();
-    console.error('[info] Redis connected');
+    logger.info('Redis connected');
   } catch (err) {
-    console.error('[error] Failed to connect to Redis:', (err as Error).message);
-    console.error('[error] Make sure Redis is running. For development: docker compose up -d');
+    logger.error(
+      { err },
+      'Failed to connect to Redis. Make sure Redis is running. For development: docker compose up -d',
+    );
     process.exit(1);
   }
 
@@ -79,9 +92,9 @@ export async function startHttpServer(): Promise<void> {
     const now = Date.now();
     for (const [id, entry] of sessions) {
       if (now - entry.lastActivity > SESSION_TIMEOUT_MS) {
-        console.error(`[info] Cleaning up inactive session: ${id}`);
+        logger.info({ sessionId: id }, 'Cleaning up inactive session');
         entry.transport.close().catch((err: unknown) => {
-          console.error(`[error] Failed to close transport for session ${id}:`, err);
+          logger.error({ sessionId: id, err }, 'Failed to close transport for session');
         });
         sessions.delete(id);
       }
@@ -132,11 +145,17 @@ export async function startHttpServer(): Promise<void> {
     next();
   });
 
-  // Request logger for debugging OAuth flow
+  // Request ID + request logging middleware
   app.use((req: Request, _res: Response, next: () => void) => {
-    console.error(`[debug] ${req.method} ${req.path}`);
+    req.requestId = randomUUID();
+    logger.debug({ requestId: req.requestId, method: req.method, path: req.path }, 'request');
     next();
   });
+
+  // --- Rate limiting (opt-in) ---
+  if (remoteConfig.rateLimitEnabled) {
+    await setupRateLimiting(app, redis, logger);
+  }
 
   // Health check endpoint (no auth required)
   app.get('/health', async (_req: Request, res: Response) => {
@@ -236,7 +255,7 @@ export async function startHttpServer(): Promise<void> {
 
   function mcpHandler(req: Request, res: Response): void {
     handleMcpRequest(req, res).catch((err: unknown) => {
-      console.error('[error] MCP request error:', err);
+      logger.error({ err, requestId: req.requestId }, 'MCP request error');
       if (!res.headersSent) {
         res.status(500).json({ error: 'Internal server error' });
       }
@@ -259,24 +278,25 @@ export async function startHttpServer(): Promise<void> {
       sessions.delete(sessionId);
       res.status(200).json({ message: 'Session terminated' });
     } catch (err) {
-      console.error(`[error] Failed to close session ${sessionId}:`, err);
+      logger.error({ sessionId, err }, 'Failed to close session');
       sessions.delete(sessionId);
       res.status(500).json({ error: 'Failed to terminate session' });
     }
   });
 
   // Express error handler (must be after all routes)
-  app.use((err: unknown, _req: Request, res: Response, next: (err?: unknown) => void) => {
+  app.use((err: unknown, req: Request, res: Response, next: (err?: unknown) => void) => {
     if (err instanceof RedisUnavailableError) {
-      console.error('[error] Redis unavailable:', err.message);
+      logger.error({ err, requestId: req.requestId }, 'Redis unavailable');
       if (!res.headersSent) {
-        res
-          .status(503)
-          .json({ error: 'service_unavailable', message: 'Storage backend temporarily unavailable' });
+        res.status(503).json({
+          error: 'service_unavailable',
+          message: 'Storage backend temporarily unavailable',
+        });
       }
       return;
     }
-    console.error('[error] Unhandled middleware error:', err);
+    logger.error({ err, requestId: req.requestId }, 'Unhandled middleware error');
     if (res.headersSent) {
       next(err);
       return;
@@ -285,16 +305,16 @@ export async function startHttpServer(): Promise<void> {
   });
 
   const server = app.listen(remoteConfig.port, () => {
-    console.error(`[info] freee MCP HTTP server listening on port ${remoteConfig.port}`);
+    logger.info({ port: remoteConfig.port }, 'freee MCP HTTP server listening');
   });
 
   // Graceful shutdown
   async function shutdown(signal: string): Promise<void> {
-    console.error(`[info] Received ${signal}, shutting down gracefully...`);
+    logger.info({ signal }, 'Shutting down gracefully...');
 
     // Force exit after timeout if graceful shutdown hangs
     const forceExitTimer = setTimeout(() => {
-      console.error('[warn] Shutdown timeout, forcing exit');
+      logger.warn('Shutdown timeout, forcing exit');
       process.exit(1);
     }, SHUTDOWN_TIMEOUT_MS);
     forceExitTimer.unref();
@@ -304,7 +324,7 @@ export async function startHttpServer(): Promise<void> {
     // Close all sessions
     const closePromises = Array.from(sessions.values()).map((entry) =>
       entry.transport.close().catch((err: unknown) => {
-        console.error('[error] Failed to close transport during shutdown:', err);
+        logger.error({ err }, 'Failed to close transport during shutdown');
       }),
     );
     await Promise.all(closePromises);
@@ -315,11 +335,42 @@ export async function startHttpServer(): Promise<void> {
 
     // Close HTTP server
     server.close(() => {
-      console.error('[info] HTTP server closed');
+      logger.info('HTTP server closed');
       process.exit(0);
     });
   }
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
+}
+
+async function setupRateLimiting(
+  app: import('express').Express,
+  redis: Redis,
+  logger: ReturnType<typeof initLogger>,
+): Promise<void> {
+  const rateLimitModule = await import('express-rate-limit');
+  const rateLimit = rateLimitModule.rateLimit ?? rateLimitModule.default;
+  const redisStoreModule = await import('rate-limit-redis');
+  const RedisStore = redisStoreModule.RedisStore ?? redisStoreModule.default;
+
+  const createLimiter = (windowMs: number, max: number, prefix: string) =>
+    rateLimit({
+      windowMs,
+      max,
+      standardHeaders: true,
+      legacyHeaders: false,
+      store: new RedisStore({
+        sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as never,
+        prefix: `rl:${prefix}:`,
+      }),
+    });
+
+  app.use('/authorize', createLimiter(5 * 60 * 1000, 10, 'authorize'));
+  app.use('/token', createLimiter(60 * 1000, 10, 'token'));
+  app.use('/register', createLimiter(60 * 60 * 1000, 3, 'register'));
+  app.use('/oauth/freee-callback', createLimiter(5 * 60 * 1000, 10, 'freee-cb'));
+  app.use('/mcp', createLimiter(60 * 1000, 100, 'mcp'));
+
+  logger.info('Rate limiting enabled');
 }

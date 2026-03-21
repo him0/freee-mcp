@@ -3,9 +3,15 @@ import type { Request, Response } from 'express';
 import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
 import { OAuthTokenResponseSchema } from '../auth/tokens.js';
 import { createTokenData } from '../auth/token-utils.js';
-import { USER_AGENT, FREEE_API_URL, FETCH_TIMEOUT_TOKEN_MS, FETCH_TIMEOUT_USERINFO_MS } from '../constants.js';
+import {
+  USER_AGENT,
+  FREEE_API_URL,
+  FETCH_TIMEOUT_TOKEN_MS,
+  FETCH_TIMEOUT_USERINFO_MS,
+} from '../constants.js';
 import type { OAuthStateStore } from './oauth-store.js';
 import type { TokenStore } from '../storage/token-store.js';
+import { getLogger } from './logger.js';
 
 export interface FreeeCallbackDeps {
   oauthStore: OAuthStateStore;
@@ -91,7 +97,7 @@ export function createFreeeCallbackHandler(
 
   return (req: Request, res: Response) => {
     handleCallback(req, res, deps, apiUrl, callbackRedirectUri).catch((err: unknown) => {
-      console.error('[error] freee callback error:', err);
+      getLogger().error({ err }, 'freee callback error');
       if (!res.headersSent) {
         res.status(500).send('Internal server error during OAuth callback');
       }
@@ -157,12 +163,12 @@ async function handleCallback(
     try {
       const client = await deps.clientStore.getClient(session.clientId);
       if (client?.redirect_uris && !client.redirect_uris.includes(session.redirectUri)) {
-        console.error(`[error] redirect_uri mismatch for client ${session.clientId}`);
+        getLogger().error({ clientId: session.clientId }, 'redirect_uri mismatch');
         res.status(400).send('redirect_uri mismatch');
         return;
       }
     } catch (err) {
-      console.error(`[error] Failed to validate redirect_uri for client ${session.clientId}:`, err);
+      getLogger().error({ clientId: session.clientId, err }, 'Failed to validate redirect_uri');
       // Continue — redirect_uri validation is defense-in-depth, not critical path
     }
   }
@@ -203,7 +209,7 @@ async function handleCallback(
     const redirectTarget = buildRedirectUrl(session.redirectUri, session.state, { code: mcpCode });
     res.redirect(302, redirectTarget);
   } catch (err) {
-    console.error('[error] freee OAuth callback processing failed:', err);
+    getLogger().error({ err }, 'freee OAuth callback processing failed');
     const redirectTarget = buildRedirectUrl(session.redirectUri, session.state, {
       error: 'server_error',
       error_description: 'Failed to complete freee authentication',
