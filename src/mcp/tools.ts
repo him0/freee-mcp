@@ -8,7 +8,7 @@ import { registerAuthenticationRequest, getActualRedirectUri, startCallbackServe
 import { extractTokenContext } from '../storage/context.js';
 import type { AuthExtra } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
-import { AUTH_TIMEOUT_MS } from '../constants.js';
+import { AUTH_TIMEOUT_MS, PACKAGE_VERSION } from '../constants.js';
 
 export function addAuthenticationTools(server: McpServer): void {
   server.tool(
@@ -208,6 +208,15 @@ export function addAuthenticationTools(server: McpServer): void {
       } catch (error) {
         return createTextResponse(`事業所一覧の取得に失敗: ${formatErrorMessage(error)}`);
       }
+    }
+  );
+
+  server.tool(
+    'freee_server_version',
+    'freee-mcp サーバーのバージョン情報を取得',
+    {},
+    async () => {
+      return createTextResponse(`freee-mcp version: ${PACKAGE_VERSION}`);
     }
   );
 
