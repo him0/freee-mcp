@@ -1,5 +1,12 @@
 # freee-mcp
 
+## 0.13.1
+
+### Patch Changes
+
+- 0e194ff: package.json に prepare スクリプトを追加し、GitHub リポジトリから直接インストール時に自動ビルドが実行されるようにした
+- a26ecfb: `freee-mcp configure` 実行時のバナーにバージョン番号を表示するようにした
+
 ## 0.13.0
 
 ### Minor Changes
