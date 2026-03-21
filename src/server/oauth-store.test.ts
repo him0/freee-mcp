@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { OAuthStateStore } from './oauth-store.js';
+import { RedisUnavailableError } from './errors.js';
 import type { OAuthSessionData, AuthCodeData, RefreshTokenData } from './oauth-store.js';
 
 function createMockRedis() {
@@ -144,6 +145,65 @@ describe('OAuthStateStore', () => {
       await store.saveRefreshToken('rt-3', refreshData);
       await store.revokeRefreshToken('rt-3');
       expect(await store.consumeRefreshToken('rt-3')).toBeNull();
+    });
+  });
+
+  describe('Redis error handling', () => {
+    const redisError = new Error('Connection lost');
+
+    it('should throw RedisUnavailableError on saveSession failure', async () => {
+      redis.set.mockRejectedValueOnce(redisError);
+      await expect(store.saveSession('s-1', sessionData)).rejects.toThrow(RedisUnavailableError);
+    });
+
+    it('should throw RedisUnavailableError on consumeSession failure', async () => {
+      redis.getdel.mockRejectedValueOnce(redisError);
+      await expect(store.consumeSession('s-1')).rejects.toThrow(RedisUnavailableError);
+    });
+
+    it('should throw RedisUnavailableError on saveAuthCode failure', async () => {
+      redis.set.mockRejectedValueOnce(redisError);
+      await expect(store.saveAuthCode('c-1', authCodeData)).rejects.toThrow(RedisUnavailableError);
+    });
+
+    it('should throw RedisUnavailableError on getRefreshToken failure', async () => {
+      redis.get.mockRejectedValueOnce(redisError);
+      await expect(store.getRefreshToken('rt-1')).rejects.toThrow(RedisUnavailableError);
+    });
+
+    it('should throw RedisUnavailableError on revokeRefreshToken failure', async () => {
+      redis.del.mockRejectedValueOnce(redisError);
+      await expect(store.revokeRefreshToken('rt-1')).rejects.toThrow(RedisUnavailableError);
+    });
+
+    it('should preserve original error as cause', async () => {
+      redis.set.mockRejectedValueOnce(redisError);
+      try {
+        await store.saveSession('s-1', sessionData);
+      } catch (err) {
+        expect(err).toBeInstanceOf(RedisUnavailableError);
+        expect((err as RedisUnavailableError).cause).toBe(redisError);
+      }
+    });
+  });
+
+  describe('JSON parse error handling', () => {
+    it('should return null for malformed session JSON (not throw RedisUnavailableError)', async () => {
+      redis.getdel.mockResolvedValueOnce('not-json{');
+      const result = await store.consumeSession('bad-session');
+      expect(result).toBeNull();
+    });
+
+    it('should return null for malformed auth code JSON', async () => {
+      redis.get.mockResolvedValueOnce('{{invalid');
+      const result = await store.getAuthCode('bad-code');
+      expect(result).toBeNull();
+    });
+
+    it('should return null for malformed refresh token JSON', async () => {
+      redis.get.mockResolvedValueOnce('<not-json>');
+      const result = await store.getRefreshToken('bad-rt');
+      expect(result).toBeNull();
     });
   });
 });

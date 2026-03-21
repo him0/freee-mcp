@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { RedisTokenStore } from './redis-token-store.js';
+import { RedisUnavailableError } from '../server/errors.js';
 import type { TokenData } from '../auth/tokens.js';
 
 vi.mock('../auth/tokens.js', async (importOriginal) => {
@@ -167,10 +168,7 @@ describe('RedisTokenStore', () => {
       const result = await tokenStore.getValidAccessToken('user-1');
 
       expect(result).toBe('new-access-token');
-      expect(refreshFreeeTokenRaw).toHaveBeenCalledWith(
-        'test-refresh-token',
-        storeOptions,
-      );
+      expect(refreshFreeeTokenRaw).toHaveBeenCalledWith('test-refresh-token', storeOptions);
       expect(mockRedis.set).toHaveBeenCalledWith(
         'freee-mcp:tokens:user-1',
         JSON.stringify(newTokens),
@@ -259,6 +257,59 @@ describe('RedisTokenStore', () => {
       const result = await tokenStore.getCompanyInfo('user-1', '12345');
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('Redis error handling', () => {
+    const redisError = new Error('Connection lost');
+
+    it('should throw RedisUnavailableError on loadTokens failure', async () => {
+      mockRedis.get.mockRejectedValue(redisError);
+      await expect(tokenStore.loadTokens('user-1')).rejects.toThrow(RedisUnavailableError);
+      await expect(tokenStore.loadTokens('user-1')).rejects.toThrow('loadTokens');
+    });
+
+    it('should throw RedisUnavailableError on saveTokens failure', async () => {
+      mockRedis.set.mockRejectedValue(redisError);
+      await expect(tokenStore.saveTokens('user-1', mockTokenData)).rejects.toThrow(
+        RedisUnavailableError,
+      );
+    });
+
+    it('should throw RedisUnavailableError on clearTokens failure', async () => {
+      mockRedis.del.mockRejectedValue(redisError);
+      await expect(tokenStore.clearTokens('user-1')).rejects.toThrow(RedisUnavailableError);
+    });
+
+    it('should throw RedisUnavailableError on getCurrentCompanyId failure', async () => {
+      mockRedis.hget.mockRejectedValue(redisError);
+      await expect(tokenStore.getCurrentCompanyId('user-1')).rejects.toThrow(
+        RedisUnavailableError,
+      );
+    });
+
+    it('should throw RedisUnavailableError on setCurrentCompany failure', async () => {
+      mockRedis.hset.mockRejectedValue(redisError);
+      await expect(tokenStore.setCurrentCompany('user-1', '123')).rejects.toThrow(
+        RedisUnavailableError,
+      );
+    });
+
+    it('should throw RedisUnavailableError on getCompanyInfo failure', async () => {
+      mockRedis.hgetall.mockRejectedValue(redisError);
+      await expect(tokenStore.getCompanyInfo('user-1', '123')).rejects.toThrow(
+        RedisUnavailableError,
+      );
+    });
+
+    it('should preserve original error as cause', async () => {
+      mockRedis.get.mockRejectedValue(redisError);
+      try {
+        await tokenStore.loadTokens('user-1');
+      } catch (err) {
+        expect(err).toBeInstanceOf(RedisUnavailableError);
+        expect((err as RedisUnavailableError).cause).toBe(redisError);
+      }
     });
   });
 });

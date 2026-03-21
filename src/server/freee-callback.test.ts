@@ -262,4 +262,88 @@ describe('createFreeeCallbackHandler', () => {
 
     expect(res.send).toHaveBeenCalledWith('freee OAuth error: access_denied');
   });
+
+  it('rejects when redirect_uri does not match registered client', async () => {
+    const oauthStore = createMockOAuthStore();
+    const mockClientStore = {
+      getClient: vi.fn(async () => ({
+        client_id: 'test-client',
+        redirect_uris: ['https://other.example.com/callback'],
+      })),
+    };
+
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeTokenResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeUserResponse,
+      });
+
+    const handler = createFreeeCallbackHandler({
+      oauthStore,
+      tokenStore: createMockTokenStore(),
+      clientStore: mockClientStore as never,
+      freeeClientId: 'id',
+      freeeClientSecret: 'secret',
+      freeeTokenEndpoint: 'https://token.example.com',
+      freeeScope: 'read write',
+      callbackBaseUrl: 'https://mcp.example.com',
+    });
+
+    const { req, res } = createMockReqRes({ code: 'auth-code', state: 'session-id' });
+    handler(req, res);
+
+    await vi.waitFor(() => {
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    expect(res.send).toHaveBeenCalledWith('redirect_uri mismatch');
+  });
+
+  it('allows matching redirect_uri from registered client', async () => {
+    const oauthStore = createMockOAuthStore();
+    const mockClientStore = {
+      getClient: vi.fn(async () => ({
+        client_id: 'test-client',
+        redirect_uris: ['https://claude.ai/api/mcp/auth_callback'],
+      })),
+    };
+
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeTokenResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeUserResponse,
+      });
+
+    const handler = createFreeeCallbackHandler({
+      oauthStore,
+      tokenStore: createMockTokenStore(),
+      clientStore: mockClientStore as never,
+      freeeClientId: 'id',
+      freeeClientSecret: 'secret',
+      freeeTokenEndpoint: 'https://token.example.com',
+      freeeScope: 'read write',
+      callbackBaseUrl: 'https://mcp.example.com',
+    });
+
+    const { req, res } = createMockReqRes({ code: 'auth-code', state: 'session-id' });
+    handler(req, res);
+
+    await vi.waitFor(() => {
+      expect(res.redirect).toHaveBeenCalled();
+    });
+
+    const redirectUrl = (res.redirect as ReturnType<typeof vi.fn>).mock.calls[0][1] as string;
+    const parsed = new URL(redirectUrl);
+    expect(parsed.searchParams.get('code')).toBeTruthy();
+  });
 });

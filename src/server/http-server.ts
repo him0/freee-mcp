@@ -9,6 +9,9 @@ import { OAuthStateStore } from './oauth-store.js';
 import { RedisClientStore } from './client-store.js';
 import { FreeeOAuthProvider } from './oauth-provider.js';
 import { createFreeeCallbackHandler } from './freee-callback.js';
+import { RedisUnavailableError } from './errors.js';
+
+const BODY_SIZE_LIMIT = 1_048_576; // 1 MB
 
 interface SessionEntry {
   transport: StreamableHTTPServerTransport;
@@ -17,6 +20,7 @@ interface SessionEntry {
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const SHUTDOWN_TIMEOUT_MS = 30_000; // 30 seconds
 
 export async function startHttpServer(): Promise<void> {
   const remoteConfig = loadRemoteServerConfig();
@@ -58,6 +62,7 @@ export async function startHttpServer(): Promise<void> {
   const freeeCallbackHandler = createFreeeCallbackHandler({
     oauthStore,
     tokenStore,
+    clientStore,
     freeeClientId: remoteConfig.freeeClientId,
     freeeClientSecret: remoteConfig.freeeClientSecret,
     freeeTokenEndpoint: remoteConfig.freeeTokenEndpoint,
@@ -91,6 +96,41 @@ export async function startHttpServer(): Promise<void> {
   // No global express.json() -- mcpAuthRouter installs per-route body parsers
   // (urlencoded for /token, /authorize, /revoke; json for /register),
   // and StreamableHTTPServerTransport reads the raw request stream directly.
+
+  // --- Security middleware ---
+
+  // Security headers (helmet)
+  const helmet = (await import('helmet')).default;
+  app.use(
+    helmet({
+      hsts: { maxAge: 31536000, preload: true },
+      contentSecurityPolicy: { directives: { defaultSrc: ["'none'"] } },
+      frameguard: { action: 'deny' },
+    }),
+  );
+
+  // CORS
+  const cors = (await import('cors')).default;
+  const allowedOrigins = remoteConfig.corsAllowedOrigins
+    ? remoteConfig.corsAllowedOrigins.split(',').map((s) => s.trim())
+    : [remoteConfig.issuerUrl];
+  app.use(
+    cors({
+      origin: allowedOrigins,
+      methods: ['GET', 'POST', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Mcp-Session-Id', 'Accept'],
+    }),
+  );
+
+  // Body size limit (Content-Length check, does not consume the stream)
+  app.use((req: Request, res: Response, next: () => void) => {
+    const contentLength = req.headers['content-length'];
+    if (contentLength && Number.parseInt(contentLength, 10) > BODY_SIZE_LIMIT) {
+      res.status(413).json({ error: 'Payload too large' });
+      return;
+    }
+    next();
+  });
 
   // Request logger for debugging OAuth flow
   app.use((req: Request, _res: Response, next: () => void) => {
@@ -227,6 +267,15 @@ export async function startHttpServer(): Promise<void> {
 
   // Express error handler (must be after all routes)
   app.use((err: unknown, _req: Request, res: Response, next: (err?: unknown) => void) => {
+    if (err instanceof RedisUnavailableError) {
+      console.error('[error] Redis unavailable:', err.message);
+      if (!res.headersSent) {
+        res
+          .status(503)
+          .json({ error: 'service_unavailable', message: 'Storage backend temporarily unavailable' });
+      }
+      return;
+    }
     console.error('[error] Unhandled middleware error:', err);
     if (res.headersSent) {
       next(err);
@@ -242,6 +291,14 @@ export async function startHttpServer(): Promise<void> {
   // Graceful shutdown
   async function shutdown(signal: string): Promise<void> {
     console.error(`[info] Received ${signal}, shutting down gracefully...`);
+
+    // Force exit after timeout if graceful shutdown hangs
+    const forceExitTimer = setTimeout(() => {
+      console.error('[warn] Shutdown timeout, forcing exit');
+      process.exit(1);
+    }, SHUTDOWN_TIMEOUT_MS);
+    forceExitTimer.unref();
+
     clearInterval(cleanupTimer);
 
     // Close all sessions

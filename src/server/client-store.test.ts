@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RedisClientStore } from './client-store.js';
+import { RedisUnavailableError } from './errors.js';
 import type { CIMDFetcher } from './cimd-fetcher.js';
 import type {
   OAuthClientInformationFull,
@@ -124,6 +125,39 @@ describe('RedisClientStore', () => {
       const result = await store.getClient('http://example.com/metadata');
       expect(fetcher.fetch).not.toHaveBeenCalled();
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('Redis error handling', () => {
+    const redisError = new Error('Connection lost');
+
+    it('should throw RedisUnavailableError on registerClient failure', async () => {
+      redis.set.mockRejectedValueOnce(redisError);
+      const store = new RedisClientStore({ redis: redis as never });
+
+      await expect(
+        store.registerClient({
+          client_id: 'test-id',
+          client_id_issued_at: Math.floor(Date.now() / 1000),
+        } as OAuthClientInformationFull),
+      ).rejects.toThrow(RedisUnavailableError);
+    });
+
+    it('should throw RedisUnavailableError on getDcrClient read failure', async () => {
+      redis.get.mockRejectedValueOnce(redisError);
+      const store = new RedisClientStore({ redis: redis as never });
+
+      await expect(store.getClient('dcr-client-id')).rejects.toThrow(RedisUnavailableError);
+    });
+
+    it('should throw RedisUnavailableError on getCimdClient cache read failure', async () => {
+      redis.get.mockRejectedValueOnce(redisError);
+      const fetcher = createMockFetcher(cimdMetadata);
+      const store = new RedisClientStore({ redis: redis as never, cimdFetcher: fetcher });
+
+      await expect(store.getClient('https://example.com/metadata')).rejects.toThrow(
+        RedisUnavailableError,
+      );
     });
   });
 });

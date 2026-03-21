@@ -3,6 +3,7 @@ import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/serv
 import { OAuthClientInformationFullSchema } from '@modelcontextprotocol/sdk/shared/auth.js';
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { type CIMDFetcher, HttpCIMDFetcher, hashCimdUrl } from './cimd-fetcher.js';
+import { RedisUnavailableError } from './errors.js';
 
 const KEY_PREFIX = 'freee-mcp:oauth';
 const CIMD_CACHE_TTL_SECONDS = 60 * 60; // 1 hour
@@ -40,12 +41,16 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
 
   async registerClient(client: OAuthClientInformationFull): Promise<OAuthClientInformationFull> {
     const clientId = client.client_id;
-    await this.redis.set(
-      `${KEY_PREFIX}:client:${clientId}`,
-      JSON.stringify(client),
-      'EX',
-      CLIENT_TTL_SECONDS,
-    );
+    try {
+      await this.redis.set(
+        `${KEY_PREFIX}:client:${clientId}`,
+        JSON.stringify(client),
+        'EX',
+        CLIENT_TTL_SECONDS,
+      );
+    } catch (err) {
+      throw new RedisUnavailableError('registerClient', err as Error);
+    }
     return client;
   }
 
@@ -55,7 +60,13 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
     const hash = hashCimdUrl(clientIdUrl);
     const cacheKey = `${KEY_PREFIX}:cimd:${hash}`;
 
-    const cached = await this.redis.get(cacheKey);
+    let cached: string | null;
+    try {
+      cached = await this.redis.get(cacheKey);
+    } catch (err) {
+      throw new RedisUnavailableError('getCimdClient:cache-read', err as Error);
+    }
+
     if (cached) {
       const parsed = this.parseClientData(cached);
       if (parsed) return parsed;
@@ -69,9 +80,14 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
         client_id_issued_at: Math.floor(Date.now() / 1000),
       };
 
-      await this.redis.set(cacheKey, JSON.stringify(clientInfo), 'EX', CIMD_CACHE_TTL_SECONDS);
+      try {
+        await this.redis.set(cacheKey, JSON.stringify(clientInfo), 'EX', CIMD_CACHE_TTL_SECONDS);
+      } catch (err) {
+        throw new RedisUnavailableError('getCimdClient:cache-write', err as Error);
+      }
       return clientInfo;
     } catch (err) {
+      if (err instanceof RedisUnavailableError) throw err;
       console.error(`[error] CIMD fetch failed for ${clientIdUrl}:`, (err as Error).message);
       return undefined;
     }
@@ -79,14 +95,23 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
 
   private async getDcrClient(clientId: string): Promise<OAuthClientInformationFull | undefined> {
     const key = `${KEY_PREFIX}:client:${clientId}`;
-    const raw = await this.redis.get(key);
+    let raw: string | null;
+    try {
+      raw = await this.redis.get(key);
+    } catch (err) {
+      throw new RedisUnavailableError('getDcrClient:read', err as Error);
+    }
     if (!raw) return undefined;
 
     const parsed = this.parseClientData(raw);
     if (parsed) return parsed;
 
     console.error(`[error] Corrupt DCR client data for ${clientId}, removing key`);
-    await this.redis.del(key);
+    try {
+      await this.redis.del(key);
+    } catch (err) {
+      throw new RedisUnavailableError('getDcrClient:cleanup', err as Error);
+    }
     return undefined;
   }
 

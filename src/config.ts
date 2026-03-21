@@ -176,6 +176,9 @@ export interface RemoteServerConfig {
   freeeTokenEndpoint: string;
   freeeScope: string;
   redisUrl: string;
+  corsAllowedOrigins?: string;
+  rateLimitEnabled: boolean;
+  logLevel: string;
 }
 
 export function loadRemoteServerConfig(): RemoteServerConfig {
@@ -214,6 +217,9 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     freeeTokenEndpoint: process.env.FREEE_TOKEN_ENDPOINT || FREEE_TOKEN_ENDPOINT,
     freeeScope: process.env.FREEE_SCOPE || FREEE_OAUTH_SCOPE,
     redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+    corsAllowedOrigins: process.env.CORS_ALLOWED_ORIGINS,
+    rateLimitEnabled: process.env.RATE_LIMIT_ENABLED === 'true',
+    logLevel: process.env.LOG_LEVEL || 'info',
   };
 }
 

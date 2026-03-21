@@ -43,19 +43,23 @@ describe('refreshFreeeTokenRaw', () => {
     expect(result.scope).toBe('read write');
     expect(result.expires_at).toBeGreaterThan(Date.now());
 
-    expect(mockFetch).toHaveBeenCalledWith('https://test.freee.co.jp/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': expect.stringMatching(/^freee-mcp\//),
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: 'old-refresh-token',
-        client_id: 'test-client-id',
-        client_secret: 'test-client-secret',
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://test.freee.co.jp/token',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': expect.stringMatching(/^freee-mcp\//),
+        },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: 'old-refresh-token',
+          client_id: 'test-client-id',
+          client_secret: 'test-client-secret',
+        }),
+        signal: expect.any(AbortSignal),
       }),
-    });
+    );
   });
 
   it('should fall back to old refresh token when response does not include one', async () => {

@@ -1,7 +1,14 @@
 import type { Redis } from './redis-client.js';
-import { type TokenData, type OAuthClientConfig, TokenDataSchema, refreshFreeeTokenRaw, isTokenValid } from '../auth/tokens.js';
+import {
+  type TokenData,
+  type OAuthClientConfig,
+  TokenDataSchema,
+  refreshFreeeTokenRaw,
+  isTokenValid,
+} from '../auth/tokens.js';
 import type { CompanyConfig } from '../config/companies.js';
 import type { TokenStore } from './token-store.js';
+import { RedisUnavailableError } from '../server/errors.js';
 
 const TOKEN_KEY_PREFIX = 'freee-mcp:tokens:';
 const COMPANY_KEY_PREFIX = 'freee-mcp:company:';
@@ -17,7 +24,12 @@ export class RedisTokenStore implements TokenStore {
   }
 
   async loadTokens(userId: string): Promise<TokenData | null> {
-    const raw = await this.redis.get(this.tokenKey(userId));
+    let raw: string | null;
+    try {
+      raw = await this.redis.get(this.tokenKey(userId));
+    } catch (err) {
+      throw new RedisUnavailableError('loadTokens', err as Error);
+    }
     if (!raw) {
       return null;
     }
@@ -26,7 +38,10 @@ export class RedisTokenStore implements TokenStore {
       const parsed = JSON.parse(raw);
       const result = TokenDataSchema.safeParse(parsed);
       if (!result.success) {
-        console.error(`[error] Invalid token data in Redis for user ${userId}:`, result.error.message);
+        console.error(
+          `[error] Invalid token data in Redis for user ${userId}:`,
+          result.error.message,
+        );
         return null;
       }
       return result.data;
@@ -37,16 +52,19 @@ export class RedisTokenStore implements TokenStore {
   }
 
   async saveTokens(userId: string, tokens: TokenData): Promise<void> {
-    await this.redis.set(
-      this.tokenKey(userId),
-      JSON.stringify(tokens),
-      'EX',
-      TOKEN_TTL_SECONDS,
-    );
+    try {
+      await this.redis.set(this.tokenKey(userId), JSON.stringify(tokens), 'EX', TOKEN_TTL_SECONDS);
+    } catch (err) {
+      throw new RedisUnavailableError('saveTokens', err as Error);
+    }
   }
 
   async clearTokens(userId: string): Promise<void> {
-    await this.redis.del(this.tokenKey(userId));
+    try {
+      await this.redis.del(this.tokenKey(userId));
+    } catch (err) {
+      throw new RedisUnavailableError('clearTokens', err as Error);
+    }
   }
 
   async getValidAccessToken(userId: string): Promise<string | null> {
@@ -59,6 +77,7 @@ export class RedisTokenStore implements TokenStore {
       return tokens.access_token;
     }
 
+    // refreshFreeeTokenRaw may throw a freee API error -- that is NOT a Redis error
     const newTokens = await refreshFreeeTokenRaw(tokens.refresh_token, this.oauthConfig);
 
     await this.saveTokens(userId, newTokens);
@@ -66,8 +85,12 @@ export class RedisTokenStore implements TokenStore {
   }
 
   async getCurrentCompanyId(userId: string): Promise<string> {
-    const companyId = await this.redis.hget(this.companyKey(userId), 'currentCompanyId');
-    return companyId || '0';
+    try {
+      const companyId = await this.redis.hget(this.companyKey(userId), 'currentCompanyId');
+      return companyId || '0';
+    } catch (err) {
+      throw new RedisUnavailableError('getCurrentCompanyId', err as Error);
+    }
   }
 
   async setCurrentCompany(
@@ -82,11 +105,20 @@ export class RedisTokenStore implements TokenStore {
       name: name ?? '',
       description: description ?? '',
     };
-    await this.redis.hset(this.companyKey(userId), fields);
+    try {
+      await this.redis.hset(this.companyKey(userId), fields);
+    } catch (err) {
+      throw new RedisUnavailableError('setCurrentCompany', err as Error);
+    }
   }
 
   async getCompanyInfo(userId: string, companyId: string): Promise<CompanyConfig | null> {
-    const data = await this.redis.hgetall(this.companyKey(userId));
+    let data: Record<string, string>;
+    try {
+      data = await this.redis.hgetall(this.companyKey(userId));
+    } catch (err) {
+      throw new RedisUnavailableError('getCompanyInfo', err as Error);
+    }
     if (!data || data.currentCompanyId !== companyId) {
       return null;
     }

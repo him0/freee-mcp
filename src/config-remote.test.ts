@@ -30,6 +30,9 @@ describe('loadRemoteServerConfig', () => {
       freeeTokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
       freeeScope: 'read write',
       redisUrl: 'redis://localhost:6379',
+      corsAllowedOrigins: undefined,
+      rateLimitEnabled: false,
+      logLevel: 'info',
     });
   });
 

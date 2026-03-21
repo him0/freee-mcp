@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
 import { getConfig } from '../config.js';
-import { CONFIG_FILE_PERMISSION, getConfigDir, USER_AGENT } from '../constants.js';
+import { CONFIG_FILE_PERMISSION, getConfigDir, USER_AGENT, FETCH_TIMEOUT_TOKEN_MS } from '../constants.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
 import { createTokenData } from './token-utils.js';
 import { tryMigrateLegacyTokens, clearLegacyTokens } from './token-migration.js';
@@ -46,7 +46,9 @@ export async function saveTokens(tokens: TokenData): Promise<void> {
     console.error(`[info] Creating directory: ${configDir}`);
     await fs.mkdir(configDir, { recursive: true });
     console.error(`[info] Writing tokens to: ${tokenPath}`);
-    await fs.writeFile(tokenPath, JSON.stringify(tokens, null, 2), { mode: CONFIG_FILE_PERMISSION });
+    await fs.writeFile(tokenPath, JSON.stringify(tokens, null, 2), {
+      mode: CONFIG_FILE_PERMISSION,
+    });
     console.error('[info] Tokens saved successfully');
   } catch (error) {
     console.error('[error] Failed to save tokens:', error);
@@ -107,6 +109,7 @@ export async function refreshFreeeTokenRaw(
       client_id: oauthConfig.clientId,
       client_secret: oauthConfig.clientSecret,
     }),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_TOKEN_MS),
   });
 
   if (!response.ok) {

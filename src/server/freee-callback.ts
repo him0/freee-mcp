@@ -1,14 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import type { Request, Response } from 'express';
+import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
 import { OAuthTokenResponseSchema } from '../auth/tokens.js';
 import { createTokenData } from '../auth/token-utils.js';
-import { USER_AGENT, FREEE_API_URL } from '../constants.js';
+import { USER_AGENT, FREEE_API_URL, FETCH_TIMEOUT_TOKEN_MS, FETCH_TIMEOUT_USERINFO_MS } from '../constants.js';
 import type { OAuthStateStore } from './oauth-store.js';
 import type { TokenStore } from '../storage/token-store.js';
 
 export interface FreeeCallbackDeps {
   oauthStore: OAuthStateStore;
   tokenStore: TokenStore;
+  clientStore?: OAuthRegisteredClientsStore;
   freeeClientId: string;
   freeeClientSecret: string;
   freeeTokenEndpoint: string;
@@ -39,6 +41,7 @@ async function exchangeFreeeCode(
       client_id: clientId,
       client_secret: clientSecret,
     }),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_TOKEN_MS),
   });
 
   if (!response.ok) {
@@ -65,6 +68,7 @@ async function fetchFreeeUserId(accessToken: string, apiUrl: string): Promise<st
       Authorization: `Bearer ${accessToken}`,
       'User-Agent': USER_AGENT,
     },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_USERINFO_MS),
   });
 
   if (!response.ok) {
@@ -144,6 +148,23 @@ async function handleCallback(
   if (!session) {
     res.status(400).send('Invalid or expired OAuth session');
     return;
+  }
+
+  // Validate redirect_uri against registered client (defense-in-depth).
+  // Wrapped in try-catch: session is already consumed above, so a Redis failure here
+  // must not abort the flow — the user cannot retry without restarting OAuth.
+  if (deps.clientStore) {
+    try {
+      const client = await deps.clientStore.getClient(session.clientId);
+      if (client?.redirect_uris && !client.redirect_uris.includes(session.redirectUri)) {
+        console.error(`[error] redirect_uri mismatch for client ${session.clientId}`);
+        res.status(400).send('redirect_uri mismatch');
+        return;
+      }
+    } catch (err) {
+      console.error(`[error] Failed to validate redirect_uri for client ${session.clientId}:`, err);
+      // Continue — redirect_uri validation is defense-in-depth, not critical path
+    }
   }
 
   try {
