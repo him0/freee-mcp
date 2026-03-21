@@ -6,7 +6,7 @@
     "freee-mcp": "./bin/cli.js"
   },
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist bin/cli.js",
     "build": "bun run build.ts",
     "prepare": "bun run build",
     "start": "bun run src/index.ts",
