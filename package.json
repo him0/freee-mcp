@@ -1,13 +1,14 @@
 {
   "type": "module",
   "name": "freee-mcp",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "bin": {
     "freee-mcp": "./bin/cli.js"
   },
   "scripts": {
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist bin/cli.js",
     "build": "bun run build.ts",
+    "prepare": "bun run build",
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
     "dev:remote": "bun --watch run src/index.ts --remote",

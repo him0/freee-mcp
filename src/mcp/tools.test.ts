@@ -82,11 +82,24 @@ describe('tools', () => {
     it('should register authentication tools', () => {
       addAuthenticationTools(mockServer);
 
-      expect(mockTool).toHaveBeenCalledTimes(7);
+      expect(mockTool).toHaveBeenCalledTimes(8);
       expect(mockTool).toHaveBeenCalledWith('freee_current_user', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_authenticate', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_auth_status', expect.any(String), {}, expect.any(Function));
       expect(mockTool).toHaveBeenCalledWith('freee_clear_auth', expect.any(String), {}, expect.any(Function));
+      expect(mockTool).toHaveBeenCalledWith('freee_server_info', expect.any(String), {}, expect.any(Function));
+    });
+
+    describe('freee_server_info', () => {
+      it('should return server info including version', async () => {
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_server_info')?.[3];
+
+        const result = await handler();
+
+        expect(result.content[0].text).toContain('freee-mcp server info:');
+        expect(result.content[0].text).toContain('version:');
+      });
     });
 
     describe('freee_current_user', () => {

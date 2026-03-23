@@ -1,5 +1,18 @@
 # freee-mcp
 
+## 0.14.0
+
+### Minor Changes
+
+- 89a26b5: freee_server_info ツールを追加。サーバーの情報（バージョンなど）を取得できるようになりました。リリース時にスキル ZIP に VERSION.md を同梱し、スキルとサーバーのバージョン比較が可能に。
+
+## 0.13.1
+
+### Patch Changes
+
+- 0e194ff: package.json に prepare スクリプトを追加し、GitHub リポジトリから直接インストール時に自動ビルドが実行されるようにした
+- a26ecfb: `freee-mcp configure` 実行時のバナーにバージョン番号を表示するようにした
+
 ## 0.13.0
 
 ### Minor Changes

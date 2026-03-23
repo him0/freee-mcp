@@ -145,3 +145,6 @@ out
 Dockerfile.local
 Dockerfile.local.dockerignore
 docker-compose.override.yml
+
+# Generated VERSION.md in skill directory
+skills/freee-api-skill/VERSION.md

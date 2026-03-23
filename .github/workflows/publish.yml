@@ -75,9 +75,12 @@ jobs:
       - name: Package skill for release
         if: steps.check-release.outputs.skip != 'true'
         run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "freee-mcp version: ${VERSION}" > skills/freee-api-skill/VERSION.md
           cd skills/freee-api-skill
           zip -r ../../freee-api-skill.zip .
-          echo "✅ Packaged skill"
+          rm VERSION.md
+          echo "✅ Packaged skill with VERSION.md (v${VERSION})"
 
       - name: Collect contributors from community PRs
         if: steps.check-release.outputs.skip != 'true'
