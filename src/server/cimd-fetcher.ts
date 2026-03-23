@@ -36,6 +36,7 @@ function isPrivateHostname(hostname: string): boolean {
   if (ipv4Parts.length === 4 && ipv4Parts.every((p) => /^\d+$/.test(p))) {
     const [a, b] = ipv4Parts.map(Number);
     if (a === 10) return true;
+    if (a === 127) return true; // entire loopback range
     if (a === 172 && b >= 16 && b <= 31) return true;
     if (a === 192 && b === 168) return true;
     if (a === 169 && b === 254) return true; // link-local
@@ -46,6 +47,10 @@ function isPrivateHostname(hostname: string): boolean {
   if (hostname.startsWith('[')) {
     const bare = hostname.replace(/^\[|\]$/g, '');
     if (bare.startsWith('fe80:') || bare.startsWith('fc') || bare.startsWith('fd')) {
+      return true;
+    }
+    // IPv4-mapped / IPv4-compatible IPv6 (e.g. ::ffff:127.0.0.1, ::ffff:a00:1)
+    if (bare.startsWith('::ffff:') || bare === '::1' || bare === '::') {
       return true;
     }
   }

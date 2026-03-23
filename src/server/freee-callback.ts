@@ -131,7 +131,7 @@ async function handleCallback(
   if (error) {
     const session = state ? await deps.oauthStore.consumeSession(state) : null;
     if (!session) {
-      res.status(400).send(`freee OAuth error: ${error}`);
+      res.status(400).type('text/plain').send(`freee OAuth error: ${error}`);
       return;
     }
 
