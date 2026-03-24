@@ -1,14 +1,14 @@
 import prompts from 'prompts';
 import {
-  checkMcpConfigStatus,
   addFreeeMcpConfig,
-  removeFreeeMcpConfig,
+  checkMcpConfigStatus,
   getTargetDisplayName,
   type McpTarget,
+  removeFreeeMcpConfig,
 } from '../config/mcp-config.js';
 import { DEFAULT_CALLBACK_PORT } from '../constants.js';
-import type { Credentials, SelectedCompany, Company } from './types.js';
 import { fetchCompanies } from './api-client.js';
+import type { Company, Credentials, SelectedCompany } from './types.js';
 
 export async function collectCredentials(): Promise<Credentials> {
   const existingConfig = await import('../config/companies.js').then((m) => m.loadFullConfig());
@@ -22,7 +22,9 @@ export async function collectCredentials(): Promise<Credentials> {
   console.log('ステップ 1/3: OAuth認証情報の入力\n');
 
   const defaultPort = existingConfig.callbackPort || DEFAULT_CALLBACK_PORT;
-  console.log(`freee アプリのコールバックURLには http://127.0.0.1:${defaultPort}/callback を設定してください。\n`);
+  console.log(
+    `freee アプリのコールバックURLには http://127.0.0.1:${defaultPort}/callback を設定してください。\n`,
+  );
 
   const credentials = await prompts([
     {
@@ -30,8 +32,7 @@ export async function collectCredentials(): Promise<Credentials> {
       name: 'clientId',
       message: 'FREEE_CLIENT_ID:',
       initial: existingConfig.clientId || undefined,
-      validate: (value: string): string | boolean =>
-        value.trim() ? true : 'CLIENT_ID は必須です',
+      validate: (value: string): string | boolean => (value.trim() ? true : 'CLIENT_ID は必須です'),
     },
     {
       type: 'password',
@@ -82,7 +83,9 @@ export async function collectCredentials(): Promise<Credentials> {
   return { clientId, clientSecret, callbackPort };
 }
 
-export async function selectCompany(accessToken: string): Promise<{ selected: SelectedCompany; all: Company[] }> {
+export async function selectCompany(
+  accessToken: string,
+): Promise<{ selected: SelectedCompany; all: Company[] }> {
   console.log('ステップ 3/3: 操作対象の事業所の選択\n');
   console.log('事業所一覧を取得中...');
 
@@ -171,13 +174,18 @@ async function configureMcpTarget(target: McpTarget): Promise<boolean> {
 
 const SKILL_RELEASES_URL = 'https://github.com/freee/freee-mcp/releases/latest';
 
-function showSkillInstallGuide(claudeCodeConfigured: boolean, claudeDesktopConfigured: boolean): void {
+function showSkillInstallGuide(
+  claudeCodeConfigured: boolean,
+  claudeDesktopConfigured: boolean,
+): void {
   if (!claudeCodeConfigured && !claudeDesktopConfigured) {
     return;
   }
 
   console.log('=== Skill (API リファレンス) のインストール ===\n');
-  console.log('MCP サーバーと合わせて Skill をインストールすると、API リファレンスが利用可能になります。\n');
+  console.log(
+    'MCP サーバーと合わせて Skill をインストールすると、API リファレンスが利用可能になります。\n',
+  );
 
   if (claudeCodeConfigured) {
     console.log('[Claude Code]');

@@ -5,10 +5,10 @@
  * from Claude Code (~/.claude.json) and Claude Desktop config files.
  */
 
-import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import path from 'node:path';
+import fs from 'node:fs/promises';
 import os from 'node:os';
+import path from 'node:path';
 
 export type McpTarget = 'claude-code' | 'claude-desktop';
 
@@ -53,7 +53,7 @@ export function getMcpConfigPath(target: McpTarget): string {
       'Library',
       'Application Support',
       'Claude',
-      'claude_desktop_config.json'
+      'claude_desktop_config.json',
     );
   } else if (platform === 'win32') {
     // Windows Store (MSIX) version uses a sandboxed path

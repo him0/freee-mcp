@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { makeApiRequest, type BinaryFileResponse, isBinaryFileResponse } from './client.js';
-import { USER_AGENT } from '../constants.js';
 import fs from 'node:fs/promises';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { USER_AGENT } from '../constants.js';
+import { type BinaryFileResponse, isBinaryFileResponse, makeApiRequest } from './client.js';
 
 // Test constants (defined after mocks due to hoisting)
 const TEST_API_URL = 'https://api.freee.co.jp';
@@ -13,20 +13,20 @@ vi.mock('../config.js', () => ({
   getConfig: (): { freee: { apiUrl: string; companyId: string } } => ({
     freee: {
       apiUrl: 'https://api.freee.co.jp',
-      companyId: '12345'
-    }
-  })
+      companyId: '12345',
+    },
+  }),
 }));
 
 vi.mock('../config/companies.js', () => ({
   getCurrentCompanyId: vi.fn(),
-  getDownloadDir: vi.fn()
+  getDownloadDir: vi.fn(),
 }));
 
 const { getCurrentCompanyId, getDownloadDir } = await import('../config/companies.js');
 
 vi.mock('../auth/tokens.js', () => ({
-  getValidAccessToken: vi.fn()
+  getValidAccessToken: vi.fn(),
 }));
 
 const mockFetch = vi.fn();
@@ -60,7 +60,7 @@ interface MockBinaryResponse {
  */
 function createMockHeaders(contentType: string): MockHeaders {
   return {
-    get: (name: string) => name === 'content-type' ? contentType : null
+    get: (name: string) => (name === 'content-type' ? contentType : null),
   };
 }
 
@@ -72,7 +72,7 @@ function createJsonResponse(data: unknown): MockJsonResponse {
     ok: true,
     headers: createMockHeaders('application/json'),
     json: () => Promise.resolve(data),
-    text: () => Promise.resolve(JSON.stringify(data))
+    text: () => Promise.resolve(JSON.stringify(data)),
   };
 }
 
@@ -83,7 +83,7 @@ function createErrorResponse(status: number, errorData: unknown): MockErrorRespo
   return {
     ok: false,
     status,
-    json: () => Promise.resolve(errorData)
+    json: () => Promise.resolve(errorData),
   };
 }
 
@@ -94,7 +94,7 @@ function createBinaryResponse(contentType: string, data: Uint8Array): MockBinary
   return {
     ok: true,
     headers: createMockHeaders(contentType),
-    arrayBuffer: () => Promise.resolve(data.buffer)
+    arrayBuffer: () => Promise.resolve(data.buffer),
   };
 }
 
@@ -128,7 +128,7 @@ describe('client', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         `${TEST_API_URL}/api/1/users/me`,
-        {
+        expect.objectContaining({
           method: 'GET',
           headers: {
             Authorization: `Bearer ${TEST_ACCESS_TOKEN}`,
@@ -136,7 +136,8 @@ describe('client', () => {
             'User-Agent': USER_AGENT,
           },
           body: undefined,
-        }
+          signal: expect.any(AbortSignal),
+        }),
       );
       expect(result).toEqual(mockResponse);
     });
@@ -150,7 +151,7 @@ describe('client', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         `${TEST_API_URL}/api/1/deals?limit=10&offset=0`,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -162,7 +163,7 @@ describe('client', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         `${TEST_API_URL}/api/1/deals?limit=10`,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -175,7 +176,7 @@ describe('client', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         `${TEST_API_URL}/api/1/deals`,
-        {
+        expect.objectContaining({
           method: 'POST',
           headers: {
             Authorization: `Bearer ${TEST_ACCESS_TOKEN}`,
@@ -183,7 +184,8 @@ describe('client', () => {
             'User-Agent': USER_AGENT,
           },
           body: JSON.stringify(requestBody),
-        }
+          signal: expect.any(AbortSignal),
+        }),
       );
     });
 
@@ -195,16 +197,16 @@ describe('client', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         `${TEST_API_URL}/api/1/deals?company_id=${TEST_COMPANY_ID}`,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
     it('should throw error for mismatched company_id in params', async () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
 
-      await expect(
-        makeApiRequest('GET', '/api/1/deals', { company_id: '99999' })
-      ).rejects.toThrow('company_id の不整合');
+      await expect(makeApiRequest('GET', '/api/1/deals', { company_id: '99999' })).rejects.toThrow(
+        'company_id の不整合',
+      );
     });
 
     it('should pass through matching company_id in body', async () => {
@@ -218,7 +220,7 @@ describe('client', () => {
         `${TEST_API_URL}/api/1/deals`,
         expect.objectContaining({
           body: JSON.stringify(requestBody),
-        })
+        }),
       );
     });
 
@@ -226,7 +228,7 @@ describe('client', () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
 
       await expect(
-        makeApiRequest('POST', '/api/1/deals', undefined, { company_id: '99999' })
+        makeApiRequest('POST', '/api/1/deals', undefined, { company_id: '99999' }),
       ).rejects.toThrow('company_id の不整合');
     });
 
@@ -234,7 +236,7 @@ describe('client', () => {
       await setupAccessToken(null);
 
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
-        '認証が必要です。freee_authenticate ツールを使用して認証を行ってください。'
+        '認証が必要です。freee_authenticate ツールを使用して認証を行ってください。',
       );
     });
 
@@ -243,7 +245,7 @@ describe('client', () => {
       mockFetch.mockResolvedValue(createErrorResponse(401, { error: 'invalid_token' }));
 
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
-        '認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。'
+        '認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。',
       );
     });
 
@@ -251,9 +253,7 @@ describe('client', () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
       mockFetch.mockResolvedValue(createErrorResponse(403, { error: 'insufficient_scope' }));
 
-      await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
-        'アクセス拒否 (403)'
-      );
+      await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow('アクセス拒否 (403)');
     });
 
     it('should include rate limit hint in 403 error message', async () => {
@@ -261,7 +261,7 @@ describe('client', () => {
       mockFetch.mockResolvedValue(createErrorResponse(403, { error: 'rate_limit_exceeded' }));
 
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
-        'レートリミットの可能性があります'
+        'レートリミットの可能性があります',
       );
     });
 
@@ -270,7 +270,7 @@ describe('client', () => {
       mockFetch.mockResolvedValue(createErrorResponse(500, { error: 'internal_server_error' }));
 
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
-        'API request failed: 500'
+        'API request failed: 500',
       );
     });
 
@@ -279,11 +279,11 @@ describe('client', () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 500,
-        json: () => Promise.reject(new Error('Invalid JSON'))
+        json: () => Promise.reject(new Error('Invalid JSON')),
       });
 
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
-        'API request failed: 500\n\n詳細: (JSON parse failed: Invalid JSON)'
+        'API request failed: 500\n\n詳細: (JSON parse failed: Invalid JSON)',
       );
     });
 
@@ -357,7 +357,7 @@ describe('client', () => {
     it('should save image response to file with correct extension', async () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
 
-      const pngMagicBytes = new Uint8Array([0x89, 0x50, 0x4E, 0x47]);
+      const pngMagicBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
       mockFetch.mockResolvedValue(createBinaryResponse('image/png', pngMagicBytes));
 
       const result = await makeApiRequest('GET', '/api/1/receipts/456/download');

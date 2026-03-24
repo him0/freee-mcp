@@ -1,10 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { makeApiRequest, type BinaryFileResponse, isBinaryFileResponse } from '../api/client.js';
-import { validatePathForService, listAllAvailablePaths, type ApiType } from './schema-loader.js';
-import { createTextResponse, formatErrorMessage, type TextResponse } from '../utils/error.js';
-import { extractTokenContext } from '../storage/context.js';
+import { type BinaryFileResponse, isBinaryFileResponse, makeApiRequest } from '../api/client.js';
 import type { AuthExtra } from '../storage/context.js';
+import { extractTokenContext } from '../storage/context.js';
+import { createTextResponse, formatErrorMessage, type TextResponse } from '../utils/error.js';
+import { type ApiType, listAllAvailablePaths, validatePathForService } from './schema-loader.js';
 
 /**
  * Format binary file response for display
@@ -22,18 +22,23 @@ function formatBinaryResponse(response: BinaryFileResponse): string {
 const SERVICE_HINT = 'service: accounting/hr/invoice/pm/sm';
 const SKILL_HINT = '詳細ガイドはfreee-api-skill skillを参照';
 
-const serviceSchema = z.enum(['accounting', 'hr', 'invoice', 'pm', 'sm']).describe('対象のfreeeサービス');
+const serviceSchema = z
+  .enum(['accounting', 'hr', 'invoice', 'pm', 'sm'])
+  .describe('対象のfreeeサービス');
 
 /**
  * Creates a tool handler for a specific HTTP method
  */
 function createMethodTool(method: string) {
-  return async (args: {
-    service: ApiType;
-    path: string;
-    query?: Record<string, unknown>;
-    body?: Record<string, unknown>;
-  }, extra?: AuthExtra): Promise<TextResponse> => {
+  return async (
+    args: {
+      service: ApiType;
+      path: string;
+      query?: Record<string, unknown>;
+      body?: Record<string, unknown>;
+    },
+    extra?: AuthExtra,
+  ): Promise<TextResponse> => {
     try {
       const { service, path, query, body } = args;
       const { tokenStore, userId } = extractTokenContext(extra);
@@ -43,13 +48,20 @@ function createMethodTool(method: string) {
       if (!validation.isValid) {
         return createTextResponse(
           `パス検証エラー: ${validation.message}\n\n` +
-          `利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`
+            `利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`,
         );
       }
 
       // Make API request with the correct base URL
       // biome-ignore lint/style/noNonNullAssertion: actualPath is set when isValid is true
-      const result = await makeApiRequest(method, validation.actualPath!, query, body, validation.baseUrl, { tokenStore, userId });
+      const result = await makeApiRequest(
+        method,
+        validation.actualPath!,
+        query,
+        body,
+        validation.baseUrl,
+        { tokenStore, userId },
+      );
 
       // Handle binary file response
       if (isBinaryFileResponse(result)) {
@@ -81,7 +93,7 @@ export function generateClientModeTool(server: McpServer): void {
       path: z.string().describe('APIパス (例: /api/1/deals)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
-    createMethodTool('GET')
+    createMethodTool('GET'),
   );
 
   // POST tool
@@ -94,7 +106,7 @@ export function generateClientModeTool(server: McpServer): void {
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
-    createMethodTool('POST')
+    createMethodTool('POST'),
   );
 
   // PUT tool
@@ -107,7 +119,7 @@ export function generateClientModeTool(server: McpServer): void {
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
-    createMethodTool('PUT')
+    createMethodTool('PUT'),
   );
 
   // DELETE tool
@@ -119,7 +131,7 @@ export function generateClientModeTool(server: McpServer): void {
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
-    createMethodTool('DELETE')
+    createMethodTool('DELETE'),
   );
 
   // PATCH tool
@@ -132,7 +144,7 @@ export function generateClientModeTool(server: McpServer): void {
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
-    createMethodTool('PATCH')
+    createMethodTool('PATCH'),
   );
 
   // Add helper tool to list available paths
@@ -144,11 +156,11 @@ export function generateClientModeTool(server: McpServer): void {
       const pathsList = listAllAvailablePaths();
       return createTextResponse(
         `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +
-        `使用例:\n` +
-        `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "limit": 10 } }\n` +
-        `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "type": "income", "limit": 5 } }\n` +
-        `freee_api_post { "service": "accounting", "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }`
+          `使用例:\n` +
+          `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "limit": 10 } }\n` +
+          `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "type": "income", "limit": 5 } }\n` +
+          `freee_api_post { "service": "accounting", "path": "/api/1/deals", "body": { "issue_date": "2024-01-01", ... } }`,
       );
-    }
+    },
   );
 }

@@ -1,17 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {
-  type TokenData,
-  saveTokens,
-  loadTokens,
-  isTokenValid,
-  refreshAccessToken,
-  clearTokens,
-  getValidAccessToken
-} from './tokens.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { APP_NAME, CONFIG_FILE_PERMISSION } from '../constants.js';
 import { setupTestTempDir } from '../test-utils/temp-dir.js';
-import { CONFIG_FILE_PERMISSION, APP_NAME } from '../constants.js';
+import {
+  clearTokens,
+  getValidAccessToken,
+  isTokenValid,
+  loadTokens,
+  refreshAccessToken,
+  saveTokens,
+  type TokenData,
+} from './tokens.js';
 
 // テスト用一時ディレクトリの設定
 const { tempDir, setup: setupTempDir, cleanup: cleanupTempDir } = setupTestTempDir('tokens-test-');
@@ -24,13 +24,13 @@ vi.mock('../config.js', () => ({
   } => ({
     oauth: {
       tokenEndpoint: 'https://test.freee.co.jp/token',
-      scope: 'read write'
+      scope: 'read write',
     },
     freee: {
       clientId: 'test-client-id',
-      clientSecret: 'test-client-secret'
-    }
-  })
+      clientSecret: 'test-client-secret',
+    },
+  }),
 }));
 
 const mockFs = vi.mocked(fs);
@@ -46,7 +46,7 @@ describe('tokens', () => {
     refresh_token: 'test-refresh-token',
     expires_at: Date.now() + 3600000,
     token_type: 'Bearer',
-    scope: 'read write'
+    scope: 'read write',
   };
 
   beforeEach(async () => {
@@ -81,14 +81,11 @@ describe('tokens', () => {
       const expectedConfigDir = path.join(tempDir.getPath(), APP_NAME);
       const expectedTokenPath = path.join(expectedConfigDir, 'tokens.json');
 
-      expect(mockFs.mkdir).toHaveBeenCalledWith(
-        expectedConfigDir,
-        { recursive: true }
-      );
+      expect(mockFs.mkdir).toHaveBeenCalledWith(expectedConfigDir, { recursive: true });
       expect(mockFs.writeFile).toHaveBeenCalledWith(
         expectedTokenPath,
         JSON.stringify(mockTokenData, null, 2),
-        { mode: CONFIG_FILE_PERMISSION }
+        { mode: CONFIG_FILE_PERMISSION },
       );
     });
 
@@ -110,7 +107,7 @@ describe('tokens', () => {
       expect(result).toEqual(mockTokenData);
       expect(mockFs.readFile).toHaveBeenCalledWith(
         path.join(tempDir.getPath(), APP_NAME, 'tokens.json'),
-        'utf8'
+        'utf8',
       );
     });
 
@@ -138,10 +135,7 @@ describe('tokens', () => {
       const result = await loadTokens();
 
       expect(result).toBeNull();
-      expect(console.error).toHaveBeenCalledWith(
-        '[error] Invalid token file:',
-        expect.any(String)
-      );
+      expect(console.error).toHaveBeenCalledWith('[error] Invalid token file:', expect.any(String));
     });
 
     it('should return null when token data is missing required fields', async () => {
@@ -162,7 +156,7 @@ describe('tokens', () => {
         refresh_token: 'test',
         expires_at: 'not-a-number', // should be number
         token_type: 'Bearer',
-        scope: 'read'
+        scope: 'read',
       };
       mockFs.readFile.mockResolvedValue(JSON.stringify(wrongTypeData));
 
@@ -176,7 +170,7 @@ describe('tokens', () => {
     it('should return true for valid token', () => {
       const validToken: TokenData = {
         ...mockTokenData,
-        expires_at: Date.now() + 3600000
+        expires_at: Date.now() + 3600000,
       };
 
       expect(isTokenValid(validToken)).toBe(true);
@@ -185,7 +179,7 @@ describe('tokens', () => {
     it('should return false for expired token', () => {
       const expiredToken: TokenData = {
         ...mockTokenData,
-        expires_at: Date.now() - 3600000
+        expires_at: Date.now() - 3600000,
       };
 
       expect(isTokenValid(expiredToken)).toBe(false);
@@ -199,12 +193,12 @@ describe('tokens', () => {
         refresh_token: 'new-refresh-token',
         expires_in: 3600,
         token_type: 'Bearer',
-        scope: 'read write'
+        scope: 'read write',
       };
 
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(refreshResponse)
+        json: () => Promise.resolve(refreshResponse),
       });
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
@@ -213,29 +207,35 @@ describe('tokens', () => {
 
       expect(result.access_token).toBe('new-access-token');
       expect(result.refresh_token).toBe('new-refresh-token');
-      expect(mockFetch).toHaveBeenCalledWith('https://test.freee.co.jp/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': expect.stringMatching(/^freee-mcp\//),
-        },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          refresh_token: 'old-refresh-token',
-          client_id: 'test-client-id',
-          client_secret: 'test-client-secret',
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://test.freee.co.jp/token',
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': expect.stringMatching(/^freee-mcp\//),
+          },
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: 'old-refresh-token',
+            client_id: 'test-client-id',
+            client_secret: 'test-client-secret',
+          }),
+          signal: expect.any(AbortSignal),
         }),
-      });
+      );
     });
 
     it('should throw error if refresh fails', async () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 401,
-        json: () => Promise.resolve({ error: 'invalid_grant' })
+        json: () => Promise.resolve({ error: 'invalid_grant' }),
       });
 
-      await expect(refreshAccessToken('invalid-token')).rejects.toThrow('Token refresh failed: 401');
+      await expect(refreshAccessToken('invalid-token')).rejects.toThrow(
+        'Token refresh failed: 401',
+      );
     });
 
     it('should fall back to old refresh token when response does not include one', async () => {
@@ -243,12 +243,12 @@ describe('tokens', () => {
         access_token: 'new-access-token',
         expires_in: 3600,
         token_type: 'Bearer',
-        scope: 'read write'
+        scope: 'read write',
       };
 
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(refreshResponse)
+        json: () => Promise.resolve(refreshResponse),
       });
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
@@ -269,7 +269,7 @@ describe('tokens', () => {
       await clearTokens();
 
       expect(mockFs.unlink).toHaveBeenCalledWith(
-        path.join(tempDir.getPath(), APP_NAME, 'tokens.json')
+        path.join(tempDir.getPath(), APP_NAME, 'tokens.json'),
       );
     });
 
@@ -304,17 +304,18 @@ describe('tokens', () => {
     it('should refresh expired token', async () => {
       const expiredToken = {
         ...mockTokenData,
-        expires_at: Date.now() - 3600000
+        expires_at: Date.now() - 3600000,
       };
 
       mockFs.readFile.mockResolvedValue(JSON.stringify(expiredToken));
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          access_token: 'new-access-token',
-          refresh_token: 'new-refresh-token',
-          expires_in: 3600
-        })
+        json: () =>
+          Promise.resolve({
+            access_token: 'new-access-token',
+            refresh_token: 'new-refresh-token',
+            expires_in: 3600,
+          }),
       });
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
@@ -327,14 +328,14 @@ describe('tokens', () => {
     it('should throw error when token refresh fails', async () => {
       const expiredToken = {
         ...mockTokenData,
-        expires_at: Date.now() - 3600000
+        expires_at: Date.now() - 3600000,
       };
 
       mockFs.readFile.mockResolvedValue(JSON.stringify(expiredToken));
       mockFetch.mockResolvedValue({
         ok: false,
         status: 401,
-        json: () => Promise.resolve({ error: 'invalid_grant' })
+        json: () => Promise.resolve({ error: 'invalid_grant' }),
       });
 
       await expect(getValidAccessToken()).rejects.toThrow('Token refresh failed: 401');

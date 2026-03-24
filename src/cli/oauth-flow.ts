@@ -1,11 +1,11 @@
 import crypto from 'node:crypto';
 import open from 'open';
+import { buildAuthUrl, exchangeCodeForTokens } from '../auth/oauth.js';
 import {
-  startCallbackServer,
   getActualRedirectUri,
   getDefaultAuthManager,
+  startCallbackServer,
 } from '../auth/server.js';
-import { buildAuthUrl, exchangeCodeForTokens } from '../auth/oauth.js';
 import { AUTH_TIMEOUT_MS } from '../constants.js';
 import type { OAuthResult } from './types.js';
 
@@ -32,12 +32,9 @@ export async function performOAuth(): Promise<OAuthResult> {
   const authManager = getDefaultAuthManager();
 
   const callbackPromise = new Promise<string>((resolve, reject) => {
-    const timeout = setTimeout(
-      () => {
-        reject(new Error('認証がタイムアウトしました（5分）'));
-      },
-      AUTH_TIMEOUT_MS,
-    );
+    const timeout = setTimeout(() => {
+      reject(new Error('認証がタイムアウトしました（5分）'));
+    }, AUTH_TIMEOUT_MS);
 
     authManager.registerCliAuthHandler(state, {
       resolve: (code: string): void => {

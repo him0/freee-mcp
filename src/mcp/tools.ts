@@ -1,14 +1,18 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import crypto from 'node:crypto';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { getConfig } from '../config.js';
 import { makeApiRequest } from '../api/client.js';
-import { generatePKCE, buildAuthUrl } from '../auth/oauth.js';
-import { registerAuthenticationRequest, getActualRedirectUri, startCallbackServerWithAutoStop } from '../auth/server.js';
-import { extractTokenContext } from '../storage/context.js';
-import type { AuthExtra } from '../storage/context.js';
-import { createTextResponse, formatErrorMessage } from '../utils/error.js';
+import { buildAuthUrl, generatePKCE } from '../auth/oauth.js';
+import {
+  getActualRedirectUri,
+  registerAuthenticationRequest,
+  startCallbackServerWithAutoStop,
+} from '../auth/server.js';
+import { getConfig } from '../config.js';
 import { AUTH_TIMEOUT_MS, PACKAGE_VERSION } from '../constants.js';
+import type { AuthExtra } from '../storage/context.js';
+import { extractTokenContext } from '../storage/context.js';
+import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
 export function addAuthenticationTools(server: McpServer): void {
   server.tool(
@@ -21,43 +25,57 @@ export function addAuthenticationTools(server: McpServer): void {
         const companyId = await tokenStore.getCurrentCompanyId(userId);
 
         if (!companyId) {
-          return createTextResponse('会社IDが設定されていません。freee_set_current_company で設定してください。');
+          return createTextResponse(
+            '会社IDが設定されていません。freee_set_current_company で設定してください。',
+          );
         }
 
         const [companyInfo, userInfo] = await Promise.all([
           tokenStore.getCompanyInfo(userId, companyId),
-          makeApiRequest('GET', '/api/1/users/me', undefined, undefined, undefined, { tokenStore, userId }),
+          makeApiRequest('GET', '/api/1/users/me', undefined, undefined, undefined, {
+            tokenStore,
+            userId,
+          }),
         ]);
 
         return createTextResponse(
           `現在のユーザー情報:\n` +
-          `会社ID: ${companyId}\n` +
-          `会社名: ${companyInfo?.name || 'Unknown'}\n` +
-          `ユーザー詳細:\n${JSON.stringify(userInfo, null, 2)}`
+            `会社ID: ${companyId}\n` +
+            `会社名: ${companyInfo?.name || 'Unknown'}\n` +
+            `ユーザー詳細:\n${JSON.stringify(userInfo, null, 2)}`,
         );
       } catch (error) {
         return createTextResponse(`ユーザー情報の取得に失敗: ${formatErrorMessage(error)}`);
       }
-    }
+    },
   );
 
   server.tool(
     'freee_authenticate',
     'OAuth認証を開始、初回のみ必要 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
-    async () => {
+    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
-        if (!getConfig().freee.clientId) {
+        // Remote mode: OAuth already handled by MCP protocol
+        if (extra?.authInfo) {
           return createTextResponse(
-            'クライアントIDが設定されていません。\n' +
-            '`freee-mcp configure` を実行してセットアップしてください。'
+            'OAuth認証済みです。MCP OAuth プロトコル経由で認証されています。',
           );
         }
 
-        if (!getConfig().freee.clientSecret) {
+        const { clientId, clientSecret } = getConfig().freee;
+
+        if (!clientId) {
+          return createTextResponse(
+            'クライアントIDが設定されていません。\n' +
+              '`freee-mcp configure` を実行してセットアップしてください。',
+          );
+        }
+
+        if (!clientSecret) {
           return createTextResponse(
             'クライアントシークレットが設定されていません。\n' +
-            '`freee-mcp configure` を実行してセットアップしてください。'
+              '`freee-mcp configure` を実行してセットアップしてください。',
           );
         }
 
@@ -72,11 +90,13 @@ export function addAuthenticationTools(server: McpServer): void {
 
         console.error(`Authentication URL: ${authUrl}`);
 
-        return createTextResponse(`認証URL: ${authUrl}\n\nブラウザで開いて認証してください。5分でタイムアウトします。`);
+        return createTextResponse(
+          `認証URL: ${authUrl}\n\nブラウザで開いて認証してください。5分でタイムアウトします。`,
+        );
       } catch (error) {
         return createTextResponse(`認証開始に失敗: ${formatErrorMessage(error)}`);
       }
-    }
+    },
   );
 
   server.tool(
@@ -96,12 +116,12 @@ export function addAuthenticationTools(server: McpServer): void {
 
         return createTextResponse(
           `認証状態: ${isValid ? '有効' : '期限切れ'}\n有効期限: ${expiryDate}` +
-          (isValid ? '' : '\n次回API使用時に自動更新されます。')
+            (isValid ? '' : '\n次回API使用時に自動更新されます。'),
         );
       } catch (error) {
         return createTextResponse(`認証状態の確認に失敗: ${formatErrorMessage(error)}`);
       }
-    }
+    },
   );
 
   server.tool(
@@ -112,11 +132,13 @@ export function addAuthenticationTools(server: McpServer): void {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         await tokenStore.clearTokens(userId);
-        return createTextResponse('認証情報をクリアしました。再認証するには freee_authenticate を使用。');
+        return createTextResponse(
+          '認証情報をクリアしました。再認証するには freee_authenticate を使用。',
+        );
       } catch (error) {
         return createTextResponse(`認証情報のクリアに失敗: ${formatErrorMessage(error)}`);
       }
-    }
+    },
   );
 
   // Company management tools
@@ -128,7 +150,10 @@ export function addAuthenticationTools(server: McpServer): void {
       name: z.string().optional().describe('事業所名'),
       description: z.string().optional().describe('説明'),
     },
-    async (args: { company_id: string; name?: string; description?: string }, extra?: AuthExtra) => {
+    async (
+      args: { company_id: string; name?: string; description?: string },
+      extra?: AuthExtra,
+    ) => {
       try {
         const { company_id, name, description } = args;
         const { tokenStore, userId } = extractTokenContext(extra);
@@ -141,7 +166,7 @@ export function addAuthenticationTools(server: McpServer): void {
       } catch (error) {
         return createTextResponse(`事業所の設定に失敗: ${formatErrorMessage(error)}`);
       }
-    }
+    },
   );
 
   server.tool(
@@ -162,7 +187,7 @@ export function addAuthenticationTools(server: McpServer): void {
       } catch (error) {
         return createTextResponse(`事業所情報の取得に失敗: ${formatErrorMessage(error)}`);
       }
-    }
+    },
   );
 
   server.tool(
@@ -173,12 +198,23 @@ export function addAuthenticationTools(server: McpServer): void {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const CompanyResponseSchema = z.object({
-          companies: z.array(z.object({
-            id: z.number(),
-            name: z.string(),
-          })).optional(),
+          companies: z
+            .array(
+              z.object({
+                id: z.number(),
+                name: z.string(),
+              }),
+            )
+            .optional(),
         });
-        const rawResponse = await makeApiRequest('GET', '/api/1/companies', undefined, undefined, undefined, { tokenStore, userId });
+        const rawResponse = await makeApiRequest(
+          'GET',
+          '/api/1/companies',
+          undefined,
+          undefined,
+          undefined,
+          { tokenStore, userId },
+        );
         const parseResult = CompanyResponseSchema.safeParse(rawResponse);
         if (!parseResult.success) {
           return {
@@ -208,7 +244,7 @@ export function addAuthenticationTools(server: McpServer): void {
       } catch (error) {
         return createTextResponse(`事業所一覧の取得に失敗: ${formatErrorMessage(error)}`);
       }
-    }
+    },
   );
 
   server.tool(
@@ -217,7 +253,6 @@ export function addAuthenticationTools(server: McpServer): void {
     {},
     async () => {
       return createTextResponse(`freee-mcp server info:\n- version: ${PACKAGE_VERSION}`);
-    }
+    },
   );
-
 }

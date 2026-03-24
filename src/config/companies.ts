@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
 import { z } from 'zod';
 import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 
@@ -161,7 +161,7 @@ export async function getCurrentCompanyId(): Promise<string> {
 export async function setCurrentCompany(
   companyId: string,
   name?: string,
-  description?: string
+  description?: string,
 ): Promise<void> {
   const config = await loadFullConfig();
 

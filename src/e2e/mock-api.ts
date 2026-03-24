@@ -3,20 +3,20 @@
  * Provides URL-based response mapping for simulating freee APIs
  */
 
-import { vi, type MockInstance } from 'vitest';
+import { type MockInstance, vi } from 'vitest';
 import {
-  mockUserResponse,
-  mockCompaniesResponse,
-  mockDealsResponse,
-  mockDealResponse,
-  mockPartnersResponse,
   mockAccountItemsResponse,
-  mockInvoicesResponse,
+  mockCompaniesResponse,
+  mockDealResponse,
+  mockDealsResponse,
   mockEmployeesResponse,
-  mockProjectsResponse,
   mockHrUsersMeResponse,
-  mockUnauthorizedResponse,
+  mockInvoicesResponse,
   mockNotFoundResponse,
+  mockPartnersResponse,
+  mockProjectsResponse,
+  mockUnauthorizedResponse,
+  mockUserResponse,
 } from './fixtures/api-responses.js';
 
 export interface MockApiConfig {
@@ -45,38 +45,40 @@ type MockFetchFn = MockInstance<(url: string, options?: RequestInit) => Promise<
 function createMockFetch(config: MockApiConfig = {}): MockFetchFn {
   const mockFetch = vi.fn<(url: string, options?: RequestInit) => Promise<MockResponse>>();
 
-  mockFetch.mockImplementation(async (url: string, options?: RequestInit): Promise<MockResponse> => {
-    // Apply delay if configured
-    if (config.delay) {
-      await new Promise((resolve) => setTimeout(resolve, config.delay));
-    }
-
-    // Simulate network error
-    if (config.simulateNetworkError) {
-      throw new Error('Network error: Failed to fetch');
-    }
-
-    // Simulate auth failure
-    if (config.simulateAuthFailure) {
-      return createMockResponse(401, mockUnauthorizedResponse);
-    }
-
-    const urlObj = new URL(url);
-    const pathname = urlObj.pathname;
-    const method = options?.method || 'GET';
-
-    // Check for custom overrides first
-    if (config.overrides) {
-      const overrideKey = `${method} ${pathname}`;
-      if (overrideKey in config.overrides) {
-        const override = config.overrides[overrideKey];
-        return createMockResponse(override.status, override.body);
+  mockFetch.mockImplementation(
+    async (url: string, options?: RequestInit): Promise<MockResponse> => {
+      // Apply delay if configured
+      if (config.delay) {
+        await new Promise((resolve) => setTimeout(resolve, config.delay));
       }
-    }
 
-    // Default response routing based on URL patterns
-    return routeRequest(method, pathname, urlObj);
-  });
+      // Simulate network error
+      if (config.simulateNetworkError) {
+        throw new Error('Network error: Failed to fetch');
+      }
+
+      // Simulate auth failure
+      if (config.simulateAuthFailure) {
+        return createMockResponse(401, mockUnauthorizedResponse);
+      }
+
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      const method = options?.method || 'GET';
+
+      // Check for custom overrides first
+      if (config.overrides) {
+        const overrideKey = `${method} ${pathname}`;
+        if (overrideKey in config.overrides) {
+          const override = config.overrides[overrideKey];
+          return createMockResponse(override.status, override.body);
+        }
+      }
+
+      // Default response routing based on URL patterns
+      return routeRequest(method, pathname, urlObj);
+    },
+  );
 
   return mockFetch;
 }

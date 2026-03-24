@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import fs from 'node:fs/promises';
 import os from 'node:os';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  addFreeeMcpConfig,
+  checkMcpConfigStatus,
   getMcpConfigPath,
   getTargetDisplayName,
-  checkMcpConfigStatus,
-  addFreeeMcpConfig,
   removeFreeeMcpConfig,
 } from './mcp-config.js';
 
@@ -47,7 +47,9 @@ describe('mcp-config', () => {
     it('should return Claude Desktop config path for macOS', () => {
       mockOs.platform.mockReturnValue('darwin');
       const path = getMcpConfigPath('claude-desktop');
-      expect(path).toBe('/home/testuser/Library/Application Support/Claude/claude_desktop_config.json');
+      expect(path).toBe(
+        '/home/testuser/Library/Application Support/Claude/claude_desktop_config.json',
+      );
     });
 
     it('should return Claude Desktop config path for Windows', () => {
@@ -88,7 +90,7 @@ describe('mcp-config', () => {
 
       const path = getMcpConfigPath('claude-desktop');
       expect(path).toBe(
-        'C:\\Users\\testuser\\AppData\\Local/Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude/claude_desktop_config.json'
+        'C:\\Users\\testuser\\AppData\\Local/Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude/claude_desktop_config.json',
       );
 
       if (originalAppData !== undefined) {
@@ -165,7 +167,7 @@ describe('mcp-config', () => {
           mcpServers: {
             'freee-mcp': { command: 'npx', args: ['freee-mcp'] },
           },
-        })
+        }),
       );
 
       const status = await checkMcpConfigStatus('claude-code');
@@ -197,12 +199,10 @@ describe('mcp-config', () => {
       expect(mockFs.writeFile).toHaveBeenCalledWith(
         '/home/testuser/.claude.json',
         expect.stringContaining('"freee-mcp"'),
-        'utf-8'
+        'utf-8',
       );
 
-      const writtenContent = JSON.parse(
-        (mockFs.writeFile.mock.calls[0][1] as string).trim()
-      );
+      const writtenContent = JSON.parse((mockFs.writeFile.mock.calls[0][1] as string).trim());
       expect(writtenContent.mcpServers['freee-mcp']).toEqual({
         command: 'npx',
         args: ['freee-mcp'],
@@ -222,9 +222,7 @@ describe('mcp-config', () => {
 
       await addFreeeMcpConfig('claude-code');
 
-      const writtenContent = JSON.parse(
-        (mockFs.writeFile.mock.calls[0][1] as string).trim()
-      );
+      const writtenContent = JSON.parse((mockFs.writeFile.mock.calls[0][1] as string).trim());
       expect(writtenContent.someOtherSetting).toBe(true);
       expect(writtenContent.mcpServers['other-mcp']).toEqual({
         command: 'npx',
@@ -243,9 +241,7 @@ describe('mcp-config', () => {
 
       await addFreeeMcpConfig('claude-code');
 
-      const writtenContent = JSON.parse(
-        (mockFs.writeFile.mock.calls[0][1] as string).trim()
-      );
+      const writtenContent = JSON.parse((mockFs.writeFile.mock.calls[0][1] as string).trim());
       expect(writtenContent.mcpServers['freee-mcp']).toBeDefined();
     });
   });
@@ -265,7 +261,7 @@ describe('mcp-config', () => {
           mcpServers: {
             'other-mcp': { command: 'npx', args: ['other-mcp'] },
           },
-        })
+        }),
       );
 
       await removeFreeeMcpConfig('claude-code');
@@ -280,16 +276,14 @@ describe('mcp-config', () => {
             'other-mcp': { command: 'npx', args: ['other-mcp'] },
             'freee-mcp': { command: 'npx', args: ['freee-mcp'] },
           },
-        })
+        }),
       );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
 
       await removeFreeeMcpConfig('claude-code');
 
-      const writtenContent = JSON.parse(
-        (mockFs.writeFile.mock.calls[0][1] as string).trim()
-      );
+      const writtenContent = JSON.parse((mockFs.writeFile.mock.calls[0][1] as string).trim());
       expect(writtenContent.mcpServers['other-mcp']).toBeDefined();
       expect(writtenContent.mcpServers['freee-mcp']).toBeUndefined();
     });
@@ -301,16 +295,14 @@ describe('mcp-config', () => {
           mcpServers: {
             'freee-mcp': { command: 'npx', args: ['freee-mcp'] },
           },
-        })
+        }),
       );
       mockFs.mkdir.mockResolvedValue(undefined);
       mockFs.writeFile.mockResolvedValue(undefined);
 
       await removeFreeeMcpConfig('claude-code');
 
-      const writtenContent = JSON.parse(
-        (mockFs.writeFile.mock.calls[0][1] as string).trim()
-      );
+      const writtenContent = JSON.parse((mockFs.writeFile.mock.calls[0][1] as string).trim());
       expect(writtenContent.someOtherSetting).toBe(true);
       expect(writtenContent.mcpServers).toBeUndefined();
     });
@@ -337,7 +329,7 @@ describe('mcp-config', () => {
           mcpServers: {
             'freee-mcp': { command: 'npx', args: ['freee-mcp'] },
           },
-        })
+        }),
       );
       const afterAddStatus = await checkMcpConfigStatus('claude-code');
       expect(afterAddStatus.exists).toBe(true);
@@ -349,7 +341,7 @@ describe('mcp-config', () => {
           mcpServers: {
             'freee-mcp': { command: 'npx', args: ['freee-mcp'] },
           },
-        })
+        }),
       );
       await removeFreeeMcpConfig('claude-code');
 

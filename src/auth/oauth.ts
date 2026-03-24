@@ -1,9 +1,9 @@
 import crypto from 'node:crypto';
 import { getConfig } from '../config.js';
-import { saveTokens, type TokenData, OAuthTokenResponseSchema } from './tokens.js';
-import { createTokenData } from './token-utils.js';
-import { formatResponseErrorInfo } from '../utils/error.js';
 import { USER_AGENT } from '../constants.js';
+import { formatResponseErrorInfo } from '../utils/error.js';
+import { createTokenData } from './token-utils.js';
+import { OAuthTokenResponseSchema, saveTokens, type TokenData } from './tokens.js';
 
 export function generatePKCE(): { codeVerifier: string; codeChallenge: string } {
   const codeVerifier = crypto.randomBytes(32).toString('base64url');
@@ -26,7 +26,11 @@ export function buildAuthUrl(codeChallenge: string, state: string, redirectUri: 
   return `${cfg.oauth.authorizationEndpoint}?${params.toString()}`;
 }
 
-export async function exchangeCodeForTokens(code: string, codeVerifier: string, redirectUri: string): Promise<TokenData> {
+export async function exchangeCodeForTokens(
+  code: string,
+  codeVerifier: string,
+  redirectUri: string,
+): Promise<TokenData> {
   const cfg = getConfig();
   const response = await fetch(cfg.oauth.tokenEndpoint, {
     method: 'POST',

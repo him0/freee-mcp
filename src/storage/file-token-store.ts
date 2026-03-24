@@ -1,17 +1,17 @@
 import type { TokenData } from '../auth/tokens.js';
-import type { CompanyConfig } from '../config/companies.js';
-import type { TokenStore } from './token-store.js';
 import {
-  loadTokens as fileLoadTokens,
-  saveTokens as fileSaveTokens,
   clearTokens as fileClearTokens,
   getValidAccessToken as fileGetValidAccessToken,
+  loadTokens as fileLoadTokens,
+  saveTokens as fileSaveTokens,
 } from '../auth/tokens.js';
+import type { CompanyConfig } from '../config/companies.js';
 import {
+  getCompanyInfo as fileGetCompanyInfo,
   getCurrentCompanyId as fileGetCurrentCompanyId,
   setCurrentCompany as fileSetCurrentCompany,
-  getCompanyInfo as fileGetCompanyInfo,
 } from '../config/companies.js';
+import type { TokenStore } from './token-store.js';
 
 // SECURITY: FileTokenStore ignores userId — all callers share the same local files.
 // This is intentional for stdio (single-user) mode only. Do NOT use this store in
@@ -38,7 +38,12 @@ export class FileTokenStore implements TokenStore {
     return fileGetCurrentCompanyId();
   }
 
-  async setCurrentCompany(_userId: string, companyId: string, name?: string, description?: string): Promise<void> {
+  async setCurrentCompany(
+    _userId: string,
+    companyId: string,
+    name?: string,
+    description?: string,
+  ): Promise<void> {
     return fileSetCurrentCompany(companyId, name, description);
   }
 

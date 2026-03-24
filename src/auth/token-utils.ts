@@ -13,14 +13,11 @@ export interface TokenFallbacks {
   scope: string;
 }
 
-export function createTokenData(
-  response: TokenResponse,
-  fallbacks: TokenFallbacks
-): TokenData {
+export function createTokenData(response: TokenResponse, fallbacks: TokenFallbacks): TokenData {
   const refreshToken = response.refresh_token || fallbacks.refreshToken;
   if (!refreshToken) {
     throw new Error(
-      'No refresh_token available. The token response did not include a refresh_token and no fallback was provided. Please re-authenticate.'
+      'No refresh_token available. The token response did not include a refresh_token and no fallback was provided. Please re-authenticate.',
     );
   }
   return {

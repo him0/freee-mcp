@@ -1,31 +1,36 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import crypto from 'node:crypto';
-import { generatePKCE, buildAuthUrl, exchangeCodeForTokens } from './oauth.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildAuthUrl, exchangeCodeForTokens, generatePKCE } from './oauth.js';
 
 vi.mock('crypto');
 vi.mock('../config.js', () => ({
   getConfig: (): {
     freee: { clientId: string; clientSecret: string };
-    oauth: { authorizationEndpoint: string; tokenEndpoint: string; redirectUri: string; scope: string };
+    oauth: {
+      authorizationEndpoint: string;
+      tokenEndpoint: string;
+      redirectUri: string;
+      scope: string;
+    };
   } => ({
     freee: {
       clientId: 'test-client-id',
-      clientSecret: 'test-client-secret'
+      clientSecret: 'test-client-secret',
     },
     oauth: {
       authorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
       tokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
       redirectUri: 'http://127.0.0.1:54321/callback',
-      scope: 'read write'
-    }
-  })
+      scope: 'read write',
+    },
+  }),
 }));
 
 vi.mock('./tokens.js', async (importOriginal) => {
-  const actual = await importOriginal() as Record<string, unknown>;
+  const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
-    saveTokens: vi.fn()
+    saveTokens: vi.fn(),
   };
 });
 
@@ -45,11 +50,11 @@ describe('oauth', () => {
   describe('generatePKCE', () => {
     it('should generate PKCE challenge and verifier', () => {
       const mockRandomBytes = vi.fn().mockReturnValue({
-        toString: vi.fn().mockReturnValue('test-code-verifier')
+        toString: vi.fn().mockReturnValue('test-code-verifier'),
       });
       const mockHash = {
         update: vi.fn().mockReturnThis(),
-        digest: vi.fn().mockReturnValue('test-code-challenge')
+        digest: vi.fn().mockReturnValue('test-code-challenge'),
       };
       const mockCreateHash = vi.fn().mockReturnValue(mockHash);
 
@@ -64,7 +69,7 @@ describe('oauth', () => {
       expect(mockHash.digest).toHaveBeenCalledWith('base64url');
       expect(result).toEqual({
         codeVerifier: 'test-code-verifier',
-        codeChallenge: 'test-code-challenge'
+        codeChallenge: 'test-code-challenge',
       });
     });
   });
@@ -95,15 +100,19 @@ describe('oauth', () => {
         refresh_token: 'test-refresh-token',
         expires_in: 3600,
         token_type: 'Bearer',
-        scope: 'read write'
+        scope: 'read write',
       };
 
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockTokenResponse)
+        json: () => Promise.resolve(mockTokenResponse),
       });
 
-      const result = await exchangeCodeForTokens('test-code', 'test-verifier', 'http://127.0.0.1:54321/callback');
+      const result = await exchangeCodeForTokens(
+        'test-code',
+        'test-verifier',
+        'http://127.0.0.1:54321/callback',
+      );
 
       expect(mockFetch).toHaveBeenCalledWith(
         'https://accounts.secure.freee.co.jp/public_api/token',
@@ -121,7 +130,7 @@ describe('oauth', () => {
             redirect_uri: 'http://127.0.0.1:54321/callback',
             code_verifier: 'test-verifier',
           }),
-        }
+        },
       );
 
       expect(result).toEqual({
@@ -129,7 +138,7 @@ describe('oauth', () => {
         refresh_token: 'test-refresh-token',
         expires_at: expect.any(Number),
         token_type: 'Bearer',
-        scope: 'read write'
+        scope: 'read write',
       });
     });
 
@@ -137,26 +146,31 @@ describe('oauth', () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 400,
-        json: () => Promise.resolve({ error: 'invalid_grant' })
+        json: () => Promise.resolve({ error: 'invalid_grant' }),
       });
 
-      await expect(exchangeCodeForTokens('invalid-code', 'test-verifier', 'http://127.0.0.1:54321/callback'))
-        .rejects.toThrow('Token exchange failed: 400');
+      await expect(
+        exchangeCodeForTokens('invalid-code', 'test-verifier', 'http://127.0.0.1:54321/callback'),
+      ).rejects.toThrow('Token exchange failed: 400');
     });
 
     it('should handle missing optional fields in token response', async () => {
       const mockTokenResponse = {
         access_token: 'test-access-token',
         refresh_token: 'test-refresh-token',
-        expires_in: 3600
+        expires_in: 3600,
       };
 
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockTokenResponse)
+        json: () => Promise.resolve(mockTokenResponse),
       });
 
-      const result = await exchangeCodeForTokens('test-code', 'test-verifier', 'http://127.0.0.1:54321/callback');
+      const result = await exchangeCodeForTokens(
+        'test-code',
+        'test-verifier',
+        'http://127.0.0.1:54321/callback',
+      );
 
       expect(result.token_type).toBe('Bearer');
       expect(result.scope).toBe('read write');
@@ -167,16 +181,16 @@ describe('oauth', () => {
         access_token: 'test-access-token',
         expires_in: 3600,
         token_type: 'Bearer',
-        scope: 'read write'
+        scope: 'read write',
       };
 
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockTokenResponse)
+        json: () => Promise.resolve(mockTokenResponse),
       });
 
       await expect(
-        exchangeCodeForTokens('test-code', 'test-verifier', 'http://127.0.0.1:54321/callback')
+        exchangeCodeForTokens('test-code', 'test-verifier', 'http://127.0.0.1:54321/callback'),
       ).rejects.toThrow('No refresh_token available');
     });
   });

@@ -1,6 +1,6 @@
 import { FREEE_API_URL } from '../constants.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
-import { type Company, CompaniesResponseSchema, HrUsersMeResponseSchema } from './types.js';
+import { CompaniesResponseSchema, type Company, HrUsersMeResponseSchema } from './types.js';
 
 export async function fetchCompanies(accessToken: string): Promise<Company[]> {
   let companies: Company[] = [];
@@ -30,9 +30,7 @@ async function fetchAccountingCompanies(accessToken: string): Promise<Company[]>
 
   if (!response.ok) {
     const errorInfo = await formatResponseErrorInfo(response);
-    throw new Error(
-      `事業所一覧の取得に失敗しました: ${response.status} ${errorInfo}`,
-    );
+    throw new Error(`事業所一覧の取得に失敗しました: ${response.status} ${errorInfo}`);
   }
 
   const jsonData: unknown = await response.json();
@@ -53,9 +51,7 @@ async function fetchHrCompanies(accessToken: string): Promise<Company[]> {
 
   if (!response.ok) {
     const errorInfo = await formatResponseErrorInfo(response);
-    throw new Error(
-      `事業所一覧の取得に失敗しました（HR API）: ${response.status} ${errorInfo}`,
-    );
+    throw new Error(`事業所一覧の取得に失敗しました（HR API）: ${response.status} ${errorInfo}`);
   }
 
   const jsonData: unknown = await response.json();

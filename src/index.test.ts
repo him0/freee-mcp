@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./mcp/handlers.js', () => ({
-  createAndStartServer: vi.fn()
+  createAndStartServer: vi.fn(),
 }));
 
 describe('index', () => {

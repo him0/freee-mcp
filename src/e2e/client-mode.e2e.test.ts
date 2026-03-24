@@ -3,14 +3,10 @@
  * Tests the complete flow from MCP tool invocation to API response
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { generateClientModeTool } from '../openapi/client-mode.js';
-import {
-  mockDealsResponse,
-  mockDealResponse,
-  mockUserResponse,
-} from './fixtures/api-responses.js';
+import { mockDealResponse, mockDealsResponse, mockUserResponse } from './fixtures/api-responses.js';
 
 // Track API calls for assertions
 interface ApiCall {
@@ -46,41 +42,43 @@ vi.mock('../auth/tokens.js', () => ({
 
 // Mock the API client with configurable behavior
 vi.mock('../api/client.js', () => ({
-  makeApiRequest: vi.fn(async (
-    method: string,
-    path: string,
-    params?: Record<string, unknown>,
-    body?: Record<string, unknown>,
-    baseUrl?: string
-  ) => {
-    // Record the API call
-    apiCalls.push({ method, path, params, body, baseUrl });
+  makeApiRequest: vi.fn(
+    async (
+      method: string,
+      path: string,
+      params?: Record<string, unknown>,
+      body?: Record<string, unknown>,
+      baseUrl?: string,
+    ) => {
+      // Record the API call
+      apiCalls.push({ method, path, params, body, baseUrl });
 
-    // Check for configured error
-    if (mockApiError) {
-      throw mockApiError;
-    }
+      // Check for configured error
+      if (mockApiError) {
+        throw mockApiError;
+      }
 
-    // Check for configured response
-    if (mockApiResponse !== null) {
-      return mockApiResponse;
-    }
+      // Check for configured response
+      if (mockApiResponse !== null) {
+        return mockApiResponse;
+      }
 
-    // Default responses based on path
-    if (path === '/api/1/users/me') {
-      return mockUserResponse;
-    }
-    if (path === '/api/1/deals') {
-      if (method === 'GET') return mockDealsResponse;
-      if (method === 'POST') return mockDealResponse;
-    }
-    if (path.match(/^\/api\/1\/deals\/\d+$/)) {
-      if (method === 'GET' || method === 'PUT') return mockDealResponse;
-      if (method === 'DELETE') return {};
-    }
+      // Default responses based on path
+      if (path === '/api/1/users/me') {
+        return mockUserResponse;
+      }
+      if (path === '/api/1/deals') {
+        if (method === 'GET') return mockDealsResponse;
+        if (method === 'POST') return mockDealResponse;
+      }
+      if (path.match(/^\/api\/1\/deals\/\d+$/)) {
+        if (method === 'GET' || method === 'PUT') return mockDealResponse;
+        if (method === 'DELETE') return {};
+      }
 
-    return {};
-  }),
+      return {};
+    },
+  ),
   isBinaryFileResponse: vi.fn((result: unknown): boolean => {
     return (
       typeof result === 'object' &&
@@ -93,7 +91,10 @@ vi.mock('../api/client.js', () => ({
 
 describe('E2E: Client Mode Tools', () => {
   let server: McpServer;
-  let registeredTools: Map<string, { handler: (args: Record<string, unknown>) => Promise<unknown> }>;
+  let registeredTools: Map<
+    string,
+    { handler: (args: Record<string, unknown>) => Promise<unknown> }
+  >;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -104,9 +105,16 @@ describe('E2E: Client Mode Tools', () => {
     // Create a mock MCP server that captures registered tools
     registeredTools = new Map();
     server = {
-      tool: vi.fn((name: string, _description: string, _schema: unknown, handler: (args: Record<string, unknown>) => Promise<unknown>) => {
-        registeredTools.set(name, { handler });
-      }),
+      tool: vi.fn(
+        (
+          name: string,
+          _description: string,
+          _schema: unknown,
+          handler: (args: Record<string, unknown>) => Promise<unknown>,
+        ) => {
+          registeredTools.set(name, { handler });
+        },
+      ),
     } as unknown as McpServer;
 
     // Generate client mode tools
@@ -132,10 +140,10 @@ describe('E2E: Client Mode Tools', () => {
     it('should successfully fetch deals list', async () => {
       const handler = registeredTools.get('freee_api_get')?.handler;
 
-      const result = await handler({
+      const result = (await handler({
         service: 'accounting',
         path: '/api/1/deals',
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content).toHaveLength(1);
       expect(result.content[0].type).toBe('text');
@@ -163,10 +171,10 @@ describe('E2E: Client Mode Tools', () => {
     it('should fetch single deal by ID', async () => {
       const handler = registeredTools.get('freee_api_get')?.handler;
 
-      const result = await handler({
+      const result = (await handler({
         service: 'accounting',
         path: '/api/1/deals/101',
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       const responseData = JSON.parse(result.content[0].text);
       expect(responseData.deal.id).toBe(101);
@@ -175,10 +183,10 @@ describe('E2E: Client Mode Tools', () => {
     it('should fetch user info', async () => {
       const handler = registeredTools.get('freee_api_get')?.handler;
 
-      const result = await handler({
+      const result = (await handler({
         service: 'accounting',
         path: '/api/1/users/me',
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       const responseData = JSON.parse(result.content[0].text);
       expect(responseData.user.email).toBe('test@example.com');
@@ -187,10 +195,10 @@ describe('E2E: Client Mode Tools', () => {
     it('should handle invalid path with error message', async () => {
       const handler = registeredTools.get('freee_api_get')?.handler;
 
-      const result = await handler({
+      const result = (await handler({
         service: 'accounting',
         path: '/invalid/path',
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('パス検証エラー');
       expect(result.content[0].text).toContain('freee_api_list_paths');
@@ -201,7 +209,7 @@ describe('E2E: Client Mode Tools', () => {
     it('should create a new deal', async () => {
       const handler = registeredTools.get('freee_api_post')?.handler;
 
-      const result = await handler({
+      const result = (await handler({
         service: 'accounting',
         path: '/api/1/deals',
         body: {
@@ -217,7 +225,7 @@ describe('E2E: Client Mode Tools', () => {
             },
           ],
         },
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       const responseData = JSON.parse(result.content[0].text);
       expect(responseData.deal.id).toBe(101);
@@ -251,14 +259,14 @@ describe('E2E: Client Mode Tools', () => {
     it('should update an existing deal', async () => {
       const handler = registeredTools.get('freee_api_put')?.handler;
 
-      const result = await handler({
+      const result = (await handler({
         service: 'accounting',
         path: '/api/1/deals/101',
         body: {
           issue_date: '2024-01-20',
           amount: 15000,
         },
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       const responseData = JSON.parse(result.content[0].text);
       expect(responseData.deal.id).toBe(101);
@@ -288,7 +296,7 @@ describe('E2E: Client Mode Tools', () => {
     it('should return available API paths', async () => {
       const handler = registeredTools.get('freee_api_list_paths')?.handler;
 
-      const result = await handler({}) as { content: Array<{ type: string; text: string }> };
+      const result = (await handler({})) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('freee API');
       expect(result.content[0].text).toContain('使用例');
@@ -301,10 +309,10 @@ describe('E2E: Client Mode Tools', () => {
 
       const handler = registeredTools.get('freee_api_get')?.handler;
 
-      const result = await handler({
+      const result = (await handler({
         service: 'accounting',
         path: '/api/1/deals',
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('APIリクエストエラー');
     });
@@ -314,23 +322,25 @@ describe('E2E: Client Mode Tools', () => {
 
       const handler = registeredTools.get('freee_api_get')?.handler;
 
-      const result = await handler({
+      const result = (await handler({
         service: 'accounting',
         path: '/api/1/deals',
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('APIリクエストエラー');
     });
 
     it('should handle API error responses', async () => {
-      mockApiError = new Error('API request failed: 400\n\n詳細: {"errors":[{"type":"validation","messages":["issue_date is required"]}]}');
+      mockApiError = new Error(
+        'API request failed: 400\n\n詳細: {"errors":[{"type":"validation","messages":["issue_date is required"]}]}',
+      );
 
       const handler = registeredTools.get('freee_api_get')?.handler;
 
-      const result = await handler({
+      const result = (await handler({
         service: 'accounting',
         path: '/api/1/deals',
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('APIリクエストエラー');
     });
@@ -340,10 +350,10 @@ describe('E2E: Client Mode Tools', () => {
     it('should handle HR API requests', async () => {
       const handler = registeredTools.get('freee_api_get')?.handler;
 
-      const result = await handler({
+      const result = (await handler({
         service: 'hr',
         path: '/api/v1/employees',
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       // Should fail path validation since HR API has different path structure
       expect(result.content[0].type).toBe('text');
@@ -384,10 +394,10 @@ describe('E2E: Client Mode Tools', () => {
       const handler = registeredTools.get('freee_api_get')?.handler;
 
       // Using accounting path with invoice service should fail
-      const result = await handler({
+      const result = (await handler({
         service: 'invoice',
         path: '/api/1/deals', // This is an accounting path, not invoice
-      }) as { content: Array<{ type: string; text: string }> };
+      })) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('パス検証エラー');
     });

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createTokenData, type TokenResponse, type TokenFallbacks } from './token-utils.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTokenData, type TokenFallbacks, type TokenResponse } from './token-utils.js';
 
 describe('token-utils', () => {
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe('token-utils', () => {
       };
 
       expect(() => createTokenData(response, fallbacks)).toThrow(
-        'No refresh_token available. The token response did not include a refresh_token and no fallback was provided. Please re-authenticate.'
+        'No refresh_token available. The token response did not include a refresh_token and no fallback was provided. Please re-authenticate.',
       );
     });
 

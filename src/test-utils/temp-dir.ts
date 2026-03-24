@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
 
 /**
  * テスト用の一時ディレクトリを作成・管理するユーティリティ
@@ -12,7 +12,10 @@ export class TestTempDir {
   constructor(prefix = 'freee-mcp-test-') {
     // テスト用の一時ディレクトリパスを生成
     const tmpDir = os.tmpdir() || '/tmp';
-    this.tempDir = path.join(tmpDir, `${prefix}${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+    this.tempDir = path.join(
+      tmpDir,
+      `${prefix}${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    );
   }
 
   /**
@@ -59,9 +62,13 @@ export class TestTempDir {
 /**
  * vitest用のテスト一時ディレクトリ管理ヘルパー
  */
-export function setupTestTempDir(prefix?: string): { tempDir: TestTempDir; setup(): Promise<string>; cleanup(): Promise<void> } {
+export function setupTestTempDir(prefix?: string): {
+  tempDir: TestTempDir;
+  setup(): Promise<string>;
+  cleanup(): Promise<void>;
+} {
   const tempDir = new TestTempDir(prefix);
-  
+
   return {
     tempDir,
     /**
@@ -75,6 +82,6 @@ export function setupTestTempDir(prefix?: string): { tempDir: TestTempDir; setup
      */
     async cleanup(): Promise<void> {
       await tempDir.cleanup();
-    }
+    },
   };
 }

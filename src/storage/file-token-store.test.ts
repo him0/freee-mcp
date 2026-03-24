@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FileTokenStore } from './file-token-store.js';
 
 vi.mock('../auth/tokens.js', () => ({
@@ -14,18 +14,13 @@ vi.mock('../config/companies.js', () => ({
   getCompanyInfo: vi.fn(),
 }));
 
-const {
-  loadTokens,
-  saveTokens,
-  clearTokens,
-  getValidAccessToken,
-} = await import('../auth/tokens.js');
+const { loadTokens, saveTokens, clearTokens, getValidAccessToken } = await import(
+  '../auth/tokens.js'
+);
 
-const {
-  getCurrentCompanyId,
-  setCurrentCompany,
-  getCompanyInfo,
-} = await import('../config/companies.js');
+const { getCurrentCompanyId, setCurrentCompany, getCompanyInfo } = await import(
+  '../config/companies.js'
+);
 
 describe('FileTokenStore', () => {
   let store: FileTokenStore;

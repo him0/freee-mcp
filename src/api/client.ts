@@ -1,11 +1,11 @@
-import { getConfig } from '../config.js';
-import { getValidAccessToken } from '../auth/tokens.js';
-import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
-import { formatResponseErrorInfo, formatApiErrorMessage } from '../utils/error.js';
-import { USER_AGENT } from '../constants.js';
-import type { TokenContext } from '../storage/context.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { getValidAccessToken } from '../auth/tokens.js';
+import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
+import { getConfig } from '../config.js';
+import { FETCH_TIMEOUT_API_MS, USER_AGENT } from '../constants.js';
+import type { TokenContext } from '../storage/context.js';
+import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
 /**
  * Response type for binary file downloads
@@ -33,13 +33,8 @@ export function isBinaryFileResponse(result: unknown): result is BinaryFileRespo
  * Check if Content-Type indicates binary response
  */
 function isBinaryContentType(contentType: string): boolean {
-  const binaryTypes = [
-    'application/pdf',
-    'application/octet-stream',
-    'image/',
-    'text/csv',
-  ];
-  return binaryTypes.some(type => contentType.includes(type));
+  const binaryTypes = ['application/pdf', 'application/octet-stream', 'image/', 'text/csv'];
+  return binaryTypes.some((type) => contentType.includes(type));
 }
 
 /**
@@ -82,15 +77,12 @@ export async function makeApiRequest(
         tokenContext.tokenStore.getCurrentCompanyId(tokenContext.userId),
         tokenContext.tokenStore.getValidAccessToken(tokenContext.userId),
       ])
-    : await Promise.all([
-        getCurrentCompanyId(),
-        getValidAccessToken(),
-      ]);
+    : await Promise.all([getCurrentCompanyId(), getValidAccessToken()]);
 
   if (!accessToken) {
     throw new Error(
       `認証が必要です。freee_authenticate ツールを使用して認証を行ってください。\n` +
-      `現在の事業所ID: ${companyId}`
+        `現在の事業所ID: ${companyId}`,
     );
   }
 
@@ -111,7 +103,7 @@ export async function makeApiRequest(
   if (paramsCompanyId !== undefined && String(paramsCompanyId) !== String(companyId)) {
     throw new Error(
       `company_id の不整合: リクエストの company_id (${paramsCompanyId}) と現在の事業所 (${companyId}) が異なります。\n` +
-      `freee_set_current_company で事業所を切り替えるか、リクエストの company_id を修正してください。`
+        `freee_set_current_company で事業所を切り替えるか、リクエストの company_id を修正してください。`,
     );
   }
 
@@ -120,7 +112,7 @@ export async function makeApiRequest(
   if (bodyCompanyId !== undefined && String(bodyCompanyId) !== String(companyId)) {
     throw new Error(
       `company_id の不整合: リクエストボディの company_id (${bodyCompanyId}) と現在の事業所 (${companyId}) が異なります。\n` +
-      `freee_set_current_company で事業所を切り替えるか、リクエストの company_id を修正してください。`
+        `freee_set_current_company で事業所を切り替えるか、リクエストの company_id を修正してください。`,
     );
   }
 
@@ -132,18 +124,19 @@ export async function makeApiRequest(
       'User-Agent': USER_AGENT,
     },
     body: body ? JSON.stringify(typeof body === 'string' ? JSON.parse(body) : body) : undefined,
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_API_MS),
   });
 
   if (response.status === 401) {
     const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(
       `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
-      `現在の事業所ID: ${companyId}\n` +
-      `エラー詳細: ${response.status} ${errorInfo}\n\n` +
-      `確認事項:\n` +
-      `1. freee側でアプリケーション設定が正しいか（リダイレクトURI等）\n` +
-      `2. トークンの有効期限が切れていないか\n` +
-      `3. 事業所IDが正しいか（freee_get_current_company で確認）`
+        `現在の事業所ID: ${companyId}\n` +
+        `エラー詳細: ${response.status} ${errorInfo}\n\n` +
+        `確認事項:\n` +
+        `1. freee側でアプリケーション設定が正しいか（リダイレクトURI等）\n` +
+        `2. トークンの有効期限が切れていないか\n` +
+        `3. 事業所IDが正しいか（freee_get_current_company で確認）`,
     );
   }
 
@@ -151,9 +144,9 @@ export async function makeApiRequest(
     const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(
       `アクセス拒否 (403): ${errorInfo}\n` +
-      `事業所ID: ${companyId}\n\n` +
-      `レートリミットの可能性があります。数分待ってから再試行してください。\n` +
-      `それでも解決しない場合は、アプリの権限設定を確認するか、freee_authenticate で再認証してください。`
+        `事業所ID: ${companyId}\n\n` +
+        `レートリミットの可能性があります。数分待ってから再試行してください。\n` +
+        `それでも解決しない場合は、アプリの権限設定を確認するか、freee_authenticate で再認証してください。`,
     );
   }
 
@@ -198,7 +191,7 @@ export async function makeApiRequest(
     return JSON.parse(text);
   } catch {
     throw new Error(
-      `Failed to parse API response as JSON. Status: ${response.status}, Content-Type: ${contentType}, Body preview: ${text.slice(0, 200)}`
+      `Failed to parse API response as JSON. Status: ${response.status}, Content-Type: ${contentType}, Body preview: ${text.slice(0, 200)}`,
     );
   }
 }
