@@ -5,7 +5,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { FullConfig } from '../config/companies';
-import { mockCompaniesResponse, mockCompaniesWithNullNameResponse, mockHrUsersMeResponse, mockTokenResponse } from './fixtures/api-responses';
+import {
+  mockCompaniesResponse,
+  mockCompaniesWithNullNameResponse,
+  mockHrUsersMeResponse,
+  mockTokenResponse,
+} from './fixtures/api-responses';
 
 // Track mock state - isolated from real config
 let mockSavedConfig: FullConfig | null = null;
@@ -45,14 +50,16 @@ vi.mock('open', () => ({
 
 // Mock config/companies module (prevent file system access)
 vi.mock('../config/companies', () => ({
-  loadFullConfig: vi.fn(() => Promise.resolve({
-    clientId: mockExistingConfig.clientId,
-    clientSecret: mockExistingConfig.clientSecret,
-    callbackPort: mockExistingConfig.callbackPort || 54321,
-    defaultCompanyId: mockExistingConfig.defaultCompanyId || '0',
-    currentCompanyId: mockExistingConfig.currentCompanyId || '0',
-    companies: mockExistingConfig.companies || {},
-  })),
+  loadFullConfig: vi.fn(() =>
+    Promise.resolve({
+      clientId: mockExistingConfig.clientId,
+      clientSecret: mockExistingConfig.clientSecret,
+      callbackPort: mockExistingConfig.callbackPort || 54321,
+      defaultCompanyId: mockExistingConfig.defaultCompanyId || '0',
+      currentCompanyId: mockExistingConfig.currentCompanyId || '0',
+      companies: mockExistingConfig.companies || {},
+    }),
+  ),
   saveFullConfig: vi.fn((config: FullConfig) => {
     mockSavedConfig = config;
     return Promise.resolve();
@@ -80,20 +87,25 @@ vi.mock('../auth/server', () => ({
   stopCallbackServer: vi.fn(),
   getActualRedirectUri: vi.fn(() => 'http://127.0.0.1:54321/callback'),
   getDefaultAuthManager: vi.fn(() => ({
-    registerCliAuthHandler: vi.fn((_state: string, handler: {
-      resolve: (code: string) => void;
-      reject: (error: Error) => void;
-      codeVerifier: string;
-    }) => {
-      mockAuthCallback = handler.resolve;
-      _mockAuthReject = handler.reject;
-      // Simulate successful callback after a short delay
-      setTimeout(() => {
-        if (mockAuthCallback) {
-          mockAuthCallback('test-auth-code');
-        }
-      }, AUTH_CALLBACK_DELAY_MS);
-    }),
+    registerCliAuthHandler: vi.fn(
+      (
+        _state: string,
+        handler: {
+          resolve: (code: string) => void;
+          reject: (error: Error) => void;
+          codeVerifier: string;
+        },
+      ) => {
+        mockAuthCallback = handler.resolve;
+        _mockAuthReject = handler.reject;
+        // Simulate successful callback after a short delay
+        setTimeout(() => {
+          if (mockAuthCallback) {
+            mockAuthCallback('test-auth-code');
+          }
+        }, AUTH_CALLBACK_DELAY_MS);
+      },
+    ),
     removeCliAuthHandler: vi.fn(),
   })),
 }));
@@ -103,13 +115,15 @@ vi.mock('../auth/oauth', () => ({
   buildAuthUrl: vi.fn((codeChallenge: string, state: string, redirectUri: string) => {
     return `https://accounts.secure.freee.co.jp/public_api/authorize?client_id=test&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${codeChallenge}&state=${state}`;
   }),
-  exchangeCodeForTokens: vi.fn(() => Promise.resolve({
-    access_token: mockTokenResponse.access_token,
-    refresh_token: mockTokenResponse.refresh_token,
-    token_type: mockTokenResponse.token_type,
-    expires_in: mockTokenResponse.expires_in,
-    scope: mockTokenResponse.scope,
-  })),
+  exchangeCodeForTokens: vi.fn(() =>
+    Promise.resolve({
+      access_token: mockTokenResponse.access_token,
+      refresh_token: mockTokenResponse.refresh_token,
+      token_type: mockTokenResponse.token_type,
+      expires_in: mockTokenResponse.expires_in,
+      scope: mockTokenResponse.scope,
+    }),
+  ),
 }));
 
 // Mock global fetch for API calls
@@ -268,7 +282,7 @@ describe('E2E: Configure Command', () => {
       expect(buildAuthUrl).toHaveBeenCalledWith(
         expect.any(String), // codeChallenge
         expect.any(String), // state
-        'http://127.0.0.1:54321/callback'
+        'http://127.0.0.1:54321/callback',
       );
     });
 
@@ -312,7 +326,7 @@ describe('E2E: Configure Command', () => {
       expect(exchangeCodeForTokens).toHaveBeenCalledWith(
         'test-auth-code',
         expect.any(String), // codeVerifier
-        'http://127.0.0.1:54321/callback'
+        'http://127.0.0.1:54321/callback',
       );
     });
   });
@@ -339,7 +353,7 @@ describe('E2E: Configure Command', () => {
           headers: expect.objectContaining({
             Authorization: expect.stringContaining('Bearer'),
           }),
-        })
+        }),
       );
     });
 
@@ -520,22 +534,24 @@ describe('E2E: Configure Command', () => {
       const { configure } = await import('../cli');
       await configure();
 
-      expect(mockSavedConfig).toEqual(expect.objectContaining({
-        clientId: 'final-client-id',
-        clientSecret: 'final-client-secret',
-        callbackPort: 12345,
-        defaultCompanyId: '12345',
-        currentCompanyId: '12345',
-        companies: expect.objectContaining({
-          '12345': expect.objectContaining({
-            id: '12345',
-            name: 'テスト株式会社',
-            description: expect.stringContaining('admin'),
-            addedAt: expect.any(Number),
-            lastUsed: expect.any(Number),
+      expect(mockSavedConfig).toEqual(
+        expect.objectContaining({
+          clientId: 'final-client-id',
+          clientSecret: 'final-client-secret',
+          callbackPort: 12345,
+          defaultCompanyId: '12345',
+          currentCompanyId: '12345',
+          companies: expect.objectContaining({
+            '12345': expect.objectContaining({
+              id: '12345',
+              name: 'テスト株式会社',
+              description: expect.stringContaining('admin'),
+              addedAt: expect.any(Number),
+              lastUsed: expect.any(Number),
+            }),
           }),
         }),
-      }));
+      );
     });
 
     it('should display MCP configuration after save', async () => {
@@ -722,13 +738,15 @@ describe('E2E: Configure Command', () => {
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('セットアップ完了'));
 
       // Verify final config state
-      expect(mockSavedConfig).toEqual(expect.objectContaining({
-        clientId: 'full-flow-client-id',
-        clientSecret: 'full-flow-client-secret',
-        callbackPort: 54321,
-        defaultCompanyId: '67890',
-        currentCompanyId: '67890',
-      }));
+      expect(mockSavedConfig).toEqual(
+        expect.objectContaining({
+          clientId: 'full-flow-client-id',
+          clientSecret: 'full-flow-client-secret',
+          callbackPort: 54321,
+          defaultCompanyId: '67890',
+          currentCompanyId: '67890',
+        }),
+      );
 
       // Verify process did not exit with error
       expect(process.exit).not.toHaveBeenCalled();

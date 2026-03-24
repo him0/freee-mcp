@@ -67,15 +67,12 @@ export async function uploadReceipt(
         tokenContext.tokenStore.getCurrentCompanyId(tokenContext.userId),
         tokenContext.tokenStore.getValidAccessToken(tokenContext.userId),
       ])
-    : await Promise.all([
-        getCurrentCompanyId(),
-        getValidAccessToken(),
-      ]);
+    : await Promise.all([getCurrentCompanyId(), getValidAccessToken()]);
 
   if (!accessToken) {
     throw new Error(
       `認証が必要です。freee_authenticate ツールを使用して認証を行ってください。\n` +
-      `現在の事業所ID: ${companyId}`
+        `現在の事業所ID: ${companyId}`,
     );
   }
 
@@ -123,8 +120,8 @@ export async function uploadReceipt(
     const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(
       `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
-      `現在の事業所ID: ${companyId}\n` +
-      `エラー詳細: ${response.status} ${errorInfo}`
+        `現在の事業所ID: ${companyId}\n` +
+        `エラー詳細: ${response.status} ${errorInfo}`,
     );
   }
 
@@ -132,8 +129,8 @@ export async function uploadReceipt(
     const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(
       `アクセス拒否 (403): ${errorInfo}\n` +
-      `事業所ID: ${companyId}\n\n` +
-      `レートリミットの可能性があります。数分待ってから再試行してください。`
+        `事業所ID: ${companyId}\n\n` +
+        `レートリミットの可能性があります。数分待ってから再試行してください。`,
     );
   }
 
@@ -147,7 +144,7 @@ export async function uploadReceipt(
     return JSON.parse(text);
   } catch {
     throw new Error(
-      `Failed to parse API response as JSON. Status: ${response.status}, Body preview: ${text.slice(0, 200)}`
+      `Failed to parse API response as JSON. Status: ${response.status}, Body preview: ${text.slice(0, 200)}`,
     );
   }
 }

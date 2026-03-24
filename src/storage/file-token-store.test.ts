@@ -14,18 +14,13 @@ vi.mock('../config/companies.js', () => ({
   getCompanyInfo: vi.fn(),
 }));
 
-const {
-  loadTokens,
-  saveTokens,
-  clearTokens,
-  getValidAccessToken,
-} = await import('../auth/tokens.js');
+const { loadTokens, saveTokens, clearTokens, getValidAccessToken } = await import(
+  '../auth/tokens.js'
+);
 
-const {
-  getCurrentCompanyId,
-  setCurrentCompany,
-  getCompanyInfo,
-} = await import('../config/companies.js');
+const { getCurrentCompanyId, setCurrentCompany, getCompanyInfo } = await import(
+  '../config/companies.js'
+);
 
 describe('FileTokenStore', () => {
   let store: FileTokenStore;

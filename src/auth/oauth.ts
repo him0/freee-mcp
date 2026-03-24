@@ -26,7 +26,11 @@ export function buildAuthUrl(codeChallenge: string, state: string, redirectUri: 
   return `${cfg.oauth.authorizationEndpoint}?${params.toString()}`;
 }
 
-export async function exchangeCodeForTokens(code: string, codeVerifier: string, redirectUri: string): Promise<TokenData> {
+export async function exchangeCodeForTokens(
+  code: string,
+  codeVerifier: string,
+  redirectUri: string,
+): Promise<TokenData> {
   const cfg = getConfig();
   const response = await fetch(cfg.oauth.tokenEndpoint, {
     method: 'POST',

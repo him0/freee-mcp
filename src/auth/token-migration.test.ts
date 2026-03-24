@@ -4,13 +4,17 @@ import path from 'node:path';
 import {
   findLegacyTokenFiles,
   tryMigrateLegacyTokens,
-  clearLegacyTokens
+  clearLegacyTokens,
 } from './token-migration.js';
 import type { TokenData } from './tokens.js';
 import { setupTestTempDir } from '../test-utils/temp-dir.js';
 import { APP_NAME } from '../constants.js';
 
-const { tempDir, setup: setupTempDir, cleanup: cleanupTempDir } = setupTestTempDir('token-migration-test-');
+const {
+  tempDir,
+  setup: setupTempDir,
+  cleanup: cleanupTempDir,
+} = setupTestTempDir('token-migration-test-');
 
 vi.mock('fs/promises');
 
@@ -24,7 +28,7 @@ describe('token-migration', () => {
     refresh_token: 'test-refresh-token',
     expires_at: Date.now() + 3600000,
     token_type: 'Bearer',
-    scope: 'read write'
+    scope: 'read write',
   };
 
   beforeEach(async () => {
@@ -51,7 +55,7 @@ describe('token-migration', () => {
         'tokens-12345.json',
         'tokens-67890.json',
         'config.json',
-        'tokens.json'
+        'tokens.json',
       ] as unknown as Awaited<ReturnType<typeof fs.readdir>>);
 
       const result = await findLegacyTokenFiles();
@@ -60,10 +64,9 @@ describe('token-migration', () => {
     });
 
     it('should return empty array when no legacy files exist', async () => {
-      mockFs.readdir.mockResolvedValue([
-        'config.json',
-        'tokens.json'
-      ] as unknown as Awaited<ReturnType<typeof fs.readdir>>);
+      mockFs.readdir.mockResolvedValue(['config.json', 'tokens.json'] as unknown as Awaited<
+        ReturnType<typeof fs.readdir>
+      >);
 
       const result = await findLegacyTokenFiles();
 
@@ -83,9 +86,9 @@ describe('token-migration', () => {
     it('should migrate legacy tokens and clean up old files', async () => {
       const mockSaveTokens = vi.fn().mockResolvedValue(undefined);
 
-      mockFs.readdir.mockResolvedValue([
-        'tokens-12345.json'
-      ] as unknown as Awaited<ReturnType<typeof fs.readdir>>);
+      mockFs.readdir.mockResolvedValue(['tokens-12345.json'] as unknown as Awaited<
+        ReturnType<typeof fs.readdir>
+      >);
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockTokenData));
       mockFs.unlink.mockResolvedValue(undefined);
 
@@ -94,10 +97,10 @@ describe('token-migration', () => {
       expect(result).toEqual(mockTokenData);
       expect(mockSaveTokens).toHaveBeenCalledWith(mockTokenData);
       expect(mockFs.unlink).toHaveBeenCalledWith(
-        path.join(tempDir.getPath(), APP_NAME, 'tokens-12345.json')
+        path.join(tempDir.getPath(), APP_NAME, 'tokens-12345.json'),
       );
       expect(console.error).toHaveBeenCalledWith(
-        '[info] Migrated legacy company-specific tokens to user-based tokens'
+        '[info] Migrated legacy company-specific tokens to user-based tokens',
       );
     });
 
@@ -115,9 +118,9 @@ describe('token-migration', () => {
     it('should return null when legacy token file is invalid', async () => {
       const mockSaveTokens = vi.fn();
 
-      mockFs.readdir.mockResolvedValue([
-        'tokens-12345.json'
-      ] as unknown as Awaited<ReturnType<typeof fs.readdir>>);
+      mockFs.readdir.mockResolvedValue(['tokens-12345.json'] as unknown as Awaited<
+        ReturnType<typeof fs.readdir>
+      >);
       mockFs.readFile.mockResolvedValue(JSON.stringify({ invalid: 'data' }));
 
       const result = await tryMigrateLegacyTokens(mockSaveTokens);
@@ -126,7 +129,7 @@ describe('token-migration', () => {
       expect(mockSaveTokens).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
         '[error] Invalid legacy token file:',
-        expect.any(String)
+        expect.any(String),
       );
     });
 
@@ -145,7 +148,7 @@ describe('token-migration', () => {
 
       mockFs.readdir.mockResolvedValue([
         'tokens-12345.json',
-        'tokens-67890.json'
+        'tokens-67890.json',
       ] as unknown as Awaited<ReturnType<typeof fs.readdir>>);
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockTokenData));
       mockFs.unlink
@@ -157,7 +160,7 @@ describe('token-migration', () => {
       expect(result).toEqual(mockTokenData);
       expect(console.error).toHaveBeenCalledWith(
         '[warn] Failed to clean up legacy token file tokens-67890.json:',
-        expect.any(Error)
+        expect.any(Error),
       );
     });
   });
@@ -166,7 +169,7 @@ describe('token-migration', () => {
     it('should clear all legacy token files', async () => {
       mockFs.readdir.mockResolvedValue([
         'tokens-12345.json',
-        'tokens-67890.json'
+        'tokens-67890.json',
       ] as unknown as Awaited<ReturnType<typeof fs.readdir>>);
       mockFs.unlink.mockResolvedValue(undefined);
 
@@ -175,7 +178,9 @@ describe('token-migration', () => {
       const configDir = path.join(tempDir.getPath(), APP_NAME);
       expect(mockFs.unlink).toHaveBeenCalledWith(path.join(configDir, 'tokens-12345.json'));
       expect(mockFs.unlink).toHaveBeenCalledWith(path.join(configDir, 'tokens-67890.json'));
-      expect(console.error).toHaveBeenCalledWith('[info] Cleared legacy company-specific token files');
+      expect(console.error).toHaveBeenCalledWith(
+        '[info] Cleared legacy company-specific token files',
+      );
     });
 
     it('should not log when no legacy files exist', async () => {
@@ -200,7 +205,7 @@ describe('token-migration', () => {
     it('should continue cleanup even if some files fail to delete', async () => {
       mockFs.readdir.mockResolvedValue([
         'tokens-12345.json',
-        'tokens-67890.json'
+        'tokens-67890.json',
       ] as unknown as Awaited<ReturnType<typeof fs.readdir>>);
       mockFs.unlink
         .mockResolvedValueOnce(undefined)
@@ -210,7 +215,7 @@ describe('token-migration', () => {
 
       expect(console.error).toHaveBeenCalledWith(
         '[warn] Failed to clear legacy token file tokens-67890.json:',
-        expect.any(Error)
+        expect.any(Error),
       );
     });
   });

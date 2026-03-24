@@ -5,9 +5,12 @@ import { addAuthenticationTools } from './tools.js';
 import { addFileUploadTool } from './file-upload-tool.js';
 import { generateClientModeTool } from '../openapi/client-mode.js';
 
-export function createMcpServer(config: Config, options?: {
-  remote?: boolean;
-}): McpServer {
+export function createMcpServer(
+  config: Config,
+  options?: {
+    remote?: boolean;
+  },
+): McpServer {
   const server = new McpServer(
     {
       name: config.server.name,

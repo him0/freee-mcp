@@ -12,13 +12,13 @@ vi.mock('../config.js', () => ({
     freee: {
       clientId: 'test-client-id',
       clientSecret: 'test-client-secret',
-      companyId: '12345'
+      companyId: '12345',
     },
     oauth: {
       redirectUri: 'http://127.0.0.1:54321/callback',
-      callbackPort: 54321
-    }
-  })
+      callbackPort: 54321,
+    },
+  }),
 }));
 
 vi.mock('../config/companies.js', () => ({
@@ -26,30 +26,30 @@ vi.mock('../config/companies.js', () => ({
   getCompanyInfo: vi.fn().mockResolvedValue({
     id: '12345',
     name: 'Demo Company',
-    addedAt: Date.now()
-  })
+    addedAt: Date.now(),
+  }),
 }));
 
 const { getCurrentCompanyId, getCompanyInfo } = await import('../config/companies.js');
 
 vi.mock('../api/client.js', () => ({
-  makeApiRequest: vi.fn()
+  makeApiRequest: vi.fn(),
 }));
 
 vi.mock('../auth/tokens.js', () => ({
   loadTokens: vi.fn(),
-  clearTokens: vi.fn()
+  clearTokens: vi.fn(),
 }));
 
 vi.mock('../auth/oauth.js', () => ({
   generatePKCE: vi.fn(),
-  buildAuthUrl: vi.fn()
+  buildAuthUrl: vi.fn(),
 }));
 
 vi.mock('../auth/server.js', () => ({
   registerAuthenticationRequest: vi.fn(),
   getActualRedirectUri: vi.fn(),
-  startCallbackServerWithAutoStop: vi.fn().mockResolvedValue(undefined)
+  startCallbackServerWithAutoStop: vi.fn().mockResolvedValue(undefined),
 }));
 
 const mockCrypto = vi.mocked(crypto);
@@ -61,7 +61,7 @@ describe('tools', () => {
   beforeEach(() => {
     mockTool = vi.fn();
     mockServer = {
-      tool: mockTool
+      tool: mockTool,
     } as unknown as McpServer;
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -70,7 +70,7 @@ describe('tools', () => {
     vi.mocked(getCompanyInfo).mockResolvedValue({
       id: '12345',
       name: 'Demo Company',
-      addedAt: Date.now()
+      addedAt: Date.now(),
     });
   });
 
@@ -83,17 +83,42 @@ describe('tools', () => {
       addAuthenticationTools(mockServer);
 
       expect(mockTool).toHaveBeenCalledTimes(8);
-      expect(mockTool).toHaveBeenCalledWith('freee_current_user', expect.any(String), {}, expect.any(Function));
-      expect(mockTool).toHaveBeenCalledWith('freee_authenticate', expect.any(String), {}, expect.any(Function));
-      expect(mockTool).toHaveBeenCalledWith('freee_auth_status', expect.any(String), {}, expect.any(Function));
-      expect(mockTool).toHaveBeenCalledWith('freee_clear_auth', expect.any(String), {}, expect.any(Function));
-      expect(mockTool).toHaveBeenCalledWith('freee_server_info', expect.any(String), {}, expect.any(Function));
+      expect(mockTool).toHaveBeenCalledWith(
+        'freee_current_user',
+        expect.any(String),
+        {},
+        expect.any(Function),
+      );
+      expect(mockTool).toHaveBeenCalledWith(
+        'freee_authenticate',
+        expect.any(String),
+        {},
+        expect.any(Function),
+      );
+      expect(mockTool).toHaveBeenCalledWith(
+        'freee_auth_status',
+        expect.any(String),
+        {},
+        expect.any(Function),
+      );
+      expect(mockTool).toHaveBeenCalledWith(
+        'freee_clear_auth',
+        expect.any(String),
+        {},
+        expect.any(Function),
+      );
+      expect(mockTool).toHaveBeenCalledWith(
+        'freee_server_info',
+        expect.any(String),
+        {},
+        expect.any(Function),
+      );
     });
 
     describe('freee_server_info', () => {
       it('should return server info including version', async () => {
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_server_info')?.[3];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_server_info')?.[3];
 
         const result = await handler();
 
@@ -109,8 +134,8 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(mockUserInfo);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_current_user')?.[3];
-        
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_current_user')?.[3];
+
         const result = await handler();
 
         expect(result.content[0].text).toContain('現在のユーザー情報');
@@ -120,11 +145,13 @@ describe('tools', () => {
 
       it('should handle authentication error', async () => {
         const mockMakeApiRequest = await import('../api/client.js');
-        vi.mocked(mockMakeApiRequest.makeApiRequest).mockRejectedValue(new Error('Authentication required'));
+        vi.mocked(mockMakeApiRequest.makeApiRequest).mockRejectedValue(
+          new Error('Authentication required'),
+        );
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_current_user')?.[3];
-        
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_current_user')?.[3];
+
         const result = await handler();
 
         expect(result.content[0].text).toContain('ユーザー情報の取得に失敗');
@@ -140,17 +167,19 @@ describe('tools', () => {
 
         vi.mocked(mockGeneratePKCE.generatePKCE).mockReturnValue({
           codeVerifier: 'test-verifier',
-          codeChallenge: 'test-challenge'
+          codeChallenge: 'test-challenge',
         });
         vi.mocked(mockBuildAuthUrl.buildAuthUrl).mockReturnValue('https://auth.url');
-        vi.mocked(mockServerModule.getActualRedirectUri).mockReturnValue('http://127.0.0.1:54321/callback');
+        vi.mocked(mockServerModule.getActualRedirectUri).mockReturnValue(
+          'http://127.0.0.1:54321/callback',
+        );
         vi.mocked(mockServerModule.startCallbackServerWithAutoStop).mockResolvedValue(undefined);
         mockCrypto.randomBytes = vi.fn().mockReturnValue({
-          toString: vi.fn().mockReturnValue('test-state-hex')
+          toString: vi.fn().mockReturnValue('test-state-hex'),
         });
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_authenticate')?.[3];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_authenticate')?.[3];
 
         const result = await handler();
 
@@ -160,16 +189,15 @@ describe('tools', () => {
         expect(mockBuildAuthUrl.buildAuthUrl).toHaveBeenCalledWith(
           'test-challenge',
           'test-state-hex',
-          'http://127.0.0.1:54321/callback'
+          'http://127.0.0.1:54321/callback',
         );
         expect(mockServerModule.registerAuthenticationRequest).toHaveBeenCalledWith(
           'test-state-hex',
-          'test-verifier'
+          'test-verifier',
         );
         expect(result.content[0].text).toContain('認証URL:');
         expect(result.content[0].text).toContain('https://auth.url');
       });
-
     });
 
     describe('freee_auth_status', () => {
@@ -180,13 +208,13 @@ describe('tools', () => {
           refresh_token: 'test-refresh-token',
           expires_at: Date.now() + 3600000,
           scope: 'read write',
-          token_type: 'Bearer'
+          token_type: 'Bearer',
         };
         vi.mocked(mockLoadTokens.loadTokens).mockResolvedValue(mockTokens);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_auth_status')?.[3];
-        
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_auth_status')?.[3];
+
         const result = await handler();
 
         expect(result.content[0].text).toContain('認証状態: 有効');
@@ -200,13 +228,13 @@ describe('tools', () => {
           refresh_token: 'test-refresh-token',
           expires_at: Date.now() - 3600000,
           scope: 'read write',
-          token_type: 'Bearer'
+          token_type: 'Bearer',
         };
         vi.mocked(mockLoadTokens.loadTokens).mockResolvedValue(mockTokens);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_auth_status')?.[3];
-        
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_auth_status')?.[3];
+
         const result = await handler();
 
         expect(result.content[0].text).toContain('認証状態: 期限切れ');
@@ -218,8 +246,8 @@ describe('tools', () => {
         vi.mocked(mockLoadTokens.loadTokens).mockResolvedValue(null);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_auth_status')?.[3];
-        
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_auth_status')?.[3];
+
         const result = await handler();
 
         expect(result.content[0].text).toContain('未認証');
@@ -232,8 +260,8 @@ describe('tools', () => {
         vi.mocked(mockClearTokens.clearTokens).mockResolvedValue();
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_clear_auth')?.[3];
-        
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_clear_auth')?.[3];
+
         const result = await handler();
 
         expect(mockClearTokens.clearTokens).toHaveBeenCalled();
@@ -245,7 +273,7 @@ describe('tools', () => {
         vi.mocked(mockClearTokens.clearTokens).mockRejectedValue(new Error('Permission denied'));
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_clear_auth')?.[3];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_clear_auth')?.[3];
 
         const result = await handler();
 
@@ -266,7 +294,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(validResponse);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_list_companies')?.[3];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[3];
 
         const result = await handler();
 
@@ -281,7 +309,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(invalidResponse);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_list_companies')?.[3];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[3];
 
         const result = await handler();
 
@@ -298,7 +326,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(invalidResponse);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_list_companies')?.[3];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[3];
 
         const result = await handler();
 
@@ -310,7 +338,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockRejectedValue(new Error('API Error'));
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find(call => call[0] === 'freee_list_companies')?.[3];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[3];
 
         const result = await handler();
 

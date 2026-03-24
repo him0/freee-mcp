@@ -38,7 +38,9 @@ export async function configure(options: ConfigureOptions = {}): Promise<void> {
   try {
     const credentials = await collectCredentials();
     const oauthResult = await performOAuth();
-    const { selected: selectedCompany, all: allCompanies } = await selectCompany(oauthResult.accessToken);
+    const { selected: selectedCompany, all: allCompanies } = await selectCompany(
+      oauthResult.accessToken,
+    );
     await saveConfig(credentials, selectedCompany, allCompanies);
     await configureMcpIntegration();
   } catch (error) {

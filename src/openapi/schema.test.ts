@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
-import { convertParameterToZodSchema, convertPathToToolName, sanitizePropertyName } from './schema.js';
+import {
+  convertParameterToZodSchema,
+  convertPathToToolName,
+  sanitizePropertyName,
+} from './schema.js';
 import type { MinimalParameter } from './minimal-types.js';
 
 describe('schema', () => {
@@ -10,7 +14,7 @@ describe('schema', () => {
         name: 'name',
         in: 'query',
         type: 'string',
-        required: true
+        required: true,
       };
 
       const schema = convertParameterToZodSchema(parameter);
@@ -23,13 +27,15 @@ describe('schema', () => {
         name: 'id',
         in: 'path',
         type: 'integer',
-        required: true
+        required: true,
       };
 
       const schema = convertParameterToZodSchema(parameter);
 
       // ZodNumber.int() creates a ZodEffects schema internally, but vitest might see the outer type
-      expect((schema._def as unknown as { typeName: string }).typeName).toMatch(/^Zod(Effects|Number)$/);
+      expect((schema._def as unknown as { typeName: string }).typeName).toMatch(
+        /^Zod(Effects|Number)$/,
+      );
     });
 
     it('should convert number parameter to ZodNumber', () => {
@@ -37,7 +43,7 @@ describe('schema', () => {
         name: 'amount',
         in: 'query',
         type: 'number',
-        required: true
+        required: true,
       };
 
       const schema = convertParameterToZodSchema(parameter);
@@ -50,7 +56,7 @@ describe('schema', () => {
         name: 'active',
         in: 'query',
         type: 'boolean',
-        required: true
+        required: true,
       };
 
       const schema = convertParameterToZodSchema(parameter);
@@ -63,7 +69,7 @@ describe('schema', () => {
         name: 'data',
         in: 'query',
         type: 'array',
-        required: true
+        required: true,
       };
 
       const schema = convertParameterToZodSchema(parameter);
@@ -76,7 +82,7 @@ describe('schema', () => {
         name: 'optional_param',
         in: 'query',
         type: 'string',
-        required: false
+        required: false,
       };
 
       const schema = convertParameterToZodSchema(parameter);
@@ -90,7 +96,7 @@ describe('schema', () => {
         in: 'query',
         type: 'string',
         description: 'The name of the resource',
-        required: true
+        required: true,
       };
 
       const schema = convertParameterToZodSchema(parameter);
@@ -103,7 +109,7 @@ describe('schema', () => {
         name: 'legacy_param',
         in: 'query',
         type: 'string',
-        required: true
+        required: true,
       };
 
       const schema = convertParameterToZodSchema(parameter);
@@ -116,42 +122,42 @@ describe('schema', () => {
     it('should convert simple path to tool name', () => {
       const path = '/api/1/users';
       const result = convertPathToToolName(path);
-      
+
       expect(result).toBe('users');
     });
 
     it('should convert path with ID parameter', () => {
       const path = '/api/1/users/{id}';
       const result = convertPathToToolName(path);
-      
+
       expect(result).toBe('users_by_id');
     });
 
     it('should convert nested path', () => {
       const path = '/api/1/companies/{company_id}/deals';
       const result = convertPathToToolName(path);
-      
+
       expect(result).toBe('companies_by_id_deals');
     });
 
     it('should convert path with multiple parameters', () => {
       const path = '/api/1/companies/{company_id}/deals/{deal_id}';
       const result = convertPathToToolName(path);
-      
+
       expect(result).toBe('companies_by_id_deals_by_id');
     });
 
     it('should handle paths without API version prefix', () => {
       const path = '/users/{id}/profile';
       const result = convertPathToToolName(path);
-      
+
       expect(result).toBe('_users_by_id_profile');
     });
 
     it('should truncate very long tool names', () => {
       const longPath = '/api/1/very/long/path/with/many/segments/that/exceeds/the/limit';
       const result = convertPathToToolName(longPath);
-      
+
       expect(result.length).toBeLessThanOrEqual(50);
       expect(result).toBe('very_long_path_with_many_segments_that_exceeds_the');
     });
@@ -159,14 +165,14 @@ describe('schema', () => {
     it('should handle empty path', () => {
       const path = '';
       const result = convertPathToToolName(path);
-      
+
       expect(result).toBe('');
     });
 
     it('should handle root path', () => {
       const path = '/';
       const result = convertPathToToolName(path);
-      
+
       expect(result).toBe('_');
     });
 
@@ -182,7 +188,7 @@ describe('schema', () => {
     it('should keep valid property names unchanged', () => {
       const validNames = ['company_id', 'user-name', 'item.count', 'param123'];
 
-      validNames.forEach(name => {
+      validNames.forEach((name) => {
         expect(sanitizePropertyName(name)).toBe(name);
       });
     });
@@ -231,10 +237,10 @@ describe('schema', () => {
         'company id',
         'a'.repeat(100),
         '',
-        '###'
+        '###',
       ];
 
-      testCases.forEach(testCase => {
+      testCases.forEach((testCase) => {
         const result = sanitizePropertyName(testCase);
         expect(result).toMatch(mcpPattern);
       });

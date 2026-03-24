@@ -61,7 +61,7 @@ describe('token-utils', () => {
       };
 
       expect(() => createTokenData(response, fallbacks)).toThrow(
-        'No refresh_token available. The token response did not include a refresh_token and no fallback was provided. Please re-authenticate.'
+        'No refresh_token available. The token response did not include a refresh_token and no fallback was provided. Please re-authenticate.',
       );
     });
 

@@ -103,7 +103,9 @@ describe('uploadReceipt', () => {
     error.code = 'ENOENT';
     vi.mocked(mockFs.default.readFile).mockRejectedValue(error);
 
-    await expect(uploadReceipt('/nonexistent/file.pdf')).rejects.toThrow('ファイルが見つかりません');
+    await expect(uploadReceipt('/nonexistent/file.pdf')).rejects.toThrow(
+      'ファイルが見つかりません',
+    );
   });
 
   it('should throw error when file permission is denied', async () => {
@@ -111,14 +113,18 @@ describe('uploadReceipt', () => {
     error.code = 'EACCES';
     vi.mocked(mockFs.default.readFile).mockRejectedValue(error);
 
-    await expect(uploadReceipt('/protected/file.pdf')).rejects.toThrow('ファイルの読み取り権限がありません');
+    await expect(uploadReceipt('/protected/file.pdf')).rejects.toThrow(
+      'ファイルの読み取り権限がありません',
+    );
   });
 
   it('should throw error when file exceeds 64MB', async () => {
     const largeBuffer = Buffer.alloc(65 * 1024 * 1024); // 65MB
     vi.mocked(mockFs.default.readFile).mockResolvedValue(largeBuffer);
 
-    await expect(uploadReceipt('/path/to/large.pdf')).rejects.toThrow('ファイルサイズが上限(64MB)を超えています');
+    await expect(uploadReceipt('/path/to/large.pdf')).rejects.toThrow(
+      'ファイルサイズが上限(64MB)を超えています',
+    );
   });
 
   it('should throw error when not authenticated', async () => {

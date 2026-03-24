@@ -38,7 +38,12 @@ export class FileTokenStore implements TokenStore {
     return fileGetCurrentCompanyId();
   }
 
-  async setCurrentCompany(_userId: string, companyId: string, name?: string, description?: string): Promise<void> {
+  async setCurrentCompany(
+    _userId: string,
+    companyId: string,
+    name?: string,
+    description?: string,
+  ): Promise<void> {
     return fileSetCurrentCompany(companyId, name, description);
   }
 

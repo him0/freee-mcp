@@ -62,20 +62,14 @@ async function createTestApp() {
   );
 
   // Body size limit
-  app.use(
-    (
-      req: import('express').Request,
-      res: import('express').Response,
-      next: () => void,
-    ) => {
-      const contentLength = req.headers['content-length'];
-      if (contentLength && Number.parseInt(contentLength, 10) > BODY_SIZE_LIMIT) {
-        res.status(413).json({ error: 'Payload too large' });
-        return;
-      }
-      next();
-    },
-  );
+  app.use((req: import('express').Request, res: import('express').Response, next: () => void) => {
+    const contentLength = req.headers['content-length'];
+    if (contentLength && Number.parseInt(contentLength, 10) > BODY_SIZE_LIMIT) {
+      res.status(413).json({ error: 'Payload too large' });
+      return;
+    }
+    next();
+  });
 
   // Test routes
   app.get('/test', (_req, res) => res.json({ ok: true }));

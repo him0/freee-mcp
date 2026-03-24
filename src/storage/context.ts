@@ -21,9 +21,7 @@ function getDefaultFileTokenStore(): FileTokenStore {
 // In multi-tenant / remote (HTTP) mode, callers MUST inject a proper TokenStore
 // via extra.authInfo.extra to ensure tenant isolation. The HTTP transport layer
 // (added in PR 2) is responsible for populating AuthExtra on every request.
-export function extractTokenContext(
-  extra?: AuthExtra
-): TokenContext {
+export function extractTokenContext(extra?: AuthExtra): TokenContext {
   const authExtra = extra?.authInfo?.extra;
   if (authExtra?.tokenStore && typeof authExtra.userId === 'string') {
     return {

@@ -12,7 +12,11 @@ import {
 import { setupTestTempDir } from '../test-utils/temp-dir.js';
 import { APP_NAME } from '../constants.js';
 
-const { tempDir, setup: setupTempDir, cleanup: cleanupTempDir } = setupTestTempDir('companies-test-');
+const {
+  tempDir,
+  setup: setupTempDir,
+  cleanup: cleanupTempDir,
+} = setupTestTempDir('companies-test-');
 
 vi.mock('fs/promises');
 
@@ -146,7 +150,7 @@ describe('companies', () => {
       expect(result.currentCompanyId).toBe('456');
       expect(result.clientId).toBeUndefined();
       expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('古い設定形式を検出しました')
+        expect.stringContaining('古い設定形式を検出しました'),
       );
     });
   });
@@ -162,7 +166,7 @@ describe('companies', () => {
       expect(mockFs.writeFile).toHaveBeenCalledWith(
         path.join(tempDir.getPath(), APP_NAME, 'config.json'),
         JSON.stringify(validConfig, null, 2),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });

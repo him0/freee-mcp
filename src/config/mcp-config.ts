@@ -53,7 +53,7 @@ export function getMcpConfigPath(target: McpTarget): string {
       'Library',
       'Application Support',
       'Claude',
-      'claude_desktop_config.json'
+      'claude_desktop_config.json',
     );
   } else if (platform === 'win32') {
     // Windows Store (MSIX) version uses a sandboxed path

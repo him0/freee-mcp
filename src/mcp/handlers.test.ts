@@ -4,37 +4,39 @@ import { createAndStartServer } from './handlers.js';
 vi.mock('@modelcontextprotocol/sdk/server/mcp.js', () => ({
   McpServer: vi.fn().mockImplementation((options) => ({
     ...options,
-    connect: vi.fn()
-  }))
+    connect: vi.fn(),
+  })),
 }));
 
 vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
-  StdioServerTransport: vi.fn()
+  StdioServerTransport: vi.fn(),
 }));
 
 vi.mock('../config.js', () => ({
-  loadConfig: vi.fn(() => Promise.resolve({
-    server: {
-      name: 'freee',
-      version: '1.0.0',
-      instructions: 'freee APIと連携するMCPサーバー。',
-    },
-    oauth: {
-      callbackPort: 54321
-    }
-  }))
+  loadConfig: vi.fn(() =>
+    Promise.resolve({
+      server: {
+        name: 'freee',
+        version: '1.0.0',
+        instructions: 'freee APIと連携するMCPサーバー。',
+      },
+      oauth: {
+        callbackPort: 54321,
+      },
+    }),
+  ),
 }));
 
 vi.mock('./tools.js', () => ({
-  addAuthenticationTools: vi.fn()
+  addAuthenticationTools: vi.fn(),
 }));
 
 vi.mock('./file-upload-tool.js', () => ({
-  addFileUploadTool: vi.fn()
+  addFileUploadTool: vi.fn(),
 }));
 
 vi.mock('../openapi/client-mode.js', () => ({
-  generateClientModeTool: vi.fn()
+  generateClientModeTool: vi.fn(),
 }));
 
 describe('handlers', () => {
@@ -56,12 +58,18 @@ describe('handlers', () => {
       const mockGenerateClientModeTool = await import('../openapi/client-mode.js');
 
       const mockServerInstance = {
-        connect: vi.fn().mockResolvedValue(undefined)
+        connect: vi.fn().mockResolvedValue(undefined),
       };
-      vi.mocked(mockMcpServer.McpServer).mockReturnValue(mockServerInstance as unknown as InstanceType<typeof mockMcpServer.McpServer>);
+      vi.mocked(mockMcpServer.McpServer).mockReturnValue(
+        mockServerInstance as unknown as InstanceType<typeof mockMcpServer.McpServer>,
+      );
 
       const mockTransportInstance = {};
-      vi.mocked(mockStdioTransport.StdioServerTransport).mockReturnValue(mockTransportInstance as unknown as InstanceType<typeof mockStdioTransport.StdioServerTransport>);
+      vi.mocked(mockStdioTransport.StdioServerTransport).mockReturnValue(
+        mockTransportInstance as unknown as InstanceType<
+          typeof mockStdioTransport.StdioServerTransport
+        >,
+      );
 
       await createAndStartServer();
 
@@ -74,9 +82,13 @@ describe('handlers', () => {
           instructions: expect.any(String),
         },
       );
-      expect(mockAddAuthenticationTools.addAuthenticationTools).toHaveBeenCalledWith(mockServerInstance);
+      expect(mockAddAuthenticationTools.addAuthenticationTools).toHaveBeenCalledWith(
+        mockServerInstance,
+      );
       expect(mockAddFileUploadTool.addFileUploadTool).toHaveBeenCalledWith(mockServerInstance);
-      expect(mockGenerateClientModeTool.generateClientModeTool).toHaveBeenCalledWith(mockServerInstance);
+      expect(mockGenerateClientModeTool.generateClientModeTool).toHaveBeenCalledWith(
+        mockServerInstance,
+      );
       expect(mockServerInstance.connect).toHaveBeenCalledWith(mockTransportInstance);
     });
   });

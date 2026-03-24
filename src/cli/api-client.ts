@@ -30,9 +30,7 @@ async function fetchAccountingCompanies(accessToken: string): Promise<Company[]>
 
   if (!response.ok) {
     const errorInfo = await formatResponseErrorInfo(response);
-    throw new Error(
-      `事業所一覧の取得に失敗しました: ${response.status} ${errorInfo}`,
-    );
+    throw new Error(`事業所一覧の取得に失敗しました: ${response.status} ${errorInfo}`);
   }
 
   const jsonData: unknown = await response.json();
@@ -53,9 +51,7 @@ async function fetchHrCompanies(accessToken: string): Promise<Company[]> {
 
   if (!response.ok) {
     const errorInfo = await formatResponseErrorInfo(response);
-    throw new Error(
-      `事業所一覧の取得に失敗しました（HR API）: ${response.status} ${errorInfo}`,
-    );
+    throw new Error(`事業所一覧の取得に失敗しました（HR API）: ${response.status} ${errorInfo}`);
   }
 
   const jsonData: unknown = await response.json();

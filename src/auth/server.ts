@@ -43,7 +43,7 @@ export class AuthenticationManager {
       reject: (error: Error) => {
         console.error('Authentication failed:', error);
       },
-      timeout
+      timeout,
     });
 
     console.error(`Registration complete. Total pending: ${this.pendingAuthentications.size}`);
@@ -136,7 +136,9 @@ class CallbackServer {
 
   async start(): Promise<void> {
     if (this.server) {
-      console.error('OAuth callback server is already running. If authentication is not working, try restarting the MCP server.');
+      console.error(
+        'OAuth callback server is already running. If authentication is not working, try restarting the MCP server.',
+      );
       return;
     }
 
@@ -147,13 +149,13 @@ class CallbackServer {
       const redirectUri = `http://127.0.0.1:${port}/callback`;
       throw new Error(
         `ポート ${port} は既に使用されています。\n\n` +
-        `freee アプリにコールバックURL (${redirectUri}) を登録している場合、` +
-        `ポートを変更すると認証が失敗します。\n\n` +
-        `解決方法:\n` +
-        `  1. ポート ${port} を使用しているプロセスを終了する\n` +
-        `     (例: lsof -i :${port} でプロセスを確認)\n` +
-        `  2. または、設定でポートを変更し、freee アプリのコールバックURLも更新する\n` +
-        `     (freee-mcp configure を実行して再設定)`
+          `freee アプリにコールバックURL (${redirectUri}) を登録している場合、` +
+          `ポートを変更すると認証が失敗します。\n\n` +
+          `解決方法:\n` +
+          `  1. ポート ${port} を使用しているプロセスを終了する\n` +
+          `     (例: lsof -i :${port} でプロセスを確認)\n` +
+          `  2. または、設定でポートを変更し、freee アプリのコールバックURLも更新する\n` +
+          `     (freee-mcp configure を実行して再設定)`,
       );
     }
 
@@ -185,7 +187,9 @@ class CallbackServer {
       });
 
       this.server.listen(port, '127.0.0.1', () => {
-        console.error(`OAuth callback server listening on http://127.0.0.1:${port} (callback URL: http://127.0.0.1:${port}/callback)`);
+        console.error(
+          `OAuth callback server listening on http://127.0.0.1:${port} (callback URL: http://127.0.0.1:${port}/callback)`,
+        );
         resolve();
       });
     });
@@ -232,7 +236,7 @@ class CallbackServer {
       code: code ? `${code.substring(0, 10)}...` : null,
       state: state ? `${state.substring(0, 10)}...` : null,
       error,
-      errorDescription
+      errorDescription,
     });
     console.error(`Pending authentications count: ${this.authManager.pendingCount}`);
 
@@ -268,7 +272,9 @@ class CallbackServer {
     if (cliHandler) {
       console.error(`Valid CLI callback received`);
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてターミナルに戻ってください。</p>');
+      res.end(
+        '<h1>認証完了</h1><p>認証が完了しました。このページを閉じてターミナルに戻ってください。</p>',
+      );
 
       cliHandler.resolve(code);
       return;
@@ -286,7 +292,11 @@ class CallbackServer {
 
     // トークン交換を待ってから、結果に応じてブラウザに応答を返す
     try {
-      const tokens = await exchangeCodeForTokens(code, pendingAuth.codeVerifier, this.getRedirectUri());
+      const tokens = await exchangeCodeForTokens(
+        code,
+        pendingAuth.codeVerifier,
+        this.getRedirectUri(),
+      );
       console.error(`Token exchange successful!`);
       pendingAuth.resolve(tokens);
 
@@ -298,7 +308,8 @@ class CallbackServer {
       pendingAuth.reject(exchangeError as Error);
 
       // エラー時は「認証エラー」を表示
-      const errorMessage = exchangeError instanceof Error ? exchangeError.message : String(exchangeError);
+      const errorMessage =
+        exchangeError instanceof Error ? exchangeError.message : String(exchangeError);
       res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(`<h1>認証エラー</h1><p>トークン交換に失敗しました: ${errorMessage}</p>`);
     } finally {

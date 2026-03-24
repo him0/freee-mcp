@@ -161,7 +161,7 @@ export async function getCurrentCompanyId(): Promise<string> {
 export async function setCurrentCompany(
   companyId: string,
   name?: string,
-  description?: string
+  description?: string,
 ): Promise<void> {
   const config = await loadFullConfig();
 

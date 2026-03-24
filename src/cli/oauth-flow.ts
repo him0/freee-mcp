@@ -32,12 +32,9 @@ export async function performOAuth(): Promise<OAuthResult> {
   const authManager = getDefaultAuthManager();
 
   const callbackPromise = new Promise<string>((resolve, reject) => {
-    const timeout = setTimeout(
-      () => {
-        reject(new Error('認証がタイムアウトしました（5分）'));
-      },
-      AUTH_TIMEOUT_MS,
-    );
+    const timeout = setTimeout(() => {
+      reject(new Error('認証がタイムアウトしました（5分）'));
+    }, AUTH_TIMEOUT_MS);
 
     authManager.registerCliAuthHandler(state, {
       resolve: (code: string): void => {

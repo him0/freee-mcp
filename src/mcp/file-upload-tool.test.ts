@@ -48,7 +48,11 @@ describe('file-upload-tool', () => {
 
       const result = await handler({ file_path: '/path/to/test.pdf' });
 
-      expect(uploadReceipt).toHaveBeenCalledWith('/path/to/test.pdf', {}, expect.objectContaining({ tokenStore: expect.any(Object), userId: 'local' }));
+      expect(uploadReceipt).toHaveBeenCalledWith(
+        '/path/to/test.pdf',
+        {},
+        expect.objectContaining({ tokenStore: expect.any(Object), userId: 'local' }),
+      );
       expect(result.content[0].text).toContain('ファイルをアップロードしました');
       expect(result.content[0].text).toContain('ファイルボックスID: 123');
       expect(result.content[0].text).toContain('ステータス: uploaded');
@@ -70,18 +74,24 @@ describe('file-upload-tool', () => {
         document_type: 'receipt',
       });
 
-      expect(uploadReceipt).toHaveBeenCalledWith('/path/to/test.pdf', {
-        description: 'テスト',
-        receipt_metadatum_partner_name: '取引先A',
-        receipt_metadatum_issue_date: '2026-01-15',
-        receipt_metadatum_amount: 5000,
-        qualified_invoice: 'qualified',
-        document_type: 'receipt',
-      }, expect.objectContaining({ tokenStore: expect.any(Object), userId: 'local' }));
+      expect(uploadReceipt).toHaveBeenCalledWith(
+        '/path/to/test.pdf',
+        {
+          description: 'テスト',
+          receipt_metadatum_partner_name: '取引先A',
+          receipt_metadatum_issue_date: '2026-01-15',
+          receipt_metadatum_amount: 5000,
+          qualified_invoice: 'qualified',
+          document_type: 'receipt',
+        },
+        expect.objectContaining({ tokenStore: expect.any(Object), userId: 'local' }),
+      );
     });
 
     it('should return error message on failure', async () => {
-      vi.mocked(uploadReceipt).mockRejectedValue(new Error('ファイルが見つかりません: /missing.pdf'));
+      vi.mocked(uploadReceipt).mockRejectedValue(
+        new Error('ファイルが見つかりません: /missing.pdf'),
+      );
 
       addFileUploadTool(mockServer);
       const handler = mockTool.mock.calls[0][3];

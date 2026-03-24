@@ -69,9 +69,7 @@ export function formatErrorMessage(error: unknown): string {
  */
 export async function formatResponseErrorInfo(response: Response): Promise<string> {
   const result = await parseJsonResponse(response);
-  return result.success
-    ? JSON.stringify(result.data)
-    : `(JSON parse failed: ${result.error})`;
+  return result.success ? JSON.stringify(result.data) : `(JSON parse failed: ${result.error})`;
 }
 
 /**
@@ -82,7 +80,10 @@ export async function formatResponseErrorInfo(response: Response): Promise<strin
  * @param statusCode - The HTTP status code
  * @returns Formatted error message string
  */
-export async function formatApiErrorMessage(response: Response, statusCode: number): Promise<string> {
+export async function formatApiErrorMessage(
+  response: Response,
+  statusCode: number,
+): Promise<string> {
   const result = await parseJsonResponse(response);
 
   let errorMessage = `API request failed: ${statusCode}`;

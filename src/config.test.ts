@@ -26,9 +26,7 @@ describe('parsePort', () => {
   it('should fallback to default for NaN string', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(parsePort('not-a-number', DEFAULT_CALLBACK_PORT)).toBe(DEFAULT_CALLBACK_PORT);
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining('ポートの値が不正です')
-    );
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('ポートの値が不正です'));
     spy.mockRestore();
   });
 
@@ -75,8 +73,12 @@ describe('parsePort', () => {
 describe('config', () => {
   it('should have correct OAuth configuration', async () => {
     const config = await loadConfig();
-    expect(config.oauth.redirectUri).toContain(`http://127.0.0.1:${config.oauth.callbackPort}/callback`);
-    expect(config.oauth.authorizationEndpoint).toBe('https://accounts.secure.freee.co.jp/public_api/authorize');
+    expect(config.oauth.redirectUri).toContain(
+      `http://127.0.0.1:${config.oauth.callbackPort}/callback`,
+    );
+    expect(config.oauth.authorizationEndpoint).toBe(
+      'https://accounts.secure.freee.co.jp/public_api/authorize',
+    );
     expect(config.oauth.tokenEndpoint).toBe('https://accounts.secure.freee.co.jp/public_api/token');
     expect(config.oauth.scope).toBe('read write');
   });
@@ -91,7 +93,6 @@ describe('config', () => {
     const config = await loadConfig();
     expect(config.auth.timeoutMs).toBe(AUTH_TIMEOUT_MS);
   });
-
 });
 
 describe('loadConfig - partial env var validation', () => {
@@ -113,9 +114,7 @@ describe('loadConfig - partial env var validation', () => {
     delete process.env.FREEE_CLIENT_SECRET;
 
     const { loadConfig: freshLoadConfig } = await import('./config.js');
-    await expect(freshLoadConfig()).rejects.toThrow(
-      'FREEE_CLIENT_SECRET が設定されていません'
-    );
+    await expect(freshLoadConfig()).rejects.toThrow('FREEE_CLIENT_SECRET が設定されていません');
   });
 
   it('should throw error when only FREEE_CLIENT_SECRET is set', async () => {
@@ -123,9 +122,7 @@ describe('loadConfig - partial env var validation', () => {
     process.env.FREEE_CLIENT_SECRET = 'test-secret';
 
     const { loadConfig: freshLoadConfig } = await import('./config.js');
-    await expect(freshLoadConfig()).rejects.toThrow(
-      'FREEE_CLIENT_ID が設定されていません'
-    );
+    await expect(freshLoadConfig()).rejects.toThrow('FREEE_CLIENT_ID が設定されていません');
   });
 
   it('should work when both env vars are set', async () => {

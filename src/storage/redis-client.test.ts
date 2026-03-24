@@ -30,9 +30,12 @@ describe('redis-client', () => {
 
     const client = getRedisClient();
 
-    expect(Redis).toHaveBeenCalledWith('redis://localhost:6379', expect.objectContaining({
-      maxRetriesPerRequest: 3,
-    }));
+    expect(Redis).toHaveBeenCalledWith(
+      'redis://localhost:6379',
+      expect.objectContaining({
+        maxRetriesPerRequest: 3,
+      }),
+    );
     expect(client).toBeDefined();
   });
 

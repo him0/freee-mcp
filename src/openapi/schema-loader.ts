@@ -17,9 +17,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // - development (bun): __dirname = .../src/openapi → ../../openapi/minimal
 function getSchemasDir(): string {
   const candidates = [
-    path.resolve(__dirname, './openapi/minimal'),      // dist/index.esm.js
+    path.resolve(__dirname, './openapi/minimal'), // dist/index.esm.js
     path.resolve(__dirname, '../dist/openapi/minimal'), // bin/cli.js
-    path.resolve(__dirname, '../../openapi/minimal'),  // development (bun)
+    path.resolve(__dirname, '../../openapi/minimal'), // development (bun)
   ];
 
   for (const candidate of candidates) {
@@ -29,7 +29,7 @@ function getSchemasDir(): string {
   }
 
   throw new Error(
-    `Could not find minimal schema directory. Searched paths:\n${candidates.join('\n')}`
+    `Could not find minimal schema directory. Searched paths:\n${candidates.join('\n')}`,
   );
 }
 
@@ -41,9 +41,7 @@ function loadSchema(filename: string): MinimalSchema {
   const parsed = JSON.parse(content);
   const result = MinimalSchemaSchema.safeParse(parsed);
   if (!result.success) {
-    throw new Error(
-      `Invalid schema file ${filename}: ${result.error.message}`
-    );
+    throw new Error(`Invalid schema file ${filename}: ${result.error.message}`);
   }
   return result.data;
 }
@@ -153,30 +151,27 @@ export function _resetApiConfigs(): void {
   _cachedPathList = null;
 }
 
-export const API_CONFIGS: Record<ApiType, ApiConfig> = new Proxy(
-  {} as Record<ApiType, ApiConfig>,
-  {
-    get(_, prop: string): ApiConfig | undefined {
-      if (prop in API_METADATA) {
-        return getApiConfig(prop as ApiType);
-      }
-      return undefined;
-    },
-    ownKeys(): string[] {
-      return Object.keys(API_METADATA);
-    },
-    getOwnPropertyDescriptor(_, prop: string): PropertyDescriptor | undefined {
-      if (prop in API_METADATA) {
-        return {
-          enumerable: true,
-          configurable: true,
-          value: getApiConfig(prop as ApiType),
-        };
-      }
-      return undefined;
-    },
-  }
-);
+export const API_CONFIGS: Record<ApiType, ApiConfig> = new Proxy({} as Record<ApiType, ApiConfig>, {
+  get(_, prop: string): ApiConfig | undefined {
+    if (prop in API_METADATA) {
+      return getApiConfig(prop as ApiType);
+    }
+    return undefined;
+  },
+  ownKeys(): string[] {
+    return Object.keys(API_METADATA);
+  },
+  getOwnPropertyDescriptor(_, prop: string): PropertyDescriptor | undefined {
+    if (prop in API_METADATA) {
+      return {
+        enumerable: true,
+        configurable: true,
+        value: getApiConfig(prop as ApiType),
+      };
+    }
+    return undefined;
+  },
+});
 
 export interface PathValidationResult {
   isValid: boolean;
@@ -195,7 +190,7 @@ function findPathInSchema(
   normalizedMethod: keyof MinimalPathItem,
   path: string,
   apiType: ApiType,
-  config: ApiConfig
+  config: ApiConfig,
 ): PathValidationResult | null {
   const paths = config.schema.paths;
 
@@ -245,7 +240,7 @@ function findPathInSchema(
 export function validatePathForService(
   method: string,
   path: string,
-  service?: ApiType
+  service?: ApiType,
 ): PathValidationResult {
   const normalizedMethod = method.toLowerCase() as keyof MinimalPathItem;
 
