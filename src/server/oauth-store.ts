@@ -78,7 +78,9 @@ export class OAuthStateStore {
   }
 
   async getAuthCode(code: string): Promise<AuthCodeData | null> {
-    const raw = await withRedis('getAuthCode', () => this.redis.get(`${OAUTH_KEY_PREFIX}:code:${code}`));
+    const raw = await withRedis('getAuthCode', () =>
+      this.redis.get(`${OAUTH_KEY_PREFIX}:code:${code}`),
+    );
     if (!raw) return null;
     return tryParseJson<AuthCodeData>(raw, 'authCode');
   }
@@ -121,6 +123,8 @@ export class OAuthStateStore {
   }
 
   async revokeRefreshToken(token: string): Promise<void> {
-    await withRedis('revokeRefreshToken', () => this.redis.del(`${OAUTH_KEY_PREFIX}:refresh:${token}`));
+    await withRedis('revokeRefreshToken', () =>
+      this.redis.del(`${OAUTH_KEY_PREFIX}:refresh:${token}`),
+    );
   }
 }
