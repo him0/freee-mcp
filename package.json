@@ -3,15 +3,16 @@
   "name": "freee-mcp",
   "version": "0.14.0",
   "bin": {
-    "freee-mcp": "./bin/cli.js"
+    "freee-mcp": "./bin/freee-mcp.js",
+    "freee-remote-mcp": "./bin/freee-remote-mcp.js"
   },
   "scripts": {
-    "clean": "rm -rf dist bin/cli.js",
+    "clean": "rm -rf dist bin/freee-mcp.js bin/freee-remote-mcp.js",
     "build": "bun run build.ts",
     "prepare": "bun run build",
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
-    "dev:remote": "bun --watch run src/index.ts --remote",
+    "dev:remote": "bun --watch run src/entry-remote.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint src/",
     "lint:fix": "biome lint --write src/",

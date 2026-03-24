@@ -13,12 +13,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Resolve schemas directory based on runtime context.
 // Bun.build bundles code into different entry points:
 // - dist/index.esm.js: __dirname = .../dist → ./openapi/minimal
-// - bin/cli.js: __dirname = .../bin → ../dist/openapi/minimal
+// - bin/freee-mcp.js: __dirname = .../bin → ../dist/openapi/minimal
 // - development (bun): __dirname = .../src/openapi → ../../openapi/minimal
 function getSchemasDir(): string {
   const candidates = [
     path.resolve(__dirname, './openapi/minimal'), // dist/index.esm.js
-    path.resolve(__dirname, '../dist/openapi/minimal'), // bin/cli.js
+    path.resolve(__dirname, '../dist/openapi/minimal'), // bin/freee-mcp.js
     path.resolve(__dirname, '../../openapi/minimal'), // development (bun)
   ];
 
