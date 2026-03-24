@@ -1,11 +1,11 @@
 import crypto from 'node:crypto';
 import open from 'open';
+import { buildAuthUrl, exchangeCodeForTokens } from '../auth/oauth.js';
 import {
-  startCallbackServer,
   getActualRedirectUri,
   getDefaultAuthManager,
+  startCallbackServer,
 } from '../auth/server.js';
-import { buildAuthUrl, exchangeCodeForTokens } from '../auth/oauth.js';
 import { AUTH_TIMEOUT_MS } from '../constants.js';
 import type { OAuthResult } from './types.js';
 

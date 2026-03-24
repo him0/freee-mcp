@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { loadConfig, parsePort } from './config.js';
 import { AUTH_TIMEOUT_MS, DEFAULT_CALLBACK_PORT } from './constants.js';
 

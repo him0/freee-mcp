@@ -3,9 +3,9 @@ import path from 'node:path';
 import { stopCallbackServer } from '../auth/server.js';
 import { clearTokens } from '../auth/tokens.js';
 import { getConfigDir, PACKAGE_VERSION } from '../constants.js';
-import { collectCredentials, selectCompany, configureMcpIntegration } from './prompts.js';
-import { performOAuth } from './oauth-flow.js';
 import { saveConfig } from './configuration.js';
+import { performOAuth } from './oauth-flow.js';
+import { collectCredentials, configureMcpIntegration, selectCompany } from './prompts.js';
 
 export interface ConfigureOptions {
   force?: boolean;

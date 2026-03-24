@@ -1,5 +1,5 @@
-import type { TokenStore } from './token-store.js';
 import { FileTokenStore } from './file-token-store.js';
+import type { TokenStore } from './token-store.js';
 
 export type AuthExtra = { authInfo?: { extra?: Record<string, unknown> } };
 

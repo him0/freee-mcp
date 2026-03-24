@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { RedisTokenStore } from './redis-token-store.js';
-import { RedisUnavailableError } from '../server/errors.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TokenData } from '../auth/tokens.js';
+import { RedisUnavailableError } from '../server/errors.js';
+import { RedisTokenStore } from './redis-token-store.js';
 
 vi.mock('../auth/tokens.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../auth/tokens.js')>();

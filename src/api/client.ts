@@ -1,11 +1,11 @@
-import { getConfig } from '../config.js';
-import { getValidAccessToken } from '../auth/tokens.js';
-import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
-import { formatResponseErrorInfo, formatApiErrorMessage } from '../utils/error.js';
-import { USER_AGENT, FETCH_TIMEOUT_API_MS } from '../constants.js';
-import type { TokenContext } from '../storage/context.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { getValidAccessToken } from '../auth/tokens.js';
+import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
+import { getConfig } from '../config.js';
+import { FETCH_TIMEOUT_API_MS, USER_AGENT } from '../constants.js';
+import type { TokenContext } from '../storage/context.js';
+import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
 /**
  * Response type for binary file downloads

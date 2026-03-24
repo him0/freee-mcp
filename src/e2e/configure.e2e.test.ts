@@ -3,7 +3,7 @@
  * Tests the complete configuration flow without affecting the actual machine settings
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FullConfig } from '../config/companies';
 import {
   mockCompaniesResponse,

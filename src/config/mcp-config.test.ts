@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import fs from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import fs from 'node:fs/promises';
 import os from 'node:os';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  addFreeeMcpConfig,
+  checkMcpConfigStatus,
   getMcpConfigPath,
   getTargetDisplayName,
-  checkMcpConfigStatus,
-  addFreeeMcpConfig,
   removeFreeeMcpConfig,
 } from './mcp-config.js';
 

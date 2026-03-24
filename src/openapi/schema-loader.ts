@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  type MinimalOperation,
+  type MinimalPathItem,
   type MinimalSchema,
   MinimalSchemaSchema,
-  type MinimalPathItem,
-  type MinimalOperation,
 } from './minimal-types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { parseJsonResponse, createTextResponse, formatErrorMessage } from './error.js';
+import { describe, expect, it } from 'vitest';
+import { createTextResponse, formatErrorMessage, parseJsonResponse } from './error.js';
 
 describe('parseJsonResponse', () => {
   it('should return success with parsed data for valid JSON', async () => {

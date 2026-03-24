@@ -1,22 +1,22 @@
 import { randomUUID } from 'node:crypto';
-import type { Response } from 'express';
-import type {
-  OAuthServerProvider,
-  AuthorizationParams,
-} from '@modelcontextprotocol/sdk/server/auth/provider.js';
 import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
+import { InvalidGrantError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import type {
+  AuthorizationParams,
+  OAuthServerProvider,
+} from '@modelcontextprotocol/sdk/server/auth/provider.js';
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import type {
   OAuthClientInformationFull,
-  OAuthTokens,
   OAuthTokenRevocationRequest,
+  OAuthTokens,
 } from '@modelcontextprotocol/sdk/shared/auth.js';
-import { InvalidGrantError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import type { Response } from 'express';
 import { generatePKCE } from '../auth/oauth.js';
+import type { TokenStore } from '../storage/token-store.js';
+import type { RedisClientStore } from './client-store.js';
 import { signAccessToken, verifyAccessToken as verifyJwt } from './jwt.js';
 import type { OAuthStateStore } from './oauth-store.js';
-import type { RedisClientStore } from './client-store.js';
-import type { TokenStore } from '../storage/token-store.js';
 
 export interface FreeeOAuthProviderDeps {
   clientStore: RedisClientStore;

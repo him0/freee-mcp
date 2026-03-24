@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { signAccessToken, verifyAccessToken, joseErrors } from './jwt.js';
+import { describe, expect, it } from 'vitest';
+import { joseErrors, signAccessToken, verifyAccessToken } from './jwt.js';
 
 const TEST_SECRET = 'test-secret-key-that-is-long-enough-for-hmac-256';
 const TEST_ISSUER = 'https://mcp.example.com';

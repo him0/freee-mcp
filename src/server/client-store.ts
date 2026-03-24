@@ -1,7 +1,7 @@
-import type { Redis } from '../storage/redis-client.js';
 import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
-import { OAuthClientInformationFullSchema } from '@modelcontextprotocol/sdk/shared/auth.js';
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
+import { OAuthClientInformationFullSchema } from '@modelcontextprotocol/sdk/shared/auth.js';
+import type { Redis } from '../storage/redis-client.js';
 import { type CIMDFetcher, HttpCIMDFetcher, hashCimdUrl } from './cimd-fetcher.js';
 import { RedisUnavailableError, withRedis } from './errors.js';
 import { getLogger } from './logger.js';

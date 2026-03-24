@@ -1,14 +1,14 @@
 import prompts from 'prompts';
 import {
-  checkMcpConfigStatus,
   addFreeeMcpConfig,
-  removeFreeeMcpConfig,
+  checkMcpConfigStatus,
   getTargetDisplayName,
   type McpTarget,
+  removeFreeeMcpConfig,
 } from '../config/mcp-config.js';
 import { DEFAULT_CALLBACK_PORT } from '../constants.js';
-import type { Credentials, SelectedCompany, Company } from './types.js';
 import { fetchCompanies } from './api-client.js';
+import type { Company, Credentials, SelectedCompany } from './types.js';
 
 export async function collectCredentials(): Promise<Credentials> {
   const existingConfig = await import('../config/companies.js').then((m) => m.loadFullConfig());

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // Create shared mock functions that persist across module resets
 const mockInstances: Array<{ quit: ReturnType<typeof vi.fn>; ping: ReturnType<typeof vi.fn> }> = [];

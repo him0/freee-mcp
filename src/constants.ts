@@ -5,8 +5,8 @@
  * across multiple files in the codebase.
  */
 
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
 
 /**
  * Application name used for configuration directory

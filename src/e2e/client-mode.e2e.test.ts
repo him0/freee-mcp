@@ -3,10 +3,10 @@
  * Tests the complete flow from MCP tool invocation to API response
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { generateClientModeTool } from '../openapi/client-mode.js';
-import { mockDealsResponse, mockDealResponse, mockUserResponse } from './fixtures/api-responses.js';
+import { mockDealResponse, mockDealsResponse, mockUserResponse } from './fixtures/api-responses.js';
 
 // Track API calls for assertions
 interface ApiCall {

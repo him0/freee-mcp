@@ -1,9 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { type Config, loadConfig } from '../config.js';
-import { addAuthenticationTools } from './tools.js';
-import { addFileUploadTool } from './file-upload-tool.js';
 import { generateClientModeTool } from '../openapi/client-mode.js';
+import { addFileUploadTool } from './file-upload-tool.js';
+import { addAuthenticationTools } from './tools.js';
 
 export function createMcpServer(
   config: Config,

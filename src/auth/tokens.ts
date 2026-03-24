@@ -4,13 +4,13 @@ import { z } from 'zod';
 import { getConfig } from '../config.js';
 import {
   CONFIG_FILE_PERMISSION,
+  FETCH_TIMEOUT_TOKEN_MS,
   getConfigDir,
   USER_AGENT,
-  FETCH_TIMEOUT_TOKEN_MS,
 } from '../constants.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
+import { clearLegacyTokens, tryMigrateLegacyTokens } from './token-migration.js';
 import { createTokenData } from './token-utils.js';
-import { tryMigrateLegacyTokens, clearLegacyTokens } from './token-migration.js';
 
 export const TokenDataSchema = z.object({
   access_token: z.string(),

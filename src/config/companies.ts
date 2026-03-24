@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
 import { z } from 'zod';
 import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 

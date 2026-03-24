@@ -1,9 +1,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { uploadReceipt } from '../api/file-upload.js';
-import { createTextResponse, formatErrorMessage } from '../utils/error.js';
-import { extractTokenContext } from '../storage/context.js';
 import type { AuthExtra } from '../storage/context.js';
+import { extractTokenContext } from '../storage/context.js';
+import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
 export function addFileUploadTool(server: McpServer): void {
   server.tool(

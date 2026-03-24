@@ -1,10 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { makeApiRequest, type BinaryFileResponse, isBinaryFileResponse } from '../api/client.js';
-import { validatePathForService, listAllAvailablePaths, type ApiType } from './schema-loader.js';
-import { createTextResponse, formatErrorMessage, type TextResponse } from '../utils/error.js';
-import { extractTokenContext } from '../storage/context.js';
+import { type BinaryFileResponse, isBinaryFileResponse, makeApiRequest } from '../api/client.js';
 import type { AuthExtra } from '../storage/context.js';
+import { extractTokenContext } from '../storage/context.js';
+import { createTextResponse, formatErrorMessage, type TextResponse } from '../utils/error.js';
+import { type ApiType, listAllAvailablePaths, validatePathForService } from './schema-loader.js';
 
 /**
  * Format binary file response for display

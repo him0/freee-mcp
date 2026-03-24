@@ -1,17 +1,17 @@
 import { randomUUID } from 'node:crypto';
-import type { Request, Response } from 'express';
 import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
-import { OAuthTokenResponseSchema } from '../auth/tokens.js';
+import type { Request, Response } from 'express';
 import { createTokenData } from '../auth/token-utils.js';
+import { OAuthTokenResponseSchema } from '../auth/tokens.js';
 import {
-  USER_AGENT,
-  FREEE_API_URL,
   FETCH_TIMEOUT_TOKEN_MS,
   FETCH_TIMEOUT_USERINFO_MS,
+  FREEE_API_URL,
+  USER_AGENT,
 } from '../constants.js';
-import type { OAuthStateStore } from './oauth-store.js';
 import type { TokenStore } from '../storage/token-store.js';
 import { getLogger } from './logger.js';
+import type { OAuthStateStore } from './oauth-store.js';
 
 export interface FreeeCallbackDeps {
   oauthStore: OAuthStateStore;

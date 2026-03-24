@@ -1,5 +1,5 @@
-import { createAndStartServer } from './mcp/handlers.js';
 import { configure } from './cli.js';
+import { createAndStartServer } from './mcp/handlers.js';
 
 const main = async (): Promise<void> => {
   // Parse command line arguments

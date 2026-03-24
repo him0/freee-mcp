@@ -1,14 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { APP_NAME } from '../constants.js';
+import { setupTestTempDir } from '../test-utils/temp-dir.js';
 import {
+  clearLegacyTokens,
   findLegacyTokenFiles,
   tryMigrateLegacyTokens,
-  clearLegacyTokens,
 } from './token-migration.js';
 import type { TokenData } from './tokens.js';
-import { setupTestTempDir } from '../test-utils/temp-dir.js';
-import { APP_NAME } from '../constants.js';
 
 const {
   tempDir,

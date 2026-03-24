@@ -1,10 +1,10 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
+  _resetApiConfigs,
   API_CONFIGS,
   type ApiType,
-  validatePathForService,
   listAllAvailablePaths,
-  _resetApiConfigs,
+  validatePathForService,
 } from './schema-loader.js';
 
 describe('schema-loader', () => {

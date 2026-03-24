@@ -1,9 +1,9 @@
 import http from 'node:http';
-import { URL } from 'node:url';
 import net from 'node:net';
+import { URL } from 'node:url';
 import { getConfig } from '../config.js';
-import type { TokenData } from './tokens.js';
 import { exchangeCodeForTokens } from './oauth.js';
+import type { TokenData } from './tokens.js';
 
 interface PendingAuthentication {
   codeVerifier: string;

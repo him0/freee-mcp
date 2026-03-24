@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { getConfig } from '../config.js';
 import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
-import { formatResponseErrorInfo, formatApiErrorMessage } from '../utils/error.js';
+import { getConfig } from '../config.js';
 import { USER_AGENT } from '../constants.js';
 import type { TokenContext } from '../storage/context.js';
+import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
 const MAX_FILE_SIZE_BYTES = 64 * 1024 * 1024; // 64MB
 

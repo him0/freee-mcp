@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify, errors as joseErrors } from 'jose';
+import { errors as joseErrors, jwtVerify, SignJWT } from 'jose';
 
 export interface JwtPayload {
   sub: string;

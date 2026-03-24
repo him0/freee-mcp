@@ -1,5 +1,5 @@
-import { saveFullConfig, type FullConfig } from '../config/companies.js';
-import type { Credentials, SelectedCompany, Company } from './types.js';
+import { type FullConfig, saveFullConfig } from '../config/companies.js';
+import type { Company, Credentials, SelectedCompany } from './types.js';
 
 export async function saveConfig(
   credentials: Credentials,

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { OAuthClientMetadataSchema } from '@modelcontextprotocol/sdk/shared/auth.js';
 import type { OAuthClientMetadata } from '@modelcontextprotocol/sdk/shared/auth.js';
+import { OAuthClientMetadataSchema } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { USER_AGENT } from '../constants.js';
 
 const CIMD_FETCH_TIMEOUT_MS = 5000;

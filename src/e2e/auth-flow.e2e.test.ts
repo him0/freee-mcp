@@ -3,12 +3,12 @@
  * Tests the complete authentication flow from tool invocation to token management
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { addAuthenticationTools } from '../mcp/tools.js';
-import { setupMockApi, clearMockApi } from './mock-api.js';
-import { mockUserResponse, mockCompaniesResponse } from './fixtures/api-responses.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TokenData } from '../auth/tokens.js';
+import { addAuthenticationTools } from '../mcp/tools.js';
+import { mockCompaniesResponse, mockUserResponse } from './fixtures/api-responses.js';
+import { clearMockApi, setupMockApi } from './mock-api.js';
 
 // Track mock function state
 let mockTokenData: TokenData | null = null;

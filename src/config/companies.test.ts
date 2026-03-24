@@ -1,16 +1,16 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { APP_NAME } from '../constants.js';
+import { setupTestTempDir } from '../test-utils/temp-dir.js';
 import {
+  type FullConfig,
+  getCompanyInfo,
+  getCurrentCompanyId,
   loadFullConfig,
   saveFullConfig,
-  getCurrentCompanyId,
   setCurrentCompany,
-  getCompanyInfo,
-  type FullConfig,
 } from './companies.js';
-import { setupTestTempDir } from '../test-utils/temp-dir.js';
-import { APP_NAME } from '../constants.js';
 
 const {
   tempDir,

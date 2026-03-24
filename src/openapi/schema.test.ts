@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import type { MinimalParameter } from './minimal-types.js';
 import {
   convertParameterToZodSchema,
   convertPathToToolName,
   sanitizePropertyName,
 } from './schema.js';
-import type { MinimalParameter } from './minimal-types.js';
 
 describe('schema', () => {
   describe('convertParameterToZodSchema', () => {

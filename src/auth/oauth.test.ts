@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import crypto from 'node:crypto';
-import { generatePKCE, buildAuthUrl, exchangeCodeForTokens } from './oauth.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildAuthUrl, exchangeCodeForTokens, generatePKCE } from './oauth.js';
 
 vi.mock('crypto');
 vi.mock('../config.js', () => ({

@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { RedisClientStore } from './client-store.js';
-import { RedisUnavailableError } from './errors.js';
-import type { CIMDFetcher } from './cimd-fetcher.js';
 import type {
   OAuthClientInformationFull,
   OAuthClientMetadata,
 } from '@modelcontextprotocol/sdk/shared/auth.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { CIMDFetcher } from './cimd-fetcher.js';
+import { RedisClientStore } from './client-store.js';
+import { RedisUnavailableError } from './errors.js';
 
 function createMockRedis() {
   const store = new Map<string, string>();

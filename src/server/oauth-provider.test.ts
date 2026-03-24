@@ -1,12 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
-import { FreeeOAuthProvider } from './oauth-provider.js';
-import type { FreeeOAuthProviderDeps } from './oauth-provider.js';
-import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
-import type { AuthorizationParams } from '@modelcontextprotocol/sdk/server/auth/provider.js';
 import { InvalidGrantError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
-import type { OAuthStateStore, AuthCodeData, RefreshTokenData } from './oauth-store.js';
-import type { RedisClientStore } from './client-store.js';
+import type { AuthorizationParams } from '@modelcontextprotocol/sdk/server/auth/provider.js';
+import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
+import { describe, expect, it, vi } from 'vitest';
 import type { TokenStore } from '../storage/token-store.js';
+import type { RedisClientStore } from './client-store.js';
+import type { FreeeOAuthProviderDeps } from './oauth-provider.js';
+import { FreeeOAuthProvider } from './oauth-provider.js';
+import type { AuthCodeData, OAuthStateStore, RefreshTokenData } from './oauth-store.js';
 
 const TEST_SECRET = 'test-jwt-secret-long-enough-for-hmac-signing';
 const TEST_ISSUER = 'https://mcp.example.com';

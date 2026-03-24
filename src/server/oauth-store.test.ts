@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { OAuthStateStore } from './oauth-store.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RedisUnavailableError } from './errors.js';
-import type { OAuthSessionData, AuthCodeData, RefreshTokenData } from './oauth-store.js';
+import type { AuthCodeData, OAuthSessionData, RefreshTokenData } from './oauth-store.js';
+import { OAuthStateStore } from './oauth-store.js';
 
 function createMockRedis() {
   const store = new Map<string, string>();
