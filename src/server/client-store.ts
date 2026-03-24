@@ -15,12 +15,7 @@ export interface ClientStoreOptions {
 }
 
 function isCimdUrl(clientId: string): boolean {
-  try {
-    const url = new URL(clientId);
-    return url.protocol === 'https:';
-  } catch {
-    return false;
-  }
+  return clientId.startsWith('https://');
 }
 
 export class RedisClientStore implements OAuthRegisteredClientsStore {
