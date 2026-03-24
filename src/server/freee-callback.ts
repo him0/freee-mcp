@@ -7,6 +7,7 @@ import {
   FETCH_TIMEOUT_TOKEN_MS,
   FETCH_TIMEOUT_USERINFO_MS,
   FREEE_API_URL,
+  FREEE_CALLBACK_PATH,
   USER_AGENT,
 } from '../constants.js';
 import type { TokenStore } from '../storage/token-store.js';
@@ -93,7 +94,7 @@ export function createFreeeCallbackHandler(
   deps: FreeeCallbackDeps,
 ): (req: Request, res: Response) => void {
   const apiUrl = deps.freeeApiUrl || FREEE_API_URL;
-  const callbackRedirectUri = `${deps.callbackBaseUrl}/oauth/freee-callback`;
+  const callbackRedirectUri = `${deps.callbackBaseUrl}${FREEE_CALLBACK_PATH}`;
 
   return (req: Request, res: Response) => {
     handleCallback(req, res, deps, apiUrl, callbackRedirectUri).catch((err: unknown) => {

@@ -1,3 +1,4 @@
+import { OAUTH_KEY_PREFIX, REFRESH_TOKEN_TTL_SECONDS } from '../constants.js';
 import type { Redis } from '../storage/redis-client.js';
 import { withRedis } from './errors.js';
 
@@ -26,10 +27,8 @@ export interface RefreshTokenData {
   scopes: string[];
 }
 
-const KEY_PREFIX = 'freee-mcp:oauth';
 const SESSION_TTL_SECONDS = 10 * 60; // 10 minutes
 const AUTH_CODE_TTL_SECONDS = 10 * 60; // 10 minutes
-const REFRESH_TOKEN_TTL_SECONDS = 90 * 24 * 60 * 60; // 90 days
 
 function tryParseJson<T>(raw: string, label: string): T | null {
   try {
@@ -48,7 +47,7 @@ export class OAuthStateStore {
   async saveSession(id: string, data: OAuthSessionData): Promise<void> {
     await withRedis('saveSession', () =>
       this.redis.set(
-        `${KEY_PREFIX}:session:${id}`,
+        `${OAUTH_KEY_PREFIX}:session:${id}`,
         JSON.stringify(data),
         'EX',
         SESSION_TTL_SECONDS,
@@ -58,7 +57,7 @@ export class OAuthStateStore {
 
   async consumeSession(id: string): Promise<OAuthSessionData | null> {
     const raw = await withRedis('consumeSession', () =>
-      this.redis.getdel(`${KEY_PREFIX}:session:${id}`),
+      this.redis.getdel(`${OAUTH_KEY_PREFIX}:session:${id}`),
     );
     if (!raw) return null;
     return tryParseJson<OAuthSessionData>(raw, 'session');
@@ -69,7 +68,7 @@ export class OAuthStateStore {
   async saveAuthCode(code: string, data: AuthCodeData): Promise<void> {
     await withRedis('saveAuthCode', () =>
       this.redis.set(
-        `${KEY_PREFIX}:code:${code}`,
+        `${OAUTH_KEY_PREFIX}:code:${code}`,
         JSON.stringify(data),
         'EX',
         AUTH_CODE_TTL_SECONDS,
@@ -78,14 +77,14 @@ export class OAuthStateStore {
   }
 
   async getAuthCode(code: string): Promise<AuthCodeData | null> {
-    const raw = await withRedis('getAuthCode', () => this.redis.get(`${KEY_PREFIX}:code:${code}`));
+    const raw = await withRedis('getAuthCode', () => this.redis.get(`${OAUTH_KEY_PREFIX}:code:${code}`));
     if (!raw) return null;
     return tryParseJson<AuthCodeData>(raw, 'authCode');
   }
 
   async consumeAuthCode(code: string): Promise<AuthCodeData | null> {
     const raw = await withRedis('consumeAuthCode', () =>
-      this.redis.getdel(`${KEY_PREFIX}:code:${code}`),
+      this.redis.getdel(`${OAUTH_KEY_PREFIX}:code:${code}`),
     );
     if (!raw) return null;
     return tryParseJson<AuthCodeData>(raw, 'authCode');
@@ -96,7 +95,7 @@ export class OAuthStateStore {
   async saveRefreshToken(token: string, data: RefreshTokenData): Promise<void> {
     await withRedis('saveRefreshToken', () =>
       this.redis.set(
-        `${KEY_PREFIX}:refresh:${token}`,
+        `${OAUTH_KEY_PREFIX}:refresh:${token}`,
         JSON.stringify(data),
         'EX',
         REFRESH_TOKEN_TTL_SECONDS,
@@ -106,7 +105,7 @@ export class OAuthStateStore {
 
   async getRefreshToken(token: string): Promise<RefreshTokenData | null> {
     const raw = await withRedis('getRefreshToken', () =>
-      this.redis.get(`${KEY_PREFIX}:refresh:${token}`),
+      this.redis.get(`${OAUTH_KEY_PREFIX}:refresh:${token}`),
     );
     if (!raw) return null;
     return tryParseJson<RefreshTokenData>(raw, 'refreshToken');
@@ -114,13 +113,13 @@ export class OAuthStateStore {
 
   async consumeRefreshToken(token: string): Promise<RefreshTokenData | null> {
     const raw = await withRedis('consumeRefreshToken', () =>
-      this.redis.getdel(`${KEY_PREFIX}:refresh:${token}`),
+      this.redis.getdel(`${OAUTH_KEY_PREFIX}:refresh:${token}`),
     );
     if (!raw) return null;
     return tryParseJson<RefreshTokenData>(raw, 'refreshToken');
   }
 
   async revokeRefreshToken(token: string): Promise<void> {
-    await withRedis('revokeRefreshToken', () => this.redis.del(`${KEY_PREFIX}:refresh:${token}`));
+    await withRedis('revokeRefreshToken', () => this.redis.del(`${OAUTH_KEY_PREFIX}:refresh:${token}`));
   }
 }

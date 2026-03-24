@@ -13,6 +13,7 @@ import type {
 } from '@modelcontextprotocol/sdk/shared/auth.js';
 import type { Response } from 'express';
 import { generatePKCE } from '../auth/oauth.js';
+import { FREEE_CALLBACK_PATH } from '../constants.js';
 import type { TokenStore } from '../storage/token-store.js';
 import type { RedisClientStore } from './client-store.js';
 import { signAccessToken, verifyAccessToken as verifyJwt } from './jwt.js';
@@ -60,7 +61,7 @@ export class FreeeOAuthProvider implements OAuthServerProvider {
       resource: params.resource?.href,
     });
 
-    const freeeCallbackUri = `${this.deps.callbackBaseUrl}/oauth/freee-callback`;
+    const freeeCallbackUri = `${this.deps.callbackBaseUrl}${FREEE_CALLBACK_PATH}`;
     const freeeParams = new URLSearchParams({
       response_type: 'code',
       client_id: this.deps.freeeClientId,

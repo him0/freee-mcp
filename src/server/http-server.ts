@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { Request, Response } from 'express';
 import { getConfig, initRemoteConfig, loadRemoteServerConfig } from '../config.js';
+import { FREEE_CALLBACK_PATH } from '../constants.js';
 import { createMcpServer } from '../mcp/handlers.js';
 import type { Redis } from '../storage/redis-client.js';
 import { closeRedisClient, getRedisClient } from '../storage/redis-client.js';
@@ -176,7 +177,7 @@ export async function startHttpServer(): Promise<void> {
   });
 
   // freee OAuth callback (browser redirect, no MCP auth required)
-  app.get('/oauth/freee-callback', freeeCallbackHandler);
+  app.get(FREEE_CALLBACK_PATH, freeeCallbackHandler);
 
   // MCP Auth Router: /.well-known/*, /authorize, /token, /register, /revoke
   const { mcpAuthRouter } = await import('@modelcontextprotocol/sdk/server/auth/router.js');
@@ -369,7 +370,7 @@ async function setupRateLimiting(
   app.use('/authorize', createLimiter(5 * 60 * 1000, 10, 'authorize'));
   app.use('/token', createLimiter(60 * 1000, 10, 'token'));
   app.use('/register', createLimiter(60 * 60 * 1000, 3, 'register'));
-  app.use('/oauth/freee-callback', createLimiter(5 * 60 * 1000, 10, 'freee-cb'));
+  app.use(FREEE_CALLBACK_PATH, createLimiter(5 * 60 * 1000, 10, 'freee-cb'));
   app.use('/mcp', createLimiter(60 * 1000, 100, 'mcp'));
 
   logger.info('Rate limiting enabled');

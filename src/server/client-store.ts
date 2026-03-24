@@ -1,12 +1,11 @@
 import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { OAuthClientInformationFullSchema } from '@modelcontextprotocol/sdk/shared/auth.js';
+import { OAUTH_KEY_PREFIX } from '../constants.js';
 import type { Redis } from '../storage/redis-client.js';
 import { type CIMDFetcher, HttpCIMDFetcher, hashCimdUrl } from './cimd-fetcher.js';
 import { RedisUnavailableError, withRedis } from './errors.js';
 import { getLogger } from './logger.js';
-
-const KEY_PREFIX = 'freee-mcp:oauth';
 const CIMD_CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 const CLIENT_TTL_SECONDS = 365 * 24 * 60 * 60; // 1 year
 
@@ -43,7 +42,7 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
   async registerClient(client: OAuthClientInformationFull): Promise<OAuthClientInformationFull> {
     await withRedis('registerClient', () =>
       this.redis.set(
-        `${KEY_PREFIX}:client:${client.client_id}`,
+        `${OAUTH_KEY_PREFIX}:client:${client.client_id}`,
         JSON.stringify(client),
         'EX',
         CLIENT_TTL_SECONDS,
@@ -56,7 +55,7 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
     clientIdUrl: string,
   ): Promise<OAuthClientInformationFull | undefined> {
     const hash = hashCimdUrl(clientIdUrl);
-    const cacheKey = `${KEY_PREFIX}:cimd:${hash}`;
+    const cacheKey = `${OAUTH_KEY_PREFIX}:cimd:${hash}`;
 
     const cached = await withRedis('getCimdClient:cache-read', () => this.redis.get(cacheKey));
 
@@ -85,7 +84,7 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
   }
 
   private async getDcrClient(clientId: string): Promise<OAuthClientInformationFull | undefined> {
-    const key = `${KEY_PREFIX}:client:${clientId}`;
+    const key = `${OAUTH_KEY_PREFIX}:client:${clientId}`;
     const raw = await withRedis('getDcrClient:read', () => this.redis.get(key));
     if (!raw) return undefined;
 

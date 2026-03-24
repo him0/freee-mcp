@@ -5,6 +5,7 @@ import {
   type TokenData,
   TokenDataSchema,
 } from '../auth/tokens.js';
+import { REFRESH_TOKEN_TTL_SECONDS } from '../constants.js';
 import type { CompanyConfig } from '../config/companies.js';
 import { withRedis } from '../server/errors.js';
 import { getLogger } from '../server/logger.js';
@@ -13,7 +14,6 @@ import type { TokenStore } from './token-store.js';
 
 const TOKEN_KEY_PREFIX = 'freee-mcp:tokens:';
 const COMPANY_KEY_PREFIX = 'freee-mcp:company:';
-const TOKEN_TTL_SECONDS = 90 * 24 * 60 * 60; // 90 days
 
 export class RedisTokenStore implements TokenStore {
   private redis: Redis;
@@ -46,7 +46,7 @@ export class RedisTokenStore implements TokenStore {
 
   async saveTokens(userId: string, tokens: TokenData): Promise<void> {
     await withRedis('saveTokens', () =>
-      this.redis.set(this.tokenKey(userId), JSON.stringify(tokens), 'EX', TOKEN_TTL_SECONDS),
+      this.redis.set(this.tokenKey(userId), JSON.stringify(tokens), 'EX', REFRESH_TOKEN_TTL_SECONDS),
     );
   }
 
