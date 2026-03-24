@@ -1,6 +1,7 @@
 import { OAUTH_KEY_PREFIX, REFRESH_TOKEN_TTL_SECONDS } from '../constants.js';
 import type { Redis } from '../storage/redis-client.js';
 import { withRedis } from './errors.js';
+import { getLogger } from './logger.js';
 
 export interface OAuthSessionData {
   clientId: string;
@@ -34,7 +35,7 @@ function tryParseJson<T>(raw: string, label: string): T | null {
   try {
     return JSON.parse(raw) as T;
   } catch {
-    console.error(`[error] Failed to parse ${label} data from Redis`);
+    getLogger().error({ label }, 'Failed to parse data from Redis');
     return null;
   }
 }

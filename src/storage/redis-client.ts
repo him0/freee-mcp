@@ -1,4 +1,5 @@
 import { Redis } from 'ioredis';
+import { getLogger } from '../server/logger.js';
 
 let client: Redis | null = null;
 
@@ -14,7 +15,7 @@ export function getRedisClient(url?: string): Redis {
     maxRetriesPerRequest: 3,
     retryStrategy(times) {
       if (times > 5) {
-        console.error('[error] Redis: max reconnection attempts reached, giving up');
+        getLogger().error('Redis: max reconnection attempts reached, giving up');
         return null;
       }
       return Math.min(times * 500, 3000);
@@ -22,7 +23,7 @@ export function getRedisClient(url?: string): Redis {
   });
 
   client.on('error', (err) => {
-    console.error('[error] Redis connection error:', err.message);
+    getLogger().error({ err: err.message }, 'Redis connection error');
   });
 
   return client;
