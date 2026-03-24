@@ -2,31 +2,37 @@ import { dependencies, version } from './package.json';
 import { chmod, copyFile, mkdir, readdir } from 'fs/promises';
 import { join } from 'path';
 
-const binFile = './bin/cli.js';
-const result = await Bun.build({
-  entrypoints: ['src/index.ts'],
-  external: Object.keys(dependencies),
-  minify: true,
-  target: 'node',
-  format: 'esm',
-  outdir: '.',
-  naming: { entry: binFile },
-  define: {
-    __PACKAGE_VERSION__: JSON.stringify(version),
-  },
-  banner: '#! /usr/bin/env node\n',
-});
+const entries = [
+  { entrypoint: 'src/index.ts', output: './bin/freee-mcp.js' },
+  { entrypoint: 'src/entry-remote.ts', output: './bin/freee-remote-mcp.js' },
+];
 
-if (!result.success) {
-  console.error('Build failed:');
-  for (const log of result.logs) {
-    console.error(log);
+for (const { entrypoint, output } of entries) {
+  const result = await Bun.build({
+    entrypoints: [entrypoint],
+    external: Object.keys(dependencies),
+    minify: true,
+    target: 'node',
+    format: 'esm',
+    outdir: '.',
+    naming: { entry: output },
+    define: {
+      __PACKAGE_VERSION__: JSON.stringify(version),
+    },
+    banner: '#! /usr/bin/env node\n',
+  });
+
+  if (!result.success) {
+    console.error(`Build failed for ${entrypoint}:`);
+    for (const log of result.logs) {
+      console.error(log);
+    }
+    process.exit(1);
   }
-  process.exit(1);
-}
 
-await chmod(binFile, 0o755);
-console.log(`Built ${binFile}`);
+  await chmod(output, 0o755);
+  console.log(`Built ${output}`);
+}
 
 // Copy minimal schema files to dist for npm package
 const minimalSrcDir = './openapi/minimal';

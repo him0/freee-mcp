@@ -17,4 +17,4 @@ USER 65532:65532
 EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
   CMD wget -q --spider http://localhost:3000/health || exit 1
-CMD ["bun", "run", "bin/cli.js", "--remote"]
+CMD ["bun", "run", "bin/freee-remote-mcp.js"]
