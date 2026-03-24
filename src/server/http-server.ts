@@ -70,6 +70,7 @@ export async function startHttpServer(): Promise<void> {
     issuerUrl: remoteConfig.issuerUrl,
     freeeClientId: remoteConfig.freeeClientId,
     freeeAuthorizationEndpoint: remoteConfig.freeeAuthorizationEndpoint,
+    freeeScope: remoteConfig.freeeScope,
     callbackBaseUrl: remoteConfig.issuerUrl,
   });
 

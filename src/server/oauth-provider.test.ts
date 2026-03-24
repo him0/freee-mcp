@@ -68,6 +68,7 @@ function createProvider(overrides?: Partial<FreeeOAuthProviderDeps>): {
     issuerUrl: TEST_ISSUER,
     freeeClientId: 'freee-app-id',
     freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
+    freeeScope: 'read write',
     callbackBaseUrl: TEST_ISSUER,
     ...overrides,
   });

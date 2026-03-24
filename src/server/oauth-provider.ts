@@ -27,6 +27,7 @@ export interface FreeeOAuthProviderDeps {
   issuerUrl: string;
   freeeClientId: string;
   freeeAuthorizationEndpoint: string;
+  freeeScope: string;
   callbackBaseUrl: string;
 }
 
@@ -66,7 +67,7 @@ export class FreeeOAuthProvider implements OAuthServerProvider {
       response_type: 'code',
       client_id: this.deps.freeeClientId,
       redirect_uri: freeeCallbackUri,
-      scope: 'read write',
+      scope: this.deps.freeeScope,
       state: sessionId,
       code_challenge: freeeCodeChallenge,
       code_challenge_method: 'S256',
