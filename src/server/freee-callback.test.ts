@@ -43,6 +43,7 @@ function createMockReqRes(query: Record<string, string> = {}) {
   const req = { query } as unknown as Request;
   const res = {
     status: vi.fn().mockReturnThis(),
+    type: vi.fn().mockReturnThis(),
     send: vi.fn().mockReturnThis(),
     redirect: vi.fn(),
     headersSent: false,
