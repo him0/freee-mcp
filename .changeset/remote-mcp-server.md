@@ -11,6 +11,6 @@
 - クライアントストア（CIMD + DCR デュアルサポート）
 - freee OAuth コールバックハンドラー（/oauth/freee-callback）
 - プロダクション強化: Redis接続復元力、セキュリティヘッダー (helmet)、CORS、レート制限、リクエストタイムアウト、構造化ログ (pino)
-- Dockerfile、docker-compose.yml 追加
+- Dockerfile、compose.yaml 追加
 
 注意: この機能は実験的であり、今後のリリースで破壊的変更が入る可能性があります。
