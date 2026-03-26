@@ -157,13 +157,7 @@ jobs:
             ${{ steps.contributors.outputs.list != '' && format('\n## Contributors\n\nThank you to the following contributors for their suggestions!\n\n{0}\n', steps.contributors.outputs.list) || '' }}
             ## Package
             - npm: https://www.npmjs.com/package/freee-mcp/v/${{ steps.version.outputs.version }}
-            - Install: `npm install freee-mcp@${{ steps.version.outputs.version }}`
 
-            ## Claude Plugin
-            This repository can also be used as a Claude Code plugin:
-            ```bash
-            claude plugin install freee/freee-mcp
-            ```
           files: freee-api-skill.zip
           draft: false
           prerelease: false
