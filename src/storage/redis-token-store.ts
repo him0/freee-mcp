@@ -46,7 +46,12 @@ export class RedisTokenStore implements TokenStore {
 
   async saveTokens(userId: string, tokens: TokenData): Promise<void> {
     await withRedis('saveTokens', () =>
-      this.redis.set(this.tokenKey(userId), JSON.stringify(tokens), 'EX', REFRESH_TOKEN_TTL_SECONDS),
+      this.redis.set(
+        this.tokenKey(userId),
+        JSON.stringify(tokens),
+        'EX',
+        REFRESH_TOKEN_TTL_SECONDS,
+      ),
     );
   }
 
