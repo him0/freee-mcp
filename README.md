@@ -1,8 +1,8 @@
 # freee-mcp
 
-freee API を Claude から使えるようにする MCP サーバー & Claude Plugin です。
+freee会計、freee人事労務、freee請求書、freee工数管理、freee販売を AI Agent から操作できるようにする MCP サーバーと Agent Skills です。
 
-MCP サーバー（API 呼び出し機能）と skill（API リファレンス）を組み合わせて利用することを想定しています。
+MCP サーバー（API 呼び出し機能）と Agent Skills（API リファレンス）を組み合わせて利用することを想定しています。
 
 [![npm version](https://badge.fury.io/js/freee-mcp.svg)](https://www.npmjs.com/package/freee-mcp)
 
