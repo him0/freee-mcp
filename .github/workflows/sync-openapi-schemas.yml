@@ -8,7 +8,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
 
 jobs:
   sync-schemas:
@@ -49,7 +48,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create branch and commit schema changes
+      - name: Generate references
+        if: steps.changes.outputs.changed == 'true'
+        run: bun run generate:references
+
+      - name: Update README file counts
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          REFS_DIR="skills/freee-api-skill/references"
+          ACCOUNTING=$(ls "$REFS_DIR"/accounting-*.md 2>/dev/null | wc -l | tr -d ' ')
+          HR=$(ls "$REFS_DIR"/hr-*.md 2>/dev/null | wc -l | tr -d ' ')
+          INVOICE=$(ls "$REFS_DIR"/invoice-*.md 2>/dev/null | wc -l | tr -d ' ')
+          PM=$(ls "$REFS_DIR"/pm-*.md 2>/dev/null | wc -l | tr -d ' ')
+          SM=$(ls "$REFS_DIR"/sm-*.md 2>/dev/null | wc -l | tr -d ' ')
+
+          sed -i "s/| 会計     |.*|.*|/| 会計     | 取引、勘定科目、取引先、請求書、経費申請など     | ${ACCOUNTING}         |/" README.md
+          sed -i "s/| 人事労務 |.*|.*|/| 人事労務 | 従業員、勤怠、給与明細、年末調整など             | ${HR}         |/" README.md
+          sed -i "s/| 請求書   |.*|.*|/| 請求書   | 請求書、見積書、納品書                           | ${INVOICE}          |/" README.md
+          sed -i "s/| 工数管理 |.*|.*|/| 工数管理 | プロジェクト、チーム、パートナー、工数、ユーザーなど | ${PM}          |/" README.md
+          sed -i "s/| 販売     |.*|.*|/| 販売     | 案件、受注、マスタ                               | ${SM}          |/" README.md
+
+      - name: Create changeset
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          DIFF_SUMMARY=$(git diff --stat openapi/ | tail -1)
+          printf '%s\n' '---' '"freee-mcp": patch' '---' '' "OpenAPIスキーマを最新版に同期 (${DIFF_SUMMARY})" > .changeset/sync-openapi-schemas.md
+
+      - name: Create branch and commit all changes
         if: steps.changes.outputs.changed == 'true'
         id: branch
         run: |
@@ -61,39 +86,10 @@ jobs:
           git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
 
           git checkout -b "$BRANCH_NAME"
-          git add openapi/
-          git commit -m "chore: sync OpenAPI schemas"
+          git add openapi/ skills/freee-api-skill/references/ .changeset/sync-openapi-schemas.md README.md
+          git commit -m "chore: sync OpenAPI schemas and regenerate references"
           git push -u origin "$BRANCH_NAME"
           echo "branch=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
-
-      - name: Create changeset with Claude Code
-        if: steps.changes.outputs.changed == 'true'
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          allowed_tools: "Bash,Read,Write,Edit"
-          prompt: |
-            OpenAPIスキーマが更新されました。changeset を作成してください。
-
-            1. `git diff HEAD~1 -- openapi/` を実行して、スキーマの変更内容を確認してください
-            2. 変更内容を分析し、どのAPIにどのような変更があったかを把握してください
-            3. `.changeset/sync-openapi-schemas.md` ファイルを以下のフォーマットで作成してください:
-
-            ```
-            ---
-            "freee-mcp": patch
-            ---
-
-            OpenAPIスキーマを最新版に同期: [各APIの変更点を日本語で簡潔に要約]
-            ```
-
-            4. 作成したファイルを git add して `git commit -m "chore: add changeset for schema sync"` して `git push` してください
-
-            注意事項:
-            - changeset の説明は日本語で書いてください
-            - 各APIの主要な変更点を簡潔にまとめてください（例: 会計APIにXXフィールド追加、人事労務APIにYYエンドポイント追加）
-            - frontmatter の package 名は "freee-mcp" です
-            - markdown の bold 記法（`**`）は使わないでください
 
       - name: Create Pull Request
         if: steps.changes.outputs.changed == 'true'
@@ -107,13 +103,12 @@ jobs:
 
           OpenAPIスキーマを最新版に自動同期しました。
 
-          - `bun run fetch:schemas` を実行してスキーマを取得
-          - 変更が検出されたため、changeset を作成しPRを作成しました
-
           ## 変更対象
 
           - `openapi/` 配下のスキーマファイル
           - `openapi/minimal/` 配下の最小化スキーマファイル
+          - `skills/freee-api-skill/references/` 配下のリファレンスファイル（再生成）
+          - `README.md` のファイル数テーブル更新
           - `.changeset/` 配下の changeset ファイル
 
           ---
