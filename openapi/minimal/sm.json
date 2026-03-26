@@ -105,7 +105,7 @@
     "/master/custom_fields/business/definitions": {
       "get": {
         "summary": "案件カスタム項目定義一覧",
-        "description": "<h2 id=\"\">概要</h2>\n<p>\nカスタム項目定義の一覧を取得します。\n使用可能なもののみを返却します。\n</p>\n\n<h3>入力形式の一覧</h3>\n<ul>\n  <li><code>text</code>: 一行テキスト</li>\n  <li><code>textarea</code>: 複数行テキスト</li>\n  <li><code>amount</code>: 金額</li>\n  <li><code>quantity</code>: 数量</li>\n  <li><code>number</code>: 数値</li>\n  <li><code>date</code>: 日付</li>\n  <li><code>enum</code>: プルダウン</li>\n</ul>"
+        "description": "<h2 id=\"\">概要</h2>\n<p>\nカスタム項目定義の一覧を取得します。\n使用可能なもののみを返却します。\n</p>\n\n<h3>入力形式の一覧</h3>\n<ul>\n  <li><code>text</code>: 一行テキスト</li>\n  <li><code>textarea</code>: 複数行テキスト</li>\n  <li><code>amount</code>: 金額</li>\n  <li><code>quantity</code>: 数量</li>\n  <li><code>number</code>: 数値</li>\n  <li><code>date</code>: 日付</li>\n  <li><code>enum</code>: プルダウン</li>\n  <li><code>partner</code>: 取引先</li>\n  <li><code>employee</code>: 従業員</li>\n  <li><code>section</code>: 部門</li>\n  <li><code>master_item</code>: 商品</li>\n</ul>"
       }
     },
     "/sales_orders": {
@@ -134,7 +134,7 @@
       },
       "patch": {
         "summary": "受注更新",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの受注を更新します。\n受注の基本情報、納品・請求・入金情報などを部分的に更新できます。\n送信したフィールドのみが更新され、送信しなかったフィールドは変更されません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>更新可能項目</h3>\n<ul>\n<li>\n<p>sales_order_subject : 受注タイトル</p>\n</li>\n<li>\n<p>sales_order_date : 受注日</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>sales_on : 売上予定日</p>\n</li>\n<li>\n<p>deliveries_on : 納品予定日</p>\n</li>\n<li>\n<p>accepts_on : 検収予定日</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID</p>\n</li>\n<li>\n<p>delivery_subject : 納品書件名</p>\n</li>\n<li>\n<p>delivery_note : 納品書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>billing_creating_method_type : 請求の管理</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>lines : 明細リスト ※指定した場合、既存の明細は全て削除され、新しい明細に置き換えられます。</p>\n</li>\n</ul>\n<p>※全ての項目は任意です。更新したい項目のみを送信してください。</p>",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの受注を更新します。\n受注の基本情報、納品・請求・入金情報などを部分的に更新できます。\n送信したフィールドのみが更新され、送信しなかったフィールドは変更されません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>更新可能項目</h3>\n<ul>\n<li>\n<p>sales_order_subject : 受注タイトル</p>\n</li>\n<li>\n<p>sales_order_date : 受注日</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>sales_on : 売上予定日</p>\n</li>\n<li>\n<p>deliveries_on : 納品予定日</p>\n</li>\n<li>\n<p>accepts_on : 検収予定日</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID</p>\n</li>\n<li>\n<p>delivery_subject : 納品書件名</p>\n</li>\n<li>\n<p>delivery_note : 納品書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>billing_creating_method_type : 請求の管理</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>lines : 明細リスト ※指定した場合、既存の明細は全て削除され、新しい明細に置き換えられます。</p>\n</li>\n</ul>\n<p>※全ての項目は任意です。更新したい項目のみを送信してください。</p>\n<h2 id=\"_3\">注意点</h2>\n<p>受注を更新する際、登録後に下記の設定変更が行われていた場合は、明細行の金額が再計算されます。</p>\n<ul>\n<li><p>事業所(自社)の設定が変更された場合：freee会計の「設定」で変更可能な\"消費税の経理処理\"、\"消費税の端数処理\"の設定値</p></li>\n<li><p>取引先の設定が変更された場合：freeeの「取引先」で変更可能な\"内税/外税\"の設定値</p></li>\n<li><p>明細取引タイプが変更された場合：freee販売の「明細取引タイプ」で変更可能な\"税区分\"、\"軽減税率\"の設定値</p></li>\n</ul>",
         "parameters": [
           {
             "name": "id",
@@ -142,6 +142,82 @@
             "type": "string",
             "required": true,
             "description": "受注ID"
+          }
+        ]
+      }
+    },
+    "/deliveries": {
+      "get": {
+        "summary": "納品一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>納品の一覧を取得します。\n登録されている納品情報を一覧形式で取得できます。\n各種フィルタ条件を指定することで、特定の条件に合致する納品のみを取得することが可能です。\n</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>start_registered_date : 登録日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_registered_date : 登録日(絞り込み終了)</p>\n</li>\n<li>\n<p>start_delivery_date : 納品日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_delivery_date : 納品日(絞り込み終了)</p>\n</li>\n<li>\n<p>start_acceptance_date : 検収日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_acceptance_date : 検収日(絞り込み終了)</p>\n</li>\n<li>\n<p>charge_employee_ids : 社内担当者の従業員ID(複数指定可)</p>\n</li>\n<li>\n<p>customer_ids : 顧客の取引先ID(複数指定可)</p>\n</li>\n<li>\n<p>delivery_status : 納品ステータス</p>\n</li>\n<li>\n<p>canceled : 取消状態(デフォルト:false)</p>\n</li>\n</ul>\n<p>\n`limit`と`offset`パラメータを使用してページネーションが可能です。\nデフォルトでは20件ずつ取得され、最大100件まで一度に取得できます。\n</p>"
+      },
+      "post": {
+        "summary": "納品登録",
+        "description": "<h2 id=\"\">概要</h2>\n<p>新しい納品を登録します。\n受注に紐づく納品、または独立した納品を登録できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>必須項目</h3>\n<ul>\n<li>\n<p>delivery_date : 納品日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>billing_creating_method_type : 請求作成方法</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>lines : 明細リスト</p>\n</li>\n</ul>\n<h3>任意項目</h3>\n<ul>\n<li>\n<p>sales_order_id : 受注ID（受注に紐づける場合）</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>internal_subject : 納品タイトル</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>acceptance_date : 検収日</p>\n</li>\n<li>\n<p>delivery_note : 納品書の備考欄に記載する内容</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n<li>\n<p>subject : 納品書件名</p>\n</li>\n<li>\n<p>recipient_address : 宛先情報 ※Web画面とは異なり、顧客マスタからの自動補完は行われません。指定しない場合は全ての項目がnullとして登録されます。</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n</ul>"
+      }
+    },
+    "/deliveries/{id}": {
+      "get": {
+        "summary": "納品詳細取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの納品の詳細情報を取得します。\n納品の基本情報に加えて、売上・請求情報などの詳細な進捗情報も取得できます。\n</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "納品ID"
+          }
+        ]
+      },
+      "patch": {
+        "summary": "納品更新",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの納品を更新します。\n納品の基本情報、請求・入金情報などを部分的に更新できます。\n送信したフィールドのみが更新され、送信しなかったフィールドは変更されません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>更新可能項目</h3>\n<ul>\n<li>\n<p>branch_no : 枝番</p>\n</li>\n<li>\n<p>internal_subject : 納品タイトル</p>\n</li>\n<li>\n<p>delivery_date : 納品日</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>acceptance_date : 検収日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>delivery_note : 納品書の備考欄に記載する内容</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID</p>\n</li>\n<li>\n<p>subject : 納品書件名</p>\n</li>\n<li>\n<p>recipient_address : 宛先情報（指定した場合、既存の宛先情報は全て削除され、新しい宛先情報に置き換えられます）</p>\n</li>\n<li>\n<p>billing_creating_method_type : 請求作成方法</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>lines : 明細リスト（指定した場合、既存の明細は全て削除され、新しい明細に置き換えられます）</p>\n</li>\n</ul>\n<p>※全ての項目は任意です。更新したい項目のみを送信してください。</p>\n<p>※recipient_addressを指定した場合、リクエストに含まれない項目はnullとして扱われます。</p>\n<h2 id=\"_3\">注意点</h2>\n<h3>明細行の金額再計算について</h3>\n<p>納品を更新する際、登録後に下記の設定変更が行われていた場合は、明細行の金額が再計算されます。</p>\n<ul>\n<li><p>事業所(自社)の設定が変更された場合：freee会計の「設定」で変更可能な\"消費税の経理処理\"、\"消費税の端数処理\"の設定値</p></li>\n<li><p>取引先の設定が変更された場合：freeeの「取引先」で変更可能な\"内税/外税\"の設定値</p></li>\n</ul>\n<h3>納品書への反映について</h3>\n<p>発行済みの納品書がある場合、納品情報を更新しても納品書の内容には自動で反映されません。納品書の内容を更新するには、再発行が必要です。</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "納品ID"
+          }
+        ]
+      }
+    },
+    "/sales": {
+      "get": {
+        "summary": "売上一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>売上の一覧を取得します。\n登録されている売上情報を一覧形式で取得できます。\n各種フィルタ条件を指定することで、特定の条件に合致する売上のみを取得することが可能です。\n</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>start_registered_date : 売上登録日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_registered_date : 売上登録日(絞り込み終了)</p>\n</li>\n<li>\n<p>start_revenue_recognition_date : 売上日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_revenue_recognition_date : 売上日(絞り込み終了)</p>\n</li>\n<li>\n<p>charge_employee_ids : 社内担当者の従業員ID(複数指定可)</p>\n</li>\n<li>\n<p>customer_ids : 顧客の取引先ID(複数指定可)</p>\n</li>\n<li>\n<p>billing_status : 請求書送付ステータス</p>\n</li>\n<li>\n<p>collection_status : 入金ステータス</p>\n</li>\n<li>\n<p>canceled : 取消状態(デフォルト:false)</p>\n</li>\n</ul>\n<p>\n`limit`と`offset`パラメータを使用してページネーションが可能です。\nデフォルトでは20件ずつ取得され、最大100件まで一度に取得できます。\n</p>"
+      },
+      "post": {
+        "summary": "売上登録",
+        "description": "<h2 id=\"\">概要</h2>\n<p>新しい売上を登録します。\n受注や納品に紐づく売上、または独立した売上を登録できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>必須項目</h3>\n<ul>\n<li>\n<p>revenue_recognition_date : 売上日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>billing_creating_method_type : 請求の管理</p>\n</li>\n<li>\n<p>lines : 明細リスト</p>\n</li>\n</ul>\n<h3>任意項目</h3>\n<ul>\n<li>\n<p>sales_order_id : 受注ID（受注に紐づける場合）</p>\n</li>\n<li>\n<p>delivery_id : 納品ID（納品に紐づける場合）</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>subject : 売上タイトル</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>bills_on : 請求日 ※billing_creating_method_typeがautomaticallyの場合は必須</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collects_on : 入金期日 ※billing_creating_method_typeがautomaticallyの場合は必須</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n</ul>"
+      }
+    },
+    "/sales/{id}": {
+      "get": {
+        "summary": "売上詳細取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの売上の詳細情報を取得します。\n売上の基本情報に加えて、請求・入金情報などの詳細な進捗情報も取得できます。\n</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "売上ID"
+          }
+        ]
+      },
+      "patch": {
+        "summary": "売上更新",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの売上を更新します。\n売上の基本情報、請求・入金情報などを部分的に更新できます。\n送信したフィールドのみが更新され、送信しなかったフィールドは変更されません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>更新可能項目</h3>\n<ul>\n<li>\n<p>subject : 売上タイトル</p>\n</li>\n<li>\n<p>revenue_recognition_date : 売上日</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>bills_on : 請求日</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>collects_on : 入金期日</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>lines : 明細リスト（指定した場合、既存の明細は全て削除され、新しい明細に置き換えられます）</p>\n</li>\n</ul>\n<p>※全ての項目は任意です。更新したい項目のみを送信してください。</p>\n<h2 id=\"_3\">注意点</h2>\n<h3>明細行の金額再計算について</h3>\n<p>売上を更新する際、登録後に下記の設定変更が行われていた場合は、明細行の金額が再計算されます。</p>\n<ul>\n<li><p>事業所(自社)の設定が変更された場合：freee会計の「設定」で変更可能な\"消費税の経理処理\"、\"消費税の端数処理\"の設定値</p></li>\n<li><p>取引先の設定が変更された場合：freeeの「取引先」で変更可能な\"内税/外税\"の設定値</p></li>\n<li><p>明細取引タイプが変更された場合：freee販売の「明細取引タイプ」で変更可能な\"税区分\"、\"軽減税率\"の設定値</p></li>\n</ul>\n<h3>請求書への反映について</h3>\n<p>発行済みの請求書がある場合、売上情報を更新すると請求データは更新されますが、請求書の内容には自動で反映されません。請求書の内容を更新するには、再発行が必要です。</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "売上ID"
           }
         ]
       }

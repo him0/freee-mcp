@@ -86,7 +86,7 @@
 
 操作: 案件カスタム項目定義一覧
 
-説明: 概要 カスタム項目定義の一覧を取得します。 使用可能なもののみを返却します。 入力形式の一覧 text: 一行テキスト textarea: 複数行テキスト amount: 金額 quantity: 数量 number: 数値 date: 日付 enum: プルダウン
+説明: 概要 カスタム項目定義の一覧を取得します。 使用可能なもののみを返却します。 入力形式の一覧 text: 一行テキスト textarea: 複数行テキスト amount: 金額 quantity: 数量 number: 数値 date: 日付 enum: プルダウン partner: 取引先 employee: 従業員 section: 部門 master_item: 商品
 
 ### パラメータ
 

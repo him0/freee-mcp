@@ -79,6 +79,8 @@
   "sm-api": {
     "businesses": "businesses",
     "master": "master",
-    "sales_orders": "sales-orders"
+    "sales_orders": "sales-orders",
+    "deliveries": "deliveries",
+    "sales": "sales"
   }
 }

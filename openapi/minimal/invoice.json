@@ -38,7 +38,7 @@
             "in": "query",
             "type": "string",
             "required": false,
-            "description": "入金ステータス（unsettled: 入金待ち, settled: 入金済み）"
+            "description": "決済ステータス（unsettled: 決済待ち, settled: 決済済み）"
           },
           {
             "name": "deal_status",
@@ -185,7 +185,7 @@
             "in": "query",
             "type": "string",
             "required": false,
-            "description": "入金ステータス（unsettled: 入金待ち, settled: 入金済み）"
+            "description": "決済ステータス（unsettled: 決済待ち, settled: 決済済み, canceled: 決済キャンセル）"
           },
           {
             "name": "deal_status",

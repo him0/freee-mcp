@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "freee販売 API (β版)",
-    "version": "2025-11-17",
+    "title": "freee販売 API",
+    "version": "2026-02-16",
     "termsOfService": "https://app.secure.freee.co.jp/terms-freee-api.html",
     "contact": {
       "name": "サポートデスクへのお問い合わせ",
@@ -34,6 +34,14 @@
     {
       "name": "sales_orders",
       "description": "受注"
+    },
+    {
+      "name": "deliveries",
+      "description": "納品"
+    },
+    {
+      "name": "sales",
+      "description": "売上"
     },
     {
       "name": "master",
@@ -498,7 +506,7 @@
           "master"
         ],
         "summary": "案件カスタム項目定義一覧",
-        "description": "<h2 id=\"\">概要</h2>\n<p>\nカスタム項目定義の一覧を取得します。\n使用可能なもののみを返却します。\n</p>\n\n<h3>入力形式の一覧</h3>\n<ul>\n  <li><code>text</code>: 一行テキスト</li>\n  <li><code>textarea</code>: 複数行テキスト</li>\n  <li><code>amount</code>: 金額</li>\n  <li><code>quantity</code>: 数量</li>\n  <li><code>number</code>: 数値</li>\n  <li><code>date</code>: 日付</li>\n  <li><code>enum</code>: プルダウン</li>\n</ul>",
+        "description": "<h2 id=\"\">概要</h2>\n<p>\nカスタム項目定義の一覧を取得します。\n使用可能なもののみを返却します。\n</p>\n\n<h3>入力形式の一覧</h3>\n<ul>\n  <li><code>text</code>: 一行テキスト</li>\n  <li><code>textarea</code>: 複数行テキスト</li>\n  <li><code>amount</code>: 金額</li>\n  <li><code>quantity</code>: 数量</li>\n  <li><code>number</code>: 数値</li>\n  <li><code>date</code>: 日付</li>\n  <li><code>enum</code>: プルダウン</li>\n  <li><code>partner</code>: 取引先</li>\n  <li><code>employee</code>: 従業員</li>\n  <li><code>section</code>: 部門</li>\n  <li><code>master_item</code>: 商品</li>\n</ul>",
         "operationId": "get_master_custom_fields_business_definitions",
         "parameters": [
           {
@@ -687,7 +695,7 @@
           "sales_orders"
         ],
         "summary": "受注更新",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの受注を更新します。\n受注の基本情報、納品・請求・入金情報などを部分的に更新できます。\n送信したフィールドのみが更新され、送信しなかったフィールドは変更されません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>更新可能項目</h3>\n<ul>\n<li>\n<p>sales_order_subject : 受注タイトル</p>\n</li>\n<li>\n<p>sales_order_date : 受注日</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>sales_on : 売上予定日</p>\n</li>\n<li>\n<p>deliveries_on : 納品予定日</p>\n</li>\n<li>\n<p>accepts_on : 検収予定日</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID</p>\n</li>\n<li>\n<p>delivery_subject : 納品書件名</p>\n</li>\n<li>\n<p>delivery_note : 納品書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>billing_creating_method_type : 請求の管理</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>lines : 明細リスト ※指定した場合、既存の明細は全て削除され、新しい明細に置き換えられます。</p>\n</li>\n</ul>\n<p>※全ての項目は任意です。更新したい項目のみを送信してください。</p>",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの受注を更新します。\n受注の基本情報、納品・請求・入金情報などを部分的に更新できます。\n送信したフィールドのみが更新され、送信しなかったフィールドは変更されません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>更新可能項目</h3>\n<ul>\n<li>\n<p>sales_order_subject : 受注タイトル</p>\n</li>\n<li>\n<p>sales_order_date : 受注日</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>sales_on : 売上予定日</p>\n</li>\n<li>\n<p>deliveries_on : 納品予定日</p>\n</li>\n<li>\n<p>accepts_on : 検収予定日</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID</p>\n</li>\n<li>\n<p>delivery_subject : 納品書件名</p>\n</li>\n<li>\n<p>delivery_note : 納品書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>billing_creating_method_type : 請求の管理</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>lines : 明細リスト ※指定した場合、既存の明細は全て削除され、新しい明細に置き換えられます。</p>\n</li>\n</ul>\n<p>※全ての項目は任意です。更新したい項目のみを送信してください。</p>\n<h2 id=\"_3\">注意点</h2>\n<p>受注を更新する際、登録後に下記の設定変更が行われていた場合は、明細行の金額が再計算されます。</p>\n<ul>\n<li><p>事業所(自社)の設定が変更された場合：freee会計の「設定」で変更可能な\"消費税の経理処理\"、\"消費税の端数処理\"の設定値</p></li>\n<li><p>取引先の設定が変更された場合：freeeの「取引先」で変更可能な\"内税/外税\"の設定値</p></li>\n<li><p>明細取引タイプが変更された場合：freee販売の「明細取引タイプ」で変更可能な\"税区分\"、\"軽減税率\"の設定値</p></li>\n</ul>",
         "operationId": "update_sales_order",
         "parameters": [
           {
@@ -709,6 +717,441 @@
         "responses": {
           "200": {
             "$ref": "#/components/responses/SalesOrderUpdateResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/deliveries": {
+      "get": {
+        "tags": [
+          "deliveries"
+        ],
+        "summary": "納品一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>納品の一覧を取得します。\n登録されている納品情報を一覧形式で取得できます。\n各種フィルタ条件を指定することで、特定の条件に合致する納品のみを取得することが可能です。\n</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>start_registered_date : 登録日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_registered_date : 登録日(絞り込み終了)</p>\n</li>\n<li>\n<p>start_delivery_date : 納品日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_delivery_date : 納品日(絞り込み終了)</p>\n</li>\n<li>\n<p>start_acceptance_date : 検収日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_acceptance_date : 検収日(絞り込み終了)</p>\n</li>\n<li>\n<p>charge_employee_ids : 社内担当者の従業員ID(複数指定可)</p>\n</li>\n<li>\n<p>customer_ids : 顧客の取引先ID(複数指定可)</p>\n</li>\n<li>\n<p>delivery_status : 納品ステータス</p>\n</li>\n<li>\n<p>canceled : 取消状態(デフォルト:false)</p>\n</li>\n</ul>\n<p>\n`limit`と`offset`パラメータを使用してページネーションが可能です。\nデフォルトでは20件ずつ取得され、最大100件まで一度に取得できます。\n</p>",
+        "operationId": "get_deliveries",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "$ref": "#/components/parameters/start_registered_date"
+          },
+          {
+            "$ref": "#/components/parameters/end_registered_date"
+          },
+          {
+            "$ref": "#/components/parameters/start_delivery_date"
+          },
+          {
+            "$ref": "#/components/parameters/end_delivery_date"
+          },
+          {
+            "$ref": "#/components/parameters/start_acceptance_date"
+          },
+          {
+            "$ref": "#/components/parameters/end_acceptance_date"
+          },
+          {
+            "$ref": "#/components/parameters/charge_employee_ids"
+          },
+          {
+            "$ref": "#/components/parameters/customer_ids"
+          },
+          {
+            "$ref": "#/components/parameters/delivery_status"
+          },
+          {
+            "$ref": "#/components/parameters/canceled"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/DeliveryIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "deliveries"
+        ],
+        "summary": "納品登録",
+        "description": "<h2 id=\"\">概要</h2>\n<p>新しい納品を登録します。\n受注に紐づく納品、または独立した納品を登録できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>必須項目</h3>\n<ul>\n<li>\n<p>delivery_date : 納品日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>billing_creating_method_type : 請求作成方法</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>lines : 明細リスト</p>\n</li>\n</ul>\n<h3>任意項目</h3>\n<ul>\n<li>\n<p>sales_order_id : 受注ID（受注に紐づける場合）</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>internal_subject : 納品タイトル</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>acceptance_date : 検収日</p>\n</li>\n<li>\n<p>delivery_note : 納品書の備考欄に記載する内容</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n<li>\n<p>subject : 納品書件名</p>\n</li>\n<li>\n<p>recipient_address : 宛先情報 ※Web画面とは異なり、顧客マスタからの自動補完は行われません。指定しない場合は全ての項目がnullとして登録されます。</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n</ul>",
+        "operationId": "create_delivery",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/DeliveryCreateRequest"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/DeliveryCreateResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/deliveries/{id}": {
+      "get": {
+        "tags": [
+          "deliveries"
+        ],
+        "summary": "納品詳細取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの納品の詳細情報を取得します。\n納品の基本情報に加えて、売上・請求情報などの詳細な進捗情報も取得できます。\n</p>",
+        "operationId": "get_delivery",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "納品ID",
+            "schema": {
+              "type": "string",
+              "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+              "maxLength": 26,
+              "minLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "納品詳細取得のレスポンス",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "deliveries"
+        ],
+        "summary": "納品更新",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの納品を更新します。\n納品の基本情報、請求・入金情報などを部分的に更新できます。\n送信したフィールドのみが更新され、送信しなかったフィールドは変更されません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>更新可能項目</h3>\n<ul>\n<li>\n<p>branch_no : 枝番</p>\n</li>\n<li>\n<p>internal_subject : 納品タイトル</p>\n</li>\n<li>\n<p>delivery_date : 納品日</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>acceptance_date : 検収日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>delivery_note : 納品書の備考欄に記載する内容</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID</p>\n</li>\n<li>\n<p>subject : 納品書件名</p>\n</li>\n<li>\n<p>recipient_address : 宛先情報（指定した場合、既存の宛先情報は全て削除され、新しい宛先情報に置き換えられます）</p>\n</li>\n<li>\n<p>billing_creating_method_type : 請求作成方法</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>lines : 明細リスト（指定した場合、既存の明細は全て削除され、新しい明細に置き換えられます）</p>\n</li>\n</ul>\n<p>※全ての項目は任意です。更新したい項目のみを送信してください。</p>\n<p>※recipient_addressを指定した場合、リクエストに含まれない項目はnullとして扱われます。</p>\n<h2 id=\"_3\">注意点</h2>\n<h3>明細行の金額再計算について</h3>\n<p>納品を更新する際、登録後に下記の設定変更が行われていた場合は、明細行の金額が再計算されます。</p>\n<ul>\n<li><p>事業所(自社)の設定が変更された場合：freee会計の「設定」で変更可能な\"消費税の経理処理\"、\"消費税の端数処理\"の設定値</p></li>\n<li><p>取引先の設定が変更された場合：freeeの「取引先」で変更可能な\"内税/外税\"の設定値</p></li>\n</ul>\n<h3>納品書への反映について</h3>\n<p>発行済みの納品書がある場合、納品情報を更新しても納品書の内容には自動で反映されません。納品書の内容を更新するには、再発行が必要です。</p>",
+        "operationId": "update_delivery",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "納品ID",
+            "schema": {
+              "type": "string",
+              "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+              "maxLength": 26,
+              "minLength": 26
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/DeliveryUpdateRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/DeliveryUpdateResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/sales": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "売上一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>売上の一覧を取得します。\n登録されている売上情報を一覧形式で取得できます。\n各種フィルタ条件を指定することで、特定の条件に合致する売上のみを取得することが可能です。\n</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>start_registered_date : 売上登録日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_registered_date : 売上登録日(絞り込み終了)</p>\n</li>\n<li>\n<p>start_revenue_recognition_date : 売上日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_revenue_recognition_date : 売上日(絞り込み終了)</p>\n</li>\n<li>\n<p>charge_employee_ids : 社内担当者の従業員ID(複数指定可)</p>\n</li>\n<li>\n<p>customer_ids : 顧客の取引先ID(複数指定可)</p>\n</li>\n<li>\n<p>billing_status : 請求書送付ステータス</p>\n</li>\n<li>\n<p>collection_status : 入金ステータス</p>\n</li>\n<li>\n<p>canceled : 取消状態(デフォルト:false)</p>\n</li>\n</ul>\n<p>\n`limit`と`offset`パラメータを使用してページネーションが可能です。\nデフォルトでは20件ずつ取得され、最大100件まで一度に取得できます。\n</p>",
+        "operationId": "get_sales",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "$ref": "#/components/parameters/parameters-start_registered_date"
+          },
+          {
+            "$ref": "#/components/parameters/parameters-end_registered_date"
+          },
+          {
+            "$ref": "#/components/parameters/start_revenue_recognition_date"
+          },
+          {
+            "$ref": "#/components/parameters/end_revenue_recognition_date"
+          },
+          {
+            "$ref": "#/components/parameters/charge_employee_ids"
+          },
+          {
+            "$ref": "#/components/parameters/customer_ids"
+          },
+          {
+            "$ref": "#/components/parameters/billing_status"
+          },
+          {
+            "$ref": "#/components/parameters/collection_status"
+          },
+          {
+            "$ref": "#/components/parameters/canceled"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SalesIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "売上登録",
+        "description": "<h2 id=\"\">概要</h2>\n<p>新しい売上を登録します。\n受注や納品に紐づく売上、または独立した売上を登録できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>必須項目</h3>\n<ul>\n<li>\n<p>revenue_recognition_date : 売上日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>billing_creating_method_type : 請求の管理</p>\n</li>\n<li>\n<p>lines : 明細リスト</p>\n</li>\n</ul>\n<h3>任意項目</h3>\n<ul>\n<li>\n<p>sales_order_id : 受注ID（受注に紐づける場合）</p>\n</li>\n<li>\n<p>delivery_id : 納品ID（納品に紐づける場合）</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>subject : 売上タイトル</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>bills_on : 請求日 ※billing_creating_method_typeがautomaticallyの場合は必須</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collects_on : 入金期日 ※billing_creating_method_typeがautomaticallyの場合は必須</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n</ul>",
+        "operationId": "create_sale",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/SaleCreateRequest"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/SaleCreateResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/sales/{id}": {
+      "get": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "売上詳細取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの売上の詳細情報を取得します。\n売上の基本情報に加えて、請求・入金情報などの詳細な進捗情報も取得できます。\n</p>",
+        "operationId": "get_sale",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "売上ID",
+            "schema": {
+              "type": "string",
+              "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+              "maxLength": 26,
+              "minLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "売上詳細取得のレスポンス",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "sales"
+        ],
+        "summary": "売上更新",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの売上を更新します。\n売上の基本情報、請求・入金情報などを部分的に更新できます。\n送信したフィールドのみが更新され、送信しなかったフィールドは変更されません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>更新可能項目</h3>\n<ul>\n<li>\n<p>subject : 売上タイトル</p>\n</li>\n<li>\n<p>revenue_recognition_date : 売上日</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>bills_on : 請求日</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID</p>\n</li>\n<li>\n<p>invoice_subject : 請求書件名</p>\n</li>\n<li>\n<p>invoice_note : 請求書の備考欄に掲載する内容</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>collection_method_type : 入金方法</p>\n</li>\n<li>\n<p>collects_on : 入金期日</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>lines : 明細リスト（指定した場合、既存の明細は全て削除され、新しい明細に置き換えられます）</p>\n</li>\n</ul>\n<p>※全ての項目は任意です。更新したい項目のみを送信してください。</p>\n<h2 id=\"_3\">注意点</h2>\n<h3>明細行の金額再計算について</h3>\n<p>売上を更新する際、登録後に下記の設定変更が行われていた場合は、明細行の金額が再計算されます。</p>\n<ul>\n<li><p>事業所(自社)の設定が変更された場合：freee会計の「設定」で変更可能な\"消費税の経理処理\"、\"消費税の端数処理\"の設定値</p></li>\n<li><p>取引先の設定が変更された場合：freeeの「取引先」で変更可能な\"内税/外税\"の設定値</p></li>\n<li><p>明細取引タイプが変更された場合：freee販売の「明細取引タイプ」で変更可能な\"税区分\"、\"軽減税率\"の設定値</p></li>\n</ul>\n<h3>請求書への反映について</h3>\n<p>発行済みの請求書がある場合、売上情報を更新すると請求データは更新されますが、請求書の内容には自動で反映されません。請求書の内容を更新するには、再発行が必要です。</p>",
+        "operationId": "update_sale",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "売上ID",
+            "schema": {
+              "type": "string",
+              "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+              "maxLength": 26,
+              "minLength": 26
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/SaleUpdateRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SaleUpdateResponse"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestErrorResponse"
@@ -912,6 +1355,161 @@
           "format": "date",
           "example": "2024-12-31"
         }
+      },
+      "start_registered_date": {
+        "name": "start_registered_date",
+        "description": "登録日で絞込：開始日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-01-01"
+        }
+      },
+      "end_registered_date": {
+        "name": "end_registered_date",
+        "description": "登録日で絞込：終了日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-05-01"
+        }
+      },
+      "start_delivery_date": {
+        "name": "start_delivery_date",
+        "description": "納品日で絞込：開始日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-01-01"
+        }
+      },
+      "end_delivery_date": {
+        "name": "end_delivery_date",
+        "description": "納品日で絞込：終了日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-05-01"
+        }
+      },
+      "start_acceptance_date": {
+        "name": "start_acceptance_date",
+        "description": "検収日で絞込：開始日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-01-01"
+        }
+      },
+      "end_acceptance_date": {
+        "name": "end_acceptance_date",
+        "description": "検収日で絞込：終了日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-05-01"
+        }
+      },
+      "delivery_status": {
+        "name": "delivery_status",
+        "description": "納品ステータス (未納品: not_delivered, 納品済: delivered)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "not_delivered",
+            "delivered"
+          ],
+          "example": "not_delivered"
+        }
+      },
+      "parameters-start_registered_date": {
+        "name": "start_registered_date",
+        "description": "売上登録日で絞込：開始日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2024-01-01"
+        }
+      },
+      "parameters-end_registered_date": {
+        "name": "end_registered_date",
+        "description": "売上登録日で絞込：終了日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2024-12-31"
+        }
+      },
+      "start_revenue_recognition_date": {
+        "name": "start_revenue_recognition_date",
+        "description": "売上日で絞込：開始日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2024-01-01"
+        }
+      },
+      "end_revenue_recognition_date": {
+        "name": "end_revenue_recognition_date",
+        "description": "売上日で絞込：終了日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2024-12-31"
+        }
+      },
+      "billing_status": {
+        "name": "billing_status",
+        "description": "請求書送付ステータス (未送付: not_billed, 送付済: billed, 対象外: none)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "not_billed",
+            "billed",
+            "none"
+          ],
+          "example": "not_billed"
+        }
+      },
+      "collection_status": {
+        "name": "collection_status",
+        "description": "決済ステータス (未決済: not_settled, 一部決済済: partially_settled, 決済済: settled, 対象外: none)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "not_settled",
+            "partially_settled",
+            "settled",
+            "none"
+          ],
+          "example": "not_settled"
+        }
       }
     },
     "schemas": {
@@ -1071,6 +1669,11 @@
             "description": "取消状態",
             "example": false,
             "nullable": true
+          },
+          "closed": {
+            "type": "boolean",
+            "description": "ロック状態",
+            "example": false
           },
           "customer": {
             "$ref": "#/components/schemas/Customer"
@@ -1439,12 +2042,174 @@
         ],
         "additionalProperties": false
       },
+      "CustomFieldPartnerValue": {
+        "type": "object",
+        "description": "取引先型カスタム項目の値",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "partner"
+            ],
+            "description": "マスタ型の種別",
+            "example": "partner"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "取引先ID",
+            "example": 1001
+          },
+          "name": {
+            "type": "string",
+            "description": "取引先名",
+            "example": "サンプル取引先"
+          },
+          "code": {
+            "type": "string",
+            "description": "取引先コード",
+            "nullable": true,
+            "example": "P-001"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "CustomFieldEmployeeValue": {
+        "type": "object",
+        "description": "従業員型カスタム項目の値",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "employee"
+            ],
+            "description": "マスタ型の種別",
+            "example": "employee"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "従業員ID",
+            "example": 101
+          },
+          "name": {
+            "type": "string",
+            "description": "従業員名",
+            "example": "サンプル従業員"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "CustomFieldSectionValue": {
+        "type": "object",
+        "description": "部門型カスタム項目の値",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "section"
+            ],
+            "description": "マスタ型の種別",
+            "example": "section"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "部門ID",
+            "example": 67890
+          },
+          "name": {
+            "type": "string",
+            "description": "部門名",
+            "example": "サンプル部門"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "CustomFieldMasterItemValue": {
+        "type": "object",
+        "description": "商品型カスタム項目の値",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "master_item"
+            ],
+            "description": "マスタ型の種別",
+            "example": "master_item"
+          },
+          "id": {
+            "type": "string",
+            "description": "商品ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "name": {
+            "type": "string",
+            "description": "商品名",
+            "example": "サンプル商品"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true,
+            "description": "商品コード",
+            "example": "I-001"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "name",
+          "code"
+        ],
+        "additionalProperties": false
+      },
+      "CustomFieldMasterValue": {
+        "description": "マスタ型カスタム項目の値",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldPartnerValue"
+          },
+          {
+            "$ref": "#/components/schemas/CustomFieldEmployeeValue"
+          },
+          {
+            "$ref": "#/components/schemas/CustomFieldSectionValue"
+          },
+          {
+            "$ref": "#/components/schemas/CustomFieldMasterItemValue"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "partner": "#/components/schemas/CustomFieldPartnerValue",
+            "employee": "#/components/schemas/CustomFieldEmployeeValue",
+            "section": "#/components/schemas/CustomFieldSectionValue",
+            "master_item": "#/components/schemas/CustomFieldMasterItemValue"
+          }
+        }
+      },
       "CustomField": {
         "type": "object",
         "description": "カスタム項目",
         "properties": {
           "value": {
-            "description": "カスタム項目の値",
+            "description": "カスタム項目の値\n* 文字列型（text, textarea, date）: 文字列\n* 数値型（number, amount, quantity）: 数値\n* プルダウン型（enum）: 選択肢の名称（文字列）\n* マスタ型（partner, employee, section, master_item）: マスタ情報オブジェクト",
             "nullable": true,
             "anyOf": [
               {
@@ -1452,6 +2217,9 @@
               },
               {
                 "type": "number"
+              },
+              {
+                "$ref": "#/components/schemas/CustomFieldMasterValue"
               }
             ],
             "example": "サンプル値"
@@ -1647,8 +2415,18 @@
                   },
                   {
                     "value": 12345,
-                    "definition_id": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+                    "definition_id": "01JPP4FD1CVQWCDSWA90VE1ZTN",
                     "definition_name": "カスタム項目2"
+                  },
+                  {
+                    "value": {
+                      "type": "partner",
+                      "id": 1001,
+                      "name": "サンプル取引先",
+                      "code": "P-001"
+                    },
+                    "definition_id": "01JPP4FD1CVQWCDSWA90VE1ZTO",
+                    "definition_name": "担当取引先"
                   }
                 ]
               }
@@ -1902,7 +2680,7 @@
           },
           "type": {
             "type": "string",
-            "description": "カスタム項目の入力形式\n* `text` - 一行テキスト\n* `textarea` - 複数行テキスト\n* `amount` - 金額\n* `quantity` - 数量\n* `number` - 数値\n* `date` - 日付\n* `enum` - プルダウン",
+            "description": "カスタム項目の入力形式\n* `text` - 一行テキスト\n* `textarea` - 複数行テキスト\n* `amount` - 金額\n* `quantity` - 数量\n* `number` - 数値\n* `date` - 日付\n* `enum` - プルダウン\n* `partner` - 取引先\n* `employee` - 従業員\n* `section` - 部門\n* `master_item` - 商品",
             "enum": [
               "text",
               "textarea",
@@ -1910,7 +2688,11 @@
               "quantity",
               "number",
               "date",
-              "enum"
+              "enum",
+              "partner",
+              "employee",
+              "section",
+              "master_item"
             ],
             "example": "text"
           },
@@ -2133,6 +2915,98 @@
           }
         ]
       },
+      "PartnerCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "partner"
+                ],
+                "example": "partner"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
+      },
+      "EmployeeCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "employee"
+                ],
+                "example": "employee"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
+      },
+      "SectionCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "section"
+                ],
+                "example": "section"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
+      },
+      "MasterItemCustomFieldDefinition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CustomFieldDefinitionBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "master_item"
+                ],
+                "example": "master_item"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          }
+        ]
+      },
       "CustomFieldDefinition": {
         "oneOf": [
           {
@@ -2155,6 +3029,18 @@
           },
           {
             "$ref": "#/components/schemas/EnumCustomFieldDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/PartnerCustomFieldDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/EmployeeCustomFieldDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/SectionCustomFieldDefinition"
+          },
+          {
+            "$ref": "#/components/schemas/MasterItemCustomFieldDefinition"
           }
         ],
         "discriminator": {
@@ -2166,7 +3052,11 @@
             "quantity": "#/components/schemas/QuantityCustomFieldDefinition",
             "number": "#/components/schemas/NumberCustomFieldDefinition",
             "date": "#/components/schemas/DateCustomFieldDefinition",
-            "enum": "#/components/schemas/EnumCustomFieldDefinition"
+            "enum": "#/components/schemas/EnumCustomFieldDefinition",
+            "partner": "#/components/schemas/PartnerCustomFieldDefinition",
+            "employee": "#/components/schemas/EmployeeCustomFieldDefinition",
+            "section": "#/components/schemas/SectionCustomFieldDefinition",
+            "master_item": "#/components/schemas/MasterItemCustomFieldDefinition"
           }
         }
       },
@@ -2227,7 +3117,7 @@
         "example": "not_sold"
       },
       "BillingStatus": {
-        "description": "請求書送付ステータス (未送付: not_billed, 一部送付済: partially_billed, 送付済: billed, 対象外: none)",
+        "description": "請求書送付ステータス (未送付: not_billed, 一部送付済: partially_billed, 送付済: billed, 対象外: none)\n※partially_billed（一部送付済）は納品でのみ発生します。none（対象外）は売上でのみ発生します。",
         "enum": [
           "not_billed",
           "partially_billed",
@@ -2238,7 +3128,7 @@
         "example": "not_billed"
       },
       "CollectionStatus": {
-        "description": "決済ステータス (未決済: not_settled, 一部決済済: partially_settled, 決済済: settled, 無効: invalidated, 対象外: none)",
+        "description": "決済ステータス (未決済: not_settled, 一部決済済: partially_settled, 決済済: settled, 無効: invalidated, 対象外: none)\n※invalidated（無効）は請求でのみ発生します。売上・納品では発生しません。",
         "enum": [
           "not_settled",
           "partially_settled",
@@ -2407,7 +3297,7 @@
         "example": "automatically"
       },
       "CollectionMethodType": {
-        "description": "入金方法 (振込: transfer, 現金: cash, 手形: bill_payable, 口座振替: direct_debit)",
+        "description": "入金方法 (振込: transfer, 現金: cash, 手形: bill_payable, 振替: direct_debit)",
         "type": "string",
         "enum": [
           "transfer",
@@ -2537,7 +3427,12 @@
         "type": "object",
         "properties": {
           "line_type": {
-            "$ref": "#/components/schemas/LineType"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LineType"
+              }
+            ],
+            "example": "text"
           },
           "text": {
             "description": "テキスト行",
@@ -2946,7 +3841,7 @@
                 "format": "int32",
                 "maximum": 2147483647,
                 "description": "税区分コード<br>※freee会計 APIで参照可能な税区分のコードです",
-                "example": "10"
+                "example": 10
               },
               "name": {
                 "type": "string",
@@ -3047,7 +3942,12 @@
             "example": 1
           },
           "line_type": {
-            "$ref": "#/components/schemas/LineType"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LineType"
+              }
+            ],
+            "example": "text"
           },
           "text": {
             "description": "テキスト行",
@@ -3237,6 +4137,1112 @@
               "collecting_partner",
               "registered_at",
               "last_updated_at",
+              "lines"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "DeliveryStatus": {
+        "description": "納品ステータス (未納品: not_delivered, 納品済: delivered)",
+        "enum": [
+          "not_delivered",
+          "delivered"
+        ],
+        "type": "string",
+        "example": "not_delivered"
+      },
+      "AcceptanceStatus": {
+        "description": "検収ステータス (未検収: not_accepted, 検収済: accepted)",
+        "enum": [
+          "not_accepted",
+          "accepted"
+        ],
+        "type": "string",
+        "example": "not_accepted"
+      },
+      "DeliveryDigest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "納品ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "sales_order_id": {
+            "type": "string",
+            "description": "紐づく受注ID",
+            "nullable": true,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "delivery_status": {
+            "$ref": "#/components/schemas/DeliveryStatus"
+          },
+          "acceptance_status": {
+            "$ref": "#/components/schemas/AcceptanceStatus"
+          },
+          "canceled": {
+            "type": "boolean",
+            "description": "取消状態",
+            "example": false
+          },
+          "registered_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "登録日時",
+            "example": "2025-01-15T10:30:00+09:00"
+          },
+          "registered_by": {
+            "description": "登録者",
+            "$ref": "#/components/schemas/Employee",
+            "nullable": true
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "変更日時",
+            "example": "2025-01-16T14:45:00+09:00"
+          },
+          "last_updated_by": {
+            "description": "変更者",
+            "$ref": "#/components/schemas/Employee",
+            "nullable": true
+          },
+          "amount_set": {
+            "$ref": "#/components/schemas/AmountSet"
+          },
+          "amount_of_withholding_tax": {
+            "description": "源泉徴収税額",
+            "format": "int64",
+            "type": "integer",
+            "example": 10000
+          },
+          "total_amount": {
+            "description": "源泉徴収税額を除いた合計金額",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 10000,
+            "nullable": true
+          },
+          "business": {
+            "$ref": "#/components/schemas/Business"
+          },
+          "delivery_no": {
+            "type": "string",
+            "description": "納品No.",
+            "example": "D211212-00001"
+          },
+          "branch_no": {
+            "type": "integer",
+            "format": "int32",
+            "description": "枝番",
+            "nullable": true,
+            "example": 1
+          },
+          "internal_subject": {
+            "description": "納品タイトル",
+            "type": "string",
+            "example": "サンプル案件納品の件",
+            "nullable": true
+          },
+          "customer_order_no": {
+            "description": "顧客注文No.",
+            "type": "string",
+            "nullable": true,
+            "example": "C-PO-20250401-001"
+          },
+          "delivery_date": {
+            "description": "納品日",
+            "type": "string",
+            "format": "date",
+            "example": "2025-04-01"
+          },
+          "acceptance_date": {
+            "description": "検収日",
+            "type": "string",
+            "format": "date",
+            "example": "2025-04-01",
+            "nullable": true
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "issued": {
+            "type": "boolean",
+            "description": "送付ステータス",
+            "example": false
+          },
+          "issued_on": {
+            "type": "string",
+            "format": "date",
+            "description": "送付日",
+            "nullable": true,
+            "example": "2025-04-01"
+          },
+          "subject": {
+            "description": "納品書件名",
+            "type": "string",
+            "nullable": true,
+            "example": "サンプル案件納品の件"
+          },
+          "sales_status": {
+            "$ref": "#/components/schemas/SalesStatus"
+          },
+          "billing_status": {
+            "$ref": "#/components/schemas/BillingStatus"
+          },
+          "collection_status": {
+            "$ref": "#/components/schemas/CollectionStatus"
+          }
+        },
+        "required": [
+          "id",
+          "delivery_no",
+          "delivery_date",
+          "customer",
+          "delivery_status",
+          "acceptance_status",
+          "sales_status",
+          "issued",
+          "canceled",
+          "registered_at",
+          "last_updated_at"
+        ],
+        "additionalProperties": false
+      },
+      "DefaultTitle": {
+        "description": "敬称区分 (なし: none, 様: to_person, 御中: to_organization)",
+        "type": "string",
+        "enum": [
+          "none",
+          "to_person",
+          "to_organization"
+        ],
+        "nullable": true
+      },
+      "RecipientAddress": {
+        "description": "宛先",
+        "type": "object",
+        "properties": {
+          "official_name": {
+            "type": "string",
+            "description": "正式名称",
+            "nullable": true,
+            "example": "株式会社サンプル"
+          },
+          "default_title": {
+            "description": "敬称",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DefaultTitle"
+              }
+            ]
+          },
+          "zipcode": {
+            "type": "string",
+            "description": "郵便番号",
+            "nullable": true,
+            "example": "150-0001"
+          },
+          "prefecture_code": {
+            "type": "integer",
+            "format": "int64",
+            "description": "都道府県コード（-1: 設定しない、0: 北海道、1:青森、2:岩手、3:宮城、4:秋田、5:山形、6:福島、7:茨城、8:栃木、9:群馬、10:埼玉、11:千葉、12:東京、13:神奈川、14:新潟、15:富山、16:石川、17:福井、18:山梨、19:長野、20:岐阜、21:静岡、22:愛知、23:三重、24:滋賀、25:京都、26:大阪、27:兵庫、28:奈良、29:和歌山、30:鳥取、31:島根、32:岡山、33:広島、34:山口、35:徳島、36:香川、37:愛媛、38:高知、39:福岡、40:佐賀、41:長崎、42:熊本、43:大分、44:宮崎、45:鹿児島、46:沖縄）",
+            "nullable": true,
+            "example": 12
+          },
+          "street_name1": {
+            "type": "string",
+            "description": "住所1",
+            "nullable": true,
+            "example": "渋谷区神宮前1-1-1"
+          },
+          "street_name2": {
+            "type": "string",
+            "description": "住所2",
+            "nullable": true,
+            "example": "サンプルビル3F"
+          },
+          "contact_department": {
+            "type": "string",
+            "description": "連絡先部署",
+            "nullable": true,
+            "example": "営業部"
+          },
+          "contact_name": {
+            "type": "string",
+            "description": "連絡先名",
+            "nullable": true,
+            "example": "山田太郎"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DeliveryLineParams": {
+        "description": "明細パラメータ",
+        "discriminator": {
+          "propertyName": "line_type",
+          "mapping": {
+            "basic": "#/components/schemas/BasicLineParams",
+            "text": "#/components/schemas/TextLineParams"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BasicLineParams"
+          },
+          {
+            "$ref": "#/components/schemas/TextLineParams"
+          }
+        ]
+      },
+      "DeliveryRequestBase": {
+        "type": "object",
+        "properties": {
+          "business_id": {
+            "description": "案件ID",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 26,
+            "minLength": 26,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "internal_subject": {
+            "description": "納品タイトル",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件納品の件"
+          },
+          "customer_order_no": {
+            "description": "顧客注文No.",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "C-PO-20250401-001"
+          },
+          "delivery_date": {
+            "description": "納品日",
+            "type": "string",
+            "format": "date",
+            "example": "2025-04-01"
+          },
+          "acceptance_date": {
+            "description": "検収日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2025-04-01"
+          },
+          "customer_id": {
+            "description": "顧客の取引先ID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 1001
+          },
+          "delivery_note": {
+            "description": "納品書の備考欄に記載する内容",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000,
+            "example": "納品時の注意事項"
+          },
+          "delivery_template_id": {
+            "description": "納品書テンプレートID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "nullable": true,
+            "example": 10001
+          },
+          "subject": {
+            "description": "納品書件名",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件納品の件"
+          },
+          "recipient_address": {
+            "$ref": "#/components/schemas/RecipientAddress"
+          },
+          "billing_creating_method_type": {
+            "$ref": "#/components/schemas/BillingCreatingMethodType"
+          },
+          "bills_on": {
+            "description": "請求予定日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2025-04-01"
+          },
+          "invoice_template_id": {
+            "description": "請求書テンプレートID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "nullable": true,
+            "example": 10002
+          },
+          "billing_partner_id": {
+            "description": "請求先の取引先ID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 1002
+          },
+          "invoice_subject": {
+            "description": "請求書件名",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件納品の件"
+          },
+          "invoice_note": {
+            "description": "請求書の備考欄に掲載する内容",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000,
+            "example": "お振込期限は月末までとなります"
+          },
+          "collects_on": {
+            "description": "入金予定日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2025-04-01"
+          },
+          "collection_method_type": {
+            "$ref": "#/components/schemas/CollectionMethodType"
+          },
+          "collecting_partner_id": {
+            "description": "入金元の取引先ID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 1003
+          },
+          "charge_employee_id": {
+            "$ref": "#/components/schemas/ChargeEmployeeId"
+          },
+          "reporting_section_id": {
+            "$ref": "#/components/schemas/ReportingSectionId"
+          },
+          "internal_memo": {
+            "$ref": "#/components/schemas/InternalMemo"
+          },
+          "lines": {
+            "description": "明細リスト",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryLineParams"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DeliveryMinimalResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "納品ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "registered_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "登録日時",
+            "example": "2025-01-15T10:30:00+09:00"
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "変更日時",
+            "example": "2025-01-16T14:45:00+09:00"
+          }
+        },
+        "required": [
+          "id",
+          "registered_at",
+          "last_updated_at"
+        ],
+        "additionalProperties": false
+      },
+      "DeliveryDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DeliveryDigest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "amount_set_rates": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AmountSetRate"
+                }
+              },
+              "delivery_note": {
+                "description": "納品書の備考欄に記載する内容",
+                "type": "string",
+                "nullable": true,
+                "example": "納品時の注意事項"
+              },
+              "delivery_template_name": {
+                "description": "納品書テンプレート名称",
+                "type": "string",
+                "example": "デフォルトテンプレート"
+              },
+              "recipient_address": {
+                "$ref": "#/components/schemas/RecipientAddress"
+              },
+              "recorded_sales_amount_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "description": "売上金額(税抜)",
+                "example": 5200000
+              },
+              "remaining_sales_amount_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "description": "売上残金額(税抜)",
+                "example": 5200000
+              },
+              "billing_creating_method_type": {
+                "description": "請求の管理",
+                "$ref": "#/components/schemas/BillingCreatingMethodType"
+              },
+              "bills_on": {
+                "description": "請求予定日",
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "example": "2025-04-01"
+              },
+              "invoice_template_name": {
+                "description": "請求書テンプレート名称",
+                "type": "string",
+                "example": "デフォルトテンプレート"
+              },
+              "billing_partner": {
+                "$ref": "#/components/schemas/BillingPartner",
+                "nullable": true
+              },
+              "invoice_subject": {
+                "description": "請求書件名",
+                "type": "string",
+                "nullable": true,
+                "example": "サンプル案件納品の件"
+              },
+              "invoice_note": {
+                "description": "請求書の備考欄に掲載する内容",
+                "type": "string",
+                "nullable": true,
+                "example": "お振込期限は月末までとなります"
+              },
+              "collects_on": {
+                "description": "入金予定日",
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "example": "2025-04-01"
+              },
+              "collection_method_type": {
+                "description": "入金方法",
+                "$ref": "#/components/schemas/CollectionMethodType"
+              },
+              "collecting_partner": {
+                "$ref": "#/components/schemas/CollectingPartner",
+                "nullable": true
+              },
+              "charge_employee": {
+                "$ref": "#/components/schemas/Employee",
+                "nullable": true
+              },
+              "reporting_section": {
+                "$ref": "#/components/schemas/ReportingSection",
+                "nullable": true
+              },
+              "internal_memo": {
+                "$ref": "#/components/schemas/InternalMemo",
+                "nullable": true
+              },
+              "lines": {
+                "description": "明細リスト",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LineDetail"
+                }
+              }
+            },
+            "required": [
+              "delivery_template_name",
+              "invoice_template_name",
+              "collection_method_type",
+              "lines",
+              "recipient_address"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "BillingCreatingStatus": {
+        "description": "請求登録ステータス (未作成: not_created, 作成済: created, 取消済: canceled, 赤伝作成済: aka_created, 対象外: none)\n※aka_created（赤伝作成済）は過去データにのみ存在します。今後、新規に発生することはありません。",
+        "enum": [
+          "not_created",
+          "created",
+          "canceled",
+          "aka_created",
+          "none"
+        ],
+        "type": "string",
+        "example": "not_created"
+      },
+      "SaleDigest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "売上ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+            "maxLength": 26,
+            "minLength": 26
+          },
+          "deal_id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "会計の取引ID",
+            "nullable": true,
+            "example": 12345
+          },
+          "canceled": {
+            "type": "boolean",
+            "description": "取消状態",
+            "example": false
+          },
+          "registered_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "登録日時",
+            "example": "2024-01-15T10:30:00+09:00"
+          },
+          "registered_by": {
+            "description": "登録者",
+            "$ref": "#/components/schemas/Employee",
+            "nullable": true
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "変更日時",
+            "example": "2024-01-16T14:45:00+09:00"
+          },
+          "last_updated_by": {
+            "description": "変更者",
+            "$ref": "#/components/schemas/Employee",
+            "nullable": true
+          },
+          "amount_set": {
+            "$ref": "#/components/schemas/AmountSet"
+          },
+          "amount_of_withholding_tax": {
+            "description": "源泉徴収税額",
+            "format": "int64",
+            "type": "integer",
+            "example": 10000
+          },
+          "total_amount": {
+            "description": "源泉徴収税額を除いた合計金額",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 10000,
+            "nullable": true
+          },
+          "business": {
+            "$ref": "#/components/schemas/Business"
+          },
+          "sales_no": {
+            "type": "string",
+            "description": "売上No.",
+            "example": "S-2024-0001"
+          },
+          "subject": {
+            "type": "string",
+            "description": "売上タイトル",
+            "nullable": true,
+            "example": "Webシステム開発業務"
+          },
+          "customer_order_no": {
+            "type": "string",
+            "description": "顧客注文No.",
+            "nullable": true,
+            "example": "PO-2024-001"
+          },
+          "revenue_recognition_date": {
+            "type": "string",
+            "format": "date",
+            "description": "売上日",
+            "example": "2024-01-31"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "billing_creating_status": {
+            "$ref": "#/components/schemas/BillingCreatingStatus"
+          },
+          "billing_status": {
+            "$ref": "#/components/schemas/BillingStatus"
+          },
+          "collection_status": {
+            "$ref": "#/components/schemas/CollectionStatus"
+          }
+        },
+        "required": [
+          "id",
+          "deal_id",
+          "canceled",
+          "registered_at",
+          "registered_by",
+          "last_updated_at",
+          "last_updated_by",
+          "amount_set",
+          "amount_of_withholding_tax",
+          "total_amount",
+          "business",
+          "sales_no",
+          "subject",
+          "customer_order_no",
+          "revenue_recognition_date",
+          "customer",
+          "billing_creating_status",
+          "billing_status",
+          "collection_status"
+        ],
+        "additionalProperties": false
+      },
+      "SaleBasicLineParams": {
+        "description": "売上通常明細パラメータ",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BasicLineParams"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "segment_tag_1_id": {
+                "description": "セグメントタグ1のID",
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "nullable": true,
+                "example": 12345
+              },
+              "segment_tag_2_id": {
+                "description": "セグメントタグ2のID",
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "nullable": true,
+                "example": 12345
+              },
+              "segment_tag_3_id": {
+                "description": "セグメントタグ3のID",
+                "type": "integer",
+                "format": "int64",
+                "maximum": 9223372036854776000,
+                "nullable": true,
+                "example": 12345
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "schemas-LineParams": {
+        "description": "明細パラメータ",
+        "discriminator": {
+          "propertyName": "line_type",
+          "mapping": {
+            "basic": "#/components/schemas/SaleBasicLineParams",
+            "text": "#/components/schemas/TextLineParams"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SaleBasicLineParams"
+          },
+          {
+            "$ref": "#/components/schemas/TextLineParams"
+          }
+        ]
+      },
+      "SaleRequestBase": {
+        "type": "object",
+        "properties": {
+          "business_id": {
+            "description": "案件ID",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 26,
+            "minLength": 26,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "subject": {
+            "description": "売上タイトル",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件売上の件"
+          },
+          "customer_order_no": {
+            "description": "顧客注文No.",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "C-PO-20211212-001"
+          },
+          "revenue_recognition_date": {
+            "description": "売上日",
+            "type": "string",
+            "format": "date",
+            "example": "2021-12-12"
+          },
+          "customer_id": {
+            "description": "顧客の取引先ID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 1001
+          },
+          "bills_on": {
+            "description": "請求日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2021-12-12"
+          },
+          "invoice_template_id": {
+            "description": "請求書テンプレートID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "nullable": true,
+            "example": 10002
+          },
+          "billing_partner_id": {
+            "description": "請求先の取引先ID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 1002
+          },
+          "invoice_subject": {
+            "description": "請求書件名",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件売上の件"
+          },
+          "invoice_note": {
+            "description": "請求書の備考欄に掲載する内容",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000,
+            "example": "お振込期限は月末までとなります"
+          },
+          "collects_on": {
+            "description": "入金期日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2021-12-12"
+          },
+          "collection_method_type": {
+            "$ref": "#/components/schemas/CollectionMethodType"
+          },
+          "collecting_partner_id": {
+            "description": "入金元の取引先ID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 1003
+          },
+          "charge_employee_id": {
+            "$ref": "#/components/schemas/ChargeEmployeeId"
+          },
+          "reporting_section_id": {
+            "$ref": "#/components/schemas/ReportingSectionId"
+          },
+          "internal_memo": {
+            "$ref": "#/components/schemas/InternalMemo"
+          },
+          "lines": {
+            "description": "明細リスト",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/schemas-LineParams"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaleMinimalResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "売上ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "registered_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "登録日時",
+            "example": "2025-01-15T10:30:00+09:00"
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "変更日時",
+            "example": "2025-01-16T14:45:00+09:00"
+          }
+        },
+        "required": [
+          "id",
+          "registered_at",
+          "last_updated_at"
+        ],
+        "additionalProperties": false
+      },
+      "CollectionMethodTypeWithNone": {
+        "description": "入金方法\n* `transfer` - 振込\n* `cash` - 現金\n* `bill_payable` - 手形\n* `direct_debit` - 振替\n* `none` - なし",
+        "type": "string",
+        "enum": [
+          "transfer",
+          "cash",
+          "bill_payable",
+          "direct_debit",
+          "none"
+        ],
+        "example": "none"
+      },
+      "SegmentTag": {
+        "description": "セグメントタグ",
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "セグメントタグID",
+            "example": 12345
+          },
+          "name": {
+            "type": "string",
+            "description": "セグメントタグ名",
+            "example": "プロジェクトA"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "SaleBasicLineDetail": {
+        "description": "売上通常明細詳細",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BasicLineDetail"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "is_manual_tax_entry": {
+                "description": "税の手動入力フラグ",
+                "type": "boolean",
+                "example": false
+              },
+              "account_item": {
+                "description": "勘定科目",
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "maximum": 9223372036854776000,
+                    "description": "勘定科目ID",
+                    "example": 12345
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "勘定科目名",
+                    "example": "売上高"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "segment_tag_1": {
+                "$ref": "#/components/schemas/SegmentTag"
+              },
+              "segment_tag_2": {
+                "$ref": "#/components/schemas/SegmentTag"
+              },
+              "segment_tag_3": {
+                "$ref": "#/components/schemas/SegmentTag"
+              }
+            },
+            "required": [
+              "is_manual_tax_entry"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "SaleLineDetail": {
+        "description": "売上明細詳細",
+        "discriminator": {
+          "propertyName": "line_type",
+          "mapping": {
+            "basic": "#/components/schemas/SaleBasicLineDetail",
+            "text": "#/components/schemas/TextLineDetail"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SaleBasicLineDetail"
+          },
+          {
+            "$ref": "#/components/schemas/TextLineDetail"
+          }
+        ]
+      },
+      "SaleDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SaleDigest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "sales_order_id": {
+                "type": "string",
+                "description": "紐づく受注ID",
+                "nullable": true,
+                "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+                "maxLength": 26,
+                "minLength": 26
+              },
+              "delivery_id": {
+                "type": "string",
+                "description": "紐づく納品ID",
+                "nullable": true,
+                "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+                "maxLength": 26,
+                "minLength": 26
+              },
+              "amount_set_rates": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AmountSetRate"
+                }
+              },
+              "bills_on": {
+                "description": "請求日",
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "example": "2024-02-01"
+              },
+              "invoice_template_name": {
+                "description": "請求書テンプレート名称",
+                "type": "string",
+                "example": "デフォルトテンプレート"
+              },
+              "billing_partner": {
+                "$ref": "#/components/schemas/BillingPartner",
+                "nullable": true
+              },
+              "invoice_subject": {
+                "description": "請求書件名",
+                "type": "string",
+                "nullable": true,
+                "example": "Webシステム開発業務"
+              },
+              "invoice_note": {
+                "description": "請求書の備考欄に掲載する内容",
+                "type": "string",
+                "nullable": true,
+                "example": "お振込期限は月末までとなります"
+              },
+              "billing_amount_excluding_tax": {
+                "type": "integer",
+                "format": "int64",
+                "description": "請求金額(税抜)",
+                "nullable": true,
+                "example": 5200000
+              },
+              "invoice_no": {
+                "type": "string",
+                "description": "請求書番号",
+                "nullable": true,
+                "example": "INV-2024-0001"
+              },
+              "bill_id": {
+                "type": "string",
+                "description": "請求ID",
+                "nullable": true,
+                "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+                "maxLength": 26,
+                "minLength": 26
+              },
+              "collects_on": {
+                "description": "入金期日",
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "example": "2024-02-28"
+              },
+              "collection_method_type": {
+                "description": "入金方法",
+                "$ref": "#/components/schemas/CollectionMethodTypeWithNone"
+              },
+              "collecting_partner": {
+                "$ref": "#/components/schemas/CollectingPartner",
+                "nullable": true
+              },
+              "charge_employee": {
+                "$ref": "#/components/schemas/Employee",
+                "nullable": true
+              },
+              "reporting_section": {
+                "$ref": "#/components/schemas/ReportingSection",
+                "nullable": true
+              },
+              "internal_memo": {
+                "type": "string",
+                "description": "社内メモ",
+                "nullable": true,
+                "example": "重要顧客案件"
+              },
+              "lines": {
+                "description": "明細リスト",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SaleLineDetail"
+                }
+              }
+            },
+            "required": [
+              "amount_set_rates",
+              "invoice_template_name",
+              "collection_method_type",
               "lines"
             ],
             "additionalProperties": false
@@ -3657,6 +5663,38 @@
                       "usable": false
                     }
                   ]
+                },
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTW",
+                  "key": "custom_field_008",
+                  "display_name": "担当取引先",
+                  "type": "partner",
+                  "required": false,
+                  "description": null
+                },
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTX",
+                  "key": "custom_field_009",
+                  "display_name": "担当従業員",
+                  "type": "employee",
+                  "required": false,
+                  "description": null
+                },
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTY",
+                  "key": "custom_field_010",
+                  "display_name": "担当部門",
+                  "type": "section",
+                  "required": false,
+                  "description": null
+                },
+                {
+                  "id": "01JPP4FD1CVQWCDSWA90VE1ZTZ",
+                  "key": "custom_field_011",
+                  "display_name": "関連商品",
+                  "type": "master_item",
+                  "required": false,
+                  "description": null
                 }
               ]
             }
@@ -3708,6 +5746,98 @@
             }
           }
         }
+      },
+      "DeliveryIndexResponse": {
+        "description": "納品一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "deliveries": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeliveryDigest"
+                  }
+                },
+                "meta": {
+                  "$ref": "#/components/schemas/PaginationMeta"
+                }
+              },
+              "required": [
+                "deliveries",
+                "meta"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "DeliveryCreateResponse": {
+        "description": "納品登録のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DeliveryMinimalResponse"
+            }
+          }
+        }
+      },
+      "DeliveryUpdateResponse": {
+        "description": "納品更新のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DeliveryMinimalResponse"
+            }
+          }
+        }
+      },
+      "SalesIndexResponse": {
+        "description": "売上一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sales": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SaleDigest"
+                  }
+                },
+                "meta": {
+                  "$ref": "#/components/schemas/PaginationMeta"
+                }
+              },
+              "required": [
+                "sales",
+                "meta"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "SaleCreateResponse": {
+        "description": "売上登録のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SaleMinimalResponse"
+            }
+          }
+        }
+      },
+      "SaleUpdateResponse": {
+        "description": "売上更新のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SaleMinimalResponse"
+            }
+          }
+        }
       }
     },
     "requestBodies": {
@@ -3725,6 +5855,7 @@
                 },
                 {
                   "type": "object",
+                  "additionalProperties": false,
                   "required": [
                     "name"
                   ]
@@ -3765,6 +5896,7 @@
                 },
                 {
                   "type": "object",
+                  "additionalProperties": false,
                   "required": [
                     "sales_order_date",
                     "customer_id",
@@ -3803,6 +5935,159 @@
                       "nullable": false,
                       "example": 10001
                     },
+                    "invoice_template_id": {
+                      "description": "請求書テンプレートID",
+                      "type": "integer",
+                      "format": "int64",
+                      "maximum": 9223372036854776000,
+                      "nullable": false,
+                      "example": 10002
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        }
+      },
+      "DeliveryCreateRequest": {
+        "description": "納品登録リクエスト",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/WithCompanyId"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "sales_order_id": {
+                      "description": "受注ID",
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 26,
+                      "minLength": 26,
+                      "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+                    }
+                  },
+                  "required": [
+                    "delivery_date",
+                    "customer_id",
+                    "billing_partner_id",
+                    "billing_creating_method_type",
+                    "collecting_partner_id",
+                    "collection_method_type",
+                    "lines"
+                  ]
+                },
+                {
+                  "$ref": "#/components/schemas/DeliveryRequestBase"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "DeliveryUpdateRequest": {
+        "description": "納品更新リクエスト",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/WithCompanyId"
+                },
+                {
+                  "$ref": "#/components/schemas/DeliveryRequestBase"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "branch_no": {
+                      "description": "枝番",
+                      "type": "integer",
+                      "format": "int32",
+                      "nullable": true,
+                      "example": 1
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "SaleCreateRequest": {
+        "description": "売上登録リクエスト",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/WithCompanyId"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "sales_order_id": {
+                      "description": "受注ID",
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 26,
+                      "minLength": 26,
+                      "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+                    },
+                    "delivery_id": {
+                      "description": "納品ID",
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 26,
+                      "minLength": 26,
+                      "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+                    },
+                    "billing_creating_method_type": {
+                      "description": "請求の管理",
+                      "$ref": "#/components/schemas/BillingCreatingMethodType"
+                    }
+                  },
+                  "required": [
+                    "revenue_recognition_date",
+                    "customer_id",
+                    "billing_partner_id",
+                    "collecting_partner_id",
+                    "collection_method_type",
+                    "billing_creating_method_type",
+                    "lines"
+                  ]
+                },
+                {
+                  "$ref": "#/components/schemas/SaleRequestBase"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "SaleUpdateRequest": {
+        "description": "売上更新リクエスト",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/WithCompanyId"
+                },
+                {
+                  "$ref": "#/components/schemas/SaleRequestBase"
+                },
+                {
+                  "type": "object",
+                  "properties": {
                     "invoice_template_id": {
                       "description": "請求書テンプレートID",
                       "type": "integer",
