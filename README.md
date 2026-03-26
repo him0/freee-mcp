@@ -2,14 +2,13 @@
 
 freee会計、人事労務、請求書、工数管理、販売を AI Agent から操作できるようにする freee 公式の MCP サーバーと Agent Skills です。
 
-MCP サーバー（API 呼び出し機能）と Agent Skills（API リファレンス）を組み合わせて利用することを想定しています。
+- MCP サーバー: freee API の呼び出し・認証・リクエスト検証を担当
+- Agent Skills: API リファレンスと操作レシピを AI Agent のコンテキストに注入し、正確な API 利用をガイド
 
 [![npm version](https://badge.fury.io/js/freee-mcp.svg)](https://www.npmjs.com/package/freee-mcp)
 
 ## 特徴
 
-- MCP サーバー: freee API を AI Agent から直接呼び出し
-- Agent Skills: 詳細な API リファレンスドキュメント付きスキルを提供
 - 複数 API 対応: 会計・人事労務・請求書・工数管理・販売の5つの freee API をサポート
 - OAuth 2.0 + PKCE: セキュアな認証フロー、トークン自動更新
 - 複数事業所対応: 事業所の動的切り替えが可能
