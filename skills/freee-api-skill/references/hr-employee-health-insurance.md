@@ -45,6 +45,12 @@ successful operation
   - manual_care_insurance_amount_of_employee_bonus (任意): integer(int32) - 賞与計算時の介護保険料の直接指定金額（従業員負担分） 例: `3333` (最小: -999999999, 最大: 999999999)
   - manual_care_insurance_amount_of_company_salary (任意): number(float) - 給与計算時の介護保険料の直接指定金額（会社負担分） 例: `2222.0001` (最小: -999999999.9999, 最大: 999999999.9999)
   - manual_care_insurance_amount_of_company_bonus (任意): number(float) - 賞与計算時の介護保険料の直接指定金額（会社負担分） 例: `1111.0001` (最小: -999999999.9999, 最大: 999999999.9999)
+  - child_support_fund_salary_calc_type (任意): string - 給与計算時の子ども・子育て支援金の計算方法 (選択肢: auto, manual) 例: `manual`
+  - child_support_fund_bonus_calc_type (任意): string - 賞与計算時の子ども・子育て支援金の計算方法 (選択肢: auto, manual) 例: `manual`
+  - manual_child_support_fund_amount_of_employee_salary (任意): integer(int32) - 給与計算時の子ども・子育て支援金の直接指定金額（従業員負担分） 例: `4000` (最小: -999999999, 最大: 999999999)
+  - manual_child_support_fund_amount_of_employee_bonus (任意): integer(int32) - 賞与計算時の子ども・子育て支援金の直接指定金額（従業員負担分） 例: `3000` (最小: -999999999, 最大: 999999999)
+  - manual_child_support_fund_amount_of_company_salary (任意): number(float) - 給与計算時の子ども・子育て支援金の直接指定金額（会社負担分） 例: `2000.0001` (最小: -999999999.9999, 最大: 999999999.9999)
+  - manual_child_support_fund_amount_of_company_bonus (任意): number(float) - 賞与計算時の子ども・子育て支援金の直接指定金額（会社負担分） 例: `1000.0001` (最小: -999999999.9999, 最大: 999999999.9999)
   - reference_num (任意): string - 健康保険の被保険者整理番号
   - standard_monthly_remuneration (任意): integer(int32) - 標準報酬月額
 
@@ -81,6 +87,12 @@ successful operation
   - manual_care_insurance_amount_of_employee_bonus (任意): integer(int32) - 賞与計算時の介護保険料の直接指定金額（従業員負担分） 例: `3333` (最小: -999999999, 最大: 999999999)
   - manual_care_insurance_amount_of_company_salary (任意): number(float) - 給与計算時の介護保険料の直接指定金額（会社負担分） 例: `2222.0001` (最小: -999999999.9999, 最大: 999999999.9999)
   - manual_care_insurance_amount_of_company_bonus (任意): number(float) - 賞与計算時の介護保険料の直接指定金額（会社負担分） 例: `1111.0001` (最小: -999999999.9999, 最大: 999999999.9999)
+  - child_support_fund_salary_calc_type (任意): string - 給与計算時の子ども・子育て支援金の計算方法 (選択肢: auto, manual) 例: `manual`
+  - child_support_fund_bonus_calc_type (任意): string - 賞与計算時の子ども・子育て支援金の計算方法 (選択肢: auto, manual) 例: `manual`
+  - manual_child_support_fund_amount_of_employee_salary (任意): integer(int32) - 給与計算時の子ども・子育て支援金の直接指定金額（従業員負担分） 例: `4000` (最小: -999999999, 最大: 999999999)
+  - manual_child_support_fund_amount_of_employee_bonus (任意): integer(int32) - 賞与計算時の子ども・子育て支援金の直接指定金額（従業員負担分） 例: `3000` (最小: -999999999, 最大: 999999999)
+  - manual_child_support_fund_amount_of_company_salary (任意): number(float) - 給与計算時の子ども・子育て支援金の直接指定金額（会社負担分） 例: `2000.0001` (最小: -999999999.9999, 最大: 999999999.9999)
+  - manual_child_support_fund_amount_of_company_bonus (任意): number(float) - 賞与計算時の子ども・子育て支援金の直接指定金額（会社負担分） 例: `1000.0001` (最小: -999999999.9999, 最大: 999999999.9999)
   - reference_num (任意): string - 健康保険の被保険者整理番号 例: `0000000000`
   - standard_monthly_remuneration (必須): integer(int32) - 標準報酬月額 null不可 例: `58000` (最小: 1, 最大: 2147483647)
   - health_insurance_qualification_required (任意): boolean - 健康保険の資格確認書の発行が必要かどうか
@@ -107,6 +119,12 @@ successful operation
   - manual_care_insurance_amount_of_employee_bonus (任意): integer(int32) - 賞与計算時の介護保険料の直接指定金額（従業員負担分） 例: `3333` (最小: -999999999, 最大: 999999999)
   - manual_care_insurance_amount_of_company_salary (任意): number(float) - 給与計算時の介護保険料の直接指定金額（会社負担分） 例: `2222.0001` (最小: -999999999.9999, 最大: 999999999.9999)
   - manual_care_insurance_amount_of_company_bonus (任意): number(float) - 賞与計算時の介護保険料の直接指定金額（会社負担分） 例: `1111.0001` (最小: -999999999.9999, 最大: 999999999.9999)
+  - child_support_fund_salary_calc_type (任意): string - 給与計算時の子ども・子育て支援金の計算方法 (選択肢: auto, manual) 例: `manual`
+  - child_support_fund_bonus_calc_type (任意): string - 賞与計算時の子ども・子育て支援金の計算方法 (選択肢: auto, manual) 例: `manual`
+  - manual_child_support_fund_amount_of_employee_salary (任意): integer(int32) - 給与計算時の子ども・子育て支援金の直接指定金額（従業員負担分） 例: `4000` (最小: -999999999, 最大: 999999999)
+  - manual_child_support_fund_amount_of_employee_bonus (任意): integer(int32) - 賞与計算時の子ども・子育て支援金の直接指定金額（従業員負担分） 例: `3000` (最小: -999999999, 最大: 999999999)
+  - manual_child_support_fund_amount_of_company_salary (任意): number(float) - 給与計算時の子ども・子育て支援金の直接指定金額（会社負担分） 例: `2000.0001` (最小: -999999999.9999, 最大: 999999999.9999)
+  - manual_child_support_fund_amount_of_company_bonus (任意): number(float) - 賞与計算時の子ども・子育て支援金の直接指定金額（会社負担分） 例: `1000.0001` (最小: -999999999.9999, 最大: 999999999.9999)
   - reference_num (任意): string - 健康保険の被保険者整理番号
   - standard_monthly_remuneration (任意): integer(int32) - 標準報酬月額
 

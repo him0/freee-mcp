@@ -13806,6 +13806,60 @@
             "minimum": -999999999.9999,
             "maximum": 999999999.9999
           },
+          "child_support_fund_salary_calc_type": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "manual"
+            ],
+            "description": "給与計算時の子ども・子育て支援金の計算方法",
+            "example": "manual"
+          },
+          "child_support_fund_bonus_calc_type": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "manual"
+            ],
+            "description": "賞与計算時の子ども・子育て支援金の計算方法",
+            "example": "manual"
+          },
+          "manual_child_support_fund_amount_of_employee_salary": {
+            "type": "integer",
+            "format": "int32",
+            "description": "給与計算時の子ども・子育て支援金の直接指定金額（従業員負担分）",
+            "example": 4000,
+            "nullable": true,
+            "minimum": -999999999,
+            "maximum": 999999999
+          },
+          "manual_child_support_fund_amount_of_employee_bonus": {
+            "type": "integer",
+            "format": "int32",
+            "description": "賞与計算時の子ども・子育て支援金の直接指定金額（従業員負担分）",
+            "example": 3000,
+            "nullable": true,
+            "minimum": -999999999,
+            "maximum": 999999999
+          },
+          "manual_child_support_fund_amount_of_company_salary": {
+            "type": "number",
+            "format": "float",
+            "description": "給与計算時の子ども・子育て支援金の直接指定金額（会社負担分）",
+            "example": 2000.0001,
+            "nullable": true,
+            "minimum": -999999999.9999,
+            "maximum": 999999999.9999
+          },
+          "manual_child_support_fund_amount_of_company_bonus": {
+            "type": "number",
+            "format": "float",
+            "description": "賞与計算時の子ども・子育て支援金の直接指定金額（会社負担分）",
+            "example": 1000.0001,
+            "nullable": true,
+            "minimum": -999999999.9999,
+            "maximum": 999999999.9999
+          },
           "reference_num": {
             "type": "string",
             "description": "健康保険の被保険者整理番号",
@@ -15311,6 +15365,60 @@
             "format": "float",
             "description": "賞与計算時の介護保険料の直接指定金額（会社負担分）",
             "example": 1111.0001,
+            "nullable": true,
+            "minimum": -999999999.9999,
+            "maximum": 999999999.9999
+          },
+          "child_support_fund_salary_calc_type": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "manual"
+            ],
+            "description": "給与計算時の子ども・子育て支援金の計算方法",
+            "example": "manual"
+          },
+          "child_support_fund_bonus_calc_type": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "manual"
+            ],
+            "description": "賞与計算時の子ども・子育て支援金の計算方法",
+            "example": "manual"
+          },
+          "manual_child_support_fund_amount_of_employee_salary": {
+            "type": "integer",
+            "format": "int32",
+            "description": "給与計算時の子ども・子育て支援金の直接指定金額（従業員負担分）",
+            "example": 4000,
+            "nullable": true,
+            "minimum": -999999999,
+            "maximum": 999999999
+          },
+          "manual_child_support_fund_amount_of_employee_bonus": {
+            "type": "integer",
+            "format": "int32",
+            "description": "賞与計算時の子ども・子育て支援金の直接指定金額（従業員負担分）",
+            "example": 3000,
+            "nullable": true,
+            "minimum": -999999999,
+            "maximum": 999999999
+          },
+          "manual_child_support_fund_amount_of_company_salary": {
+            "type": "number",
+            "format": "float",
+            "description": "給与計算時の子ども・子育て支援金の直接指定金額（会社負担分）",
+            "example": 2000.0001,
+            "nullable": true,
+            "minimum": -999999999.9999,
+            "maximum": 999999999.9999
+          },
+          "manual_child_support_fund_amount_of_company_bonus": {
+            "type": "number",
+            "format": "float",
+            "description": "賞与計算時の子ども・子育て支援金の直接指定金額（会社負担分）",
+            "example": 1000.0001,
             "nullable": true,
             "minimum": -999999999.9999,
             "maximum": 999999999.9999

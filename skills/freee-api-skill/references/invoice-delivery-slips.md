@@ -21,7 +21,7 @@
 | delivery_slip_number | query | いいえ | string | 納品書番号 |
 | subject | query | いいえ | string | 件名 |
 | partner_ids | query | いいえ | string | 取引先ID（半角数字のidを半角カンマ区切りスペースなしで指定してください。最大3件まで指定できます。） |
-| payment_status | query | いいえ | string | 入金ステータス（unsettled: 入金待ち, settled: 入金済み） (選択肢: settled, unsettled) |
+| payment_status | query | いいえ | string | 決済ステータス（unsettled: 決済待ち, settled: 決済済み） (選択肢: settled, unsettled) |
 | deal_status | query | いいえ | string | 取引ステータス（registered: 登録済み、 unregistered: 登録待ち） (選択肢: registered, unregistered) |
 | sending_status | query | いいえ | string | 送付ステータス（sent: 送付済み、 unsent: 送付待ち） (選択肢: sent, unsent) |
 | cancel_status | query | いいえ | string | 取消済み（canceled: 該当する、 uncanceled: 該当しない） (選択肢: canceled, uncanceled) |
@@ -45,7 +45,7 @@ The request has succeeded.
     - issue_date (任意): string(date) - 発生日 (パターン: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$)
     - memo (必須): string - 社内メモ
     - sending_status (必須): string - 送付ステータス（sent: 送付済み、 unsent: 送付待ち） (選択肢: sent, unsent)
-    - payment_status (必須): string - 入金ステータス（unsettled: 入金待ち, settled: 入金済み） (選択肢: settled, unsettled)
+    - payment_status (必須): string - 決済ステータス（unsettled: 決済待ち, settled: 決済済み） (選択肢: settled, unsettled)
     - cancel_status (必須): string - 取消済み（canceled: 該当する、 uncanceled: 該当しない） (選択肢: canceled, uncanceled)
     - deal_status (必須): string - 取引ステータス（registered: 登録済み、 unregistered: 登録待ち） (選択肢: registered, unregistered)
     - deal_id (任意): integer(int64) - 取引ID （deal_statusがunregisteredの場合、nullになります。） (最小: 1, 最大: 9223372036854775000)
@@ -187,7 +187,7 @@ The request has succeeded and a new resource has been created as a result.
   - delivery_slip_note (必須): string - 備考
   - memo (必須): string - 社内メモ
   - sending_status (必須): string - 送付ステータス（sent: 送付済み、 unsent: 送付待ち） (選択肢: sent, unsent)
-  - payment_status (必須): string - 入金ステータス（unsettled: 入金待ち, settled: 入金済み） (選択肢: settled, unsettled)
+  - payment_status (必須): string - 決済ステータス（unsettled: 決済待ち, settled: 決済済み） (選択肢: settled, unsettled)
   - cancel_status (必須): string - 取消済み（canceled: 該当する、 uncanceled: 該当しない） (選択肢: canceled, uncanceled)
   - deal_status (必須): string - 取引ステータス（registered: 登録済み、 unregistered: 登録待ち） (選択肢: registered, unregistered)
   - deal_id (任意): integer(int64) - 取引ID （deal_statusがunregisteredの場合、nullになります。） (最小: 1, 最大: 9223372036854775000)
@@ -289,7 +289,7 @@ The request has succeeded.
   - delivery_slip_note (必須): string - 備考
   - memo (必須): string - 社内メモ
   - sending_status (必須): string - 送付ステータス（sent: 送付済み、 unsent: 送付待ち） (選択肢: sent, unsent)
-  - payment_status (必須): string - 入金ステータス（unsettled: 入金待ち, settled: 入金済み） (選択肢: settled, unsettled)
+  - payment_status (必須): string - 決済ステータス（unsettled: 決済待ち, settled: 決済済み） (選択肢: settled, unsettled)
   - cancel_status (必須): string - 取消済み（canceled: 該当する、 uncanceled: 該当しない） (選択肢: canceled, uncanceled)
   - deal_status (必須): string - 取引ステータス（registered: 登録済み、 unregistered: 登録待ち） (選択肢: registered, unregistered)
   - deal_id (任意): integer(int64) - 取引ID （deal_statusがunregisteredの場合、nullになります。） (最小: 1, 最大: 9223372036854775000)
@@ -465,7 +465,7 @@ The request has succeeded.
   - delivery_slip_note (必須): string - 備考
   - memo (必須): string - 社内メモ
   - sending_status (必須): string - 送付ステータス（sent: 送付済み、 unsent: 送付待ち） (選択肢: sent, unsent)
-  - payment_status (必須): string - 入金ステータス（unsettled: 入金待ち, settled: 入金済み） (選択肢: settled, unsettled)
+  - payment_status (必須): string - 決済ステータス（unsettled: 決済待ち, settled: 決済済み） (選択肢: settled, unsettled)
   - cancel_status (必須): string - 取消済み（canceled: 該当する、 uncanceled: 該当しない） (選択肢: canceled, uncanceled)
   - deal_status (必須): string - 取引ステータス（registered: 登録済み、 unregistered: 登録待ち） (選択肢: registered, unregistered)
   - deal_id (任意): integer(int64) - 取引ID （deal_statusがunregisteredの場合、nullになります。） (最小: 1, 最大: 9223372036854775000)
