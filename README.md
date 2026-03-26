@@ -53,10 +53,6 @@ sequenceDiagram
 
 ## クイックスタート
 
-### Claude Desktop のインストール
-
-[Claude Desktop](https://claude.ai/download) をダウンロードしてインストールしてください。
-
 ### 方法 1: Remote MCP で接続する（推奨）
 
 freee が提供する Remote MCP サーバーに接続する方法です。ローカルでのセットアップが不要で、すぐに利用を開始できます。
