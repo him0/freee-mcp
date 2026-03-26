@@ -65,7 +65,7 @@ Claude 及び Claude Desktop では「カスタマイズ」より「カスタム
 
 その他の AI ツールでは、それぞれの案内に従って Remote MCP サーバーを追加してください。
 
-Agent Skills を利用する場合は、同じく「カスタマイズ」より「スキル」を開き、[Releases](https://github.com/freee/freee-mcp/releases) ページから最新の `.skill` ファイルをダウンロードしてアップロードしてください。
+Agent Skills を利用する場合は、同じく「カスタマイズ」より「スキル」を開き、[Releases](https://github.com/freee/freee-mcp/releases) ページから最新の `freee-api-skill.zip` をダウンロードしてアップロードしてください。
 
 <img src="docs/images/claude-desktop-skill-upload.png" width="600" alt="Claude Desktop でスキルをアップロード">
 
