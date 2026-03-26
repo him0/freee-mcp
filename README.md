@@ -103,7 +103,7 @@ npx freee-mcp configure
 Windows Store (Microsoft Store) 版の Claude Desktop をご利用の場合、設定ファイルのパスが異なります。`freee-mcp configure` は自動的に適切なパスを検出します。
 ## Agent Skills をインストールする
 
-Claude Code 以外のコーディングエージェント（Cursor, OpenCode など）で API リファレンス付きスキルを利用する場合は、[skills](https://www.npmjs.com/package/skills) でインストールできます。
+Claude Code 以外のコーディングエージェント（Cursor, OpenCode など）で Agent Skills（API リファレンス・操作レシピ）を利用する場合は、[skills](https://www.npmjs.com/package/skills) でインストールできます。
 
 ```bash
 npx skills add freee/freee-mcp
@@ -113,13 +113,13 @@ npx skills add freee/freee-mcp
 
 ## Claude Code Plugin として使う
 
-Claude Code でプラグインとしてインストールすると、MCP サーバーと API リファレンス付きのスキルがまとめて利用できます。
+Claude Code でプラグインとしてインストールすると、MCP サーバーと Agent Skills（API リファレンス・操作レシピ）がまとめて利用できます。
 
 ```bash
 claude plugin install freee/freee-mcp
 ```
 
-### 含まれるリファレンス
+### Agent Skills の内容
 
 | API      | 内容                                             | ファイル数 |
 | -------- | ------------------------------------------------ | ---------- |
@@ -129,7 +129,7 @@ claude plugin install freee/freee-mcp
 | 工数管理 | プロジェクト、チーム、パートナー、工数、ユーザーなど | 7          |
 | 販売     | 案件、受注、マスタ                               | 3          |
 
-Claude との会話中に API の使い方を質問すると、これらのリファレンスを参照して正確な情報を提供します。
+AI Agent との会話中に freee API の操作を依頼すると、これらのリファレンスやレシピを参照して正確に実行します。
 
 ### データ作成のベストプラクティス
 
