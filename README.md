@@ -62,6 +62,8 @@ Claude 及び Claude Desktop では「カスタマイズ」より「カスタム
 - 名前: `freee`
 - URL: `https://mcp.freee.co.jp/mcp`
 
+> ⚠️ freee 公式以外の URL を入力しないようにご注意ください。
+
 <img src="docs/images/claude-desktop-custom-connector.png" width="600" alt="Claude Desktop でカスタムコネクタを追加">
 
 ### 方法 2: ローカルで MCP サーバーを起動する
