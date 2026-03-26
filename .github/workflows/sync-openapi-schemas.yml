@@ -1,0 +1,124 @@
+name: Sync OpenAPI Schemas
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # Every Monday at 03:00 UTC = 12:00 JST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  sync-schemas:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Fetch latest OpenAPI schemas
+        run: bun run fetch:schemas
+
+      - name: Check for schema changes
+        id: changes
+        run: |
+          if git diff --quiet openapi/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No schema changes detected."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Schema changes detected:"
+            git diff --stat openapi/
+          fi
+
+      - name: Close existing sync PRs
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          EXISTING_PRS=$(gh pr list --head "chore/sync-openapi-schemas" --json number --jq '.[].number' || true)
+          for PR_NUM in $EXISTING_PRS; do
+            echo "Closing existing sync PR #$PR_NUM"
+            gh pr close "$PR_NUM" --comment "新しいスキーマ同期PRに置き換えられました。"
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create branch and commit schema changes
+        if: steps.changes.outputs.changed == 'true'
+        id: branch
+        run: |
+          BRANCH_NAME="chore/sync-openapi-schemas-$(date +%Y%m%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Delete remote branch if it exists (re-run on same day)
+          git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
+
+          git checkout -b "$BRANCH_NAME"
+          git add openapi/
+          git commit -m "chore: sync OpenAPI schemas"
+          git push -u origin "$BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Create changeset with Claude Code
+        if: steps.changes.outputs.changed == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_tools: "Bash,Read,Write,Edit"
+          prompt: |
+            OpenAPIスキーマが更新されました。changeset を作成してください。
+
+            1. `git diff HEAD~1 -- openapi/` を実行して、スキーマの変更内容を確認してください
+            2. 変更内容を分析し、どのAPIにどのような変更があったかを把握してください
+            3. `.changeset/sync-openapi-schemas.md` ファイルを以下のフォーマットで作成してください:
+
+            ```
+            ---
+            "freee-mcp": patch
+            ---
+
+            OpenAPIスキーマを最新版に同期: [各APIの変更点を日本語で簡潔に要約]
+            ```
+
+            4. 作成したファイルを git add して `git commit -m "chore: add changeset for schema sync"` して `git push` してください
+
+            注意事項:
+            - changeset の説明は日本語で書いてください
+            - 各APIの主要な変更点を簡潔にまとめてください（例: 会計APIにXXフィールド追加、人事労務APIにYYエンドポイント追加）
+            - frontmatter の package 名は "freee-mcp" です
+            - markdown の bold 記法（`**`）は使わないでください
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          gh pr create \
+            --base main \
+            --head "${{ steps.branch.outputs.branch }}" \
+            --title "chore: sync OpenAPI schemas" \
+            --body "$(cat <<'EOF'
+          ## Summary
+
+          OpenAPIスキーマを最新版に自動同期しました。
+
+          - `bun run fetch:schemas` を実行してスキーマを取得
+          - 変更が検出されたため、changeset を作成しPRを作成しました
+
+          ## 変更対象
+
+          - `openapi/` 配下のスキーマファイル
+          - `openapi/minimal/` 配下の最小化スキーマファイル
+          - `.changeset/` 配下の changeset ファイル
+
+          ---
+          This PR was automatically created by the sync-openapi-schemas workflow.
+          EOF
+          )"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
