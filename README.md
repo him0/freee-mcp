@@ -65,10 +65,6 @@ Claude 及び Claude Desktop では「カスタマイズ」より「カスタム
 
 その他の AI ツールでは、それぞれの案内に従って Remote MCP サーバーを追加してください。
 
-Agent Skills を利用する場合は、同じく「カスタマイズ」より「スキル」を開き、[Releases](https://github.com/freee/freee-mcp/releases) ページから最新の `freee-api-skill.zip` をダウンロードしてアップロードしてください。
-
-<img src="docs/images/claude-desktop-skill-upload.png" width="600" alt="Claude Desktop でスキルをアップロード">
-
 ### 方法 2: ローカルで MCP サーバーを起動する
 
 freee アプリケーションを自分で登録し、ローカルで MCP サーバーを起動する方法です。
@@ -107,7 +103,11 @@ npx freee-mcp configure
 Windows Store (Microsoft Store) 版の Claude Desktop をご利用の場合、設定ファイルのパスが異なります。`freee-mcp configure` は自動的に適切なパスを検出します。
 ## Agent Skills をインストールする
 
-Claude Code 以外のコーディングエージェント（Cursor, OpenCode など）で Agent Skills（API リファレンス・操作レシピ）を利用する場合は、[skills](https://www.npmjs.com/package/skills) でインストールできます。
+Claude 及び Claude Desktop では「カスタマイズ」より「スキル」を開き、[Releases](https://github.com/freee/freee-mcp/releases) ページから最新の `freee-api-skill.zip` をダウンロードしてアップロードしてください。
+
+<img src="docs/images/claude-desktop-skill-upload.png" width="600" alt="Claude Desktop でスキルをアップロード">
+
+Claude Code 等のコーディングエージェント（Cursor, OpenCode など）では、[skills](https://www.npmjs.com/package/skills) でインストールできます。
 
 ```bash
 npx skills add freee/freee-mcp
