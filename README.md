@@ -57,7 +57,7 @@ sequenceDiagram
 
 freee が提供する Remote MCP サーバーに接続する方法です。ローカルでのセットアップが不要で、すぐに利用を開始できます。
 
-Claude 及び Claude Desktop では「カスタマイズ」より「カスタムコネクタを追加」を開き、以下を設定してください。その他の AI ツールでは、それぞれの案内に従って Remote MCP サーバーを追加してください。
+Claude 及び Claude Desktop では「カスタマイズ」より「カスタムコネクタを追加」を開き、以下を設定してください。
 
 - 名前: `freee`
 - URL: `https://mcp.freee.co.jp/mcp`
@@ -65,6 +65,8 @@ Claude 及び Claude Desktop では「カスタマイズ」より「カスタム
 > ⚠️ freee 公式以外の URL を入力しないようにご注意ください。
 
 <img src="docs/images/claude-desktop-custom-connector.png" width="600" alt="Claude Desktop でカスタムコネクタを追加">
+
+その他の AI ツールでは、それぞれの案内に従って Remote MCP サーバーを追加してください。
 
 ### 方法 2: ローカルで MCP サーバーを起動する
 
