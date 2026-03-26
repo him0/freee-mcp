@@ -1,6 +1,6 @@
 # freee-mcp
 
-freee会計、人事労務、請求書、工数管理、販売を AI Agent から操作できるようにする MCP サーバーと Agent Skills です。
+freee会計、人事労務、請求書、工数管理、販売を AI Agent から操作できるようにする freee 公式の MCP サーバーと Agent Skills です。
 
 MCP サーバー（API 呼び出し機能）と Agent Skills（API リファレンス）を組み合わせて利用することを想定しています。
 
