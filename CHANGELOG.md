@@ -1,5 +1,12 @@
 # freee-mcp
 
+## 0.15.1
+
+### Patch Changes
+
+- [`c03aec1`](https://github.com/freee/freee-mcp/commit/c03aec121618a73faae7f5ce43aa1594fb46ae5f): OpenAPI スキーマ同期ワークフローを修正: Claude Code ステップを廃止しシェルスクリプトに置換、リファレンス再生成・README ファイル数テーブル自動更新ステップを追加 ([#318](https://github.com/freee/freee-mcp/pull/318))
+- [`9237ba6`](https://github.com/freee/freee-mcp/commit/9237ba60c9a60dcfaacfcd501daa62b001aab538): OpenAPI スキーマを最新版に同期 ( 6 files changed, 4397 insertions(+), 1922 deletions(-)) ([#319](https://github.com/freee/freee-mcp/pull/319))
+
 ## 0.15.0
 
 ### Minor Changes
