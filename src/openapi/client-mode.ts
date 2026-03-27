@@ -53,10 +53,10 @@ function createMethodTool(method: string) {
       }
 
       // Make API request with the correct base URL
-      // biome-ignore lint/style/noNonNullAssertion: actualPath is set when isValid is true
+      const actualPath = validation.actualPath ?? path;
       const result = await makeApiRequest(
         method,
-        validation.actualPath!,
+        actualPath,
         query,
         body,
         validation.baseUrl,
