@@ -221,20 +221,13 @@ export async function startHttpServer(): Promise<void> {
       'mcp request',
     );
 
-    const existingEntry = sessionId ? sessions.get(sessionId) : undefined;
-    if (existingEntry) {
-      existingEntry.lastActivity = Date.now();
-      await existingEntry.transport.handleRequest(req, res);
-      return;
-    }
-
-    // Unknown session ID: return 404 per MCP spec
+    // Unknown session ID: return 404 per MCP spec (stateless mode never issues session IDs)
     if (sessionId) {
       res.status(404).json({ error: 'Session not found' });
       return;
     }
 
-    // Create new session for initialize requests
+    // Create a fresh transport for each request (stateless)
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
     });
