@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.16.0
+
+### Minor Changes
+
+- [`f552919`](https://github.com/freee/freee-mcp/commit/f552919f9a1ca2c9c148f2867606f8c0e686b2b9): HTTP モードの /mcp エンドポイントに構造化アクセスログを追加（source_ip, session_id, company_id, user_id） ([#327](https://github.com/freee/freee-mcp/pull/327))
+
 ## 0.15.2
 
 ### Patch Changes
