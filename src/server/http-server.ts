@@ -16,6 +16,14 @@ import { OAuthStateStore } from './oauth-store.js';
 
 const BODY_SIZE_LIMIT = 1_048_576; // 1 MB
 
+function getClientIp(req: Request): string {
+  const xff = req.headers['x-forwarded-for'];
+  if (typeof xff === 'string') {
+    return xff.split(',')[0].trim();
+  }
+  return req.ip || 'unknown';
+}
+
 // Extend Express Request with request ID
 declare module 'express' {
   interface Request {
@@ -209,6 +217,34 @@ export async function startHttpServer(): Promise<void> {
   // MCP endpoint handler
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
+
+    // Access log with security-relevant fields
+    const sourceIp = getClientIp(req);
+    const authExtra = (req as unknown as Record<string, unknown>).auth as
+      | { extra?: Record<string, unknown> }
+      | undefined;
+    const userId =
+      typeof authExtra?.extra?.userId === 'string' ? authExtra.extra.userId : undefined;
+    let companyId: string | undefined;
+    if (userId && authExtra?.extra?.tokenStore) {
+      try {
+        const store = authExtra.extra.tokenStore as { getCurrentCompanyId(u: string): Promise<unknown> };
+        companyId = String(await store.getCurrentCompanyId(userId));
+      } catch {
+        /* ignore - company_id is best-effort */
+      }
+    }
+    logger.info(
+      {
+        source_ip: sourceIp,
+        session_id: sessionId,
+        company_id: companyId,
+        user_id: userId,
+        method: req.method,
+        path: req.path,
+      },
+      'mcp request',
+    );
 
     const existingEntry = sessionId ? sessions.get(sessionId) : undefined;
     if (existingEntry) {
