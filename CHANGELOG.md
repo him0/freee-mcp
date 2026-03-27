@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.15.2
+
+### Patch Changes
+
+- [`2e3d530`](https://github.com/freee/freee-mcp/commit/2e3d53088b6e6f7286ed26cd4d9fb806d97d4a2f): MCP セッションをステートレス化し、マルチ Pod 環境での 404 エラーを解消 ([#325](https://github.com/freee/freee-mcp/pull/325))
+
 ## 0.15.1
 
 ### Patch Changes

@@ -31,13 +31,6 @@ declare module 'express' {
   }
 }
 
-interface SessionEntry {
-  transport: StreamableHTTPServerTransport;
-  lastActivity: number;
-}
-
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const SHUTDOWN_TIMEOUT_MS = 30_000; // 30 seconds
 
 export async function startHttpServer(): Promise<void> {
@@ -94,22 +87,6 @@ export async function startHttpServer(): Promise<void> {
   });
 
   const config = getConfig();
-
-  const sessions = new Map<string, SessionEntry>();
-
-  // Session cleanup interval
-  const cleanupTimer = setInterval(() => {
-    const now = Date.now();
-    for (const [id, entry] of sessions) {
-      if (now - entry.lastActivity > SESSION_TIMEOUT_MS) {
-        logger.info({ sessionId: id }, 'Cleaning up inactive session');
-        entry.transport.close().catch((err: unknown) => {
-          logger.error({ sessionId: id, err }, 'Failed to close transport for session');
-        });
-        sessions.delete(id);
-      }
-    }
-  }, CLEANUP_INTERVAL_MS);
 
   // Dynamic import of express (only loaded in serve mode)
   const express = (await import('express')).default;
@@ -174,13 +151,11 @@ export async function startHttpServer(): Promise<void> {
       res.json({
         status: 'ok',
         redis: 'connected',
-        sessions: sessions.size,
       });
     } catch {
       res.status(503).json({
         status: 'degraded',
         redis: 'disconnected',
-        sessions: sessions.size,
       });
     }
   });
@@ -214,7 +189,7 @@ export async function startHttpServer(): Promise<void> {
     resourceMetadataUrl: getOAuthProtectedResourceMetadataUrl(mcpResourceUrl),
   });
 
-  // MCP endpoint handler
+  // MCP endpoint handler (stateless: each request creates a fresh transport)
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
@@ -261,34 +236,19 @@ export async function startHttpServer(): Promise<void> {
 
     // Create new session for initialize requests
     const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => randomUUID(),
+      sessionIdGenerator: undefined,
     });
 
-    try {
-      const server = createMcpServer(config, { remote: true });
-      await server.connect(transport);
+    const mcpServer = createMcpServer(config, { remote: true });
+    await mcpServer.connect(transport);
 
-      // handleRequest first so that the transport gets its sessionId assigned
-      await transport.handleRequest(req, res);
+    // Clean up transport when the HTTP response finishes (normal completion or client disconnect).
+    // Cannot use a finally block here because handleRequest resolves before SSE streaming completes.
+    res.on('close', () => {
+      transport.close().catch(() => {});
+    });
 
-      const newSessionId = transport.sessionId;
-      if (newSessionId) {
-        sessions.set(newSessionId, {
-          transport,
-          lastActivity: Date.now(),
-        });
-
-        transport.onclose = () => {
-          sessions.delete(newSessionId);
-        };
-      } else {
-        // No session was created (e.g., non-initialize request) — clean up
-        await transport.close().catch(() => {});
-      }
-    } catch (err) {
-      await transport.close().catch(() => {});
-      throw err;
-    }
+    await transport.handleRequest(req, res);
   }
 
   function mcpHandler(req: Request, res: Response): void {
@@ -303,24 +263,7 @@ export async function startHttpServer(): Promise<void> {
   app.post('/mcp', bearerAuth, mcpHandler);
   app.get('/mcp', bearerAuth, mcpHandler);
 
-  app.delete('/mcp', bearerAuth, async (req: Request, res: Response) => {
-    const sessionId = req.headers['mcp-session-id'] as string | undefined;
-    const entry = sessionId ? sessions.get(sessionId) : undefined;
-    if (!sessionId || !entry) {
-      res.status(404).json({ error: 'Session not found' });
-      return;
-    }
-
-    try {
-      await entry.transport.close();
-      sessions.delete(sessionId);
-      res.status(200).json({ message: 'Session terminated' });
-    } catch (err) {
-      logger.error({ sessionId, err }, 'Failed to close session');
-      sessions.delete(sessionId);
-      res.status(500).json({ error: 'Failed to terminate session' });
-    }
-  });
+  app.delete('/mcp', bearerAuth, mcpHandler);
 
   // Express error handler (must be after all routes)
   app.use((err: unknown, req: Request, res: Response, next: (err?: unknown) => void) => {
@@ -356,17 +299,6 @@ export async function startHttpServer(): Promise<void> {
       process.exit(1);
     }, SHUTDOWN_TIMEOUT_MS);
     forceExitTimer.unref();
-
-    clearInterval(cleanupTimer);
-
-    // Close all sessions
-    const closePromises = Array.from(sessions.values()).map((entry) =>
-      entry.transport.close().catch((err: unknown) => {
-        logger.error({ err }, 'Failed to close transport during shutdown');
-      }),
-    );
-    await Promise.all(closePromises);
-    sessions.clear();
 
     // Close Redis
     await closeRedisClient();

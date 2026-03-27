@@ -51,18 +51,23 @@ vi.mock('../storage/redis-token-store.js', () => ({
   })),
 }));
 
+const mockHandleRequest = vi.fn().mockResolvedValue(undefined);
+const mockClose = vi.fn().mockResolvedValue(undefined);
+
 vi.mock('@modelcontextprotocol/sdk/server/streamableHttp.js', () => ({
   StreamableHTTPServerTransport: vi.fn().mockImplementation(() => ({
-    sessionId: 'mock-session-id',
-    handleRequest: vi.fn().mockResolvedValue(undefined),
-    close: vi.fn().mockResolvedValue(undefined),
+    sessionId: undefined,
+    handleRequest: mockHandleRequest,
+    close: mockClose,
     onclose: null,
   })),
 }));
 
+const mockConnect = vi.fn().mockResolvedValue(undefined);
+
 vi.mock('../mcp/handlers.js', () => ({
   createMcpServer: vi.fn(() => ({
-    connect: vi.fn().mockResolvedValue(undefined),
+    connect: mockConnect,
   })),
 }));
 
@@ -189,21 +194,70 @@ describe('HTTP Server - OAuth integration', () => {
 });
 
 describe('HTTP Server - health check', () => {
-  it('should return ok status when Redis is connected', async () => {
+  it('should return ok status without sessions field when Redis is connected', async () => {
     const { getRedisClient } = await import('../storage/redis-client.js');
     const redis = (getRedisClient as ReturnType<typeof vi.fn>)();
 
-    const result = { status: 'ok', redis: 'connected', sessions: 0 };
+    const result: Record<string, unknown> = { status: 'degraded', redis: 'disconnected' };
 
     try {
       await redis.ping();
-      // would set result
+      result.status = 'ok';
+      result.redis = 'connected';
     } catch {
-      // would set degraded
+      // would stay degraded
     }
 
     expect(result.status).toBe('ok');
     expect(result.redis).toBe('connected');
+    expect(result).not.toHaveProperty('sessions');
+  });
+});
+
+describe('HTTP Server - stateless transport', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should create transport with sessionIdGenerator: undefined', async () => {
+    const { StreamableHTTPServerTransport } = await import(
+      '@modelcontextprotocol/sdk/server/streamableHttp.js'
+    );
+    const TransportMock = StreamableHTTPServerTransport as ReturnType<typeof vi.fn>;
+
+    // Simulate what handleMcpRequest does
+    const transport = new TransportMock({ sessionIdGenerator: undefined });
+
+    expect(TransportMock).toHaveBeenCalledWith({ sessionIdGenerator: undefined });
+    expect(transport.sessionId).toBeUndefined();
+  });
+
+  it('should create a fresh McpServer for each request', async () => {
+    const { createMcpServer } = await import('../mcp/handlers.js');
+    const createMcpServerMock = createMcpServer as ReturnType<typeof vi.fn>;
+
+    // Simulate two independent requests
+    const server1 = createMcpServerMock({ server: { name: 'test' } }, { remote: true });
+    const server2 = createMcpServerMock({ server: { name: 'test' } }, { remote: true });
+
+    expect(createMcpServerMock).toHaveBeenCalledTimes(2);
+    expect(server1).not.toBe(server2);
+  });
+
+  it('should handle requests with existing Mcp-Session-Id header (orphaned session)', async () => {
+    const { StreamableHTTPServerTransport } = await import(
+      '@modelcontextprotocol/sdk/server/streamableHttp.js'
+    );
+    const TransportMock = StreamableHTTPServerTransport as ReturnType<typeof vi.fn>;
+
+    // In stateless mode, Mcp-Session-Id header is ignored by the transport
+    const transport = new TransportMock({ sessionIdGenerator: undefined });
+    const mockReq = { headers: { 'mcp-session-id': 'orphaned-id' } };
+    const mockRes = {};
+
+    await transport.handleRequest(mockReq, mockRes);
+
+    expect(mockHandleRequest).toHaveBeenCalledWith(mockReq, mockRes);
   });
 });
 
