@@ -1,7 +1,5 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import { getValidAccessToken } from '../auth/tokens.js';
-import { getCurrentCompanyId, getDownloadDir } from '../config/companies.js';
+import { getCurrentCompanyId } from '../config/companies.js';
 import { getConfig } from '../config.js';
 import { FETCH_TIMEOUT_API_MS, USER_AGENT } from '../constants.js';
 import type { TokenContext } from '../storage/context.js';
@@ -12,7 +10,7 @@ import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.j
  */
 export interface BinaryFileResponse {
   type: 'binary';
-  filePath: string;
+  data: Buffer;
   mimeType: string;
   size: number;
 }
@@ -35,32 +33,6 @@ export function isBinaryFileResponse(result: unknown): result is BinaryFileRespo
 function isBinaryContentType(contentType: string): boolean {
   const binaryTypes = ['application/pdf', 'application/octet-stream', 'image/', 'text/csv'];
   return binaryTypes.some((type) => contentType.includes(type));
-}
-
-/**
- * Get file extension from Content-Type
- */
-function getExtensionFromContentType(contentType: string): string {
-  const typeMap: Record<string, string> = {
-    'application/pdf': '.pdf',
-    'image/png': '.png',
-    'image/jpeg': '.jpg',
-    'image/gif': '.gif',
-    'image/webp': '.webp',
-    'text/csv': '.csv',
-  };
-
-  for (const [type, ext] of Object.entries(typeMap)) {
-    if (contentType.includes(type)) {
-      return ext;
-    }
-  }
-
-  if (contentType.includes('image/')) {
-    return '.bin';
-  }
-
-  return '.bin';
 }
 
 export async function makeApiRequest(
@@ -159,22 +131,13 @@ export async function makeApiRequest(
   const contentType = response.headers.get('content-type') || '';
 
   if (isBinaryContentType(contentType)) {
-    // Handle binary response: save to file and return path
-    const downloadDir = await getDownloadDir();
-    const extension = getExtensionFromContentType(contentType);
-    const timestamp = Date.now();
-    const fileName = `freee_download_${timestamp}${extension}`;
-    const filePath = path.join(downloadDir, fileName);
-
-    const buffer = await response.arrayBuffer();
-    await fs.writeFile(filePath, Buffer.from(buffer));
-
+    const buffer = Buffer.from(await response.arrayBuffer());
     return {
       type: 'binary',
-      filePath,
+      data: buffer,
       mimeType: contentType,
       size: buffer.byteLength,
-    } as BinaryFileResponse;
+    };
   }
 
   // Handle empty responses (e.g., 204 No Content from DELETE)
