@@ -123,6 +123,7 @@ describe('E2E: Authentication Flow', () => {
           name: string,
           description: string,
           schema: unknown,
+          _annotations: unknown,
           handler: (args: Record<string, unknown>) => Promise<unknown>,
         ) => {
           registeredTools.set(name, { description, schema, handler });

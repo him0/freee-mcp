@@ -93,6 +93,7 @@ export function generateClientModeTool(server: McpServer): void {
       path: z.string().describe('APIパス (例: /api/1/deals)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
+    { readOnlyHint: true },
     createMethodTool('GET'),
   );
 
@@ -106,6 +107,7 @@ export function generateClientModeTool(server: McpServer): void {
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
+    { destructiveHint: false },
     createMethodTool('POST'),
   );
 
@@ -119,6 +121,7 @@ export function generateClientModeTool(server: McpServer): void {
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
+    { destructiveHint: false, idempotentHint: true },
     createMethodTool('PUT'),
   );
 
@@ -131,6 +134,7 @@ export function generateClientModeTool(server: McpServer): void {
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
+    { idempotentHint: true },
     createMethodTool('DELETE'),
   );
 
@@ -144,6 +148,7 @@ export function generateClientModeTool(server: McpServer): void {
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
+    { destructiveHint: false },
     createMethodTool('PATCH'),
   );
 
@@ -152,6 +157,7 @@ export function generateClientModeTool(server: McpServer): void {
     'freee_api_list_paths',
     'freee API エンドポイント一覧 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
+    { readOnlyHint: true, openWorldHint: false },
     async () => {
       const pathsList = listAllAvailablePaths();
       return createTextResponse(
