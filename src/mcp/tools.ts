@@ -202,7 +202,7 @@ export function addAuthenticationTools(server: McpServer): void {
             .array(
               z.object({
                 id: z.number(),
-                name: z.string(),
+                name: z.string().nullable(),
               }),
             )
             .optional(),
@@ -236,7 +236,7 @@ export function addAuthenticationTools(server: McpServer): void {
         const companyList = apiCompanies.companies
           .map((company) => {
             const current = company.id === parseInt(currentCompanyId, 10) ? ' *' : '';
-            return `${company.name} (${company.id})${current}`;
+            return `${company.name ?? '(名称未設定)'} (${company.id})${current}`;
           })
           .join('\n');
 
