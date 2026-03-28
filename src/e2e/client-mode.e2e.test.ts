@@ -110,6 +110,7 @@ describe('E2E: Client Mode Tools', () => {
           name: string,
           _description: string,
           _schema: unknown,
+          _annotations: unknown,
           handler: (args: Record<string, unknown>) => Promise<unknown>,
         ) => {
           registeredTools.set(name, { handler });

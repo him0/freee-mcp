@@ -3,11 +3,12 @@
 // This file simplifies the McpServer.tool method signature to avoid deep type inference
 
 import '@modelcontextprotocol/sdk/server/mcp.js';
+import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 
 declare module '@modelcontextprotocol/sdk/server/mcp.js' {
   interface McpServer {
     // Override tool method with simplified signature to avoid OOM
     // biome-ignore lint/suspicious/noExplicitAny: intentional override to prevent deep type inference OOM
-    tool(name: string, description: string, schema: any, handler: any): void;
+    tool(name: string, description: string, schema: any, annotations: ToolAnnotations, handler: any): void;
   }
 }
