@@ -338,6 +338,28 @@ describe('tools', () => {
         expect(result.content[0].text).toContain('APIレスポンスの形式が不正です');
       });
 
+      it('should handle companies with null name', async () => {
+        const mockMakeApiRequest = await import('../api/client.js');
+        const responseWithNullName = {
+          companies: [
+            { id: 123, name: 'Company A' },
+            { id: 456, name: null },
+            { id: 789, name: 'Company C' },
+          ],
+        };
+        vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(responseWithNullName);
+
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[3];
+
+        const result = await handler();
+
+        expect(result.content[0].text).toContain('事業所一覧:');
+        expect(result.content[0].text).toContain('Company A');
+        expect(result.content[0].text).toContain('(名称未設定) (456)');
+        expect(result.content[0].text).toContain('Company C');
+      });
+
       it('should handle API error', async () => {
         const mockMakeApiRequest = await import('../api/client.js');
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockRejectedValue(new Error('API Error'));
