@@ -84,6 +84,7 @@ describe('handlers', () => {
       );
       expect(mockAddAuthenticationTools.addAuthenticationTools).toHaveBeenCalledWith(
         mockServerInstance,
+        undefined,
       );
       expect(mockAddFileUploadTool.addFileUploadTool).toHaveBeenCalledWith(mockServerInstance);
       expect(mockGenerateClientModeTool.generateClientModeTool).toHaveBeenCalledWith(
