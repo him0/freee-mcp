@@ -16,7 +16,9 @@ freee会計APIとカスタムツールを使ったファイルボックスの操
 
 ## ファイルアップロード
 
-### カスタムツール freee_file_upload を使う（推奨）
+> 注意: `freee_file_upload` ツールはローカルモードでのみ利用可能です。Remote MCP をご利用の場合、ファイルのアップロードは freee Web UI から行ってください。
+
+### カスタムツール freee_file_upload を使う（推奨・ローカルモードのみ）
 
 ローカルファイルをファイルボックスにアップロードするには、カスタムツール `freee_file_upload` を使います。
 APIの `POST /api/1/receipts` は multipart/form-data が必要なため、通常の `freee_api_post` では利用できません。
