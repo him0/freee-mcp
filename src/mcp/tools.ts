@@ -14,7 +14,10 @@ import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
-export function addAuthenticationTools(server: McpServer): void {
+export function addAuthenticationTools(
+  server: McpServer,
+  options?: { remote?: boolean },
+): void {
   server.registerTool(
     'freee_current_user',
     {
@@ -277,7 +280,10 @@ export function addAuthenticationTools(server: McpServer): void {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async () => {
-      return createTextResponse(`freee-mcp server info:\n- version: ${PACKAGE_VERSION}`);
+      const transport = options?.remote ? 'remote' : 'stdio';
+      return createTextResponse(
+        `freee-mcp server info:\n- version: ${PACKAGE_VERSION}\n- transport: ${transport}`,
+      );
     },
   );
 }

@@ -111,7 +111,7 @@ describe('tools', () => {
     });
 
     describe('freee_server_info', () => {
-      it('should return server info including version', async () => {
+      it('should return server info with stdio transport by default', async () => {
         addAuthenticationTools(mockServer);
         const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_server_info')?.[2];
 
@@ -119,6 +119,16 @@ describe('tools', () => {
 
         expect(result.content[0].text).toContain('freee-mcp server info:');
         expect(result.content[0].text).toContain('version:');
+        expect(result.content[0].text).toContain('transport: stdio');
+      });
+
+      it('should return remote transport when remote option is true', async () => {
+        addAuthenticationTools(mockServer, { remote: true });
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_server_info')?.[2];
+
+        const result = await handler();
+
+        expect(result.content[0].text).toContain('transport: remote');
       });
     });
 
