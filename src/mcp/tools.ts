@@ -14,10 +14,7 @@ import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
-export function addAuthenticationTools(
-  server: McpServer,
-  options?: { remote?: boolean },
-): void {
+export function addAuthenticationTools(server: McpServer, options?: { remote?: boolean }): void {
   server.registerTool(
     'freee_current_user',
     {
