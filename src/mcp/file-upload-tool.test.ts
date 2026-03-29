@@ -15,7 +15,7 @@ describe('file-upload-tool', () => {
   beforeEach(() => {
     mockTool = vi.fn();
     mockServer = {
-      tool: mockTool,
+      registerTool: mockTool,
     } as unknown as McpServer;
     vi.clearAllMocks();
   });
@@ -31,11 +31,14 @@ describe('file-upload-tool', () => {
       expect(mockTool).toHaveBeenCalledTimes(1);
       expect(mockTool).toHaveBeenCalledWith(
         'freee_file_upload',
-        expect.any(String),
         expect.objectContaining({
-          file_path: expect.anything(),
+          title: 'ファイルアップロード',
+          description: expect.any(String),
+          inputSchema: expect.objectContaining({
+            file_path: expect.anything(),
+          }),
+          annotations: expect.any(Object),
         }),
-        expect.any(Object),
         expect.any(Function),
       );
     });
@@ -45,7 +48,7 @@ describe('file-upload-tool', () => {
       vi.mocked(uploadReceipt).mockResolvedValue(mockResult);
 
       addFileUploadTool(mockServer);
-      const handler = mockTool.mock.calls[0][4];
+      const handler = mockTool.mock.calls[0][2];
 
       const result = await handler({ file_path: '/path/to/test.pdf' });
 
@@ -63,7 +66,7 @@ describe('file-upload-tool', () => {
       vi.mocked(uploadReceipt).mockResolvedValue({ receipt: { id: '1' } });
 
       addFileUploadTool(mockServer);
-      const handler = mockTool.mock.calls[0][4];
+      const handler = mockTool.mock.calls[0][2];
 
       await handler({
         file_path: '/path/to/test.pdf',
@@ -95,7 +98,7 @@ describe('file-upload-tool', () => {
       );
 
       addFileUploadTool(mockServer);
-      const handler = mockTool.mock.calls[0][4];
+      const handler = mockTool.mock.calls[0][2];
 
       const result = await handler({ file_path: '/missing.pdf' });
 

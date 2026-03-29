@@ -102,79 +102,97 @@ function createMethodTool(method: string) {
  */
 export function generateClientModeTool(server: McpServer): void {
   // GET tool
-  server.tool(
+  server.registerTool(
     'freee_api_get',
-    `freee API GET - ${SERVICE_HINT} (${SKILL_HINT})`,
     {
-      service: serviceSchema,
-      path: z.string().describe('APIパス (例: /api/1/deals)'),
-      query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      title: 'freee API GET リクエスト',
+      description: `freee API GET - ${SERVICE_HINT} (${SKILL_HINT})`,
+      inputSchema: {
+        service: serviceSchema,
+        path: z.string().describe('APIパス (例: /api/1/deals)'),
+        query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      },
+      annotations: { readOnlyHint: true },
     },
-    { readOnlyHint: true },
     createMethodTool('GET'),
   );
 
   // POST tool
-  server.tool(
+  server.registerTool(
     'freee_api_post',
-    `freee API POST - ${SERVICE_HINT} (${SKILL_HINT})`,
     {
-      service: serviceSchema,
-      path: z.string().describe('APIパス (例: /api/1/deals)'),
-      body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
-      query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      title: 'freee API POST リクエスト',
+      description: `freee API POST - ${SERVICE_HINT} (${SKILL_HINT})`,
+      inputSchema: {
+        service: serviceSchema,
+        path: z.string().describe('APIパス (例: /api/1/deals)'),
+        body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
+        query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      },
+      annotations: { destructiveHint: false },
     },
-    { destructiveHint: false },
     createMethodTool('POST'),
   );
 
   // PUT tool
-  server.tool(
+  server.registerTool(
     'freee_api_put',
-    `freee API PUT - ${SERVICE_HINT} (${SKILL_HINT})`,
     {
-      service: serviceSchema,
-      path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-      body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
-      query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      title: 'freee API PUT リクエスト',
+      description: `freee API PUT - ${SERVICE_HINT} (${SKILL_HINT})`,
+      inputSchema: {
+        service: serviceSchema,
+        path: z.string().describe('APIパス (例: /api/1/deals/123)'),
+        body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
+        query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      },
+      annotations: { destructiveHint: false, idempotentHint: true },
     },
-    { destructiveHint: false, idempotentHint: true },
     createMethodTool('PUT'),
   );
 
   // DELETE tool
-  server.tool(
+  server.registerTool(
     'freee_api_delete',
-    `freee API DELETE - ${SERVICE_HINT} (${SKILL_HINT})`,
     {
-      service: serviceSchema,
-      path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-      query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      title: 'freee API DELETE リクエスト',
+      description: `freee API DELETE - ${SERVICE_HINT} (${SKILL_HINT})`,
+      inputSchema: {
+        service: serviceSchema,
+        path: z.string().describe('APIパス (例: /api/1/deals/123)'),
+        query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      },
+      annotations: { idempotentHint: true },
     },
-    { idempotentHint: true },
     createMethodTool('DELETE'),
   );
 
   // PATCH tool
-  server.tool(
+  server.registerTool(
     'freee_api_patch',
-    `freee API PATCH - ${SERVICE_HINT} (${SKILL_HINT})`,
     {
-      service: serviceSchema,
-      path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-      body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
-      query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      title: 'freee API PATCH リクエスト',
+      description: `freee API PATCH - ${SERVICE_HINT} (${SKILL_HINT})`,
+      inputSchema: {
+        service: serviceSchema,
+        path: z.string().describe('APIパス (例: /api/1/deals/123)'),
+        body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
+        query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+      },
+      annotations: { destructiveHint: false },
     },
-    { destructiveHint: false },
     createMethodTool('PATCH'),
   );
 
   // Add helper tool to list available paths
-  server.tool(
+  server.registerTool(
     'freee_api_list_paths',
-    'freee API エンドポイント一覧 (詳細ガイドはfreee-api-skill skillを参照)',
-    {},
-    { readOnlyHint: true, openWorldHint: false },
+    {
+      title: 'API エンドポイント一覧',
+      description: 'freee API エンドポイント一覧 (詳細ガイドはfreee-api-skill skillを参照)',
+      inputSchema: {},
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
     async () => {
       const pathsList = listAllAvailablePaths();
       return createTextResponse(
