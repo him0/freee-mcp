@@ -61,7 +61,7 @@ describe('tools', () => {
   beforeEach(() => {
     mockTool = vi.fn();
     mockServer = {
-      registerTool: mockTool,
+      tool: mockTool,
     } as unknown as McpServer;
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -85,40 +85,60 @@ describe('tools', () => {
       expect(mockTool).toHaveBeenCalledTimes(8);
       expect(mockTool).toHaveBeenCalledWith(
         'freee_current_user',
-        expect.objectContaining({ title: '現在のユーザー情報', description: expect.any(String) }),
+        expect.any(String),
+        {},
+        expect.any(Object),
         expect.any(Function),
       );
       expect(mockTool).toHaveBeenCalledWith(
         'freee_authenticate',
-        expect.objectContaining({ title: 'OAuth認証', description: expect.any(String) }),
+        expect.any(String),
+        {},
+        expect.any(Object),
         expect.any(Function),
       );
       expect(mockTool).toHaveBeenCalledWith(
         'freee_auth_status',
-        expect.objectContaining({ title: '認証状態確認', description: expect.any(String) }),
+        expect.any(String),
+        {},
+        expect.any(Object),
         expect.any(Function),
       );
       expect(mockTool).toHaveBeenCalledWith(
         'freee_clear_auth',
-        expect.objectContaining({ title: '認証情報クリア', description: expect.any(String) }),
+        expect.any(String),
+        {},
+        expect.any(Object),
         expect.any(Function),
       );
       expect(mockTool).toHaveBeenCalledWith(
         'freee_server_info',
-        expect.objectContaining({ title: 'サーバー情報', description: expect.any(String) }),
+        expect.any(String),
+        {},
+        expect.any(Object),
         expect.any(Function),
       );
     });
 
     describe('freee_server_info', () => {
-      it('should return server info including version', async () => {
+      it('should return server info with stdio transport by default', async () => {
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_server_info')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_server_info')?.[4];
 
         const result = await handler();
 
         expect(result.content[0].text).toContain('freee-mcp server info:');
         expect(result.content[0].text).toContain('version:');
+        expect(result.content[0].text).toContain('transport: stdio');
+      });
+
+      it('should return remote transport when remote option is true', async () => {
+        addAuthenticationTools(mockServer, { remote: true });
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_server_info')?.[4];
+
+        const result = await handler();
+
+        expect(result.content[0].text).toContain('transport: remote');
       });
     });
 
@@ -129,7 +149,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(mockUserInfo);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_current_user')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_current_user')?.[4];
 
         const result = await handler();
 
@@ -145,7 +165,7 @@ describe('tools', () => {
         );
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_current_user')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_current_user')?.[4];
 
         const result = await handler();
 
@@ -174,7 +194,7 @@ describe('tools', () => {
         });
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_authenticate')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_authenticate')?.[4];
 
         const result = await handler();
 
@@ -208,7 +228,7 @@ describe('tools', () => {
         vi.mocked(mockLoadTokens.loadTokens).mockResolvedValue(mockTokens);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_auth_status')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_auth_status')?.[4];
 
         const result = await handler();
 
@@ -228,7 +248,7 @@ describe('tools', () => {
         vi.mocked(mockLoadTokens.loadTokens).mockResolvedValue(mockTokens);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_auth_status')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_auth_status')?.[4];
 
         const result = await handler();
 
@@ -241,7 +261,7 @@ describe('tools', () => {
         vi.mocked(mockLoadTokens.loadTokens).mockResolvedValue(null);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_auth_status')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_auth_status')?.[4];
 
         const result = await handler();
 
@@ -255,7 +275,7 @@ describe('tools', () => {
         vi.mocked(mockClearTokens.clearTokens).mockResolvedValue();
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_clear_auth')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_clear_auth')?.[4];
 
         const result = await handler();
 
@@ -268,7 +288,7 @@ describe('tools', () => {
         vi.mocked(mockClearTokens.clearTokens).mockRejectedValue(new Error('Permission denied'));
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_clear_auth')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_clear_auth')?.[4];
 
         const result = await handler();
 
@@ -289,7 +309,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(validResponse);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[4];
 
         const result = await handler();
 
@@ -304,7 +324,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(invalidResponse);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[4];
 
         const result = await handler();
 
@@ -321,7 +341,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(invalidResponse);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[4];
 
         const result = await handler();
 
@@ -340,7 +360,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(responseWithNullName);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[4];
 
         const result = await handler();
 
@@ -355,7 +375,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockRejectedValue(new Error('API Error'));
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[2];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[4];
 
         const result = await handler();
 

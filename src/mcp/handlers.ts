@@ -21,7 +21,7 @@ export function createMcpServer(
     },
   );
 
-  addAuthenticationTools(server);
+  addAuthenticationTools(server, options);
   if (!options?.remote) {
     addFileUploadTool(server);
   }
