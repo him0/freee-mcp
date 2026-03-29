@@ -119,11 +119,18 @@ npx skills add freee/freee-mcp
 
 Claude Code でプラグインとしてインストールすると、MCP サーバーと Agent Skills（API リファレンス・操作レシピ）がまとめて利用できます。
 
-Claude Code のプロンプト内で以下の2つのコマンドを順に実行してください:
+以下の2つのコマンドを順に実行してください:
+
+```bash
+claude plugin marketplace add freee/freee-mcp
+claude plugin install freee-mcp@freee-mcp-marketplace
+```
+
+Claude Code のプロンプト内からも実行できます:
 
 ```
 /plugin marketplace add freee/freee-mcp
-/plugin install freee-api@freee-api-marketplace
+/plugin install freee-mcp@freee-mcp-marketplace
 ```
 
 ## Agent Skills の内容
