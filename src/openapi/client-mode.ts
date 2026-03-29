@@ -190,7 +190,6 @@ export function generateClientModeTool(server: McpServer): void {
     {
       title: 'API エンドポイント一覧',
       description: 'freee API エンドポイント一覧 (詳細ガイドはfreee-api-skill skillを参照)',
-      inputSchema: {},
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async () => {
