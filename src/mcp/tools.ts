@@ -56,57 +56,52 @@ export function addAuthenticationTools(
     },
   );
 
-  server.registerTool(
-    'freee_authenticate',
-    {
-      title: 'OAuth認証',
-      description: 'OAuth認証を開始、初回のみ必要 (詳細ガイドはfreee-api-skill skillを参照)',
-      annotations: { destructiveHint: false },
-    },
-    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
-      try {
-        // Remote mode: OAuth already handled by MCP protocol
-        if (extra?.authInfo) {
+  if (!options?.remote) {
+    server.registerTool(
+      'freee_authenticate',
+      {
+        title: 'OAuth認証',
+        description: 'OAuth認証を開始、初回のみ必要 (詳細ガイドはfreee-api-skill skillを参照)',
+        annotations: { destructiveHint: false },
+      },
+      async (_args: Record<string, unknown>) => {
+        try {
+          const { clientId, clientSecret } = getConfig().freee;
+
+          if (!clientId) {
+            return createTextResponse(
+              'クライアントIDが設定されていません。\n' +
+                '`freee-mcp configure` を実行してセットアップしてください。',
+            );
+          }
+
+          if (!clientSecret) {
+            return createTextResponse(
+              'クライアントシークレットが設定されていません。\n' +
+                '`freee-mcp configure` を実行してセットアップしてください。',
+            );
+          }
+
+          // Start callback server on-demand with auto-stop after timeout
+          await startCallbackServerWithAutoStop(AUTH_TIMEOUT_MS);
+
+          const { codeVerifier, codeChallenge } = generatePKCE();
+          const state = crypto.randomBytes(16).toString('hex');
+          const authUrl = buildAuthUrl(codeChallenge, state, getActualRedirectUri());
+
+          registerAuthenticationRequest(state, codeVerifier);
+
+          console.error(`Authentication URL: ${authUrl}`);
+
           return createTextResponse(
-            'OAuth認証済みです。MCP OAuth プロトコル経由で認証されています。',
+            `認証URL: ${authUrl}\n\nブラウザで開いて認証してください。5分でタイムアウトします。`,
           );
+        } catch (error) {
+          return createTextResponse(`認証開始に失敗: ${formatErrorMessage(error)}`);
         }
-
-        const { clientId, clientSecret } = getConfig().freee;
-
-        if (!clientId) {
-          return createTextResponse(
-            'クライアントIDが設定されていません。\n' +
-              '`freee-mcp configure` を実行してセットアップしてください。',
-          );
-        }
-
-        if (!clientSecret) {
-          return createTextResponse(
-            'クライアントシークレットが設定されていません。\n' +
-              '`freee-mcp configure` を実行してセットアップしてください。',
-          );
-        }
-
-        // Start callback server on-demand with auto-stop after timeout
-        await startCallbackServerWithAutoStop(AUTH_TIMEOUT_MS);
-
-        const { codeVerifier, codeChallenge } = generatePKCE();
-        const state = crypto.randomBytes(16).toString('hex');
-        const authUrl = buildAuthUrl(codeChallenge, state, getActualRedirectUri());
-
-        registerAuthenticationRequest(state, codeVerifier);
-
-        console.error(`Authentication URL: ${authUrl}`);
-
-        return createTextResponse(
-          `認証URL: ${authUrl}\n\nブラウザで開いて認証してください。5分でタイムアウトします。`,
-        );
-      } catch (error) {
-        return createTextResponse(`認証開始に失敗: ${formatErrorMessage(error)}`);
-      }
-    },
-  );
+      },
+    );
+  }
 
   server.registerTool(
     'freee_auth_status',
