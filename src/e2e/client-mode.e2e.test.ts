@@ -426,7 +426,7 @@ describe('E2E: Client Mode Tools', () => {
       expect(result.content[0].data).toBe(pngBytes.toString('base64'));
     });
 
-    it('should return base64 ImageContent for PDF binary response', async () => {
+    it('should return EmbeddedResource for PDF binary response', async () => {
       const pdfBytes = Buffer.from([0x25, 0x50, 0x44, 0x46]);
       mockApiResponse = {
         type: 'binary',
@@ -439,11 +439,102 @@ describe('E2E: Client Mode Tools', () => {
       const result = (await handler({
         service: 'accounting',
         path: '/api/1/receipts/456/download',
+      })) as {
+        content: Array<{
+          type: string;
+          resource?: { uri: string; mimeType: string; blob: string };
+        }>;
+      };
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe('resource');
+      expect(result.content[0].resource?.uri).toBe('freee://api/api/1/receipts/456/download');
+      expect(result.content[0].resource?.mimeType).toBe('application/pdf');
+      expect(Buffer.from(result.content[0].resource?.blob ?? '', 'base64')).toEqual(pdfBytes);
+    });
+
+    it('should return ImageContent for JPEG binary response', async () => {
+      const jpegBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
+      mockApiResponse = {
+        type: 'binary',
+        data: jpegBytes,
+        mimeType: 'image/jpeg',
+        size: jpegBytes.byteLength,
+      };
+
+      const handler = registeredTools.get('freee_api_get')?.handler;
+      const result = (await handler({
+        service: 'accounting',
+        path: '/api/1/receipts/789/download',
       })) as { content: Array<{ type: string; data?: string; mimeType?: string }> };
 
+      expect(result.content).toHaveLength(1);
       expect(result.content[0].type).toBe('image');
-      expect(result.content[0].mimeType).toBe('application/pdf');
-      expect(Buffer.from(result.content[0].data ?? '', 'base64')).toEqual(pdfBytes);
+      expect(result.content[0].mimeType).toBe('image/jpeg');
+      expect(result.content[0].data).toBe(jpegBytes.toString('base64'));
+    });
+
+    it('should return decoded text for CSV binary response', async () => {
+      const csvText = 'id,name,amount\n1,テスト,1000\n2,サンプル,2000';
+      const csvBytes = Buffer.from(csvText, 'utf-8');
+      mockApiResponse = {
+        type: 'binary',
+        data: csvBytes,
+        mimeType: 'text/csv',
+        size: csvBytes.byteLength,
+      };
+
+      const handler = registeredTools.get('freee_api_get')?.handler;
+      const result = (await handler({
+        service: 'accounting',
+        path: '/api/1/receipts/789/download',
+      })) as { content: Array<{ type: string; text?: string }> };
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe('text');
+      expect(result.content[0].text).toBe(csvText);
+    });
+
+    it('should return error message for unsupported binary type', async () => {
+      const bytes = Buffer.from([0x00, 0x01, 0x02, 0x03]);
+      mockApiResponse = {
+        type: 'binary',
+        data: bytes,
+        mimeType: 'application/octet-stream',
+        size: bytes.byteLength,
+      };
+
+      const handler = registeredTools.get('freee_api_get')?.handler;
+      const result = (await handler({
+        service: 'accounting',
+        path: '/api/1/receipts/999/download',
+      })) as { content: Array<{ type: string; text?: string }> };
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe('text');
+      expect(result.content[0].text).toContain('application/octet-stream');
+      expect(result.content[0].text).toContain('表示できません');
+      expect(result.content[0].text).toContain(`${bytes.byteLength} bytes`);
+    });
+
+    it('should handle MIME type with parameters', async () => {
+      const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+      mockApiResponse = {
+        type: 'binary',
+        data: pngBytes,
+        mimeType: 'image/png; charset=utf-8',
+        size: pngBytes.byteLength,
+      };
+
+      const handler = registeredTools.get('freee_api_get')?.handler;
+      const result = (await handler({
+        service: 'accounting',
+        path: '/api/1/receipts/123/download',
+      })) as { content: Array<{ type: string; data?: string; mimeType?: string }> };
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe('image');
+      expect(result.content[0].mimeType).toBe('image/png');
     });
   });
 });

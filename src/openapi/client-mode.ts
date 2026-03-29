@@ -6,6 +6,8 @@ import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 import { type ApiType, listAllAvailablePaths, validatePathForService } from './schema-loader.js';
 
+const SUPPORTED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+
 const SERVICE_HINT = 'service: accounting/hr/invoice/pm/sm';
 const SKILL_HINT = '詳細ガイドはfreee-api-skill skillを参照';
 
@@ -49,9 +51,39 @@ function createMethodTool(method: string) {
       );
 
       if (isBinaryFileResponse(result)) {
-        return {
-          content: [{ type: 'image', data: result.data.toString('base64'), mimeType: result.mimeType }],
-        };
+        const baseMimeType = result.mimeType.split(';')[0].trim();
+
+        if (SUPPORTED_IMAGE_MIME_TYPES.has(baseMimeType)) {
+          return {
+            content: [{ type: 'image', data: result.data.toString('base64'), mimeType: baseMimeType }],
+          };
+        }
+
+        if (baseMimeType === 'application/pdf') {
+          return {
+            content: [
+              {
+                type: 'resource',
+                resource: {
+                  uri: `freee://api${actualPath}`,
+                  mimeType: baseMimeType,
+                  blob: result.data.toString('base64'),
+                },
+              },
+            ],
+          };
+        }
+
+        if (baseMimeType === 'text/csv') {
+          return createTextResponse(result.data.toString('utf-8'));
+        }
+
+        return createTextResponse(
+          `バイナリファイルを受信しました。このファイル形式（${baseMimeType}）は表示できません。\n\n` +
+            `Content-Type: ${result.mimeType}\n` +
+            `ファイルサイズ: ${result.size} bytes\n\n` +
+            `このファイルを取得するには、freee Webアプリから直接ダウンロードしてください。`,
+        );
       }
 
       if (result === null) {
