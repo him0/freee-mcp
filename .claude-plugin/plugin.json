@@ -1,18 +1,15 @@
 {
-  "name": "freee-api",
+  "name": "freee-mcp",
   "version": "0.16.0",
   "description": "freee API を MCP 経由で操作するためのスキル。詳細なAPIリファレンスと freee-mcp を使用した API 呼び出しガイドを提供。",
   "author": {
-    "name": "him0"
+    "name": "freee"
   },
   "repository": "https://github.com/freee/freee-mcp",
   "mcpServers": {
     "freee": {
-      "command": "npx",
-      "args": [
-        "freee-mcp",
-        "client"
-      ]
+      "type": "http",
+      "url": "https://mcp.freee.co.jp/mcp"
     }
   },
   "skills": [
