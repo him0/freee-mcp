@@ -350,7 +350,7 @@ describe('tools', () => {
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(responseWithNullName);
 
         addAuthenticationTools(mockServer);
-        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[3];
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[4];
 
         const result = await handler();
 
