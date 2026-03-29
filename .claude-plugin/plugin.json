@@ -10,13 +10,6 @@
     "freee": {
       "type": "http",
       "url": "https://mcp.freee.co.jp/mcp"
-    },
-    "freee-local": {
-      "command": "npx",
-      "args": [
-        "freee-mcp",
-        "client"
-      ]
     }
   },
   "skills": [
