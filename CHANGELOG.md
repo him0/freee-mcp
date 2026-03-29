@@ -1,5 +1,24 @@
 # freee-mcp
 
+## 0.17.0
+
+### Minor Changes
+
+- [`97baa3c`](https://github.com/freee/freee-mcp/commit/97baa3c98d0658ea4cae7b723802327bd5e608cf): MCP ツール定義に tool annotations を追加 ([#330](https://github.com/freee/freee-mcp/pull/330))
+- [`8177270`](https://github.com/freee/freee-mcp/commit/817727010525fe5477c11f2d5dbc7fefe2718ca3): バイナリレスポンスを MIME タイプに応じて適切な MCP コンテンツタイプで返却するように改善。画像(JPEG/PNG/GIF/WebP)は ImageContent、PDF は EmbeddedResource、CSV はテキスト、その他はエラーメッセージを返却。 ([#334](https://github.com/freee/freee-mcp/pull/334))
+- [`18371be`](https://github.com/freee/freee-mcp/commit/18371be729a985f657f6cd6520297092fac1a412): プラグイン名を freee-mcp に変更し、Remote MCP サーバーをプラグインに追加 ([#341](https://github.com/freee/freee-mcp/pull/341))
+- [`04f9425`](https://github.com/freee/freee-mcp/commit/04f94252faafe24fc95d0cba240eb97a1d2f367d): バイナリレスポンスをファイル保存せず MCP ImageContent (base64) としてインライン返却 ([#331](https://github.com/freee/freee-mcp/pull/331))
+- [`aa8097b`](https://github.com/freee/freee-mcp/commit/aa8097bf1c848d4a158f5e406d57b275f3a4fd95): @modelcontextprotocol/sdk を 1.28.0 にアップデートし、deprecated な server.tool() を server.registerTool() に移行。全ツールに title フィールドを追加。 ([#335](https://github.com/freee/freee-mcp/pull/335))
+
+### Patch Changes
+
+- [`60cd954`](https://github.com/freee/freee-mcp/commit/60cd954d2d97f137863a9970333dc608f7ab88b0): HTTP モードのエラーレスポンス (500/503) ログにアクセスログと同じセキュリティ関連フィールド (source_ip, session_id, company_id, user_id, method, path) を追加 ([#333](https://github.com/freee/freee-mcp/pull/333))
+- [`e216516`](https://github.com/freee/freee-mcp/commit/e216516543f4f32e35d2022b01495491cb6034c8): freee_list_companies で事業所名が null の場合にバリデーションエラーになる問題を修正 ([#332](https://github.com/freee/freee-mcp/pull/332))
+- [`e178099`](https://github.com/freee/freee-mcp/commit/e17809916e26fb7df9ea8be52fa79e202259e64c): README の Claude Code プラグインインストール手順を修正（marketplace 追加 → プラグインインストールの 2 段階手順に更新） ([#340](https://github.com/freee/freee-mcp/pull/340))
+- [`f21ae2d`](https://github.com/freee/freee-mcp/commit/f21ae2ddc52dae9effc4a7fa22c37db69346f3d3): Remote モードで freee_authenticate ツールを非表示にする ([#338](https://github.com/freee/freee-mcp/pull/338))
+- [`0d98ca3`](https://github.com/freee/freee-mcp/commit/0d98ca3f46f56ae1318b5457df8734641f3c0da5): freee_server_info にトランスポート情報(remote/stdio)を追加 ([#336](https://github.com/freee/freee-mcp/pull/336))
+- [`2e09352`](https://github.com/freee/freee-mcp/commit/2e09352bd7ae18d644725168761264397b8990b8): Agent Skill のドキュメントを Remote MCP 対応に更新 ([#337](https://github.com/freee/freee-mcp/pull/337))
+
 ## 0.16.0
 
 ### Minor Changes
