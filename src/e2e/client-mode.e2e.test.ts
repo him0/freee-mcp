@@ -105,12 +105,10 @@ describe('E2E: Client Mode Tools', () => {
     // Create a mock MCP server that captures registered tools
     registeredTools = new Map();
     server = {
-      tool: vi.fn(
+      registerTool: vi.fn(
         (
           name: string,
-          _description: string,
-          _schema: unknown,
-          _annotations: unknown,
+          _config: unknown,
           handler: (args: Record<string, unknown>) => Promise<unknown>,
         ) => {
           registeredTools.set(name, { handler });

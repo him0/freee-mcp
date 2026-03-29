@@ -118,15 +118,13 @@ describe('E2E: Authentication Flow', () => {
     // Create a mock MCP server that captures registered tools
     registeredTools = new Map();
     server = {
-      tool: vi.fn(
+      registerTool: vi.fn(
         (
           name: string,
-          description: string,
-          schema: unknown,
-          _annotations: unknown,
+          config: { description?: string; inputSchema?: unknown },
           handler: (args: Record<string, unknown>) => Promise<unknown>,
         ) => {
-          registeredTools.set(name, { description, schema, handler });
+          registeredTools.set(name, { description: config.description ?? '', schema: config.inputSchema, handler });
         },
       ),
     } as unknown as McpServer;
