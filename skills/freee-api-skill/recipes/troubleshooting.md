@@ -4,6 +4,10 @@ freee API スキル使用時の一般的な問題と解決方法。
 
 ## 認証関連
 
+### 接続モードの確認
+
+`freee_server_info` を実行すると、transport フィールドで現在の接続モードを確認できます。`remote` なら Remote MCP、`stdio` ならローカルモードです。
+
 ### Remote MCP での認証について
 
 Remote MCP では認証は MCP OAuth プロトコルにより自動的に処理されます。初回接続時にブラウザで freee へのログインが求められます。
