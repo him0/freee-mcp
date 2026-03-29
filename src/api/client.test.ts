@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { USER_AGENT } from '../constants.js';
 import { type BinaryFileResponse, isBinaryFileResponse, makeApiRequest } from './client.js';
@@ -314,7 +313,7 @@ describe('client', () => {
       expect(result).toBeNull();
     });
 
-    it('should save binary response to file and return file info', async () => {
+    it('should return binary response with buffer data for PDF', async () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
 
       const pdfMagicBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
@@ -327,12 +326,11 @@ describe('client', () => {
       expect(binaryResult.type).toBe('binary');
       expect(binaryResult.mimeType).toBe('application/pdf');
       expect(binaryResult.size).toBe(4);
-      expect(binaryResult.filePath).toContain('.pdf');
-
-      await fs.unlink(binaryResult.filePath).catch(() => {});
+      expect(Buffer.isBuffer(binaryResult.data)).toBe(true);
+      expect(binaryResult.data).toEqual(Buffer.from(pdfMagicBytes));
     });
 
-    it('should save CSV response to file with correct extension', async () => {
+    it('should return binary response with buffer data for CSV', async () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
 
       const csvData = new TextEncoder().encode('id,name\n1,Test');
@@ -345,16 +343,10 @@ describe('client', () => {
       expect(binaryResult.type).toBe('binary');
       expect(binaryResult.mimeType).toBe('text/csv');
       expect(binaryResult.size).toBe(csvData.byteLength);
-      expect(binaryResult.filePath).toContain('.csv');
-
-      // Verify file content
-      const fileContent = await fs.readFile(binaryResult.filePath, 'utf-8');
-      expect(fileContent).toBe('id,name\n1,Test');
-
-      await fs.unlink(binaryResult.filePath).catch(() => {});
+      expect(binaryResult.data.toString('utf-8')).toBe('id,name\n1,Test');
     });
 
-    it('should save image response to file with correct extension', async () => {
+    it('should return binary response with buffer data for PNG', async () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
 
       const pngMagicBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
@@ -366,9 +358,7 @@ describe('client', () => {
       const binaryResult = result as BinaryFileResponse;
       expect(binaryResult.type).toBe('binary');
       expect(binaryResult.mimeType).toBe('image/png');
-      expect(binaryResult.filePath).toContain('.png');
-
-      await fs.unlink(binaryResult.filePath).catch(() => {});
+      expect(binaryResult.data).toEqual(Buffer.from(pngMagicBytes));
     });
   });
 });

@@ -19,6 +19,7 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_current_user',
     '現在のユーザー情報を取得 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
+    { readOnlyHint: true },
     async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
@@ -54,6 +55,7 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_authenticate',
     'OAuth認証を開始、初回のみ必要 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
+    { destructiveHint: false },
     async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
         // Remote mode: OAuth already handled by MCP protocol
@@ -103,6 +105,7 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_auth_status',
     '認証状態を確認 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
+    { readOnlyHint: true },
     async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
@@ -128,6 +131,7 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_clear_auth',
     '認証情報をクリア (詳細ガイドはfreee-api-skill skillを参照)',
     {},
+    { idempotentHint: true, openWorldHint: false },
     async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
@@ -150,6 +154,7 @@ export function addAuthenticationTools(server: McpServer): void {
       name: z.string().optional().describe('事業所名'),
       description: z.string().optional().describe('説明'),
     },
+    { destructiveHint: false, idempotentHint: true, openWorldHint: false },
     async (
       args: { company_id: string; name?: string; description?: string },
       extra?: AuthExtra,
@@ -173,6 +178,7 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_get_current_company',
     '現在の事業所情報を表示 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
+    { readOnlyHint: true, openWorldHint: false },
     async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
@@ -194,6 +200,7 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_list_companies',
     '事業所一覧を表示 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
+    { readOnlyHint: true },
     async (_args: Record<string, unknown>, extra?: AuthExtra) => {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
@@ -202,7 +209,7 @@ export function addAuthenticationTools(server: McpServer): void {
             .array(
               z.object({
                 id: z.number(),
-                name: z.string(),
+                name: z.string().nullable(),
               }),
             )
             .optional(),
@@ -236,7 +243,7 @@ export function addAuthenticationTools(server: McpServer): void {
         const companyList = apiCompanies.companies
           .map((company) => {
             const current = company.id === parseInt(currentCompanyId, 10) ? ' *' : '';
-            return `${company.name} (${company.id})${current}`;
+            return `${company.name ?? '(名称未設定)'} (${company.id})${current}`;
           })
           .join('\n');
 
@@ -251,6 +258,7 @@ export function addAuthenticationTools(server: McpServer): void {
     'freee_server_info',
     'freee-mcp サーバーの情報を取得（バージョンなど）',
     {},
+    { readOnlyHint: true, openWorldHint: false },
     async () => {
       return createTextResponse(`freee-mcp server info:\n- version: ${PACKAGE_VERSION}`);
     },

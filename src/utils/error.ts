@@ -22,23 +22,12 @@ export async function parseJsonResponse(response: Response): Promise<JsonParseRe
   }
 }
 
-/**
- * MCP text response type
- */
-export interface TextResponse {
-  content: {
-    type: 'text';
-    text: string;
-  }[];
-}
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 /**
  * Creates a standardized MCP text response.
- *
- * @param text - The text content for the response
- * @returns MCP-formatted text response object
  */
-export function createTextResponse(text: string): TextResponse {
+export function createTextResponse(text: string): CallToolResult {
   return {
     content: [
       {

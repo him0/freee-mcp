@@ -1,23 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { type BinaryFileResponse, isBinaryFileResponse, makeApiRequest } from '../api/client.js';
+import { isBinaryFileResponse, makeApiRequest } from '../api/client.js';
 import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
-import { createTextResponse, formatErrorMessage, type TextResponse } from '../utils/error.js';
+import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 import { type ApiType, listAllAvailablePaths, validatePathForService } from './schema-loader.js';
-
-/**
- * Format binary file response for display
- */
-function formatBinaryResponse(response: BinaryFileResponse): string {
-  const sizeInKB = (response.size / 1024).toFixed(2);
-  return (
-    `ファイルをダウンロードしました\n\n` +
-    `保存場所: ${response.filePath}\n` +
-    `MIMEタイプ: ${response.mimeType}\n` +
-    `サイズ: ${sizeInKB} KB`
-  );
-}
 
 const SERVICE_HINT = 'service: accounting/hr/invoice/pm/sm';
 const SKILL_HINT = '詳細ガイドはfreee-api-skill skillを参照';
@@ -38,12 +25,11 @@ function createMethodTool(method: string) {
       body?: Record<string, unknown>;
     },
     extra?: AuthExtra,
-  ): Promise<TextResponse> => {
+  ) => {
     try {
       const { service, path, query, body } = args;
       const { tokenStore, userId } = extractTokenContext(extra);
 
-      // Validate path against the specified service's OpenAPI schema
       const validation = validatePathForService(method, path, service);
       if (!validation.isValid) {
         return createTextResponse(
@@ -52,7 +38,6 @@ function createMethodTool(method: string) {
         );
       }
 
-      // Make API request with the correct base URL
       const actualPath = validation.actualPath ?? path;
       const result = await makeApiRequest(
         method,
@@ -63,12 +48,12 @@ function createMethodTool(method: string) {
         { tokenStore, userId },
       );
 
-      // Handle binary file response
       if (isBinaryFileResponse(result)) {
-        return createTextResponse(formatBinaryResponse(result));
+        return {
+          content: [{ type: 'image', data: result.data.toString('base64'), mimeType: result.mimeType }],
+        };
       }
 
-      // Handle empty response (e.g., 204 No Content)
       if (result === null) {
         return createTextResponse('リクエストが正常に完了しました。');
       }
@@ -93,6 +78,7 @@ export function generateClientModeTool(server: McpServer): void {
       path: z.string().describe('APIパス (例: /api/1/deals)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
+    { readOnlyHint: true },
     createMethodTool('GET'),
   );
 
@@ -106,6 +92,7 @@ export function generateClientModeTool(server: McpServer): void {
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
+    { destructiveHint: false },
     createMethodTool('POST'),
   );
 
@@ -119,6 +106,7 @@ export function generateClientModeTool(server: McpServer): void {
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
+    { destructiveHint: false, idempotentHint: true },
     createMethodTool('PUT'),
   );
 
@@ -131,6 +119,7 @@ export function generateClientModeTool(server: McpServer): void {
       path: z.string().describe('APIパス (例: /api/1/deals/123)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
+    { idempotentHint: true },
     createMethodTool('DELETE'),
   );
 
@@ -144,6 +133,7 @@ export function generateClientModeTool(server: McpServer): void {
       body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
     },
+    { destructiveHint: false },
     createMethodTool('PATCH'),
   );
 
@@ -152,6 +142,7 @@ export function generateClientModeTool(server: McpServer): void {
     'freee_api_list_paths',
     'freee API エンドポイント一覧 (詳細ガイドはfreee-api-skill skillを参照)',
     {},
+    { readOnlyHint: true, openWorldHint: false },
     async () => {
       const pathsList = listAllAvailablePaths();
       return createTextResponse(

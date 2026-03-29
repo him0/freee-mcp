@@ -110,6 +110,7 @@ describe('E2E: Client Mode Tools', () => {
           name: string,
           _description: string,
           _schema: unknown,
+          _annotations: unknown,
           handler: (args: Record<string, unknown>) => Promise<unknown>,
         ) => {
           registeredTools.set(name, { handler });
@@ -400,6 +401,49 @@ describe('E2E: Client Mode Tools', () => {
       })) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0].text).toContain('パス検証エラー');
+    });
+  });
+
+  describe('Binary Response', () => {
+    it('should return base64 ImageContent for binary response', async () => {
+      const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+      mockApiResponse = {
+        type: 'binary',
+        data: pngBytes,
+        mimeType: 'image/png',
+        size: pngBytes.byteLength,
+      };
+
+      const handler = registeredTools.get('freee_api_get')?.handler;
+      const result = (await handler({
+        service: 'accounting',
+        path: '/api/1/receipts/123/download',
+      })) as { content: Array<{ type: string; data?: string; mimeType?: string }> };
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe('image');
+      expect(result.content[0].mimeType).toBe('image/png');
+      expect(result.content[0].data).toBe(pngBytes.toString('base64'));
+    });
+
+    it('should return base64 ImageContent for PDF binary response', async () => {
+      const pdfBytes = Buffer.from([0x25, 0x50, 0x44, 0x46]);
+      mockApiResponse = {
+        type: 'binary',
+        data: pdfBytes,
+        mimeType: 'application/pdf',
+        size: pdfBytes.byteLength,
+      };
+
+      const handler = registeredTools.get('freee_api_get')?.handler;
+      const result = (await handler({
+        service: 'accounting',
+        path: '/api/1/receipts/456/download',
+      })) as { content: Array<{ type: string; data?: string; mimeType?: string }> };
+
+      expect(result.content[0].type).toBe('image');
+      expect(result.content[0].mimeType).toBe('application/pdf');
+      expect(Buffer.from(result.content[0].data ?? '', 'base64')).toEqual(pdfBytes);
     });
   });
 });
