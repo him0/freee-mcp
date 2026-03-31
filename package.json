@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "freee-mcp",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "bin": {
     "freee-mcp": "./bin/freee-mcp.js",
     "freee-remote-mcp": "./bin/freee-remote-mcp.js"
