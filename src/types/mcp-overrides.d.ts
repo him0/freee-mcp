@@ -8,7 +8,17 @@ import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 declare module '@modelcontextprotocol/sdk/server/mcp.js' {
   interface McpServer {
     // Override registerTool method with simplified signature to avoid OOM
-    // biome-ignore lint/suspicious/noExplicitAny: intentional override to prevent deep type inference OOM
-    registerTool(name: string, config: { title?: string; description?: string; inputSchema?: any; annotations?: ToolAnnotations }, handler: any): void;
+    registerTool(
+      name: string,
+      config: {
+        title?: string;
+        description?: string;
+        // biome-ignore lint/suspicious/noExplicitAny: intentional override to prevent deep type inference OOM
+        inputSchema?: any;
+        annotations?: ToolAnnotations;
+      },
+      // biome-ignore lint/suspicious/noExplicitAny: intentional override to prevent deep type inference OOM
+      handler: any,
+    ): void;
   }
 }

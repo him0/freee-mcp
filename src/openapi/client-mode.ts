@@ -41,21 +41,19 @@ function createMethodTool(method: string) {
       }
 
       const actualPath = validation.actualPath ?? path;
-      const result = await makeApiRequest(
-        method,
-        actualPath,
-        query,
-        body,
-        validation.baseUrl,
-        { tokenStore, userId },
-      );
+      const result = await makeApiRequest(method, actualPath, query, body, validation.baseUrl, {
+        tokenStore,
+        userId,
+      });
 
       if (isBinaryFileResponse(result)) {
         const baseMimeType = result.mimeType.split(';')[0].trim();
 
         if (SUPPORTED_IMAGE_MIME_TYPES.has(baseMimeType)) {
           return {
-            content: [{ type: 'image', data: result.data.toString('base64'), mimeType: baseMimeType }],
+            content: [
+              { type: 'image', data: result.data.toString('base64'), mimeType: baseMimeType },
+            ],
           };
         }
 
@@ -110,7 +108,10 @@ export function generateClientModeTool(server: McpServer): void {
       inputSchema: {
         service: serviceSchema,
         path: z.string().describe('APIパス (例: /api/1/deals)'),
-        query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+        query: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe('クエリパラメータ (オプション)'),
       },
       annotations: { readOnlyHint: true },
     },
@@ -127,7 +128,10 @@ export function generateClientModeTool(server: McpServer): void {
         service: serviceSchema,
         path: z.string().describe('APIパス (例: /api/1/deals)'),
         body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
-        query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+        query: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe('クエリパラメータ (オプション)'),
       },
       annotations: { destructiveHint: false },
     },
@@ -144,7 +148,10 @@ export function generateClientModeTool(server: McpServer): void {
         service: serviceSchema,
         path: z.string().describe('APIパス (例: /api/1/deals/123)'),
         body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
-        query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+        query: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe('クエリパラメータ (オプション)'),
       },
       annotations: { destructiveHint: false, idempotentHint: true },
     },
@@ -160,7 +167,10 @@ export function generateClientModeTool(server: McpServer): void {
       inputSchema: {
         service: serviceSchema,
         path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-        query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+        query: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe('クエリパラメータ (オプション)'),
       },
       annotations: { idempotentHint: true },
     },
@@ -177,7 +187,10 @@ export function generateClientModeTool(server: McpServer): void {
         service: serviceSchema,
         path: z.string().describe('APIパス (例: /api/1/deals/123)'),
         body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
-        query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ (オプション)'),
+        query: z
+          .record(z.string(), z.unknown())
+          .optional()
+          .describe('クエリパラメータ (オプション)'),
       },
       annotations: { destructiveHint: false },
     },

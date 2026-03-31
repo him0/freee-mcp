@@ -203,7 +203,9 @@ export async function startHttpServer(): Promise<void> {
     let companyId: string | undefined;
     if (userId && authExtra?.extra?.tokenStore) {
       try {
-        const store = authExtra.extra.tokenStore as { getCurrentCompanyId(u: string): Promise<unknown> };
+        const store = authExtra.extra.tokenStore as {
+          getCurrentCompanyId(u: string): Promise<unknown>;
+        };
         companyId = String(await store.getCurrentCompanyId(userId));
       } catch {
         /* ignore - company_id is best-effort */
@@ -244,9 +246,7 @@ export async function startHttpServer(): Promise<void> {
     await transport.handleRequest(req, res);
   }
 
-  async function extractRequestContext(
-    req: Request,
-  ): Promise<Record<string, string | undefined>> {
+  async function extractRequestContext(req: Request): Promise<Record<string, string | undefined>> {
     const authExtra = (req as unknown as Record<string, unknown>).auth as
       | { extra?: Record<string, unknown> }
       | undefined;
@@ -265,7 +265,7 @@ export async function startHttpServer(): Promise<void> {
     }
     return {
       source_ip: getClientIp(req),
-      session_id: (req.headers['mcp-session-id'] as string | undefined),
+      session_id: req.headers['mcp-session-id'] as string | undefined,
       company_id: companyId,
       user_id: userId,
       method: req.method,
@@ -276,10 +276,7 @@ export async function startHttpServer(): Promise<void> {
   function mcpHandler(req: Request, res: Response): void {
     handleMcpRequest(req, res).catch(async (err: unknown) => {
       const ctx = await extractRequestContext(req).catch(() => ({}));
-      logger.error(
-        { err, requestId: req.requestId, ...ctx },
-        'MCP request error',
-      );
+      logger.error({ err, requestId: req.requestId, ...ctx }, 'MCP request error');
       if (!res.headersSent) {
         res.status(500).json({ error: 'Internal server error' });
       }
@@ -316,10 +313,7 @@ export async function startHttpServer(): Promise<void> {
     extractRequestContext(req)
       .catch(() => ({}))
       .then((ctx) => {
-        logger.error(
-          { err, requestId: req.requestId, ...ctx },
-          'Unhandled middleware error',
-        );
+        logger.error({ err, requestId: req.requestId, ...ctx }, 'Unhandled middleware error');
       });
   });
 

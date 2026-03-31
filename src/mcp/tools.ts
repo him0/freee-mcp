@@ -22,7 +22,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       description: '現在のユーザー情報を取得 (詳細ガイドはfreee-api-skill skillを参照)',
       annotations: { readOnlyHint: true },
     },
-    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
+    async (extra: AuthExtra) => {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const companyId = await tokenStore.getCurrentCompanyId(userId);
@@ -61,7 +61,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         description: 'OAuth認証を開始、初回のみ必要 (詳細ガイドはfreee-api-skill skillを参照)',
         annotations: { destructiveHint: false },
       },
-      async (_args: Record<string, unknown>) => {
+      async () => {
         try {
           const { clientId, clientSecret } = getConfig().freee;
 
@@ -107,7 +107,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       description: '認証状態を確認 (詳細ガイドはfreee-api-skill skillを参照)',
       annotations: { readOnlyHint: true },
     },
-    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
+    async (extra: AuthExtra) => {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const tokens = await tokenStore.loadTokens(userId);
@@ -135,7 +135,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       description: '認証情報をクリア (詳細ガイドはfreee-api-skill skillを参照)',
       annotations: { idempotentHint: true, openWorldHint: false },
     },
-    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
+    async (extra: AuthExtra) => {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         await tokenStore.clearTokens(userId);
@@ -187,7 +187,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       description: '現在の事業所情報を表示 (詳細ガイドはfreee-api-skill skillを参照)',
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
+    async (extra: AuthExtra) => {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const companyId = await tokenStore.getCurrentCompanyId(userId);
@@ -211,7 +211,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       description: '事業所一覧を表示 (詳細ガイドはfreee-api-skill skillを参照)',
       annotations: { readOnlyHint: true },
     },
-    async (_args: Record<string, unknown>, extra?: AuthExtra) => {
+    async (extra: AuthExtra) => {
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const CompanyResponseSchema = z.object({

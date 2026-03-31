@@ -5,8 +5,8 @@ import {
   type TokenData,
   TokenDataSchema,
 } from '../auth/tokens.js';
-import { REFRESH_TOKEN_TTL_SECONDS } from '../constants.js';
 import type { CompanyConfig } from '../config/companies.js';
+import { REFRESH_TOKEN_TTL_SECONDS } from '../constants.js';
 import { withRedis } from '../server/errors.js';
 import { getLogger } from '../server/logger.js';
 import type { Redis } from './redis-client.js';
