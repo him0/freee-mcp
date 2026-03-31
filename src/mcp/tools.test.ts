@@ -287,6 +287,75 @@ describe('tools', () => {
       });
     });
 
+    describe('zero-arg tool callback receives extra as first argument', () => {
+      // MCP SDK 1.28.0+ の registerTool で inputSchema を指定しない場合、
+      // コールバックのシグネチャは (extra) => ... となる（(args, extra) ではない）。
+      // この仕様に違反するとRemoteモードでトークンコンテキストが渡らず認証が壊れる。
+
+      const mockTokenStore = {
+        loadTokens: vi.fn(),
+        saveTokens: vi.fn(),
+        clearTokens: vi.fn(),
+        getValidAccessToken: vi.fn(),
+        getCurrentCompanyId: vi.fn().mockResolvedValue('99999'),
+        setCurrentCompany: vi.fn(),
+        getCompanyInfo: vi.fn().mockResolvedValue({ id: '99999', name: 'Remote Co' }),
+      };
+
+      const remoteExtra = {
+        authInfo: {
+          extra: { tokenStore: mockTokenStore, userId: 'remote-user-1' },
+        },
+      };
+
+      const zeroArgToolNames = [
+        'freee_current_user',
+        'freee_auth_status',
+        'freee_clear_auth',
+        'freee_get_current_company',
+        'freee_list_companies',
+      ];
+
+      for (const toolName of zeroArgToolNames) {
+        it(`${toolName}: should use tokenStore from extra (not fallback)`, async () => {
+          const mockMakeApiRequest = await import('../api/client.js');
+          vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue({
+            user: { id: 1 },
+            companies: [{ id: 99999, name: 'Remote Co' }],
+          });
+          mockTokenStore.loadTokens.mockResolvedValue({
+            access_token: 'remote-token',
+            refresh_token: 'refresh',
+            expires_at: Date.now() + 3600000,
+            scope: 'read write',
+            token_type: 'Bearer',
+          });
+
+          addAuthenticationTools(mockServer);
+          const handler = mockTool.mock.calls.find((call) => call[0] === toolName)?.[2];
+          expect(handler).toBeDefined();
+
+          // SDK の zero-arg ツールは extra を第1引数として渡す
+          await handler(remoteExtra);
+
+          // fallback (FileTokenStore) ではなく、extra 経由の mockTokenStore が使われたことを検証
+          const calledMethods = [
+            ...mockTokenStore.loadTokens.mock.calls,
+            ...mockTokenStore.getCurrentCompanyId.mock.calls,
+            ...mockTokenStore.clearTokens.mock.calls,
+            ...mockTokenStore.getCompanyInfo.mock.calls,
+          ];
+          expect(calledMethods.length).toBeGreaterThan(0);
+
+          // userId が 'remote-user-1' で呼ばれたことを検証（'local' fallback ではない）
+          const allUserIds = calledMethods.map((call) => call[0]);
+          expect(allUserIds.every((id) => id === 'remote-user-1')).toBe(true);
+
+          vi.clearAllMocks();
+        });
+      }
+    });
+
     describe('freee_list_companies', () => {
       it('should return company list when API response is valid', async () => {
         const mockMakeApiRequest = await import('../api/client.js');

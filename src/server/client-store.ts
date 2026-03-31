@@ -6,6 +6,7 @@ import type { Redis } from '../storage/redis-client.js';
 import { type CIMDFetcher, HttpCIMDFetcher, hashCimdUrl } from './cimd-fetcher.js';
 import { RedisUnavailableError, withRedis } from './errors.js';
 import { getLogger } from './logger.js';
+
 const CIMD_CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 const CLIENT_TTL_SECONDS = 365 * 24 * 60 * 60; // 1 year
 

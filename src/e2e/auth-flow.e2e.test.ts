@@ -124,7 +124,11 @@ describe('E2E: Authentication Flow', () => {
           config: { description?: string; inputSchema?: unknown },
           handler: (args: Record<string, unknown>) => Promise<unknown>,
         ) => {
-          registeredTools.set(name, { description: config.description ?? '', schema: config.inputSchema, handler });
+          registeredTools.set(name, {
+            description: config.description ?? '',
+            schema: config.inputSchema,
+            handler,
+          });
         },
       ),
     } as unknown as McpServer;
