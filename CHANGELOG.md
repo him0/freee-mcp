@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.17.1
+
+### Patch Changes
+
+- [`ab41118`](https://github.com/freee/freee-mcp/commit/ab411186be5070be2ad0a4427e9f5212bf591d5a): MCP SDK 1.28.0 の registerTool で引数なしツールの extra が正しく渡らない問題を修正 ([#344](https://github.com/freee/freee-mcp/pull/344))
+
 ## 0.17.0
 
 ### Minor Changes
