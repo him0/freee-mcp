@@ -30,7 +30,10 @@ type McpConfig = {
   [key: string]: unknown;
 };
 
-const FREEE_MCP_SERVER_NAME = 'freee-mcp';
+function getServerName(): string {
+  const profile = getProfile();
+  return profile ? `freee-mcp-${profile}` : 'freee-mcp';
+}
 
 function getServerConfig(): McpServerEntry {
   const profile = getProfile();
@@ -115,7 +118,7 @@ export async function checkMcpConfigStatus(target: McpTarget): Promise<McpConfig
     return {
       path: configPath,
       exists: true,
-      hasFreeeConfig: config?.mcpServers?.[FREEE_MCP_SERVER_NAME] !== undefined,
+      hasFreeeConfig: config?.mcpServers?.[getServerName()] !== undefined,
     };
   } catch {
     return {
@@ -145,7 +148,7 @@ export async function addFreeeMcpConfig(target: McpTarget): Promise<void> {
   }
 
   // Add/update freee-mcp entry
-  config.mcpServers[FREEE_MCP_SERVER_NAME] = getServerConfig();
+  config.mcpServers[getServerName()] = getServerConfig();
 
   await writeMcpConfig(configPath, config);
 }
@@ -158,13 +161,13 @@ export async function removeFreeeMcpConfig(target: McpTarget): Promise<void> {
   const configPath = getMcpConfigPath(target);
 
   const config = await readMcpConfig(configPath);
-  if (!config?.mcpServers?.[FREEE_MCP_SERVER_NAME]) {
+  if (!config?.mcpServers?.[getServerName()]) {
     // Nothing to remove
     return;
   }
 
   // Remove freee-mcp entry
-  delete config.mcpServers[FREEE_MCP_SERVER_NAME];
+  delete config.mcpServers[getServerName()];
 
   // Clean up empty mcpServers object
   if (Object.keys(config.mcpServers).length === 0) {

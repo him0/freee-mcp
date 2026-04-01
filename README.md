@@ -101,6 +101,43 @@ npx freee-mcp configure
 ```
 
 Windows Store (Microsoft Store) 版の Claude Desktop をご利用の場合、設定ファイルのパスが異なります。`freee-mcp configure` は自動的に適切なパスを検出します。
+
+### プロファイル機能（複数アカウント対応）
+
+複数の freee アカウントや事業所を使い分けたい場合、`--profile` オプションでプロファイルごとに認証情報を分けて管理できます。
+
+#### セットアップ
+
+```bash
+# デフォルト（プロファイルなし）
+npx freee-mcp configure
+
+# プロファイルを指定してセットアップ
+npx freee-mcp configure --profile work
+npx freee-mcp configure --profile personal
+```
+
+各プロファイルの認証情報・トークンは `~/.config/freee-mcp/profiles/<name>/` に保存されます。
+デフォルト（プロファイル未指定）は従来通り `~/.config/freee-mcp/` に保存されます。
+
+#### MCP 設定例
+
+```json
+{
+  "mcpServers": {
+    "freee": {
+      "command": "npx",
+      "args": ["freee-mcp"]
+    },
+    "freee-work": {
+      "command": "npx",
+      "args": ["freee-mcp", "--profile", "work"]
+    }
+  }
+}
+```
+
+`freee-mcp configure --profile <name>` 実行時に Claude Code / Claude Desktop への MCP 設定も自動で追加できます。
 ## Agent Skills をインストールする
 
 Claude 及び Claude Desktop では「カスタマイズ」より「スキル」を開き、[Releases](https://github.com/freee/freee-mcp/releases) ページから最新の `freee-api-skill.zip` をダウンロードしてアップロードしてください。

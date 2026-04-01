@@ -24,8 +24,12 @@ async function clearConfig(): Promise<void> {
 }
 
 export async function configure(options: ConfigureOptions = {}): Promise<void> {
-  const profileLabel = options.profile ? ` (profile: ${options.profile})` : '';
-  console.log(`\n=== freee-mcp v${PACKAGE_VERSION} Configuration Setup${profileLabel} ===\n`);
+  console.log(`\n=== freee-mcp v${PACKAGE_VERSION} Configuration Setup ===\n`);
+
+  if (options.profile) {
+    console.log(`プロファイル: ${options.profile}`);
+    console.log(`設定ディレクトリ: ${getConfigDir()}\n`);
+  }
 
   if (options.force) {
     console.log('保存済みのログイン情報をリセットしています...');
