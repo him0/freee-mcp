@@ -14,15 +14,41 @@ import path from 'node:path';
 export const APP_NAME = 'freee-mcp';
 
 /**
+ * Current profile name (undefined = default profile)
+ */
+let currentProfile: string | undefined;
+
+/**
+ * Set the active profile.
+ * When set, configuration is stored in a profile-specific subdirectory.
+ */
+export function setProfile(profile: string | undefined): void {
+  currentProfile = profile;
+}
+
+/**
+ * Get the active profile name, or undefined for the default profile.
+ */
+export function getProfile(): string | undefined {
+  return currentProfile;
+}
+
+/**
  * Get the configuration directory path.
  * Respects XDG Base Directory specification:
  * - Uses XDG_CONFIG_HOME if set
  * - Falls back to ~/.config/freee-mcp
+ * When a profile is active, returns ~/.config/freee-mcp/profiles/<profile>
  */
 export function getConfigDir(): string {
-  return process.env.XDG_CONFIG_HOME
+  const baseDir = process.env.XDG_CONFIG_HOME
     ? path.join(process.env.XDG_CONFIG_HOME, APP_NAME)
     : path.join(os.homedir(), '.config', APP_NAME);
+
+  if (currentProfile) {
+    return path.join(baseDir, 'profiles', currentProfile);
+  }
+  return baseDir;
 }
 
 /**

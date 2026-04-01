@@ -9,6 +9,7 @@ import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { getProfile } from '../constants.js';
 
 export type McpTarget = 'claude-code' | 'claude-desktop';
 
@@ -31,10 +32,11 @@ type McpConfig = {
 
 const FREEE_MCP_SERVER_NAME = 'freee-mcp';
 
-const FREEE_MCP_SERVER_CONFIG: McpServerEntry = {
-  command: 'npx',
-  args: ['freee-mcp'],
-};
+function getServerConfig(): McpServerEntry {
+  const profile = getProfile();
+  const args = profile ? ['freee-mcp', '--profile', profile] : ['freee-mcp'];
+  return { command: 'npx', args };
+}
 
 /**
  * Get the MCP configuration file path for the specified target.
@@ -143,7 +145,7 @@ export async function addFreeeMcpConfig(target: McpTarget): Promise<void> {
   }
 
   // Add/update freee-mcp entry
-  config.mcpServers[FREEE_MCP_SERVER_NAME] = { ...FREEE_MCP_SERVER_CONFIG };
+  config.mcpServers[FREEE_MCP_SERVER_NAME] = getServerConfig();
 
   await writeMcpConfig(configPath, config);
 }

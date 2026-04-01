@@ -9,6 +9,7 @@ import { collectCredentials, configureMcpIntegration, selectCompany } from './pr
 
 export interface ConfigureOptions {
   force?: boolean;
+  profile?: string;
 }
 
 async function clearConfig(): Promise<void> {
@@ -23,7 +24,8 @@ async function clearConfig(): Promise<void> {
 }
 
 export async function configure(options: ConfigureOptions = {}): Promise<void> {
-  console.log(`\n=== freee-mcp v${PACKAGE_VERSION} Configuration Setup ===\n`);
+  const profileLabel = options.profile ? ` (profile: ${options.profile})` : '';
+  console.log(`\n=== freee-mcp v${PACKAGE_VERSION} Configuration Setup${profileLabel} ===\n`);
 
   if (options.force) {
     console.log('保存済みのログイン情報をリセットしています...');

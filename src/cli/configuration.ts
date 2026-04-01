@@ -1,4 +1,5 @@
 import { type FullConfig, saveFullConfig } from '../config/companies.js';
+import { getConfigDir } from '../constants.js';
 import type { Company, Credentials, SelectedCompany } from './types.js';
 
 export async function saveConfig(
@@ -26,7 +27,8 @@ export async function saveConfig(
   });
 
   await saveFullConfig(fullConfig);
+  const configDir = getConfigDir();
   console.log('設定情報を保存しました。\n');
-  console.log('認証情報は ~/.config/freee-mcp/config.json に保存されました。');
-  console.log('トークンは ~/.config/freee-mcp/tokens.json に保存されました。\n');
+  console.log(`認証情報は ${configDir}/config.json に保存されました。`);
+  console.log(`トークンは ${configDir}/tokens.json に保存されました。\n`);
 }
