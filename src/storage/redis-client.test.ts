@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // Create shared mock functions that persist across module resets
-const mockInstances: Array<{ quit: ReturnType<typeof vi.fn>; ping: ReturnType<typeof vi.fn> }> = [];
+const mockInstances: Array<{
+  quit: ReturnType<typeof vi.fn>;
+  ping: ReturnType<typeof vi.fn>;
+  disconnect: ReturnType<typeof vi.fn>;
+}> = [];
 
 vi.mock('ioredis', () => {
   return {
@@ -9,6 +13,7 @@ vi.mock('ioredis', () => {
       const instance = {
         quit: vi.fn().mockResolvedValue('OK'),
         ping: vi.fn().mockResolvedValue('PONG'),
+        disconnect: vi.fn(),
         on: vi.fn().mockReturnThis(),
       };
       mockInstances.push(instance);
@@ -84,5 +89,16 @@ describe('redis-client', () => {
     const { closeRedisClient } = await import('./redis-client.js');
     await expect(closeRedisClient()).resolves.toBeUndefined();
     expect(mockInstances).toHaveLength(0);
+  });
+
+  it('should fall back to disconnect when quit throws', async () => {
+    const { getRedisClient, closeRedisClient } = await import('./redis-client.js');
+
+    getRedisClient();
+    mockInstances[0].quit.mockRejectedValueOnce(new Error('Connection is closed.'));
+
+    await closeRedisClient();
+    expect(mockInstances[0].quit).toHaveBeenCalledOnce();
+    expect(mockInstances[0].disconnect).toHaveBeenCalledOnce();
   });
 });
