@@ -36,6 +36,8 @@ function otelMixin(): Record<string, string> {
 
 function shouldUsePretty(options?: LoggerOptions): boolean {
   if (options?.pretty !== undefined) return options.pretty;
+  // stdio mode must not use pino.transport() worker thread (MCP protocol stability)
+  if (options?.transportMode === 'stdio') return false;
   // Remote/production mode always has ISSUER_URL set; local dev does not
   return !process.env.ISSUER_URL;
 }
@@ -95,6 +97,21 @@ export function getLogger(): pino.Logger {
     );
   }
   return _logger;
+}
+
+/**
+ * Create a lazily-initialized child logger.
+ * The child is created on first call and reused thereafter,
+ * avoiding repeated .child() allocations on every invocation.
+ */
+export function createChildLogger(bindings: Record<string, unknown>): () => pino.Logger {
+  let child: pino.Logger | null = null;
+  return () => {
+    if (!child) {
+      child = getLogger().child(bindings);
+    }
+    return child;
+  };
 }
 
 /**

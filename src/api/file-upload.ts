@@ -4,8 +4,10 @@ import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
 import { getConfig } from '../config.js';
 import { USER_AGENT } from '../constants.js';
-import { getLogger } from '../server/logger.js';
+import { createChildLogger } from '../server/logger.js';
 import type { TokenContext } from '../storage/context.js';
+
+const getLog = createChildLogger({ component: 'api-client' });
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
 const MAX_FILE_SIZE_BYTES = 64 * 1024 * 1024; // 64MB
@@ -40,7 +42,7 @@ export async function uploadReceipt(
   options?: UploadReceiptOptions,
   tokenContext?: TokenContext,
 ): Promise<unknown> {
-  const log = getLogger().child({ component: 'api-client' });
+  const log = getLog();
   const startTime = Date.now();
   const safePath = '/api/:id/receipts';
   const userId = tokenContext?.userId ?? 'local';

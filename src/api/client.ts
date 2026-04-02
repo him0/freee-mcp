@@ -2,7 +2,9 @@ import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
 import { getConfig } from '../config.js';
 import { FETCH_TIMEOUT_API_MS, USER_AGENT } from '../constants.js';
-import { getLogger, sanitizePath } from '../server/logger.js';
+import { createChildLogger, sanitizePath } from '../server/logger.js';
+
+const getLog = createChildLogger({ component: 'api-client' });
 import type { TokenContext } from '../storage/context.js';
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
@@ -44,7 +46,7 @@ export async function makeApiRequest(
   baseUrl?: string,
   tokenContext?: TokenContext,
 ): Promise<unknown | BinaryFileResponse> {
-  const log = getLogger().child({ component: 'api-client' });
+  const log = getLog();
   const startTime = Date.now();
   const safePath = sanitizePath(apiPath);
   const userId = tokenContext?.userId ?? 'local';

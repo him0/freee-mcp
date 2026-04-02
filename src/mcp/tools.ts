@@ -10,12 +10,22 @@ import {
 } from '../auth/server.js';
 import { getConfig } from '../config.js';
 import { AUTH_TIMEOUT_MS, PACKAGE_VERSION } from '../constants.js';
-import { getLogger } from '../server/logger.js';
+import { createChildLogger, getLogger } from '../server/logger.js';
 import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
 export function addAuthenticationTools(server: McpServer, options?: { remote?: boolean }): void {
+  const logs = {
+    currentUser: createChildLogger({ component: 'tool', tool: 'freee_current_user' }),
+    authenticate: createChildLogger({ component: 'tool', tool: 'freee_authenticate' }),
+    authStatus: createChildLogger({ component: 'tool', tool: 'freee_auth_status' }),
+    clearAuth: createChildLogger({ component: 'tool', tool: 'freee_clear_auth' }),
+    setCompany: createChildLogger({ component: 'tool', tool: 'freee_set_current_company' }),
+    getCompany: createChildLogger({ component: 'tool', tool: 'freee_get_current_company' }),
+    listCompanies: createChildLogger({ component: 'tool', tool: 'freee_list_companies' }),
+  };
+
   server.registerTool(
     'freee_current_user',
     {
@@ -24,7 +34,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true },
     },
     async (extra: AuthExtra) => {
-      const log = getLogger().child({ component: 'tool', tool: 'freee_current_user' });
+      const log = logs.currentUser();
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const companyId = await tokenStore.getCurrentCompanyId(userId);
@@ -66,7 +76,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         annotations: { destructiveHint: false },
       },
       async () => {
-        const log = getLogger().child({ component: 'tool', tool: 'freee_authenticate' });
+        const log = logs.authenticate();
         try {
           const { clientId, clientSecret } = getConfig().freee;
 
@@ -114,7 +124,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true },
     },
     async (extra: AuthExtra) => {
-      const log = getLogger().child({ component: 'tool', tool: 'freee_auth_status' });
+      const log = logs.authStatus();
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const tokens = await tokenStore.loadTokens(userId);
@@ -145,7 +155,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { idempotentHint: true, openWorldHint: false },
     },
     async (extra: AuthExtra) => {
-      const log = getLogger().child({ component: 'tool', tool: 'freee_clear_auth' });
+      const log = logs.clearAuth();
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         await tokenStore.clearTokens(userId);
@@ -177,7 +187,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       args: { company_id: string; name?: string; description?: string },
       extra?: AuthExtra,
     ) => {
-      const log = getLogger().child({ component: 'tool', tool: 'freee_set_current_company' });
+      const log = logs.setCompany();
       try {
         const { company_id, name, description } = args;
         const { tokenStore, userId } = extractTokenContext(extra);
@@ -203,7 +213,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (extra: AuthExtra) => {
-      const log = getLogger().child({ component: 'tool', tool: 'freee_get_current_company' });
+      const log = logs.getCompany();
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const companyId = await tokenStore.getCurrentCompanyId(userId);
@@ -230,7 +240,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true },
     },
     async (extra: AuthExtra) => {
-      const log = getLogger().child({ component: 'tool', tool: 'freee_list_companies' });
+      const log = logs.listCompanies();
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const CompanyResponseSchema = z.object({

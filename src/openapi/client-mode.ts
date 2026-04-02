@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { isBinaryFileResponse, makeApiRequest } from '../api/client.js';
-import { getLogger, sanitizePath } from '../server/logger.js';
+import { createChildLogger, getLogger, sanitizePath } from '../server/logger.js';
 import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
@@ -21,6 +21,7 @@ const serviceSchema = z
  */
 function createMethodTool(method: string) {
   const toolName = `freee_api_${method.toLowerCase()}`;
+  const getLog = createChildLogger({ component: 'tool', tool: toolName });
 
   return async (
     args: {
@@ -31,7 +32,7 @@ function createMethodTool(method: string) {
     },
     extra?: AuthExtra,
   ) => {
-    const log = getLogger().child({ component: 'tool', tool: toolName });
+    const log = getLog();
     const startTime = Date.now();
     const safePath = sanitizePath(args.path);
     const { tokenStore, userId } = extractTokenContext(extra);
