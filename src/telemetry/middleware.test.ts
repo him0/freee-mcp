@@ -1,5 +1,13 @@
 import http from 'node:http';
 import { context, propagation, trace } from '@opentelemetry/api';
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
+import { W3CTraceContextPropagator } from '@opentelemetry/core';
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import {
+  BasicTracerProvider,
+  InMemorySpanExporter,
+  SimpleSpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
 import express from 'express';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -21,6 +29,21 @@ function makeRequest(
     req.on('error', reject);
     req.end();
   });
+}
+
+function setupInMemoryOtel(): { exporter: InMemorySpanExporter; provider: BasicTracerProvider } {
+  const exporter = new InMemorySpanExporter();
+  const provider = new BasicTracerProvider({
+    resource: resourceFromAttributes({ 'service.name': 'test' }),
+    spanProcessors: [new SimpleSpanProcessor(exporter)],
+  });
+
+  const contextManager = new AsyncLocalStorageContextManager();
+  context.setGlobalContextManager(contextManager);
+  propagation.setGlobalPropagator(new W3CTraceContextPropagator());
+  trace.setGlobalTracerProvider(provider);
+
+  return { exporter, provider };
 }
 
 describe('createTracingMiddleware', () => {
@@ -66,9 +89,9 @@ describe('createTracingMiddleware', () => {
 
   it('creates spans when OTel is enabled', async () => {
     process.env.OTEL_ENABLED = 'true';
-    const { initTelemetry } = await import('./init.js');
-    const otel = initTelemetry('1.0.0');
+    const { exporter, provider } = setupInMemoryOtel();
 
+    vi.doMock('./init.js', () => ({ isOtelEnabled: () => true }));
     const { createTracingMiddleware } = await import('./middleware.js');
     const app = express();
     app.use(createTracingMiddleware());
@@ -83,7 +106,11 @@ describe('createTracingMiddleware', () => {
     const result = await makeRequest(port, '/test');
     expect(result.statusCode).toBe(200);
 
-    await otel?.shutdown().catch(() => {});
+    const spans = exporter.getFinishedSpans();
+    expect(spans.length).toBe(1);
+    expect(spans[0].name).toBe('HTTP GET /test');
+
+    await provider.shutdown();
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
     });
@@ -91,9 +118,9 @@ describe('createTracingMiddleware', () => {
 
   it('skips /health endpoint', async () => {
     process.env.OTEL_ENABLED = 'true';
-    const { initTelemetry } = await import('./init.js');
-    const otel = initTelemetry('1.0.0');
+    const { exporter, provider } = setupInMemoryOtel();
 
+    vi.doMock('./init.js', () => ({ isOtelEnabled: () => true }));
     const { createTracingMiddleware } = await import('./middleware.js');
     const app = express();
     app.use(createTracingMiddleware());
@@ -109,7 +136,10 @@ describe('createTracingMiddleware', () => {
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toEqual({ status: 'ok' });
 
-    await otel?.shutdown().catch(() => {});
+    const spans = exporter.getFinishedSpans();
+    expect(spans.length).toBe(0);
+
+    await provider.shutdown();
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
     });
@@ -117,9 +147,9 @@ describe('createTracingMiddleware', () => {
 
   it('handles errors in route handlers', async () => {
     process.env.OTEL_ENABLED = 'true';
-    const { initTelemetry } = await import('./init.js');
-    const otel = initTelemetry('1.0.0');
+    const { exporter, provider } = setupInMemoryOtel();
 
+    vi.doMock('./init.js', () => ({ isOtelEnabled: () => true }));
     const { createTracingMiddleware } = await import('./middleware.js');
     const app = express();
     app.use(createTracingMiddleware());
@@ -145,7 +175,11 @@ describe('createTracingMiddleware', () => {
     const result = await makeRequest(port, '/error');
     expect(result.statusCode).toBe(500);
 
-    await otel?.shutdown().catch(() => {});
+    const spans = exporter.getFinishedSpans();
+    expect(spans.length).toBe(1);
+    expect(spans[0].status.code).toBe(2); // SpanStatusCode.ERROR
+
+    await provider.shutdown();
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
     });
@@ -153,9 +187,9 @@ describe('createTracingMiddleware', () => {
 
   it('captures status code from response', async () => {
     process.env.OTEL_ENABLED = 'true';
-    const { initTelemetry } = await import('./init.js');
-    const otel = initTelemetry('1.0.0');
+    const { exporter, provider } = setupInMemoryOtel();
 
+    vi.doMock('./init.js', () => ({ isOtelEnabled: () => true }));
     const { createTracingMiddleware } = await import('./middleware.js');
     const app = express();
     app.use(createTracingMiddleware());
@@ -170,7 +204,11 @@ describe('createTracingMiddleware', () => {
     const result = await makeRequest(port, '/created');
     expect(result.statusCode).toBe(201);
 
-    await otel?.shutdown().catch(() => {});
+    const spans = exporter.getFinishedSpans();
+    expect(spans.length).toBe(1);
+    expect(spans[0].attributes['http.response.status_code']).toBe(201);
+
+    await provider.shutdown();
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
     });
