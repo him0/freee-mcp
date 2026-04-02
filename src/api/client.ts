@@ -162,11 +162,10 @@ export async function makeApiRequest(
   // Check Content-Type for binary response
   const contentType = response.headers.get('content-type') || '';
 
-  const logFields = {
+  const baseLogFields = {
     method,
     path: safePath,
     status: response.status,
-    duration_ms: Date.now() - startTime,
     user_id: userId,
     company_id: companyId,
     content_type: contentType || undefined,
@@ -174,7 +173,7 @@ export async function makeApiRequest(
 
   if (isBinaryContentType(contentType)) {
     const buffer = Buffer.from(await response.arrayBuffer());
-    log.info(logFields, 'API request completed');
+    log.info({ ...baseLogFields, duration_ms: Date.now() - startTime }, 'API request completed');
     return {
       type: 'binary',
       data: buffer,
@@ -185,19 +184,19 @@ export async function makeApiRequest(
 
   // Handle empty responses (e.g., 204 No Content from DELETE)
   if (response.status === 204) {
-    log.info(logFields, 'API request completed');
+    log.info({ ...baseLogFields, duration_ms: Date.now() - startTime }, 'API request completed');
     return null;
   }
 
   const text = await response.text();
   if (!text) {
-    log.info(logFields, 'API request completed');
+    log.info({ ...baseLogFields, duration_ms: Date.now() - startTime }, 'API request completed');
     return null;
   }
 
   try {
     const parsed = JSON.parse(text);
-    log.info(logFields, 'API request completed');
+    log.info({ ...baseLogFields, duration_ms: Date.now() - startTime }, 'API request completed');
     return parsed;
   } catch {
     log.error(
