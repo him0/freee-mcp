@@ -7,6 +7,7 @@ import { createMcpServer } from '../mcp/handlers.js';
 import type { Redis } from '../storage/redis-client.js';
 import { closeRedisClient, getRedisClient } from '../storage/redis-client.js';
 import { RedisTokenStore } from '../storage/redis-token-store.js';
+import { createTracingMiddleware } from '../telemetry/middleware.js';
 import { RedisClientStore } from './client-store.js';
 import { RedisUnavailableError } from './errors.js';
 import { createFreeeCallbackHandler } from './freee-callback.js';
@@ -33,7 +34,9 @@ declare module 'express' {
 
 const SHUTDOWN_TIMEOUT_MS = 30_000; // 30 seconds
 
-export async function startHttpServer(): Promise<void> {
+export async function startHttpServer(options?: {
+  otelShutdown?: () => Promise<void>;
+}): Promise<void> {
   const remoteConfig = loadRemoteServerConfig();
   initRemoteConfig(remoteConfig);
 
@@ -96,6 +99,9 @@ export async function startHttpServer(): Promise<void> {
   // No global express.json() -- mcpAuthRouter installs per-route body parsers
   // (urlencoded for /token, /authorize, /revoke; json for /register),
   // and StreamableHTTPServerTransport reads the raw request stream directly.
+
+  // --- Tracing middleware (must be first to wrap entire request lifecycle) ---
+  app.use(createTracingMiddleware());
 
   // --- Security middleware ---
 
@@ -311,6 +317,9 @@ export async function startHttpServer(): Promise<void> {
         resolve();
       });
     });
+
+    // Flush pending OTel spans before closing connections
+    await options?.otelShutdown?.();
 
     // Close Redis after all in-flight requests have drained
     await closeRedisClient();

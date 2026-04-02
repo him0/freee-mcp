@@ -1,11 +1,16 @@
 # Development: docker compose up redis
 # Production:  docker compose up
+#   with tracing: docker compose up redis jaeger
 services:
   freee-mcp:
     build: .
     ports:
       - "3000:3000"
     env_file: .env
+    environment:
+      OTEL_ENABLED: "true"
+      OTEL_SERVICE_NAME: freee-mcp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
     depends_on:
       redis:
         condition: service_healthy
@@ -28,6 +33,15 @@ services:
       interval: 5s
       timeout: 3s
       retries: 3
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4318:4318"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    restart: unless-stopped
 
 volumes:
   redis-data:
