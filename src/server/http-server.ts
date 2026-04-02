@@ -322,7 +322,11 @@ export async function startHttpServer(): Promise<void> {
   });
 
   // Graceful shutdown
+  let shuttingDown = false;
   async function shutdown(signal: string): Promise<void> {
+    if (shuttingDown) return;
+    shuttingDown = true;
+
     logger.info({ signal }, 'Shutting down gracefully...');
 
     // Force exit after timeout if graceful shutdown hangs
@@ -332,14 +336,18 @@ export async function startHttpServer(): Promise<void> {
     }, SHUTDOWN_TIMEOUT_MS);
     forceExitTimer.unref();
 
-    // Close Redis
+    // Stop accepting new requests first
+    await new Promise<void>((resolve) => {
+      server.close(() => {
+        logger.info('HTTP server closed');
+        resolve();
+      });
+    });
+
+    // Close Redis after all in-flight requests have drained
     await closeRedisClient();
 
-    // Close HTTP server
-    server.close(() => {
-      logger.info('HTTP server closed');
-      process.exit(0);
-    });
+    process.exit(0);
   }
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));

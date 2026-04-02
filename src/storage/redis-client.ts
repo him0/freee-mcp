@@ -31,7 +31,13 @@ export function getRedisClient(url?: string): Redis {
 
 export async function closeRedisClient(): Promise<void> {
   if (client) {
-    await client.quit();
+    const c = client;
     client = null;
+    try {
+      await c.quit();
+    } catch {
+      // Ignore errors during shutdown (e.g. connection already closing)
+      c.disconnect();
+    }
   }
 }
