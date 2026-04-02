@@ -7,7 +7,6 @@ export type Logger = pino.Logger;
 export interface LoggerOptions {
   level?: string;
   transportMode?: 'stdio' | 'remote';
-  pretty?: boolean;
 }
 
 let _logger: pino.Logger | null = null;
@@ -34,14 +33,6 @@ function otelMixin(): Record<string, string> {
   };
 }
 
-function shouldUsePretty(options?: LoggerOptions): boolean {
-  if (options?.pretty !== undefined) return options.pretty;
-  // stdio mode must not use pino.transport() worker thread (MCP protocol stability)
-  if (options?.transportMode === 'stdio') return false;
-  // Remote/production mode always has ISSUER_URL set; local dev does not
-  return !process.env.ISSUER_URL;
-}
-
 function resolveOptions(levelOrOptions?: string | LoggerOptions): LoggerOptions {
   if (typeof levelOrOptions === 'string') {
     return { level: levelOrOptions };
@@ -64,19 +55,7 @@ export function initLogger(levelOrOptions?: string | LoggerOptions): pino.Logger
     },
   };
 
-  if (shouldUsePretty(options)) {
-    _logger = pino(baseOptions, pino.transport({
-      target: 'pino-pretty',
-      options: {
-        destination: 2,
-        colorize: true,
-        translateTime: 'HH:MM:ss.l',
-        ignore: 'pid,hostname',
-      },
-    }));
-  } else {
-    _logger = pino(baseOptions, getStderrDest());
-  }
+  _logger = pino(baseOptions, getStderrDest());
 
   return _logger;
 }
