@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { isBinaryFileResponse, makeApiRequest } from '../api/client.js';
+import { getLogger, sanitizePath } from '../server/logger.js';
 import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
@@ -19,6 +20,8 @@ const serviceSchema = z
  * Creates a tool handler for a specific HTTP method
  */
 function createMethodTool(method: string) {
+  const toolName = `freee_api_${method.toLowerCase()}`;
+
   return async (
     args: {
       service: ApiType;
@@ -28,12 +31,17 @@ function createMethodTool(method: string) {
     },
     extra?: AuthExtra,
   ) => {
+    const log = getLogger().child({ component: 'tool', tool: toolName });
+    const startTime = Date.now();
+    const safePath = sanitizePath(args.path);
+    const { tokenStore, userId } = extractTokenContext(extra);
+
     try {
       const { service, path, query, body } = args;
-      const { tokenStore, userId } = extractTokenContext(extra);
 
       const validation = validatePathForService(method, path, service);
       if (!validation.isValid) {
+        log.warn({ service, path: safePath, method, user_id: userId }, 'Tool path validation failed');
         return createTextResponse(
           `パス検証エラー: ${validation.message}\n\n` +
             `利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`,
@@ -45,6 +53,12 @@ function createMethodTool(method: string) {
         tokenStore,
         userId,
       });
+
+      const resultType = isBinaryFileResponse(result) ? 'binary' : result === null ? 'empty' : 'json';
+      log.info(
+        { service, path: safePath, method, duration_ms: Date.now() - startTime, user_id: userId, result_type: resultType },
+        'Tool call completed',
+      );
 
       if (isBinaryFileResponse(result)) {
         const baseMimeType = result.mimeType.split(';')[0].trim();
@@ -90,6 +104,10 @@ function createMethodTool(method: string) {
 
       return createTextResponse(JSON.stringify(result, null, 2));
     } catch (error) {
+      log.error(
+        { service: args.service, path: safePath, method, duration_ms: Date.now() - startTime, user_id: userId, err: error },
+        'Tool call failed',
+      );
       return createTextResponse(`APIリクエストエラー: ${formatErrorMessage(error)}`);
     }
   };
@@ -206,6 +224,7 @@ export function generateClientModeTool(server: McpServer): void {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async () => {
+      getLogger().info({ component: 'tool', tool: 'freee_api_list_paths' }, 'Tool call completed');
       const pathsList = listAllAvailablePaths();
       return createTextResponse(
         `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +

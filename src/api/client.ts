@@ -2,6 +2,7 @@ import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
 import { getConfig } from '../config.js';
 import { FETCH_TIMEOUT_API_MS, USER_AGENT } from '../constants.js';
+import { getLogger, sanitizePath } from '../server/logger.js';
 import type { TokenContext } from '../storage/context.js';
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
@@ -43,6 +44,10 @@ export async function makeApiRequest(
   baseUrl?: string,
   tokenContext?: TokenContext,
 ): Promise<unknown | BinaryFileResponse> {
+  const log = getLogger().child({ component: 'api-client' });
+  const startTime = Date.now();
+  const safePath = sanitizePath(apiPath);
+  const userId = tokenContext?.userId ?? 'local';
   const apiUrl = baseUrl || getConfig().freee.apiUrl;
   const [companyId, accessToken] = tokenContext
     ? await Promise.all([
@@ -88,19 +93,35 @@ export async function makeApiRequest(
     );
   }
 
-  const response = await fetch(url.toString(), {
-    method,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      'User-Agent': USER_AGENT,
-    },
-    body: body ? JSON.stringify(typeof body === 'string' ? JSON.parse(body) : body) : undefined,
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_API_MS),
-  });
+  let response: Response;
+  try {
+    response = await fetch(url.toString(), {
+      method,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'User-Agent': USER_AGENT,
+      },
+      body: body ? JSON.stringify(typeof body === 'string' ? JSON.parse(body) : body) : undefined,
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_API_MS),
+    });
+  } catch (fetchError) {
+    const durationMs = Date.now() - startTime;
+    const errorType =
+      fetchError instanceof Error && fetchError.name === 'TimeoutError' ? 'timeout' : 'network_error';
+    log.error(
+      { method, path: safePath, duration_ms: durationMs, user_id: userId, company_id: companyId, error_type: errorType, err: fetchError },
+      'API request network error',
+    );
+    throw fetchError;
+  }
 
   if (response.status === 401) {
     const errorInfo = await formatResponseErrorInfo(response);
+    log.warn(
+      { method, path: safePath, status: 401, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'auth_error', error_detail: errorInfo },
+      'API request failed',
+    );
     throw new Error(
       `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
         `現在の事業所ID: ${companyId}\n` +
@@ -114,6 +135,10 @@ export async function makeApiRequest(
 
   if (response.status === 403) {
     const errorInfo = await formatResponseErrorInfo(response);
+    log.warn(
+      { method, path: safePath, status: 403, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'forbidden', error_detail: errorInfo },
+      'API request failed',
+    );
     throw new Error(
       `アクセス拒否 (403): ${errorInfo}\n` +
         `事業所ID: ${companyId}\n\n` +
@@ -124,14 +149,30 @@ export async function makeApiRequest(
 
   if (!response.ok) {
     const errorMessage = await formatApiErrorMessage(response, response.status);
+    const logLevel = response.status >= 500 ? 'error' : 'warn';
+    log[logLevel](
+      { method, path: safePath, status: response.status, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'http_error', error_detail: errorMessage },
+      'API request failed',
+    );
     throw new Error(errorMessage);
   }
 
   // Check Content-Type for binary response
   const contentType = response.headers.get('content-type') || '';
 
+  const logFields = {
+    method,
+    path: safePath,
+    status: response.status,
+    duration_ms: Date.now() - startTime,
+    user_id: userId,
+    company_id: companyId,
+    content_type: contentType || undefined,
+  };
+
   if (isBinaryContentType(contentType)) {
     const buffer = Buffer.from(await response.arrayBuffer());
+    log.info(logFields, 'API request completed');
     return {
       type: 'binary',
       data: buffer,
@@ -142,17 +183,25 @@ export async function makeApiRequest(
 
   // Handle empty responses (e.g., 204 No Content from DELETE)
   if (response.status === 204) {
+    log.info(logFields, 'API request completed');
     return null;
   }
 
   const text = await response.text();
   if (!text) {
+    log.info(logFields, 'API request completed');
     return null;
   }
 
   try {
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    log.info(logFields, 'API request completed');
+    return parsed;
   } catch {
+    log.error(
+      { method, path: safePath, status: response.status, content_type: contentType, error_type: 'json_parse_error' },
+      'Failed to parse API response',
+    );
     throw new Error(
       `Failed to parse API response as JSON. Status: ${response.status}, Content-Type: ${contentType}, Body preview: ${text.slice(0, 200)}`,
     );

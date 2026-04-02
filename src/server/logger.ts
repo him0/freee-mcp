@@ -1,6 +1,14 @@
+import { trace } from '@opentelemetry/api';
 import pino from 'pino';
+import { APP_NAME, PACKAGE_VERSION } from '../constants.js';
 
 export type Logger = pino.Logger;
+
+export interface LoggerOptions {
+  level?: string;
+  transportMode?: 'stdio' | 'remote';
+  pretty?: boolean;
+}
 
 let _logger: pino.Logger | null = null;
 let _stderrDest: pino.DestinationStream | null = null;
@@ -12,14 +20,88 @@ function getStderrDest(): pino.DestinationStream {
   return _stderrDest;
 }
 
-export function initLogger(level?: string): pino.Logger {
-  _logger = pino({ level: level || process.env.LOG_LEVEL || 'info' }, getStderrDest());
+/**
+ * Inject trace_id / span_id from the active OpenTelemetry span.
+ * Returns an empty object when no span is active (OTel disabled).
+ */
+function otelMixin(): Record<string, string> {
+  const span = trace.getActiveSpan();
+  if (!span) return {};
+  const ctx = span.spanContext();
+  return {
+    trace_id: ctx.traceId,
+    span_id: ctx.spanId,
+  };
+}
+
+function shouldUsePretty(options?: LoggerOptions): boolean {
+  if (options?.pretty !== undefined) return options.pretty;
+  // Remote/production mode always has ISSUER_URL set; local dev does not
+  return !process.env.ISSUER_URL;
+}
+
+function resolveOptions(levelOrOptions?: string | LoggerOptions): LoggerOptions {
+  if (typeof levelOrOptions === 'string') {
+    return { level: levelOrOptions };
+  }
+  return levelOrOptions ?? {};
+}
+
+export function initLogger(levelOrOptions?: string | LoggerOptions): pino.Logger {
+  const options = resolveOptions(levelOrOptions);
+  const level = options.level || process.env.LOG_LEVEL || 'info';
+  const transportMode = options.transportMode ?? 'stdio';
+
+  const baseOptions: pino.LoggerOptions = {
+    level,
+    mixin: otelMixin,
+    base: {
+      service: APP_NAME,
+      version: PACKAGE_VERSION,
+      transport_mode: transportMode,
+    },
+  };
+
+  if (shouldUsePretty(options)) {
+    _logger = pino(baseOptions, pino.transport({
+      target: 'pino-pretty',
+      options: {
+        destination: 2,
+        colorize: true,
+        translateTime: 'HH:MM:ss.l',
+        ignore: 'pid,hostname',
+      },
+    }));
+  } else {
+    _logger = pino(baseOptions, getStderrDest());
+  }
+
   return _logger;
 }
 
 export function getLogger(): pino.Logger {
   if (!_logger) {
-    _logger = pino({ level: process.env.LOG_LEVEL || 'info' }, getStderrDest());
+    _logger = pino(
+      {
+        level: process.env.LOG_LEVEL || 'info',
+        mixin: otelMixin,
+        base: {
+          service: APP_NAME,
+          version: PACKAGE_VERSION,
+          transport_mode: 'stdio',
+        },
+      },
+      getStderrDest(),
+    );
   }
   return _logger;
+}
+
+/**
+ * Sanitize API path for safe logging.
+ * Strips query strings and replaces numeric ID segments with :id.
+ */
+export function sanitizePath(rawPath: string): string {
+  const pathOnly = rawPath.split('?')[0];
+  return pathOnly.replace(/\/\d+(?=\/|$)/g, '/:id');
 }
