@@ -48,8 +48,8 @@ export function addFileUploadTool(server: McpServer): void {
       const log = getLog();
       try {
         const { file_path, ...options } = args;
-        const { tokenStore, userId } = extractTokenContext(extra);
-        const result = await uploadReceipt(file_path, options, { tokenStore, userId });
+        const tokenContext = extractTokenContext(extra);
+        const result = await uploadReceipt(file_path, options, tokenContext);
 
         const receipt = result as Record<string, unknown>;
         const receiptData = (receipt.receipt || receipt) as Record<string, unknown>;

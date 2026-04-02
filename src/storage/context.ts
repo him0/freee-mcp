@@ -6,6 +6,7 @@ export type AuthExtra = { authInfo?: { extra?: Record<string, unknown> } };
 export interface TokenContext {
   tokenStore: TokenStore;
   userId: string;
+  companyId?: string;
 }
 
 let singletonFileTokenStore: FileTokenStore | null = null;
@@ -15,6 +16,20 @@ function getDefaultFileTokenStore(): FileTokenStore {
     singletonFileTokenStore = new FileTokenStore();
   }
   return singletonFileTokenStore;
+}
+
+/**
+ * Resolves the companyId for the given TokenContext, caching the result
+ * so that subsequent calls within the same request lifecycle avoid
+ * redundant Redis lookups.
+ */
+export async function resolveCompanyId(ctx: TokenContext): Promise<string> {
+  if (ctx.companyId !== undefined) {
+    return ctx.companyId;
+  }
+  const companyId = await ctx.tokenStore.getCurrentCompanyId(ctx.userId);
+  ctx.companyId = companyId;
+  return companyId;
 }
 
 // SECURITY: This fallback is only safe for stdio (single-user, local process) mode.

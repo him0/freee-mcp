@@ -5,7 +5,7 @@ import { FETCH_TIMEOUT_API_MS, USER_AGENT } from '../constants.js';
 import { createChildLogger, sanitizePath } from '../server/logger.js';
 
 const getLog = createChildLogger({ component: 'api-client' });
-import type { TokenContext } from '../storage/context.js';
+import { type TokenContext, resolveCompanyId } from '../storage/context.js';
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
 /**
@@ -53,7 +53,7 @@ export async function makeApiRequest(
   const apiUrl = baseUrl || getConfig().freee.apiUrl;
   const [companyId, accessToken] = tokenContext
     ? await Promise.all([
-        tokenContext.tokenStore.getCurrentCompanyId(tokenContext.userId),
+        resolveCompanyId(tokenContext),
         tokenContext.tokenStore.getValidAccessToken(tokenContext.userId),
       ])
     : await Promise.all([getCurrentCompanyId(), getValidAccessToken()]);

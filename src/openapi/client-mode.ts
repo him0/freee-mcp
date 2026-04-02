@@ -35,14 +35,14 @@ function createMethodTool(method: string) {
     const log = getLog();
     const startTime = Date.now();
     const safePath = sanitizePath(args.path);
-    const { tokenStore, userId } = extractTokenContext(extra);
+    const tokenContext = extractTokenContext(extra);
 
     try {
       const { service, path, query, body } = args;
 
       const validation = validatePathForService(method, path, service);
       if (!validation.isValid) {
-        log.warn({ service, path: safePath, method, user_id: userId }, 'Tool path validation failed');
+        log.warn({ service, path: safePath, method, user_id: tokenContext.userId }, 'Tool path validation failed');
         return createTextResponse(
           `パス検証エラー: ${validation.message}\n\n` +
             `利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`,
@@ -50,14 +50,11 @@ function createMethodTool(method: string) {
       }
 
       const actualPath = validation.actualPath ?? path;
-      const result = await makeApiRequest(method, actualPath, query, body, validation.baseUrl, {
-        tokenStore,
-        userId,
-      });
+      const result = await makeApiRequest(method, actualPath, query, body, validation.baseUrl, tokenContext);
 
       const resultType = isBinaryFileResponse(result) ? 'binary' : result === null ? 'empty' : 'json';
       log.info(
-        { service, path: safePath, method, duration_ms: Date.now() - startTime, user_id: userId, result_type: resultType },
+        { service, path: safePath, method, duration_ms: Date.now() - startTime, user_id: tokenContext.userId, result_type: resultType },
         'Tool call completed',
       );
 
@@ -106,7 +103,7 @@ function createMethodTool(method: string) {
       return createTextResponse(JSON.stringify(result, null, 2));
     } catch (error) {
       log.error(
-        { service: args.service, path: safePath, method, duration_ms: Date.now() - startTime, user_id: userId, err: error },
+        { service: args.service, path: safePath, method, duration_ms: Date.now() - startTime, user_id: tokenContext.userId, err: error },
         'Tool call failed',
       );
       return createTextResponse(`APIリクエストエラー: ${formatErrorMessage(error)}`);

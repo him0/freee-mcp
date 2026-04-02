@@ -12,7 +12,7 @@ import { getConfig } from '../config.js';
 import { AUTH_TIMEOUT_MS, PACKAGE_VERSION } from '../constants.js';
 import { createChildLogger, getLogger } from '../server/logger.js';
 import type { AuthExtra } from '../storage/context.js';
-import { extractTokenContext } from '../storage/context.js';
+import { extractTokenContext, resolveCompanyId } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
 export function addAuthenticationTools(server: McpServer, options?: { remote?: boolean }): void {
@@ -36,8 +36,8 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     async (extra: AuthExtra) => {
       const log = logs.currentUser();
       try {
-        const { tokenStore, userId } = extractTokenContext(extra);
-        const companyId = await tokenStore.getCurrentCompanyId(userId);
+        const tokenContext = extractTokenContext(extra);
+        const companyId = await resolveCompanyId(tokenContext);
 
         if (!companyId) {
           return createTextResponse(
@@ -46,11 +46,8 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         }
 
         const [companyInfo, userInfo] = await Promise.all([
-          tokenStore.getCompanyInfo(userId, companyId),
-          makeApiRequest('GET', '/api/1/users/me', undefined, undefined, undefined, {
-            tokenStore,
-            userId,
-          }),
+          tokenContext.tokenStore.getCompanyInfo(tokenContext.userId, companyId),
+          makeApiRequest('GET', '/api/1/users/me', undefined, undefined, undefined, tokenContext),
         ]);
 
         log.info({ company_id: companyId }, 'Tool call completed');
@@ -126,8 +123,8 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     async (extra: AuthExtra) => {
       const log = logs.authStatus();
       try {
-        const { tokenStore, userId } = extractTokenContext(extra);
-        const tokens = await tokenStore.loadTokens(userId);
+        const tokenContext = extractTokenContext(extra);
+        const tokens = await tokenContext.tokenStore.loadTokens(tokenContext.userId);
         if (!tokens) {
           return createTextResponse('未認証。freee_authenticate で認証してください。');
         }
@@ -157,8 +154,8 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     async (extra: AuthExtra) => {
       const log = logs.clearAuth();
       try {
-        const { tokenStore, userId } = extractTokenContext(extra);
-        await tokenStore.clearTokens(userId);
+        const tokenContext = extractTokenContext(extra);
+        await tokenContext.tokenStore.clearTokens(tokenContext.userId);
         log.info('Tool call completed');
         return createTextResponse(
           '認証情報をクリアしました。再認証するには freee_authenticate を使用。',
@@ -190,11 +187,11 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       const log = logs.setCompany();
       try {
         const { company_id, name, description } = args;
-        const { tokenStore, userId } = extractTokenContext(extra);
+        const tokenContext = extractTokenContext(extra);
 
-        await tokenStore.setCurrentCompany(userId, company_id, name, description);
+        await tokenContext.tokenStore.setCurrentCompany(tokenContext.userId, company_id, name, description);
 
-        const companyInfo = await tokenStore.getCompanyInfo(userId, company_id);
+        const companyInfo = await tokenContext.tokenStore.getCompanyInfo(tokenContext.userId, company_id);
 
         log.info('Tool call completed');
         return createTextResponse(`事業所を設定: ${companyInfo?.name || company_id}`);
@@ -215,9 +212,9 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     async (extra: AuthExtra) => {
       const log = logs.getCompany();
       try {
-        const { tokenStore, userId } = extractTokenContext(extra);
-        const companyId = await tokenStore.getCurrentCompanyId(userId);
-        const companyInfo = await tokenStore.getCompanyInfo(userId, companyId);
+        const tokenContext = extractTokenContext(extra);
+        const companyId = await resolveCompanyId(tokenContext);
+        const companyInfo = await tokenContext.tokenStore.getCompanyInfo(tokenContext.userId, companyId);
 
         log.info('Tool call completed');
         if (!companyInfo) {
@@ -242,7 +239,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     async (extra: AuthExtra) => {
       const log = logs.listCompanies();
       try {
-        const { tokenStore, userId } = extractTokenContext(extra);
+        const tokenContext = extractTokenContext(extra);
         const CompanyResponseSchema = z.object({
           companies: z
             .array(
@@ -259,7 +256,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           undefined,
           undefined,
           undefined,
-          { tokenStore, userId },
+          tokenContext,
         );
         const parseResult = CompanyResponseSchema.safeParse(rawResponse);
         if (!parseResult.success) {
@@ -273,7 +270,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           };
         }
         const apiCompanies = parseResult.data;
-        const currentCompanyId = await tokenStore.getCurrentCompanyId(userId);
+        const currentCompanyId = await resolveCompanyId(tokenContext);
 
         if (!apiCompanies?.companies?.length) {
           return createTextResponse('事業所情報を取得できませんでした。');
