@@ -200,22 +200,10 @@ export async function startHttpServer(): Promise<void> {
       | undefined;
     const userId =
       typeof authExtra?.extra?.userId === 'string' ? authExtra.extra.userId : undefined;
-    let companyId: string | undefined;
-    if (userId && authExtra?.extra?.tokenStore) {
-      try {
-        const store = authExtra.extra.tokenStore as {
-          getCurrentCompanyId(u: string): Promise<unknown>;
-        };
-        companyId = String(await store.getCurrentCompanyId(userId));
-      } catch {
-        /* ignore - company_id is best-effort */
-      }
-    }
     logger.info(
       {
         source_ip: sourceIp,
         session_id: sessionId,
-        company_id: companyId,
         user_id: userId,
         method: req.method,
         path: req.path,
@@ -246,27 +234,15 @@ export async function startHttpServer(): Promise<void> {
     await transport.handleRequest(req, res);
   }
 
-  async function extractRequestContext(req: Request): Promise<Record<string, string | undefined>> {
+  function extractRequestContext(req: Request): Record<string, string | undefined> {
     const authExtra = (req as unknown as Record<string, unknown>).auth as
       | { extra?: Record<string, unknown> }
       | undefined;
     const userId =
       typeof authExtra?.extra?.userId === 'string' ? authExtra.extra.userId : undefined;
-    let companyId: string | undefined;
-    if (userId && authExtra?.extra?.tokenStore) {
-      try {
-        const store = authExtra.extra.tokenStore as {
-          getCurrentCompanyId(u: string): Promise<unknown>;
-        };
-        companyId = String(await store.getCurrentCompanyId(userId));
-      } catch {
-        /* best-effort */
-      }
-    }
     return {
       source_ip: getClientIp(req),
       session_id: req.headers['mcp-session-id'] as string | undefined,
-      company_id: companyId,
       user_id: userId,
       method: req.method,
       path: req.path,
@@ -274,8 +250,8 @@ export async function startHttpServer(): Promise<void> {
   }
 
   function mcpHandler(req: Request, res: Response): void {
-    handleMcpRequest(req, res).catch(async (err: unknown) => {
-      const ctx = await extractRequestContext(req).catch(() => ({}));
+    handleMcpRequest(req, res).catch((err: unknown) => {
+      const ctx = extractRequestContext(req);
       logger.error({ err, requestId: req.requestId, ...ctx }, 'MCP request error');
       if (!res.headersSent) {
         res.status(500).json({ error: 'Internal server error' });
@@ -290,7 +266,7 @@ export async function startHttpServer(): Promise<void> {
 
   // Express error handler (must be after all routes)
   app.use((err: unknown, req: Request, res: Response, next: (err?: unknown) => void) => {
-    // Send HTTP response synchronously, then log with async context
+    const ctx = extractRequestContext(req);
     if (err instanceof RedisUnavailableError) {
       if (!res.headersSent) {
         res.status(503).json({
@@ -298,11 +274,7 @@ export async function startHttpServer(): Promise<void> {
           message: 'Storage backend temporarily unavailable',
         });
       }
-      extractRequestContext(req)
-        .catch(() => ({}))
-        .then((ctx) => {
-          logger.error({ err, requestId: req.requestId, ...ctx }, 'Redis unavailable');
-        });
+      logger.error({ err, requestId: req.requestId, ...ctx }, 'Redis unavailable');
       return;
     }
     if (res.headersSent) {
@@ -310,11 +282,7 @@ export async function startHttpServer(): Promise<void> {
       return;
     }
     res.status(500).json({ error: 'Internal server error' });
-    extractRequestContext(req)
-      .catch(() => ({}))
-      .then((ctx) => {
-        logger.error({ err, requestId: req.requestId, ...ctx }, 'Unhandled middleware error');
-      });
+    logger.error({ err, requestId: req.requestId, ...ctx }, 'Unhandled middleware error');
   });
 
   const server = app.listen(remoteConfig.port, () => {
