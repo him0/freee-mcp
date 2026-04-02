@@ -37,7 +37,7 @@ export async function startHttpServer(): Promise<void> {
   const remoteConfig = loadRemoteServerConfig();
   initRemoteConfig(remoteConfig);
 
-  const logger = initLogger(remoteConfig.logLevel);
+  const logger = initLogger({ level: remoteConfig.logLevel, transportMode: 'remote' });
 
   const redis = getRedisClient(remoteConfig.redisUrl);
 

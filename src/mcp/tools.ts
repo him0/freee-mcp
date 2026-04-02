@@ -10,11 +10,22 @@ import {
 } from '../auth/server.js';
 import { getConfig } from '../config.js';
 import { AUTH_TIMEOUT_MS, PACKAGE_VERSION } from '../constants.js';
+import { createChildLogger, getLogger } from '../server/logger.js';
 import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
 export function addAuthenticationTools(server: McpServer, options?: { remote?: boolean }): void {
+  const logs = {
+    currentUser: createChildLogger({ component: 'tool', tool: 'freee_current_user' }),
+    authenticate: createChildLogger({ component: 'tool', tool: 'freee_authenticate' }),
+    authStatus: createChildLogger({ component: 'tool', tool: 'freee_auth_status' }),
+    clearAuth: createChildLogger({ component: 'tool', tool: 'freee_clear_auth' }),
+    setCompany: createChildLogger({ component: 'tool', tool: 'freee_set_current_company' }),
+    getCompany: createChildLogger({ component: 'tool', tool: 'freee_get_current_company' }),
+    listCompanies: createChildLogger({ component: 'tool', tool: 'freee_list_companies' }),
+  };
+
   server.registerTool(
     'freee_current_user',
     {
@@ -23,6 +34,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true },
     },
     async (extra: AuthExtra) => {
+      const log = logs.currentUser();
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const companyId = await tokenStore.getCurrentCompanyId(userId);
@@ -41,6 +53,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           }),
         ]);
 
+        log.info({ company_id: companyId }, 'Tool call completed');
         return createTextResponse(
           `現在のユーザー情報:\n` +
             `会社ID: ${companyId}\n` +
@@ -48,6 +61,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
             `ユーザー詳細:\n${JSON.stringify(userInfo, null, 2)}`,
         );
       } catch (error) {
+        log.error({ err: error }, 'Tool call failed');
         return createTextResponse(`ユーザー情報の取得に失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -62,6 +76,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         annotations: { destructiveHint: false },
       },
       async () => {
+        const log = logs.authenticate();
         try {
           const { clientId, clientSecret } = getConfig().freee;
 
@@ -88,12 +103,13 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
 
           registerAuthenticationRequest(state, codeVerifier);
 
-          console.error(`Authentication URL: ${authUrl}`);
+          log.info('Authentication URL generated');
 
           return createTextResponse(
             `認証URL: ${authUrl}\n\nブラウザで開いて認証してください。5分でタイムアウトします。`,
           );
         } catch (error) {
+          log.error({ err: error }, 'Tool call failed');
           return createTextResponse(`認証開始に失敗: ${formatErrorMessage(error)}`);
         }
       },
@@ -108,6 +124,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true },
     },
     async (extra: AuthExtra) => {
+      const log = logs.authStatus();
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const tokens = await tokenStore.loadTokens(userId);
@@ -118,11 +135,13 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         const isValid = Date.now() < tokens.expires_at;
         const expiryDate = new Date(tokens.expires_at).toLocaleString();
 
+        log.info('Tool call completed');
         return createTextResponse(
           `認証状態: ${isValid ? '有効' : '期限切れ'}\n有効期限: ${expiryDate}` +
             (isValid ? '' : '\n次回API使用時に自動更新されます。'),
         );
       } catch (error) {
+        log.error({ err: error }, 'Tool call failed');
         return createTextResponse(`認証状態の確認に失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -136,13 +155,16 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { idempotentHint: true, openWorldHint: false },
     },
     async (extra: AuthExtra) => {
+      const log = logs.clearAuth();
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         await tokenStore.clearTokens(userId);
+        log.info('Tool call completed');
         return createTextResponse(
           '認証情報をクリアしました。再認証するには freee_authenticate を使用。',
         );
       } catch (error) {
+        log.error({ err: error }, 'Tool call failed');
         return createTextResponse(`認証情報のクリアに失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -165,6 +187,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       args: { company_id: string; name?: string; description?: string },
       extra?: AuthExtra,
     ) => {
+      const log = logs.setCompany();
       try {
         const { company_id, name, description } = args;
         const { tokenStore, userId } = extractTokenContext(extra);
@@ -173,8 +196,10 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
 
         const companyInfo = await tokenStore.getCompanyInfo(userId, company_id);
 
+        log.info('Tool call completed');
         return createTextResponse(`事業所を設定: ${companyInfo?.name || company_id}`);
       } catch (error) {
+        log.error({ err: error }, 'Tool call failed');
         return createTextResponse(`事業所の設定に失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -188,17 +213,20 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (extra: AuthExtra) => {
+      const log = logs.getCompany();
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const companyId = await tokenStore.getCurrentCompanyId(userId);
         const companyInfo = await tokenStore.getCompanyInfo(userId, companyId);
 
+        log.info('Tool call completed');
         if (!companyInfo) {
           return createTextResponse(`事業所ID: ${companyId} (詳細情報なし)`);
         }
 
         return createTextResponse(`事業所: ${companyInfo.name} (ID: ${companyInfo.id})`);
       } catch (error) {
+        log.error({ err: error }, 'Tool call failed');
         return createTextResponse(`事業所情報の取得に失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -212,6 +240,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true },
     },
     async (extra: AuthExtra) => {
+      const log = logs.listCompanies();
       try {
         const { tokenStore, userId } = extractTokenContext(extra);
         const CompanyResponseSchema = z.object({
@@ -257,8 +286,10 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           })
           .join('\n');
 
+        log.info('Tool call completed');
         return createTextResponse(`事業所一覧:\n${companyList}`);
       } catch (error) {
+        log.error({ err: error }, 'Tool call failed');
         return createTextResponse(`事業所一覧の取得に失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -272,6 +303,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async () => {
+      getLogger().info({ component: 'tool', tool: 'freee_server_info' }, 'Tool call completed');
       const transport = options?.remote ? 'remote' : 'stdio';
       return createTextResponse(
         `freee-mcp server info:\n- version: ${PACKAGE_VERSION}\n- transport: ${transport}`,

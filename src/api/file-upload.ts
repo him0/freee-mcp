@@ -4,7 +4,10 @@ import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
 import { getConfig } from '../config.js';
 import { USER_AGENT } from '../constants.js';
+import { createChildLogger } from '../server/logger.js';
 import type { TokenContext } from '../storage/context.js';
+
+const getLog = createChildLogger({ component: 'api-client' });
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
 const MAX_FILE_SIZE_BYTES = 64 * 1024 * 1024; // 64MB
@@ -39,6 +42,10 @@ export async function uploadReceipt(
   options?: UploadReceiptOptions,
   tokenContext?: TokenContext,
 ): Promise<unknown> {
+  const log = getLog();
+  const startTime = Date.now();
+  const safePath = '/api/:id/receipts';
+  const userId = tokenContext?.userId ?? 'local';
   const resolvedPath = path.resolve(filePath);
 
   // Read file
@@ -107,16 +114,31 @@ export async function uploadReceipt(
   const apiUrl = getConfig().freee.apiUrl;
   const url = `${apiUrl}/api/1/receipts`;
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'User-Agent': USER_AGENT,
-    },
-    body: formData,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': USER_AGENT,
+      },
+      body: formData,
+    });
+  } catch (fetchError) {
+    const errorType =
+      fetchError instanceof Error && fetchError.name === 'TimeoutError' ? 'timeout' : 'network_error';
+    log.error(
+      { method: 'POST', path: safePath, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, file_size: buffer.byteLength, error_type: errorType, err: fetchError },
+      'File upload network error',
+    );
+    throw fetchError;
+  }
 
   if (response.status === 401) {
+    log.warn(
+      { method: 'POST', path: safePath, status: 401, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'auth_error' },
+      'File upload failed',
+    );
     const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(
       `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
@@ -126,6 +148,10 @@ export async function uploadReceipt(
   }
 
   if (response.status === 403) {
+    log.warn(
+      { method: 'POST', path: safePath, status: 403, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'forbidden' },
+      'File upload failed',
+    );
     const errorInfo = await formatResponseErrorInfo(response);
     throw new Error(
       `アクセス拒否 (403): ${errorInfo}\n` +
@@ -135,14 +161,28 @@ export async function uploadReceipt(
   }
 
   if (!response.ok) {
+    const logLevel = response.status >= 500 ? 'error' : 'warn';
+    log[logLevel](
+      { method: 'POST', path: safePath, status: response.status, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'http_error' },
+      'File upload failed',
+    );
     const errorMessage = await formatApiErrorMessage(response, response.status);
     throw new Error(errorMessage);
   }
 
   const text = await response.text();
   try {
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    log.info(
+      { method: 'POST', path: safePath, status: response.status, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, file_size: buffer.byteLength },
+      'File upload completed',
+    );
+    return parsed;
   } catch {
+    log.error(
+      { method: 'POST', path: safePath, status: response.status, error_type: 'json_parse_error' },
+      'Failed to parse upload response',
+    );
     throw new Error(
       `Failed to parse API response as JSON. Status: ${response.status}, Body preview: ${text.slice(0, 200)}`,
     );

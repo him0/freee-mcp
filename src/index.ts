@@ -1,5 +1,6 @@
 import { configure } from './cli.js';
 import { createAndStartServer } from './mcp/handlers.js';
+import { getLogger, initLogger } from './server/logger.js';
 
 const main = async (): Promise<void> => {
   const args = process.argv.slice(2);
@@ -19,11 +20,12 @@ const main = async (): Promise<void> => {
     process.exit(1);
   }
 
-  console.error('Starting freee MCP server');
+  initLogger({ transportMode: 'stdio' });
+  getLogger().info('Starting freee MCP server');
   await createAndStartServer();
 };
 
 main().catch((error) => {
-  console.error('Fatal error:', error);
+  getLogger().fatal({ err: error }, 'Fatal error');
   process.exit(1);
 });

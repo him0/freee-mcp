@@ -1,11 +1,14 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { uploadReceipt } from '../api/file-upload.js';
+import { createChildLogger } from '../server/logger.js';
 import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
 export function addFileUploadTool(server: McpServer): void {
+  const getLog = createChildLogger({ component: 'tool', tool: 'freee_file_upload' });
+
   server.registerTool(
     'freee_file_upload',
     {
@@ -42,6 +45,7 @@ export function addFileUploadTool(server: McpServer): void {
       },
       extra?: AuthExtra,
     ) => {
+      const log = getLog();
       try {
         const { file_path, ...options } = args;
         const { tokenStore, userId } = extractTokenContext(extra);
@@ -59,8 +63,10 @@ export function addFileUploadTool(server: McpServer): void {
         }
         lines.push('', JSON.stringify(result, null, 2));
 
+        log.info('Tool call completed');
         return createTextResponse(lines.join('\n'));
       } catch (error) {
+        log.error({ err: error }, 'Tool call failed');
         return createTextResponse(`ファイルアップロードに失敗: ${formatErrorMessage(error)}`);
       }
     },
