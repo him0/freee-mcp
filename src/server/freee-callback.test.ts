@@ -63,6 +63,17 @@ const freeeUserResponse = {
   user: { id: 42, email: 'test@example.com' },
 };
 
+const freeeCompaniesResponse = {
+  companies: [
+    { id: 12345, name: 'テスト事業所' },
+    { id: 67890, name: '別の事業所' },
+  ],
+};
+
+const freeeHrUsersMeResponse = {
+  companies: [{ id: 11111, name: 'HR事業所' }],
+};
+
 describe('createFreeeCallbackHandler', () => {
   let originalFetch: typeof globalThis.fetch;
 
@@ -74,7 +85,7 @@ describe('createFreeeCallbackHandler', () => {
     globalThis.fetch = originalFetch;
   });
 
-  it('completes full OAuth callback flow', async () => {
+  it('completes full OAuth callback flow and sets default company', async () => {
     globalThis.fetch = vi
       .fn()
       .mockResolvedValueOnce({
@@ -84,6 +95,10 @@ describe('createFreeeCallbackHandler', () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => freeeUserResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeCompaniesResponse,
       }) as unknown as typeof fetch;
 
     const oauthStore = createMockOAuthStore();
@@ -110,8 +125,8 @@ describe('createFreeeCallbackHandler', () => {
     // Verify session consumed
     expect(oauthStore.consumeSession).toHaveBeenCalledWith('session-id');
 
-    // Verify freee token exchange
-    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    // Verify freee token exchange + /users/me + /companies
+    expect(globalThis.fetch).toHaveBeenCalledTimes(3);
 
     // Verify tokens saved to Redis
     expect(tokenStore.saveTokens).toHaveBeenCalledWith(
@@ -121,6 +136,9 @@ describe('createFreeeCallbackHandler', () => {
         refresh_token: 'freee-refresh-token',
       }),
     );
+
+    // Verify default company set to first company
+    expect(tokenStore.setCurrentCompany).toHaveBeenCalledWith('42', '12345', 'テスト事業所');
 
     // Verify MCP auth code saved
     expect(oauthStore.saveAuthCode).toHaveBeenCalledWith(
@@ -138,6 +156,135 @@ describe('createFreeeCallbackHandler', () => {
     expect(parsed.origin + parsed.pathname).toBe('https://claude.ai/api/mcp/auth_callback');
     expect(parsed.searchParams.get('code')).toBeTruthy();
     expect(parsed.searchParams.get('state')).toBe('original-state-xyz');
+  });
+
+  it('skips default company setup when company is already set', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeTokenResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeUserResponse,
+      }) as unknown as typeof fetch;
+
+    const oauthStore = createMockOAuthStore();
+    const tokenStore = createMockTokenStore();
+    (tokenStore.getCurrentCompanyId as ReturnType<typeof vi.fn>).mockResolvedValue('99999');
+
+    const handler = createFreeeCallbackHandler({
+      oauthStore,
+      tokenStore,
+      freeeClientId: 'freee-client-id',
+      freeeClientSecret: 'freee-client-secret',
+      freeeTokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
+      freeeScope: 'read write',
+      callbackBaseUrl: 'https://mcp.example.com',
+    });
+
+    const { req, res } = createMockReqRes({ code: 'freee-auth-code', state: 'session-id' });
+    handler(req, res);
+
+    await vi.waitFor(() => {
+      expect(res.redirect).toHaveBeenCalled();
+    });
+
+    // Should not fetch companies or set company
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    expect(tokenStore.setCurrentCompany).not.toHaveBeenCalled();
+  });
+
+  it('falls back to HR API when accounting companies returns empty', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeTokenResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeUserResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ companies: [] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeHrUsersMeResponse,
+      }) as unknown as typeof fetch;
+
+    const oauthStore = createMockOAuthStore();
+    const tokenStore = createMockTokenStore();
+
+    const handler = createFreeeCallbackHandler({
+      oauthStore,
+      tokenStore,
+      freeeClientId: 'freee-client-id',
+      freeeClientSecret: 'freee-client-secret',
+      freeeTokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
+      freeeScope: 'read write',
+      callbackBaseUrl: 'https://mcp.example.com',
+    });
+
+    const { req, res } = createMockReqRes({ code: 'freee-auth-code', state: 'session-id' });
+    handler(req, res);
+
+    await vi.waitFor(() => {
+      expect(res.redirect).toHaveBeenCalled();
+    });
+
+    // Should fall back to HR API and set the HR company
+    expect(tokenStore.setCurrentCompany).toHaveBeenCalledWith('42', '11111', 'HR事業所');
+  });
+
+  it('continues OAuth flow even when both companies APIs fail', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeTokenResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeUserResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      }) as unknown as typeof fetch;
+
+    const oauthStore = createMockOAuthStore();
+    const tokenStore = createMockTokenStore();
+
+    const handler = createFreeeCallbackHandler({
+      oauthStore,
+      tokenStore,
+      freeeClientId: 'freee-client-id',
+      freeeClientSecret: 'freee-client-secret',
+      freeeTokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
+      freeeScope: 'read write',
+      callbackBaseUrl: 'https://mcp.example.com',
+    });
+
+    const { req, res } = createMockReqRes({ code: 'freee-auth-code', state: 'session-id' });
+    handler(req, res);
+
+    await vi.waitFor(() => {
+      expect(res.redirect).toHaveBeenCalled();
+    });
+
+    // OAuth flow should still complete successfully
+    expect(tokenStore.setCurrentCompany).not.toHaveBeenCalled();
+    const redirectUrl = (res.redirect as ReturnType<typeof vi.fn>).mock.calls[0][1] as string;
+    const parsed = new URL(redirectUrl);
+    expect(parsed.searchParams.get('code')).toBeTruthy();
   });
 
   it('returns 400 when code or state is missing', async () => {
@@ -323,6 +470,10 @@ describe('createFreeeCallbackHandler', () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => freeeUserResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeCompaniesResponse,
       });
 
     const handler = createFreeeCallbackHandler({

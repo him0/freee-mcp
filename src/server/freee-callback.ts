@@ -90,6 +90,90 @@ async function fetchFreeeUserId(accessToken: string, apiUrl: string): Promise<st
   return String(userId);
 }
 
+async function fetchFirstCompany(
+  accessToken: string,
+  apiUrl: string,
+): Promise<{ id: number; name?: string | null } | null> {
+  // Try accounting API first
+  try {
+    const response = await fetch(`${apiUrl}/api/1/companies`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': USER_AGENT,
+      },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_USERINFO_MS),
+    });
+
+    if (response.ok) {
+      const data = (await response.json()) as {
+        companies?: Array<{ id: number; name?: string | null }>;
+      };
+      const first = data.companies?.[0];
+      if (first) {
+        return first;
+      }
+    }
+  } catch {
+    // Fall through to HR API
+  }
+
+  // Fall back to HR API (for HR-only users)
+  try {
+    const response = await fetch(`${apiUrl}/hr/api/v1/users/me`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': USER_AGENT,
+      },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_USERINFO_MS),
+    });
+
+    if (response.ok) {
+      const data = (await response.json()) as {
+        companies?: Array<{ id: number; name?: string | null }>;
+      };
+      const first = data.companies?.[0];
+      if (first) {
+        return first;
+      }
+    }
+  } catch {
+    // Both APIs failed
+  }
+
+  return null;
+}
+
+async function setDefaultCompanyIfNeeded(
+  accessToken: string,
+  apiUrl: string,
+  userId: string,
+  tokenStore: TokenStore,
+): Promise<void> {
+  const currentCompanyId = await tokenStore.getCurrentCompanyId(userId);
+  if (currentCompanyId !== '0') {
+    return;
+  }
+
+  try {
+    const firstCompany = await fetchFirstCompany(accessToken, apiUrl);
+    if (!firstCompany) {
+      return;
+    }
+
+    await tokenStore.setCurrentCompany(
+      userId,
+      String(firstCompany.id),
+      firstCompany.name ?? undefined,
+    );
+    getLogger().info(
+      { userId, companyId: firstCompany.id, companyName: firstCompany.name },
+      'Default company set automatically',
+    );
+  } catch (err) {
+    getLogger().warn({ err }, 'Failed to set default company (non-critical)');
+  }
+}
+
 export function createFreeeCallbackHandler(
   deps: FreeeCallbackDeps,
 ): (req: Request, res: Response) => void {
@@ -196,6 +280,8 @@ async function handleCallback(
       { scope: deps.freeeScope },
     );
     await deps.tokenStore.saveTokens(userId, tokenData);
+
+    await setDefaultCompanyIfNeeded(freeeTokens.accessToken, apiUrl, userId, deps.tokenStore);
 
     const mcpCode = randomUUID();
     await deps.oauthStore.saveAuthCode(mcpCode, {
