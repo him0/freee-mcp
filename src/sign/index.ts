@@ -1,6 +1,5 @@
-import { configure } from './cli.js';
-import { createAndStartServer } from './mcp/handlers.js';
-import { getLogger, initLogger } from './server/logger.js';
+import { signConfigure } from './cli/index.js';
+import { createAndStartSignServer } from './handlers.js';
 
 const main = async (): Promise<void> => {
   const args = process.argv.slice(2);
@@ -8,24 +7,23 @@ const main = async (): Promise<void> => {
 
   if (subcommand === 'configure') {
     const force = args.includes('--force');
-    await configure({ force });
+    await signConfigure({ force });
     return;
   }
 
   if (subcommand && subcommand !== 'client') {
     console.error(`Unknown subcommand: ${subcommand}`);
-    console.error('Usage: freee-mcp [configure] [--force]');
+    console.error('Usage: freee-sign-mcp [configure] [--force]');
     console.error('  configure   - Interactive configuration setup');
     console.error('  --force     - 保存済みのログイン情報をリセットして再設定');
     process.exit(1);
   }
 
-  initLogger({ transportMode: 'stdio' });
-  getLogger().info('Starting freee MCP server');
-  await createAndStartServer();
+  console.error('Starting freee Sign MCP server');
+  await createAndStartSignServer();
 };
 
 main().catch((error) => {
-  getLogger().fatal({ err: error }, 'Fatal error');
+  console.error('Fatal error:', error);
   process.exit(1);
 });
