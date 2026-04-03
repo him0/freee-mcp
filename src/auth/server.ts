@@ -134,7 +134,8 @@ class CallbackServer {
     return this.server !== null;
   }
 
-  async start(): Promise<void> {
+  // portOverride: サインなど freee の loadConfig() に依存しないモジュールが独自のポートを指定するため
+  async start(portOverride?: number): Promise<void> {
     if (this.server) {
       console.error(
         'OAuth callback server is already running. If authentication is not working, try restarting the MCP server.',
@@ -142,7 +143,7 @@ class CallbackServer {
       return;
     }
 
-    const port = getConfig().oauth.callbackPort;
+    const port = portOverride ?? getConfig().oauth.callbackPort;
     const isAvailable = await this.checkPortAvailable(port);
 
     if (!isAvailable) {
@@ -327,12 +328,12 @@ export function getActualRedirectUri(): string {
   return defaultCallbackServer.getRedirectUri();
 }
 
-export async function startCallbackServer(): Promise<void> {
-  return defaultCallbackServer.start();
+export async function startCallbackServer(port?: number): Promise<void> {
+  return defaultCallbackServer.start(port);
 }
 
-export async function startCallbackServerWithAutoStop(timeoutMs: number): Promise<void> {
-  await defaultCallbackServer.start();
+export async function startCallbackServerWithAutoStop(timeoutMs: number, port?: number): Promise<void> {
+  await defaultCallbackServer.start(port);
   defaultCallbackServer.scheduleAutoStop(timeoutMs);
 }
 
