@@ -1,5 +1,41 @@
 # freee-mcp
 
+## 0.18.0
+
+### Minor Changes
+
+- [`03c661f`](https://github.com/freee/freee-mcp/commit/03c661fa24d412d8055c98a0f2940eb3ae2f852f): OpenTelemetry 分散トレーシングサポートを追加 ([#357](https://github.com/freee/freee-mcp/pull/357))
+
+  - OTEL_ENABLED=true で有効化、globalThis.fetch パッチで自動計測
+  - Express リクエスト/Redis 操作の span を生成
+  - W3C traceparent ヘッダー伝搬
+  - ParentBasedSampler によるサンプリングレート制御
+  - Jaeger を docker compose で利用可能
+
+- [`d13c0c5`](https://github.com/freee/freee-mcp/commit/d13c0c529868dccdd3dde8ea31e371f7348c2236): ロガーの強化: API リクエスト・MCP ツール実行の構造化ログを追加 ([#355](https://github.com/freee/freee-mcp/pull/355))
+
+  - API リクエスト成功時に method/path/status/duration_ms/user_id/company_id をログ出力
+  - MCP ツール呼び出し時に tool 名/service/path/duration_ms/user_id をログ出力
+  - エラー時の HTTP ステータスコードとエラー種別(error_type)を構造化ログに追加
+  - sanitizePath()によりクエリパラメータ値・ユーザー入力データはログに記録しない
+
+- [`caa2db2`](https://github.com/freee/freee-mcp/commit/caa2db29e583cdebf4bf3455256de11a7ffafa16): OpenTelemetry メトリクス計測を追加（HTTP リクエスト duration/エラー、MCP ツール duration/エラー）。開発環境に OTel Collector + Prometheus + Grafana を追加。 ([#359](https://github.com/freee/freee-mcp/pull/359))
+- [`6879a2a`](https://github.com/freee/freee-mcp/commit/6879a2a0f8b2cb27d802489cdf3c0d4561c180e0): MCP ツール実行に OpenTelemetry span を追加（`mcp.tool {toolName}` として Jaeger で可視化） ([#358](https://github.com/freee/freee-mcp/pull/358))
+
+### Patch Changes
+
+- [`b267666`](https://github.com/freee/freee-mcp/commit/b26766694c4e2f4ded99697b850b29b3443189ec): Ctrl+C 終了時に ioredis の"Connection is closed"エラーが出る問題を修正。 ([#354](https://github.com/freee/freee-mcp/pull/354))
+
+  - シャットダウン関数に再入防止フラグを追加し、SIGINT が複数回発火しても二重実行を防止
+  - シャットダウン順序を変更：HTTP サーバーを先にクローズしてから Redis をクローズすることで、処理中リクエストが閉じた接続を参照しないよう対応
+  - `closeRedisClient` に quit 失敗時の disconnect フォールバックを追加
+
+- [`4228b9e`](https://github.com/freee/freee-mcp/commit/4228b9e1d0eaa48b4ffe35c4fe8619c7c9a835af): TokenContext に companyId キャッシュを追加し Redis 重複呼び出しを最適化 ([#356](https://github.com/freee/freee-mcp/pull/356))
+
+  - resolveCompanyId() ヘルパーで companyId を TokenContext にキャッシュ
+  - 同一リクエスト内での重複 Redis GET 呼び出しを排除
+  - アクセスログから company_id Redis 参照を削除（ツールログで既に記録済み）
+
 ## 0.17.1
 
 ### Patch Changes
