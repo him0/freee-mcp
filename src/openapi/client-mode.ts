@@ -4,6 +4,7 @@ import { isBinaryFileResponse, makeApiRequest } from '../api/client.js';
 import { createChildLogger, getLogger, sanitizePath } from '../server/logger.js';
 import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
+import { registerTracedTool, setToolAttributes } from '../telemetry/tool-tracer.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 import { type ApiType, listAllAvailablePaths, validatePathForService } from './schema-loader.js';
 
@@ -39,6 +40,7 @@ function createMethodTool(method: string) {
 
     try {
       const { service, path, query, body } = args;
+      setToolAttributes({ 'mcp.tool.service': service, 'mcp.tool.path': safePath, 'mcp.tool.method': method });
 
       const validation = validatePathForService(method, path, service);
       if (!validation.isValid) {
@@ -116,7 +118,7 @@ function createMethodTool(method: string) {
  */
 export function generateClientModeTool(server: McpServer): void {
   // GET tool
-  server.registerTool(
+  registerTracedTool(server,
     'freee_api_get',
     {
       title: 'freee API GET リクエスト',
@@ -135,7 +137,7 @@ export function generateClientModeTool(server: McpServer): void {
   );
 
   // POST tool
-  server.registerTool(
+  registerTracedTool(server,
     'freee_api_post',
     {
       title: 'freee API POST リクエスト',
@@ -155,7 +157,7 @@ export function generateClientModeTool(server: McpServer): void {
   );
 
   // PUT tool
-  server.registerTool(
+  registerTracedTool(server,
     'freee_api_put',
     {
       title: 'freee API PUT リクエスト',
@@ -175,7 +177,7 @@ export function generateClientModeTool(server: McpServer): void {
   );
 
   // DELETE tool
-  server.registerTool(
+  registerTracedTool(server,
     'freee_api_delete',
     {
       title: 'freee API DELETE リクエスト',
@@ -194,7 +196,7 @@ export function generateClientModeTool(server: McpServer): void {
   );
 
   // PATCH tool
-  server.registerTool(
+  registerTracedTool(server,
     'freee_api_patch',
     {
       title: 'freee API PATCH リクエスト',
@@ -214,7 +216,7 @@ export function generateClientModeTool(server: McpServer): void {
   );
 
   // Add helper tool to list available paths
-  server.registerTool(
+  registerTracedTool(server,
     'freee_api_list_paths',
     {
       title: 'API エンドポイント一覧',

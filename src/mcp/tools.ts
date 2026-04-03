@@ -12,6 +12,7 @@ import { getConfig } from '../config.js';
 import { AUTH_TIMEOUT_MS, PACKAGE_VERSION } from '../constants.js';
 import { createChildLogger, getLogger } from '../server/logger.js';
 import type { AuthExtra } from '../storage/context.js';
+import { registerTracedTool } from '../telemetry/tool-tracer.js';
 import { extractTokenContext, resolveCompanyId } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
@@ -26,7 +27,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     listCompanies: createChildLogger({ component: 'tool', tool: 'freee_list_companies' }),
   };
 
-  server.registerTool(
+  registerTracedTool(server,
     'freee_current_user',
     {
       title: '現在のユーザー情報',
@@ -65,7 +66,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
   );
 
   if (!options?.remote) {
-    server.registerTool(
+    registerTracedTool(server,
       'freee_authenticate',
       {
         title: 'OAuth認証',
@@ -113,7 +114,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     );
   }
 
-  server.registerTool(
+  registerTracedTool(server,
     'freee_auth_status',
     {
       title: '認証状態確認',
@@ -144,7 +145,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     },
   );
 
-  server.registerTool(
+  registerTracedTool(server,
     'freee_clear_auth',
     {
       title: '認証情報クリア',
@@ -168,7 +169,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
   );
 
   // Company management tools
-  server.registerTool(
+  registerTracedTool(server,
     'freee_set_current_company',
     {
       title: '事業所設定',
@@ -202,7 +203,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     },
   );
 
-  server.registerTool(
+  registerTracedTool(server,
     'freee_get_current_company',
     {
       title: '現在の事業所情報',
@@ -229,7 +230,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     },
   );
 
-  server.registerTool(
+  registerTracedTool(server,
     'freee_list_companies',
     {
       title: '事業所一覧',
@@ -292,7 +293,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
     },
   );
 
-  server.registerTool(
+  registerTracedTool(server,
     'freee_server_info',
     {
       title: 'サーバー情報',
