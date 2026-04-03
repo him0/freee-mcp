@@ -1,8 +1,10 @@
-import { SpanKind, SpanStatusCode, context, propagation, trace } from '@opentelemetry/api';
+import { SpanKind, SpanStatusCode, context, metrics, propagation, trace } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { resourceFromAttributes } from '@opentelemetry/resources';
+import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import {
   AlwaysOnSampler,
   BasicTracerProvider,
@@ -141,6 +143,20 @@ export function initTelemetry(serviceVersion: string): OtelHandle | null {
   propagation.setGlobalPropagator(new W3CTraceContextPropagator());
   trace.setGlobalTracerProvider(provider);
 
+  // Initialize MeterProvider for metrics export
+  const metricsExporter = process.env.OTEL_METRICS_EXPORTER === 'none'
+    ? undefined
+    : new OTLPMetricExporter({ url: `${endpoint}/v1/metrics` });
+
+  let meterProvider: MeterProvider | undefined;
+  if (metricsExporter) {
+    meterProvider = new MeterProvider({
+      resource,
+      readers: [new PeriodicExportingMetricReader({ exporter: metricsExporter })],
+    });
+    metrics.setGlobalMeterProvider(meterProvider);
+  }
+
   // Patch globalThis.fetch to auto-instrument outgoing HTTP requests
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (input: RequestInfo | URL, init?: RequestInit) =>
@@ -151,6 +167,9 @@ export function initTelemetry(serviceVersion: string): OtelHandle | null {
   return {
     shutdown: async () => {
       await provider.shutdown();
+      if (meterProvider) {
+        await meterProvider.shutdown();
+      }
     },
   };
 }

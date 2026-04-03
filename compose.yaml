@@ -1,6 +1,6 @@
 # Development: docker compose up redis
-# Production:  docker compose up
-#   with tracing: docker compose up redis jaeger
+# Observability: docker compose up redis otel-collector jaeger prometheus grafana
+# Production:   docker compose up
 services:
   freee-mcp:
     build: .
@@ -10,7 +10,7 @@ services:
     environment:
       OTEL_ENABLED: "true"
       OTEL_SERVICE_NAME: freee-mcp
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       redis:
         condition: service_healthy
@@ -34,14 +34,47 @@ services:
       timeout: 3s
       retries: 3
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    ports:
+      - "4318:4318"
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    restart: unless-stopped
+
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
       - "16686:16686"
-      - "4318:4318"
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=7d"
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+
 volumes:
   redis-data:
+  prometheus-data:
+  grafana-data:
