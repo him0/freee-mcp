@@ -86,7 +86,7 @@ async function performSignOAuthFlow(credentials: SignCredentials): Promise<void>
   }
 }
 
-const SIGN_MCP_SERVER_NAME = 'freee-sign';
+const SIGN_MCP_SERVER_NAME = 'freee-sign-mcp';
 
 async function addSignMcpConfig(target: McpTarget): Promise<void> {
   await addMcpServerConfig(target, SIGN_MCP_SERVER_NAME, {

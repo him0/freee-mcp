@@ -207,7 +207,7 @@ npx freee-sign-mcp configure
 ```json
 {
   "mcpServers": {
-    "freee-sign": {
+    "freee-sign-mcp": {
       "command": "npx",
       "args": ["freee-sign-mcp"]
     }
