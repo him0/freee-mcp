@@ -3,13 +3,14 @@ import { z } from 'zod';
 import { uploadReceipt } from '../api/file-upload.js';
 import { createChildLogger } from '../server/logger.js';
 import type { AuthExtra } from '../storage/context.js';
+import { registerTracedTool } from '../telemetry/tool-tracer.js';
 import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
 export function addFileUploadTool(server: McpServer): void {
   const getLog = createChildLogger({ component: 'tool', tool: 'freee_file_upload' });
 
-  server.registerTool(
+  registerTracedTool(server,
     'freee_file_upload',
     {
       title: 'ファイルアップロード',
