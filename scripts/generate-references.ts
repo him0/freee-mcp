@@ -17,6 +17,7 @@ const SCRIPT_DIR = __dirname;
 const PROJECT_ROOT = join(SCRIPT_DIR, "..");
 const OPENAPI_DIR = join(PROJECT_ROOT, "openapi");
 const OUTPUT_DIR = join(PROJECT_ROOT, "skills", "freee-api-skill", "references");
+const SIGN_OUTPUT_DIR = join(PROJECT_ROOT, "skills", "freee-api-skill", "sign-references");
 const MAPPINGS_FILE = join(OPENAPI_DIR, "tag-mappings.json");
 
 // Type definitions
@@ -433,9 +434,10 @@ async function generateReference(
   schema: OpenAPISchema,
   tagName: string,
   englishName: string,
-  prefix: string
+  prefix: string,
+  outputDir: string
 ): Promise<void> {
-  const outputFile = join(OUTPUT_DIR, `${prefix}-${englishName}.md`);
+  const outputFile = join(outputDir, `${prefix}-${englishName}.md`);
 
   // Get tag description from schema
   const tag = schema.tags?.find((t) => t.name === tagName);
@@ -595,7 +597,8 @@ async function processApi(
   apiKey: string,
   schemaFile: string,
   prefix: string,
-  mappings: TagMappings
+  mappings: TagMappings,
+  outputDir: string
 ): Promise<void> {
   console.log("");
   console.log(`Processing ${apiKey}...`);
@@ -615,7 +618,7 @@ async function processApi(
   let count = 0;
   for (const [tagName, englishName] of Object.entries(tagMappings)) {
     if (englishName) {
-      await generateReference(apiKey, schema, tagName, englishName, prefix);
+      await generateReference(apiKey, schema, tagName, englishName, prefix, outputDir);
       count++;
     }
   }
@@ -625,12 +628,12 @@ async function processApi(
 
 // API configurations
 const API_CONFIGS = [
-  { apiKey: "accounting-api", schemaFile: join(OPENAPI_DIR, "accounting-api-schema.json"), prefix: "accounting" },
-  { apiKey: "hr-api", schemaFile: join(OPENAPI_DIR, "hr-api-schema.json"), prefix: "hr" },
-  { apiKey: "invoice-api", schemaFile: join(OPENAPI_DIR, "invoice-api-schema.json"), prefix: "invoice" },
-  { apiKey: "pm-api", schemaFile: join(OPENAPI_DIR, "pm-api-schema.json"), prefix: "pm" },
-  { apiKey: "sm-api", schemaFile: join(OPENAPI_DIR, "sm-api-schema.json"), prefix: "sm" },
-  { apiKey: "sign-api", schemaFile: join(OPENAPI_DIR, "sign-api-schema.json"), prefix: "sign" },
+  { apiKey: "accounting-api", schemaFile: join(OPENAPI_DIR, "accounting-api-schema.json"), prefix: "accounting", outputDir: OUTPUT_DIR },
+  { apiKey: "hr-api", schemaFile: join(OPENAPI_DIR, "hr-api-schema.json"), prefix: "hr", outputDir: OUTPUT_DIR },
+  { apiKey: "invoice-api", schemaFile: join(OPENAPI_DIR, "invoice-api-schema.json"), prefix: "invoice", outputDir: OUTPUT_DIR },
+  { apiKey: "pm-api", schemaFile: join(OPENAPI_DIR, "pm-api-schema.json"), prefix: "pm", outputDir: OUTPUT_DIR },
+  { apiKey: "sm-api", schemaFile: join(OPENAPI_DIR, "sm-api-schema.json"), prefix: "sm", outputDir: OUTPUT_DIR },
+  { apiKey: "sign-api", schemaFile: join(OPENAPI_DIR, "sign-api-schema.json"), prefix: "sign", outputDir: SIGN_OUTPUT_DIR },
 ];
 
 /**
@@ -662,12 +665,15 @@ async function main(): Promise<void> {
       console.log("Tag mappings are up to date.");
     }
 
-    // Create output directory
-    await mkdir(OUTPUT_DIR, { recursive: true });
+    // Create output directories
+    const outputDirs = [...new Set(API_CONFIGS.map((c) => c.outputDir))];
+    for (const dir of outputDirs) {
+      await mkdir(dir, { recursive: true });
+    }
 
     // Process each API
-    for (const { apiKey, schemaFile, prefix } of API_CONFIGS) {
-      await processApi(apiKey, schemaFile, prefix, mappings);
+    for (const { apiKey, schemaFile, prefix, outputDir } of API_CONFIGS) {
+      await processApi(apiKey, schemaFile, prefix, mappings, outputDir);
     }
 
     console.log("");
