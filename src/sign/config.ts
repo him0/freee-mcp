@@ -7,7 +7,7 @@ import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 export const SIGN_DEFAULT_CALLBACK_PORT = 54322;
 
 // Sign OAuth endpoints
-export const SIGN_API_URL = process.env.FREEE_SIGN_API_URL || 'https://ninja-sign.com';
+export const SIGN_API_URL = process.env.FREEE_SIGN_API_URL?.replace(/\/+$/, '') || 'https://ninja-sign.com';
 export const SIGN_AUTHORIZATION_ENDPOINT = `${SIGN_API_URL}/oauth/authorize`;
 export const SIGN_TOKEN_ENDPOINT = `${SIGN_API_URL}/oauth/token`;
 export const SIGN_OAUTH_SCOPE = 'all';

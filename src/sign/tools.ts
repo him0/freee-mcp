@@ -84,7 +84,8 @@ function addSignAuthTools(server: McpServer): void {
         }
 
         return createTextResponse(
-          'トークンの有効期限が切れています。sign_authenticate ツールで再認証してください。',
+          'トークンの有効期限が切れていますが、次回API使用時に自動更新されます。\n' +
+            '自動更新に失敗する場合は sign_authenticate ツールで再認証してください。',
         );
       } catch (error) {
         return createTextResponse(`認証状態の確認に失敗: ${formatErrorMessage(error)}`);

@@ -91,7 +91,7 @@ const SIGN_MCP_SERVER_NAME = 'freee-sign-mcp';
 async function addSignMcpConfig(target: McpTarget): Promise<void> {
   await addMcpServerConfig(target, SIGN_MCP_SERVER_NAME, {
     command: 'npx',
-    args: ['freee-sign-mcp'],
+    args: ['--package=freee-mcp', '--', 'freee-sign-mcp'],
   });
 }
 
