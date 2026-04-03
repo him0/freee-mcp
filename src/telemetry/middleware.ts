@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import { isOtelEnabled } from './init.js';
+import { getHttpRequestDuration, getHttpRequestErrorCount } from './metrics.js';
 
 /**
  * Express middleware that creates a server span for each incoming request.
@@ -30,10 +31,16 @@ export function createTracingMiddleware(): (req: Request, res: Response, next: N
         },
       },
       (span) => {
+        const startTime = performance.now();
         res.on('finish', () => {
+          const durationS = (performance.now() - startTime) / 1000;
+          const attrs = { method: req.method, path: req.path, status: String(res.statusCode) };
+
           span.setAttribute('http.response.status_code', res.statusCode);
+          getHttpRequestDuration().record(durationS, attrs);
           if (res.statusCode >= 500) {
             span.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${res.statusCode}` });
+            getHttpRequestErrorCount().add(1, attrs);
           }
           span.end();
         });

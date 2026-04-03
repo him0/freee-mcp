@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Attributes } from '@opentelemetry/api';
 import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
+import { getToolErrorCount, getToolInvocationDuration } from './metrics.js';
 
 /**
  * Drop-in replacement for server.registerTool() that wraps the handler
@@ -14,6 +15,7 @@ export function registerTracedTool(server: McpServer, name: string, config: any,
   // biome-ignore lint/suspicious/noExplicitAny: wrapping preserves original handler's arg types
   const tracedHandler = async (...handlerArgs: any[]) => {
     const tracer = trace.getTracer('freee-mcp');
+    const startTime = performance.now();
     return tracer.startActiveSpan(
       `mcp.tool ${name}`,
       {
@@ -23,9 +25,14 @@ export function registerTracedTool(server: McpServer, name: string, config: any,
       async (span) => {
         try {
           const result = await handler(...handlerArgs);
+          const durationS = (performance.now() - startTime) / 1000;
+          getToolInvocationDuration().record(durationS, { tool_name: name });
           span.end();
           return result;
         } catch (error) {
+          const durationS = (performance.now() - startTime) / 1000;
+          getToolInvocationDuration().record(durationS, { tool_name: name });
+          getToolErrorCount().add(1, { tool_name: name });
           span.recordException(error as Error);
           span.setStatus({ code: SpanStatusCode.ERROR, message: String(error) });
           span.end();
