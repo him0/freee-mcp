@@ -15,8 +15,8 @@ const main = async (): Promise<void> => {
   if (subcommand && subcommand !== 'client') {
     console.error(`Unknown subcommand: ${subcommand}`);
     console.error('Usage: freee-mcp [configure] [--force]');
-    console.error('  configure   - Interactive configuration setup');
-    console.error('  --force     - 保存済みのログイン情報をリセットして再設定');
+    console.error('  configure  - Interactive configuration setup');
+    console.error('  --force    - 保存済みのログイン情報をリセットして再設定');
     process.exit(1);
   }
 
