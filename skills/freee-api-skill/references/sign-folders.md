@@ -1,0 +1,37 @@
+# フォルダ
+
+## 概要
+
+
+
+## エンドポイント一覧
+
+### GET /v1/folders
+
+操作: フォルダ一覧の取得
+
+説明: フォルダ一覧を取得する
+
+### パラメータ
+
+| 名前 | 位置 | 必須 | 型 | 説明 |
+|------|------|------|-----|------|
+| page | query | いいえ | object |  |
+| per_page | query | いいえ | object |  |
+| parent_id | query | いいえ | object | 親フォルダID。IDで指定した親フォルダに格納されているフォルダ一覧を取得できる。 |
+| name | query | いいえ | string | フォルダ名に一致する一覧を取得できる（部分一致も可） |
+
+### レスポンス (200)
+
+取得成功
+
+ホームもレスポンスに含まれます。
+
+
+
+
+
+## 参考情報
+
+- freee API公式ドキュメント: https://developer.freee.co.jp/docs
+- OpenAPIスキーマ: [sign-api-schema.json](../../openapi/sign-api-schema.json)

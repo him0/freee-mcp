@@ -1,0 +1,619 @@
+{
+  "paths": {
+    "/oauth/authorize": {
+      "get": {
+        "summary": "認可コードを発行する",
+        "description": "リソースオーナーの許可を得て、認可コードを発行する。",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "type": "string",
+            "required": true,
+            "description": "`OAuth 2.0 API クライアント設定` 画面で発行した client_id"
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "type": "string",
+            "required": true,
+            "description": "`OAuth 2.0 API クライアント設定` 画面で設定したしたリダイレクトURI"
+          },
+          {
+            "name": "response_type",
+            "in": "query",
+            "type": "string",
+            "required": true,
+            "description": "freeeサイン は当分、認可コードフローのみ対応しているため、`code` 固定で設定してください"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "許可するスコープ（カンマ区切り）。freeeサイン は当分 `all` スコープのみ定義しています"
+          }
+        ]
+      }
+    },
+    "/oauth/revoke": {
+      "post": {
+        "summary": "アクセストークンまたはリフレッシュトークンを解除する",
+        "description": "アクセストークンまたはリフレッシュトークンを解除する。\n現在はリクエストボディでの `client_id` / `client_secret` の送信のみサポートしています。\nAuthorizationヘッダはサポートしていません。\n"
+      }
+    },
+    "/oauth/token": {
+      "post": {
+        "summary": "アクセストークンを発行する",
+        "description": "アクセストークンを発行する。\n現在はリクエストボディでの `client_id` / `client_secret` の送信のみサポートしています。\nAuthorizationヘッダはサポートしていません。\n"
+      }
+    },
+    "/v1/documents": {
+      "get": {
+        "summary": "文書一覧の取得",
+        "description": "文書一覧を取得する。",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "folder_id",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "フォルダID。IDで指定したフォルダに格納されている文書一覧を取得できる。"
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "文書名に一致する一覧を取得できる（部分一致も可）。送信相手のメールアドレスに一致する一覧を取得できる（完全一致）。"
+          },
+          {
+            "name": "ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "配列で文書IDを指定して、文書一覧を取得できる"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "ステータス毎に文書一覧を取得できる。\n  * draft - 作成中\n  * in_progress - 確認待ち\n  * awaiting_receipt - 受け取り待ち\n  * approved - 要確認\n  * concluded - 完了\n  * rejected - 却下\n  * expired - 有効期限切れ\n"
+          },
+          {
+            "name": "created_at_from",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "作成日時が指定した作成日時以降である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "name": "created_at_to",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "作成日時が指定した作成日時より過去である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "name": "updated_at_from",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "更新日時が指定した更新日時以降である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "name": "updated_at_to",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "更新日時が指定した更新日時より過去である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          }
+        ]
+      },
+      "post": {
+        "summary": "文書作成",
+        "description": "文書をクイック作成する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/uploads": {
+      "post": {
+        "summary": "ファイルをアップロードして、作成中ステータスの文書を作成",
+        "description": "PDF/Word/Excel/PowerPointから文書を作成する。作成された文書のステータスは「作成中」になる",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/{document_id}": {
+      "get": {
+        "summary": "文書取得",
+        "description": "文書を取得する。\n\nPDF を取得したい場合は、Media Type を application/pdf にしてください。\n\nPDF作成処理中はエラーとなる為、時間を置いてAPIを再実行してください。\n\n締結済ファイル取得の際、Acceptヘッダーで`application/json`を指定し、`timestamped=true`を確認後にPDFファイルを取得してください。"
+      },
+      "delete": {
+        "summary": "文書削除",
+        "description": "文書を削除する。",
+        "hasJsonBody": true
+      },
+      "patch": {
+        "summary": "文書更新",
+        "description": "文書を更新する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/{document_id}/activities": {
+      "get": {
+        "summary": "文書の操作履歴の一覧取得",
+        "description": "文書の操作履歴の一覧を取得する。"
+      }
+    },
+    "/v1/documents/{document_id}/attachment_files": {
+      "get": {
+        "summary": "添付ファイルの一覧取得",
+        "description": "添付ファイルの一覧を取得する。\n\nこのエンドポイントはセキュリティ保護のため、`APIクライアント` でのご利用を制限しております。`OAuth 2.0 APIクライアント` をご利用ください。"
+      }
+    },
+    "/v1/documents/{document_id}/attachment_files/{attachment_file_id}": {
+      "get": {
+        "summary": "指定した添付ファイルの取得",
+        "description": "指定した添付ファイルを取得する。\n\nこのエンドポイントはセキュリティ保護のため、`APIクライアント` でのご利用を制限しております。`OAuth 2.0 APIクライアント` をご利用ください。"
+      }
+    },
+    "/v1/documents/{document_id}/conclusion": {
+      "post": {
+        "summary": "文書締結",
+        "description": "要確認となった文書を締結する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/{document_id}/confirmations": {
+      "post": {
+        "summary": "文書送信",
+        "description": "文書を送信する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/{document_id}/contract_certificate": {
+      "get": {
+        "summary": "電子契約締結に関する情報の取得",
+        "description": "文書に紐づく電子契約締結に関する情報を取得する。\n\nPDF を取得したい場合は、Media Type を application/pdf にしてください。"
+      }
+    },
+    "/v1/documents/{document_id}/document_items": {
+      "post": {
+        "summary": "入力項目付与",
+        "description": "文書に入力項目を付与する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/{document_id}/document_items/{document_item_id}": {
+      "delete": {
+        "summary": "入力項目の削除",
+        "description": "文書に付与した入力項目を削除する。"
+      },
+      "patch": {
+        "summary": "入力項目に値を設定",
+        "description": "文書に付与した入力項目の値を設定する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/{document_id}/meta": {
+      "put": {
+        "summary": "検索項目付与",
+        "description": "文書に検索項目を付与する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/{document_id}/placeholder": {
+      "get": {
+        "summary": "入力内容未反映の文書取得",
+        "description": "作成中の値が入っていない入力項目が配置された文書のPDFを取得する。\n\nMedia Type を application/pdf にしてください。\n\nPDF作成処理中はエラーとなる為、時間を置いてAPIを再実行してください。"
+      }
+    },
+    "/v1/documents/{document_id}/re_confirmations": {
+      "post": {
+        "summary": "文書再送信",
+        "description": "文書を再送信する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/{document_id}/rejection": {
+      "post": {
+        "summary": "文書却下",
+        "description": "要確認となった文書を却下する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/{document_id}/send_back": {
+      "post": {
+        "summary": "文書差し戻し",
+        "description": "要確認となった文書を差し戻しする。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/documents/{document_id}/signature_requests/cancel": {
+      "put": {
+        "summary": "文書承認依頼キャンセル",
+        "description": "文書の承認依頼をキャンセルする。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/folders": {
+      "get": {
+        "summary": "フォルダ一覧の取得",
+        "description": "フォルダ一覧を取得する",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "parent_id",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "親フォルダID。IDで指定した親フォルダに格納されているフォルダ一覧を取得できる。"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "フォルダ名に一致する一覧を取得できる（部分一致も可）"
+          }
+        ]
+      }
+    },
+    "/v1/items": {
+      "get": {
+        "summary": "入力項目・検索項目一覧の取得",
+        "description": "入力項目・検索項目一覧を取得する。",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "display_name",
+            "in": "query",
+            "type": "string",
+            "description": "入力項目・検索項目名に一致する一覧を取得できる（部分一致も可）。"
+          },
+          {
+            "name": "ids[]",
+            "in": "query",
+            "type": "array",
+            "description": "配列で項目IDを指定して、入力項目・検索項目一覧を取得できる。"
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "type": "boolean",
+            "description": "有効, 無効を指定して、入力項目・検索項目一覧を取得できる。\n* true - 有効\n* false - 無効\n"
+          },
+          {
+            "name": "input_type",
+            "in": "query",
+            "type": "string",
+            "description": "項目タイプを指定して、入力項目・検索項目一覧を取得できる。\n* date - 日付\n* image - 画像\n* number - 数値\n* select - プルダウン\n* string - テキスト\n* acceptance - チェックボックス\n"
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "type": "string",
+            "description": "用途を指定して、入力項目・検索項目一覧を取得できる。\n* input_item - 入力項目\n* metadata - 検索項目\n"
+          }
+        ]
+      },
+      "post": {
+        "summary": "入力項目・検索項目の登録",
+        "description": "入力項目・検索項目を登録する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/kintone": {
+      "get": {
+        "summary": "Kintone連携情報の取得"
+      }
+    },
+    "/v1/pdf_documents": {
+      "post": {
+        "summary": "文書アップロード",
+        "description": "任意のフォルダに文書をアップロードする。作成された文書のステータスは「完了」になる",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/seal_images": {
+      "get": {
+        "summary": "マイ印鑑一覧の取得",
+        "description": "マイ印鑑一覧を取得する",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "type": "string",
+            "description": "マイ印鑑名に一致する一覧を取得できる（部分一致も可）"
+          }
+        ]
+      }
+    },
+    "/v1/team": {
+      "get": {
+        "summary": "所属しているチームの取得",
+        "description": "自分が所属しているチームを取得する。"
+      }
+    },
+    "/v1/team/team_setting": {
+      "get": {
+        "summary": "所属しているチーム設定の取得",
+        "description": "自分が所属しているチームの設定を取得する。"
+      }
+    },
+    "/v1/teams": {
+      "get": {
+        "summary": "チーム一覧の取得",
+        "description": "チーム一覧を取得する。\n自チームも含め、文書を交わした全てのチームを取得することができます。\n相手方がfreeeサイン上にアカウントを作成していない場合はチームは存在していないので取得できません。\n",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "type": "string",
+            "description": "チーム名に一致する一覧を取得できる（部分一致も可）"
+          },
+          {
+            "name": "ids[]",
+            "in": "query",
+            "type": "array",
+            "description": "配列でチームIDを指定して、チーム一覧を取得できる"
+          }
+        ]
+      }
+    },
+    "/v1/templates": {
+      "get": {
+        "summary": "テンプレート一覧取得",
+        "description": "テンプレート一覧を取得する",
+        "parameters": [
+          {
+            "name": "title",
+            "in": "query",
+            "type": "string",
+            "description": "テンプレート名に一致する一覧を取得できる（部分一致も可）"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "/v1/templates/{template_id}": {
+      "get": {
+        "summary": "テンプレート取得",
+        "description": "テンプレートを取得する。\n\nPDF を取得したい場合は、Media Type を application/pdf にしてください。"
+      }
+    },
+    "/v1/token": {
+      "post": {
+        "summary": "アクセストークン発行API",
+        "description": "APIにアクセスするためのアクセストークンを発行する。\n\n発行されたアクセストークンは他のAPIを使用する際にAuthorizationリクエストヘッダーでBearerトークンとして設定してください。\nアクセストークンには有効期限があります。有効期限が切れるとAPIはエラーレスポンスを返すため、新しいアクセストークンを発行して使用してください。\n有効期限切れ時のエラーレスポンスの詳細については `Error` の項目を参照してください。\n",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/users": {
+      "get": {
+        "summary": "ユーザー一覧の取得",
+        "description": "ユーザー一覧を取得する。\nここで取得できるユーザーには、チーム内のユーザー、文書の作成者、文書の受領者が含まれます。\nそのため、複数のチームのユーザーが含まれる場合があります。\n",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "配列でユーザーIDを指定して、ユーザー一覧を取得できる"
+          },
+          {
+            "name": "team_id",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "チームIDを指定して、指定したチームのユーザー一覧を取得できる"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "メールアドレスを指定してユーザー情報を取得できる（完全一致）"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "ユーザーのステータス\n* receiving_only - 文書を受領した未登録ユーザー\n* active - 登録済ユーザー\n* unconfirmed - 登録途中ユーザー\n* canceled - 退会済ユーザー"
+          }
+        ]
+      }
+    },
+    "/v1/users/invitations": {
+      "get": {
+        "summary": "ユーザーの参加待ちの招待一覧",
+        "description": "ユーザーの参加待ちの招待一覧",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "type": "string"
+          }
+        ]
+      },
+      "post": {
+        "summary": "ユーザーを招待する",
+        "description": "ユーザーを招待する。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/users/invitations/{invitation_id}/re_invitations": {
+      "post": {
+        "summary": "ユーザーを再招待する",
+        "description": "ユーザーを再招待する。",
+        "parameters": [
+          {
+            "name": "invitation_id",
+            "in": "path",
+            "type": "integer",
+            "required": true,
+            "description": "再招待する招待のID"
+          }
+        ],
+        "hasJsonBody": true
+      }
+    },
+    "/v1/users/{user_id}/activenesses": {
+      "delete": {
+        "summary": "ユーザーの退会",
+        "description": "特定のユーザーを退会させる。",
+        "hasJsonBody": true
+      }
+    },
+    "/v1/users/{user_id}/documents": {
+      "get": {
+        "summary": "ユーザーがアクセスできる文書一覧の取得",
+        "description": "特定のユーザーがアクセスできる文書の一覧を取得する。<br>\nここで取得できる文書には、作成した文書と受領した文書が含まれます。 <br>\n文書は、新しく作成した順に取得されます。",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "folder_id",
+            "in": "query",
+            "type": "string",
+            "description": "フォルダID。IDで指定したフォルダに格納されている文書一覧を取得できる。"
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "type": "string",
+            "description": "文書名に一致する一覧を取得できる（部分一致も可）。送信相手のメールアドレスに一致する一覧を取得できる（完全一致）。"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "type": "string",
+            "description": "ステータス毎に文書一覧を取得できる。\n  * draft - 作成中\n  * in_progress - 確認待ち\n  * awaiting_receipt - 受け取り待ち\n  * approved - 要確認\n  * concluded - 完了\n  * rejected - 却下\n  * expired - 有効期限切れ"
+          },
+          {
+            "name": "ids[]",
+            "in": "query",
+            "type": "array",
+            "description": "配列で文書IDを指定して、文書一覧を取得できる"
+          },
+          {
+            "name": "created_at_from",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "作成日時が指定した作成日時以降である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "name": "created_at_to",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "作成日時が指定した作成日時より過去である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "name": "updated_at_from",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "更新日時が指定した更新日時以降である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "name": "updated_at_to",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "更新日時が指定した更新日時より過去である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          }
+        ]
+      }
+    }
+  }
+}

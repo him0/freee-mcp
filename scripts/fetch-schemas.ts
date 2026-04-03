@@ -172,6 +172,12 @@ const SCHEMA_SOURCES = [
     outputFile: "sm-api-schema.json",
     minimalFile: "sm.json",
   },
+  {
+    name: "sign-api",
+    url: "https://ninja-sign.com/v1/openapi.yaml",
+    outputFile: "sign-api-schema.json",
+    minimalFile: "sign.json",
+  },
 ];
 
 /**

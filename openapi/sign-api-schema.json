@@ -1,0 +1,5245 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "freeeサイン Web API",
+    "version": "0.1",
+    "contact": {
+      "name": "カスタマーセンター",
+      "email": "support@freee-sign.com"
+    },
+    "description": "[freeeサイン](https://ninja-sign.com/)のAPIを利用する開発者向けのドキュメントです。\n\nWebhookに関しては[Webhookの開発者向けドキュメント](/webhook/doc.html)を参照してください。"
+  },
+  "servers": [
+    {
+      "url": "/"
+    },
+    {
+      "url": "http://localhost:3250"
+    }
+  ],
+  "security": [
+    {
+      "AccessTokenAuth": []
+    },
+    {
+      "OAuth2": [
+        "all"
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "アクセストークン"
+    },
+    {
+      "name": "OAuth 2.0"
+    },
+    {
+      "name": "文書"
+    },
+    {
+      "name": "ユーザー"
+    },
+    {
+      "name": "フォルダ"
+    },
+    {
+      "name": "テンプレート"
+    },
+    {
+      "name": "マイ印鑑"
+    },
+    {
+      "name": "チーム"
+    },
+    {
+      "name": "入力項目・検索項目"
+    },
+    {
+      "name": "Kintone"
+    }
+  ],
+  "paths": {
+    "/oauth/authorize": {
+      "get": {
+        "summary": "認可コードを発行する",
+        "operationId": "get-v1-oauth-authorize",
+        "security": [],
+        "description": "リソースオーナーの許可を得て、認可コードを発行する。",
+        "tags": [
+          "OAuth 2.0"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "client_id",
+            "description": "`OAuth 2.0 API クライアント設定` 画面で発行した client_id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "in": "query",
+            "name": "redirect_uri",
+            "description": "`OAuth 2.0 API クライアント設定` 画面で設定したしたリダイレクトURI",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "code"
+              ]
+            },
+            "in": "query",
+            "name": "response_type",
+            "description": "freeeサイン は当分、認可コードフローのみ対応しているため、`code` 固定で設定してください",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all"
+              ]
+            },
+            "in": "query",
+            "name": "scope",
+            "description": "許可するスコープ（カンマ区切り）。freeeサイン は当分 `all` スコープのみ定義しています",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ログインしている場合は\n1. 認可画面にリダイレクトする\n2. ユーザが認可画面で許可したら、`code` パラメータ付きでリダイレクトURLにリダイレクトする\n\nログインしていない場合は\n1. ログイン画面にリダイレクトする\n2. ログイン後は、認可画面にリダイレクトする\n3. ユーザが認可画面で許可したら、`code` パラメータ付きでリダイレクトURLにリダイレクトする\n\n例 `https://www.example.com?code=AbC123`\n"
+          }
+        }
+      }
+    },
+    "/oauth/revoke": {
+      "post": {
+        "summary": "アクセストークンまたはリフレッシュトークンを解除する",
+        "operationId": "post-v1-oauth-revoke",
+        "security": [],
+        "description": "アクセストークンまたはリフレッシュトークンを解除する。\n現在はリクエストボディでの `client_id` / `client_secret` の送信のみサポートしています。\nAuthorizationヘッダはサポートしていません。\n",
+        "tags": [
+          "OAuth 2.0"
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "[POST /oauth/token](/v1/docs#/OAuth%202.0/post-v1-oauth-token)で発行したアクセストークンまたはリフレッシュトークン"
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "`OAuth 2.0 API クライアント設定` 画面で発行した client_id"
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "description": "`OAuth 2.0 API クライアント設定` 画面で発行した client_secret"
+                  }
+                },
+                "required": [
+                  "token",
+                  "client_id",
+                  "client_secret"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功した場合"
+          },
+          "403": {
+            "description": "client_id または client_secret を間違えた場合など",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "`unauthorized_client` 等のエラーの種類を表す文字列"
+                    },
+                    "error_description": {
+                      "type": "string",
+                      "description": "詳細なエラー内容"
+                    }
+                  },
+                  "example": {
+                    "error": "unauthorized_client",
+                    "error_description": "このトークンを無効化する権限がありません"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "何らかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oauth/token": {
+      "post": {
+        "summary": "アクセストークンを発行する",
+        "operationId": "post-v1-oauth-token",
+        "security": [],
+        "description": "アクセストークンを発行する。\n現在はリクエストボディでの `client_id` / `client_secret` の送信のみサポートしています。\nAuthorizationヘッダはサポートしていません。\n",
+        "tags": [
+          "OAuth 2.0"
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "[GET /oauth/authorize](/v1/docs#/OAuth%202.0/get-v1-oauth-authorize) で発行した認可コード。\n認可コードでアクセストークン、リフレッシュトークンを発行する場合。\n"
+                  },
+                  "refresh_token": {
+                    "type": "string",
+                    "description": "このエンドポイントで発行したリフレッシュトークン。\nリフレッシュトークンで新規アクセストークン、リフレッシュトークンを発行する場合のみ、この引数を渡してください。\n"
+                  },
+                  "grant_type": {
+                    "type": "string",
+                    "enum": [
+                      "authorization_code",
+                      "refresh_token"
+                    ],
+                    "description": "* 認可コードでアクセストークン、リフレッシュトークンを発行する場合は `authorization_code` を設定してください\n* リフレッシュトークンで新規アクセストークン、リフレッシュトークンを発行する場合は `refresh_token` を設定してください\n"
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "`OAuth 2.0 API クライアント設定` 画面で発行した client_id"
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "description": "`OAuth 2.0 API クライアント設定` 画面で発行した client_secret"
+                  },
+                  "redirect_uri": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "`OAuth 2.0 API クライアント設定` 画面で設定したしたリダイレクトURI"
+                  }
+                },
+                "required": [
+                  "grant_type",
+                  "client_id",
+                  "client_secret"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string",
+                      "description": "アクセストークン"
+                    },
+                    "refresh_token": {
+                      "type": "string",
+                      "description": "リフレッシュトークン"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "enum": [
+                        "Bearer"
+                      ]
+                    },
+                    "expires_in": {
+                      "type": "integer",
+                      "description": "有効期限までの秒数"
+                    },
+                    "scope": {
+                      "type": "string",
+                      "enum": [
+                        "all"
+                      ]
+                    },
+                    "created_at": {
+                      "type": "integer",
+                      "description": "トークン発行日時"
+                    }
+                  },
+                  "example": {
+                    "access_token": "AbC123",
+                    "token_type": "Bearer",
+                    "expires_in": 7200,
+                    "refresh_token": "DeF234",
+                    "scope": "all",
+                    "created_at": 163605088
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "パラメータが足りない場合など",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "`invalid_request` 等のエラーの種類を表す文字列\n\n`invalid_grant` の場合は認可コードの有効期限切れなので再度認可コードの発行を行ってください。\n"
+                    },
+                    "error_description": {
+                      "type": "string",
+                      "description": "詳細なエラー内容"
+                    }
+                  },
+                  "example": {
+                    "error": "invalid_request",
+                    "error_description": "必須パラメーターが不足しています: redirect_uri"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "クライアント認証が失敗した場合など",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "type": "string",
+                          "description": "`invalid_client` 等のエラーの種類を表す文字列"
+                        },
+                        "error_description": {
+                          "type": "string",
+                          "description": "詳細なエラー内容"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "type": "string",
+                          "description": "`invalid_client` 等のエラーの種類を表す文字列"
+                        },
+                        "error_description": {
+                          "type": "object",
+                          "properties": {
+                            "guide": {
+                              "type": "string",
+                              "description": "案内文"
+                            },
+                            "causes": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "エラー原因"
+                            }
+                          },
+                          "description": "詳細なエラー内容"
+                        }
+                      }
+                    }
+                  ],
+                  "example": {
+                    "error": "invalid_client",
+                    "error_description": {
+                      "guide": "以下のいずれかまたは複数の理由により、クライアント認証は失敗しました。",
+                      "causes": [
+                        "クライアントが不明",
+                        "クライアント認証が含まれていない",
+                        "認証メソッドがサポートされていない"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "何らかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents": {
+      "post": {
+        "summary": "文書作成",
+        "operationId": "post-v1-documents",
+        "description": "文書をクイック作成する。",
+        "tags": [
+          "文書"
+        ],
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "作成成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "テンプレートが存在しない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "作成者がフォルダへのアクセス権がない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "フォルダ選択必須設定が有効でフォルダを未選択（ホームを選択した）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "オーナーの必須アイテムが定義されていない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "document": {
+                    "type": "object",
+                    "required": [
+                      "title"
+                    ],
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "description": "作成する文書のタイトル",
+                        "minLength": 1,
+                        "example": "文書 忍者太郎様"
+                      },
+                      "items": {
+                        "type": "array",
+                        "description": "入力項目",
+                        "items": {
+                          "type": "object",
+                          "description": "入力項目",
+                          "properties": {
+                            "item_id": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "入力項目ID\nテンプレートで設定している入力項目の中から選ぶ。\n"
+                            },
+                            "value": {
+                              "type": "string",
+                              "description": "入力項目値\n`seal_image_id` を指定する場合は無し。item_idの項目のinput_typeに応じた値を入力する。\n"
+                            },
+                            "seal_image_id": {
+                              "allOf": [
+                                {
+                                  "$ref": "#/components/schemas/SealImage-id"
+                                }
+                              ],
+                              "description": "マイ印鑑画像のID\nマイ印鑑が使用可能かつ入力項目が印鑑の場合のみ指定可能。\n"
+                            }
+                          },
+                          "required": [
+                            "item_id"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "template_id": {
+                    "$ref": "#/components/schemas/post-v1-documents-template_id"
+                  },
+                  "creator_id": {
+                    "$ref": "#/components/schemas/post-v1-documents-creator_id"
+                  },
+                  "folder_id": {
+                    "$ref": "#/components/schemas/post-v1-documents-folder_id"
+                  }
+                },
+                "required": [
+                  "document",
+                  "template_id",
+                  "folder_id"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "文書一覧の取得",
+        "description": "文書一覧を取得する。",
+        "operationId": "get-v1-documents",
+        "tags": [
+          "文書"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "required": false,
+            "name": "page",
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-page"
+            }
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "per_page",
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-per_page"
+            }
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "folder_id",
+            "schema": {
+              "$ref": "#/components/schemas/Folder-id"
+            },
+            "description": "フォルダID。IDで指定したフォルダに格納されている文書一覧を取得できる。"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "title",
+            "schema": {
+              "type": "string"
+            },
+            "description": "文書名に一致する一覧を取得できる（部分一致も可）。送信相手のメールアドレスに一致する一覧を取得できる（完全一致）。"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "ids[]",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "description": "配列で文書IDを指定して、文書一覧を取得できる"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "in_progress",
+                "awaiting_receipt",
+                "approved",
+                "concluded",
+                "rejected",
+                "expired"
+              ]
+            },
+            "description": "ステータス毎に文書一覧を取得できる。\n  * draft - 作成中\n  * in_progress - 確認待ち\n  * awaiting_receipt - 受け取り待ち\n  * approved - 要確認\n  * concluded - 完了\n  * rejected - 却下\n  * expired - 有効期限切れ\n"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "created_at_from",
+            "schema": {
+              "$ref": "#/components/schemas/created_at",
+              "title": "作成日時(開始)"
+            },
+            "description": "作成日時が指定した作成日時以降である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "created_at_to",
+            "schema": {
+              "$ref": "#/components/schemas/created_at",
+              "title": "作成日時(終了)"
+            },
+            "description": "作成日時が指定した作成日時より過去である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "updated_at_from",
+            "schema": {
+              "$ref": "#/components/schemas/updated_at",
+              "title": "更新日時(開始)"
+            },
+            "description": "更新日時が指定した更新日時以降である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "updated_at_to",
+            "schema": {
+              "$ref": "#/components/schemas/updated_at",
+              "title": "更新日時(終了)"
+            },
+            "description": "更新日時が指定した更新日時より過去である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "条件に一致した文書一覧（作成日時降順）",
+                  "items": {
+                    "$ref": "#/components/schemas/Document"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "アクセス権限がない場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/uploads": {
+      "post": {
+        "summary": "ファイルをアップロードして、作成中ステータスの文書を作成",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "201": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "document": {
+                      "$ref": "#/components/schemas/Document"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ユーザー または フォルダ が見つからない場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "フォルダにアクセスする権限がない または フォルダ選択必須設定が有効でフォルダ未選択の場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "アップロードファイルの形式、タイトル、サイズが条件を満たしていない場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "post-v1-documents-uploads",
+        "description": "PDF/Word/Excel/PowerPointから文書を作成する。作成された文書のステータスは「作成中」になる",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "アップロードファイル\n\n- ファイル形式はPDF/Word/Excel/PowerPointのみ有効です。\n- ファイルのタイトルは255文字以内にしてください。\n- ファイルのサイズは10MB以下にしてください。\n",
+                    "format": "binary"
+                  },
+                  "uploader_id": {
+                    "type": "integer",
+                    "description": "アップロードするユーザーのID (APIクライアントを利用する場合は必須)",
+                    "format": "int64"
+                  },
+                  "folder_id": {
+                    "type": "integer",
+                    "description": "アップロードした文書の保存先フォルダのID",
+                    "format": "int64"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "作成する文書のタイトル（設定しない場合はアップロードファイルのタイトルになります）",
+                    "example": "文書 忍者太郎様"
+                  },
+                  "signers_count": {
+                    "type": "integer",
+                    "description": "相手方の人数",
+                    "format": "int64",
+                    "default": 1,
+                    "minimum": 1,
+                    "maximum": 20
+                  },
+                  "skip_approval": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "文書の種別\n\n- false の場合、署名・合意文書\n- true の場合、配付文書\n"
+                  }
+                },
+                "required": [
+                  "file",
+                  "folder_id"
+                ]
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "アップロードファイル名（拡張子込み）\n\n- ファイルのタイトルは255文字以内にしてください。"
+                      },
+                      "content": {
+                        "type": "string",
+                        "description": "アップロードファイルの内容\n\n- アップロードファイルのバイナリをBase64エンコードした文字列を指定してください。\n- ファイル形式はPDF/Word/Excel/PowerPointのみ有効です。\n- ファイルのサイズは10MB以下にしてください。"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "content"
+                    ]
+                  },
+                  "uploader_id": {
+                    "type": "integer",
+                    "description": "アップロードするユーザーのID",
+                    "format": "int64"
+                  },
+                  "folder_id": {
+                    "type": "integer",
+                    "description": "アップロードした文書の保存先フォルダのID",
+                    "format": "int64"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "作成する文書のタイトル（設定しない場合はアップロードファイルのタイトルになります）",
+                    "example": "文書 忍者太郎様"
+                  },
+                  "signers_count": {
+                    "type": "integer",
+                    "description": "相手方の人数",
+                    "format": "int64",
+                    "default": 1,
+                    "minimum": 1,
+                    "maximum": 20
+                  },
+                  "skip_approval": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "文書の種別\n\n- false の場合、署名・合意文書\n- true の場合、配付文書\n"
+                  }
+                },
+                "required": [
+                  "file",
+                  "uploader_id",
+                  "folder_id"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{document_id}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "文書のID"
+        }
+      ],
+      "get": {
+        "summary": "文書取得",
+        "operationId": "get-v1-document",
+        "description": "文書を取得する。\n\nPDF を取得したい場合は、Media Type を application/pdf にしてください。\n\nPDF作成処理中はエラーとなる為、時間を置いてAPIを再実行してください。\n\n締結済ファイル取得の際、Acceptヘッダーで`application/json`を指定し、`timestamped=true`を確認後にPDFファイルを取得してください。",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentShow"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "取得失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "文書更新",
+        "operationId": "patch-v1-documents-document_id",
+        "description": "文書を更新する。",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "リクエストになんらかの問題がある場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "document": {
+                    "type": "object",
+                    "required": [
+                      "title"
+                    ],
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "description": "文書のタイトル",
+                        "minLength": 1,
+                        "example": "文書 忍者太郎様"
+                      }
+                    }
+                  },
+                  "user_id": {
+                    "description": "実行するユーザーのID (APIクライアントを利用する場合は必須)",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/User-id"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "document"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "文書削除",
+        "operationId": "delete-v1-documents",
+        "responses": {
+          "200": {
+            "description": "削除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "削除失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "文書を削除する。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "description": "文書を削除するユーザーのユーザーID (APIクライアントを利用する場合は必須)",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/User-id"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "文書"
+        ]
+      }
+    },
+    "/v1/documents/{document_id}/activities": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "文書のID"
+        },
+        {
+          "schema": {
+            "$ref": "#/components/schemas/PaginationParameters-page"
+          },
+          "in": "query",
+          "name": "page"
+        },
+        {
+          "schema": {
+            "$ref": "#/components/schemas/PaginationParameters-per_page"
+          },
+          "in": "query",
+          "name": "per_page"
+        }
+      ],
+      "get": {
+        "summary": "文書の操作履歴の一覧取得",
+        "operationId": "get-v1-documents-document_id-activities",
+        "description": "文書の操作履歴の一覧を取得する。",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "文書の操作履歴",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentActivity"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "取得失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{document_id}/attachment_files": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "文書のID"
+        },
+        {
+          "schema": {
+            "$ref": "#/components/schemas/PaginationParameters-page"
+          },
+          "in": "query",
+          "name": "page"
+        },
+        {
+          "schema": {
+            "$ref": "#/components/schemas/PaginationParameters-per_page"
+          },
+          "in": "query",
+          "name": "per_page"
+        }
+      ],
+      "get": {
+        "summary": "添付ファイルの一覧取得",
+        "operationId": "get-v1-documents-document_id-attachment-files",
+        "description": "添付ファイルの一覧を取得する。\n\nこのエンドポイントはセキュリティ保護のため、`APIクライアント` でのご利用を制限しております。`OAuth 2.0 APIクライアント` をご利用ください。",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "添付ファイル",
+                  "items": {
+                    "$ref": "#/components/schemas/AttachmentFile"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "取得失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{document_id}/attachment_files/{attachment_file_id}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "文書のID"
+        },
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "attachment_file_id",
+          "in": "path",
+          "required": true,
+          "description": "添付ファイルのID"
+        }
+      ],
+      "get": {
+        "summary": "指定した添付ファイルの取得",
+        "operationId": "get-v1-documents-document_id-attachment-files-attachment_file_id",
+        "description": "指定した添付ファイルを取得する。\n\nこのエンドポイントはセキュリティ保護のため、`APIクライアント` でのご利用を制限しております。`OAuth 2.0 APIクライアント` をご利用ください。",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentFile"
+                }
+              },
+              "application/msword": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/vnd.ms-powerpoint": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/vnd.ms-excel": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.presentationml.presentation": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/gif": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "取得失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{document_id}/conclusion": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "締結する文書のID"
+        }
+      ],
+      "post": {
+        "summary": "文書締結",
+        "operationId": "post-v1-documents-document_id-conclusion",
+        "description": "要確認となった文書を締結する。",
+        "tags": [
+          "文書"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "リクエストになんらかの問題がある場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "signer_id": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Sender-id"
+                      }
+                    ],
+                    "description": "締結するユーザーのID (APIクライアントを利用する場合は必須)"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "メッセージ\nメッセージを送らない場合は無し。",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "description": "文書締結パラメーター"
+        }
+      }
+    },
+    "/v1/documents/{document_id}/confirmations": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "送信する文書のID"
+        }
+      ],
+      "post": {
+        "summary": "文書送信",
+        "operationId": "post-v1-documents-document_id-confirmations",
+        "responses": {
+          "200": {
+            "description": "送信成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "文書を送信する。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "notification_type": {
+                    "type": "string",
+                    "enum": [
+                      "email",
+                      "sms",
+                      "url"
+                    ],
+                    "default": "email",
+                    "description": "締結の種類\nメール送信の場合は `email` 、SMS送信の場合は `sms`、署名者用URL発行の場合は `url`。 指定しない場合はメール送信として扱われます。\n送り先情報はメール送信、SMS送信のいずれか選択した締結の種類のパラメータを含めてください。 文書配付の場合は、受領者に署名を求めないため、反映されない項目がありますのでご注意ください。\nurl を指定した場合はAPI実行時点で送信処理はされず、署名者用URLの発行が行われます。 発行されたURLを相手に伝え、署名依頼の手続きを進めてください。"
+                  },
+                  "sender_id": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Sender-id"
+                      }
+                    ],
+                    "description": "送信するユーザーのID (APIクライアントを利用する場合は必須)"
+                  },
+                  "to": {
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "description": "送り先情報（メール送信）\n\n文書・テンプレートに設定された相手方の人数分、過不足無く指定してください。",
+                        "minItems": 1,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "email": {
+                              "type": "string",
+                              "format": "email",
+                              "description": "送り先メールアドレス"
+                            },
+                            "forwarding_required": {
+                              "type": "boolean",
+                              "default": false,
+                              "description": "相手方による署名依頼の転送を利用するかどうか\n\n指定しない場合は `false` が指定されたものとして扱います。\nチーム設定で`相手方による署名依頼の転送を必須にする`を設定している場合はそちらが優先されます。\n文書配付の場合は送信内容には反映されません。"
+                            },
+                            "verification_file_required": {
+                              "type": "boolean",
+                              "default": false,
+                              "description": "本人確認書類の添付を必須とするかどうか\n\n指定しない場合は `false` が指定されたものとして扱います。\n文書配付の場合は送信内容には反映されません。"
+                            },
+                            "telephone_number_verification_required": {
+                              "type": "boolean",
+                              "default": false,
+                              "description": "相手方の電話番号確認を必須とするかどうか\n\n指定しない場合は `false` が指定されたものとして扱います。\nチーム設定で`相手方の電話番号確認`が必須となっている場合はそちらが優先されます。\n文書配付の場合は送信内容には反映されません。"
+                            }
+                          },
+                          "required": [
+                            "email"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      {
+                        "type": "array",
+                        "description": "送り先情報（SMS送信）\n\n現在は単一の送信先のみ許可されています。",
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "telephone_number": {
+                              "type": "string",
+                              "description": "送り先電話番号\n\nハイフン無しの半角数字で設定してください。\nex. 080xxxxxxxx"
+                            }
+                          },
+                          "required": [
+                            "telephone_number"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      {
+                        "type": "array",
+                        "description": "送り先情報（署名者用URL）\n\n現在は単一の送信先のみ許可されています。",
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "forwarding_required": {
+                              "type": "boolean",
+                              "default": false,
+                              "description": "相手方による署名依頼の転送を利用するかどうか\n\n指定しない場合は `false` が指定されたものとして扱います。\nチーム設定で`相手方による署名依頼の転送を必須にする`が設定されている場合はそちらが優先されます。"
+                            },
+                            "verification_file_required": {
+                              "type": "boolean",
+                              "default": false,
+                              "description": "本人確認書類の添付を必須とするかどうか\n\n指定しない場合は `false` が指定されたものとして扱います。"
+                            },
+                            "telephone_number_verification_required": {
+                              "type": "boolean",
+                              "default": false,
+                              "description": "相手方の電話番号確認を必須とするかどうか\n\n指定しない場合は `false` が指定されたものとして扱います。\nチーム設定で`相手方の電話番号確認`が必須となっている場合はそちらが優先されます。"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    ]
+                  },
+                  "es_type": {
+                    "type": "string",
+                    "description": "署名方法\n\n電子サインの場合は `timestamp_only` 、電子署名の場合は `esign` 。\n指定しない場合は電子サインとして扱われます。\n\n※ 電子署名は1通送信するごとに料金が発生します。\n\n文書配付の場合は送信内容には反映されません。",
+                    "enum": [
+                      "timestamp_only",
+                      "esign"
+                    ],
+                    "default": "timestamp_only"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "メッセージ\nメッセージを送らない場合は無し。\n\nSMSによる送信やURL発行の場合はパラメータに含めても送信内容には反映はされません。",
+                    "minLength": 1
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "パスワード\nパスワードを使用しない場合は無し。\n\n※チーム設定でパスワード必須になっている場合は必要です。",
+                    "minLength": 1
+                  },
+                  "cc": {
+                    "type": "array",
+                    "description": "CCとなるメールアドレスリスト。URL発行の場合は反映されません",
+                    "items": {
+                      "type": "string",
+                      "format": "email"
+                    }
+                  },
+                  "files": {
+                    "type": "array",
+                    "description": "添付ファイルのリスト",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "添付ファイル名（拡張子込み）"
+                        },
+                        "content": {
+                          "type": "string",
+                          "description": "添付ファイル内容\n\n添付ファイルのバイナリをBase64エンコードした文字列を指定してください。"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "content"
+                      ]
+                    }
+                  },
+                  "master_document_expiry_id": {
+                    "type": "integer",
+                    "example": 1,
+                    "minimum": 1,
+                    "format": "int64",
+                    "description": "有効期限の設定\n有効期限を設定しない場合は、1週間で設定されます。\n\n1. 1週間\n2. 2週間\n3. 4週間\n\n文書配付の場合は送信内容には反映されません。",
+                    "default": 1
+                  },
+                  "remind_about_expiry": {
+                    "type": "boolean",
+                    "example": true,
+                    "default": true,
+                    "description": "署名有効期間リマインドを行うかどうか。\ntrue のとき署名有効期限の4日前・1日前にリマインドメールが送信されます。\n\n文書配付の場合は送信内容には反映されません。"
+                  },
+                  "approve_on_signing": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "三者間以上の契約で署名と合意を同時に行う場合は、trueとしてください。\n\n文書配付の場合は送信内容には反映されません。"
+                  }
+                },
+                "required": [
+                  "to"
+                ]
+              },
+              "examples": {
+                "Mail": {
+                  "value": {
+                    "notification_type": "email",
+                    "sender_id": 1,
+                    "to": [
+                      {
+                        "email": "user@example.com",
+                        "forwarding_required": false,
+                        "verification_file_required": false,
+                        "telephone_number_verification_required": false
+                      }
+                    ],
+                    "es_type": "timestamp_only",
+                    "message": "string",
+                    "password": "string",
+                    "cc": [
+                      "user@example.com"
+                    ],
+                    "files": [
+                      {
+                        "name": "image.png",
+                        "content": "iVBORw0KGgoAAAANSUhEUgAAAV4AAACWBAMAAABkyf1EAAAAG1BMVEXMzMyWlpbFxcWqqqqcnJyxsbG3t7e+vr6jo6OVuynYAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADG0lEQVR4nO2YzW/aQBDFF2PjHBkwCUfTSOEKUaRecRpFPeKqX0eo1KZHnFx6xFWV/tud2V3DsiJEPdi+vN/BC/aL9mV2PDuLUgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgP/jMkuueYhIWPCn4CZ5+4I2Jj3kIk1OS+tC+1wq1d35LXhcvSTWw7zye0JaF2uZe6TUWeU3lvH8uDg0fkvr95S0LrLk8SqjVIXjH8xGPP2dlkl6VJwbv9kzSx9OS2uiR1uZd6k6VZzWiQR7eUQb/CLjt8qBl6W10aWNrOtWTS7snZI/BDqRfTIyfgP5m9PS2tAZKXMWA3uH+uJkcERL1m/M6fOKtDY6uixxfNd9cyOmGV9zkx0TWflIUkb4c5dpvz06Im2I3oOdOF+YG5FOzmJovyzE9KZSm/oQJUekTXLGE8+3X5NnZRNaTcb6QZBxpZvvDRm/3XFUvl950gaZljxlecfZeSvexUTHhnBNaUD7BDV+zxJ+87iMHUobg3er3+blNyZSx0RIM7dgGb+h3lpuPWmTfq/l5f8wnXMeGxPh7pUaFI4fc7tDozdPNPSkTfrluMqq9/hShdA+LIel8/5XflOdKZ60MTiuC/VJcrEc+UGbkLsf2PrwRel9raX4yqrbGBZjPym5bdvshY433hNbyl8mtyWL5/Ze+oDccuXGkhYt1Qel41r58Ypqj9z+y/Wb9duovx/v5bovX/6mFZLbfx36bWN/W4/kOhn3Pusx0b2a0xTkibNdWL/fV0r3SJ60EUx0iqF5d+TbQdMV0EXpxM/41Q+l52ijP9M+y3OztlJrD5raLs2cdsf61RGVnqOF/rcr6RnRIJZlj+RycGiYUNqt2smd30L+x5wvLZwvYho+XpU8Z5Z8i+cytz6UVR05J0PgnCirHe0+fZIz6oG0IfTZfGyO5rrWuodeHfV8X2BDe74Qtu2cj/U5fiaF1ozmhL+q/M0kJ3YrbuuZKIaetDF+ZuY3mks7uj/arGWxo31Fs36DG3q38aQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4FX+AcL6c1W3I+QxAAAAAElFTkSuQmCC"
+                      }
+                    ],
+                    "master_document_expiry_id": 1,
+                    "remind_about_expiry": true,
+                    "approve_on_signing": false
+                  }
+                },
+                "Sms": {
+                  "value": {
+                    "notification_type": "sms",
+                    "sender_id": 1,
+                    "to": [
+                      {
+                        "telephone_number": "080xxxxxxxx"
+                      }
+                    ],
+                    "es_type": "timestamp_only",
+                    "password": "string",
+                    "cc": [
+                      "user@example.com"
+                    ],
+                    "files": [
+                      {
+                        "name": "image.png",
+                        "content": "iVBORw0KGgoAAAANSUhEUgAAAV4AAACWBAMAAABkyf1EAAAAG1BMVEXMzMyWlpbFxcWqqqqcnJyxsbG3t7e+vr6jo6OVuynYAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADG0lEQVR4nO2YzW/aQBDFF2PjHBkwCUfTSOEKUaRecRpFPeKqX0eo1KZHnFx6xFWV/tud2V3DsiJEPdi+vN/BC/aL9mV2PDuLUgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgP/jMkuueYhIWPCn4CZ5+4I2Jj3kIk1OS+tC+1wq1d35LXhcvSTWw7zye0JaF2uZe6TUWeU3lvH8uDg0fkvr95S0LrLk8SqjVIXjH8xGPP2dlkl6VJwbv9kzSx9OS2uiR1uZd6k6VZzWiQR7eUQb/CLjt8qBl6W10aWNrOtWTS7snZI/BDqRfTIyfgP5m9PS2tAZKXMWA3uH+uJkcERL1m/M6fOKtDY6uixxfNd9cyOmGV9zkx0TWflIUkb4c5dpvz06Im2I3oOdOF+YG5FOzmJovyzE9KZSm/oQJUekTXLGE8+3X5NnZRNaTcb6QZBxpZvvDRm/3XFUvl950gaZljxlecfZeSvexUTHhnBNaUD7BDV+zxJ+87iMHUobg3er3+blNyZSx0RIM7dgGb+h3lpuPWmTfq/l5f8wnXMeGxPh7pUaFI4fc7tDozdPNPSkTfrluMqq9/hShdA+LIel8/5XflOdKZ60MTiuC/VJcrEc+UGbkLsf2PrwRel9raX4yqrbGBZjPym5bdvshY433hNbyl8mtyWL5/Ze+oDccuXGkhYt1Qel41r58Ypqj9z+y/Wb9duovx/v5bovX/6mFZLbfx36bWN/W4/kOhn3Pusx0b2a0xTkibNdWL/fV0r3SJ60EUx0iqF5d+TbQdMV0EXpxM/41Q+l52ijP9M+y3OztlJrD5raLs2cdsf61RGVnqOF/rcr6RnRIJZlj+RycGiYUNqt2smd30L+x5wvLZwvYho+XpU8Z5Z8i+cytz6UVR05J0PgnCirHe0+fZIz6oG0IfTZfGyO5rrWuodeHfV8X2BDe74Qtu2cj/U5fiaF1ozmhL+q/M0kJ3YrbuuZKIaetDF+ZuY3mks7uj/arGWxo31Fs36DG3q38aQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4FX+AcL6c1W3I+QxAAAAAElFTkSuQmCC"
+                      }
+                    ],
+                    "master_document_expiry_id": 1,
+                    "remind_about_expiry": true
+                  }
+                },
+                "Url": {
+                  "value": {
+                    "notification_type": "url",
+                    "sender_id": 1,
+                    "to": [
+                      {
+                        "forwarding_required": false,
+                        "verification_file_required": false,
+                        "telephone_number_verification_required": false
+                      }
+                    ],
+                    "es_type": "timestamp_only",
+                    "password": "string",
+                    "files": [
+                      {
+                        "name": "image.png",
+                        "content": "iVBORw0KGgoAAAANSUhEUgAAAV4AAACWBAMAAABkyf1EAAAAG1BMVEXMzMyWlpbFxcWqqqqcnJyxsbG3t7e+vr6jo6OVuynYAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADG0lEQVR4nO2YzW/aQBDFF2PjHBkwCUfTSOEKUaRecRpFPeKqX0eo1KZHnFx6xFWV/tud2V3DsiJEPdi+vN/BC/aL9mV2PDuLUgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgP/jMkuueYhIWPCn4CZ5+4I2Jj3kIk1OS+tC+1wq1d35LXhcvSTWw7zye0JaF2uZe6TUWeU3lvH8uDg0fkvr95S0LrLk8SqjVIXjH8xGPP2dlkl6VJwbv9kzSx9OS2uiR1uZd6k6VZzWiQR7eUQb/CLjt8qBl6W10aWNrOtWTS7snZI/BDqRfTIyfgP5m9PS2tAZKXMWA3uH+uJkcERL1m/M6fOKtDY6uixxfNd9cyOmGV9zkx0TWflIUkb4c5dpvz06Im2I3oOdOF+YG5FOzmJovyzE9KZSm/oQJUekTXLGE8+3X5NnZRNaTcb6QZBxpZvvDRm/3XFUvl950gaZljxlecfZeSvexUTHhnBNaUD7BDV+zxJ+87iMHUobg3er3+blNyZSx0RIM7dgGb+h3lpuPWmTfq/l5f8wnXMeGxPh7pUaFI4fc7tDozdPNPSkTfrluMqq9/hShdA+LIel8/5XflOdKZ60MTiuC/VJcrEc+UGbkLsf2PrwRel9raX4yqrbGBZjPym5bdvshY433hNbyl8mtyWL5/Ze+oDccuXGkhYt1Qel41r58Ypqj9z+y/Wb9duovx/v5bovX/6mFZLbfx36bWN/W4/kOhn3Pusx0b2a0xTkibNdWL/fV0r3SJ60EUx0iqF5d+TbQdMV0EXpxM/41Q+l52ijP9M+y3OztlJrD5raLs2cdsf61RGVnqOF/rcr6RnRIJZlj+RycGiYUNqt2smd30L+x5wvLZwvYho+XpU8Z5Z8i+cytz6UVR05J0PgnCirHe0+fZIz6oG0IfTZfGyO5rrWuodeHfV8X2BDe74Qtu2cj/U5fiaF1ozmhL+q/M0kJ3YrbuuZKIaetDF+ZuY3mks7uj/arGWxo31Fs36DG3q38aQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4FX+AcL6c1W3I+QxAAAAAElFTkSuQmCC"
+                      }
+                    ],
+                    "master_document_expiry_id": 1,
+                    "remind_about_expiry": true
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sender_id": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Sender-id"
+                      }
+                    ],
+                    "description": "送信するユーザーのID (APIクライアントを利用する場合は必須)"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "送り先メールアドレス"
+                  },
+                  "es_type": {
+                    "type": "string",
+                    "description": "署名方法\n電子サインの場合は `timestamp_only` 、電子署名の場合は `esign` 。\n指定しない場合は電子サインとして扱われます。\n\n※ 電子署名は1通送信するごとに料金が発生します。\n\n文書配付の場合は送信内容には反映されません。",
+                    "enum": [
+                      "timestamp_only",
+                      "esign"
+                    ],
+                    "default": "timestamp_only"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "メッセージ\nメッセージを送らない場合は無し。",
+                    "minLength": 1
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "パスワード\nパスワードを使用しない場合は無し。\n\n※チーム設定でパスワード必須になっている場合は必要です。",
+                    "minLength": 1
+                  },
+                  "cc[]": {
+                    "type": "array",
+                    "description": "CCとなるメールアドレスリスト\nCCを使用しない場合は無し。",
+                    "items": {
+                      "type": "string",
+                      "format": "email"
+                    }
+                  },
+                  "files[]": {
+                    "type": "array",
+                    "description": "添付ファイルのリスト ファイルを添付しない場合は無し。",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "master_document_expiry_id": {
+                    "type": "integer",
+                    "default": 1,
+                    "example": 1,
+                    "minimum": 1,
+                    "format": "int64",
+                    "description": "有効期限の設定\n有効期限を設定しない場合は、1週間で設定されます。\n\n1. 1週間\n2. 2週間\n3. 4週間\n\n文書配付の場合は送信内容には反映されません。"
+                  },
+                  "remind_about_expiry": {
+                    "type": "boolean",
+                    "example": true,
+                    "default": true,
+                    "description": "署名有効期間リマインドを行うかどうか。\ntrue のとき署名有効期限の4日前・1日前にリマインドメールが送信されます。\n\n文書配付の場合は送信内容には反映されません。"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              },
+              "encoding": {
+                "cc[]": {
+                  "style": "form",
+                  "contentType": "text/plain"
+                }
+              }
+            }
+          },
+          "description": "### 文書送信パラメーター\n\n`multipart/form-data` 形式のリクエストは非推奨です。三者間契約に対応した `application/json` 形式のリクエストをご使用ください。\n\n### 三者間以上の契約の署名・合意について（[機能について詳しく](https://support.freee.co.jp/hc/ja/articles/7477108755609-%E4%B8%89%E8%80%85%E9%96%93%E4%BB%A5%E4%B8%8A%E3%81%AE%E5%A5%91%E7%B4%84%E6%A9%9F%E8%83%BD%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6#h_01HNHX8YFGMZ58N1D60ZBFZ170)）\n\n- 以下条件で送付する場合、`approve_on_signing` を設定すると、「署名と合意を同時に行う」ことができます。<br>\n  署名方法：電子サイン<br>\n  送信方法：メール\n- 本設定を実装する場合は、以下の注意事項を設定画面に必ず表記してください。<br />\n  *本機能をご利用の際は、署名者間で事前に十分な協議を行ってください。*<br>\n  *契約の重要部分については、受領者側ではなく送信者側であらかじめ入力済みにして運用してください。*<br>\n  *署名者が入力項目の内容を確認できない場合、トラブルが発生する可能性があります。この点にご注意いただき、慎重に設定を行ってください。*"
+        },
+        "tags": [
+          "文書"
+        ]
+      }
+    },
+    "/v1/documents/{document_id}/contract_certificate": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "文書のID"
+        }
+      ],
+      "get": {
+        "summary": "電子契約締結に関する情報の取得",
+        "operationId": "get-v1-documents-document_id-contract-certificate",
+        "description": "文書に紐づく電子契約締結に関する情報を取得する。\n\nPDF を取得したい場合は、Media Type を application/pdf にしてください。",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractCertificate"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "取得失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{document_id}/document_items": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "文書のID"
+        }
+      ],
+      "post": {
+        "summary": "入力項目付与",
+        "operationId": "post-v1-documents-document_id-document-items",
+        "description": "文書に入力項目を付与する。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "item_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 1,
+                    "example": 1,
+                    "title": "入力項目の項目ID",
+                    "description": "入力項目の項目ID\nチームで設定されているものの中から選んで指定する。"
+                  },
+                  "order": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 0,
+                    "description": "入力項目を付与する署名者の値\n* 0 - 送信者\n* 1以降 - n番目の受領者"
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "入力項目に設定する値\n入力タイプによっては値のフォーマットがあります。\n以下を参照して値を設定してください。\n* テキスト - 任意の文字列\n* プルダウン - 選択項目名と一致した文字列\n* 数値 - 任意の整数\n* 日付 - YYYY-MM-DD形式\n* 印鑑(文字列) - 任意の文字列\n* 印鑑(マイ印鑑) - 「マイ印鑑一覧の取得」で取得したnameを設定してください"
+                  },
+                  "required": {
+                    "type": "boolean",
+                    "description": "必須項目かどうか"
+                  },
+                  "seal_image_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 1,
+                    "example": 1,
+                    "description": "入力タイプが印鑑かつマイ印鑑を設定したい場合のみ、マイ印鑑のIDを設定してください。\nマイ印鑑のIDは「マイ印鑑一覧の取得」で取得可能です。\n\n※ マイ印鑑のIDが指定された場合、マイ印鑑を有効にするためvalueに任意の文字列を指定してもマイ印鑑のnameが登録されます。"
+                  }
+                },
+                "required": [
+                  "item_id",
+                  "order"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功時\n入力項目を付与した文書を返す。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentItem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "文書"
+        ]
+      }
+    },
+    "/v1/documents/{document_id}/document_items/{document_item_id}": {
+      "parameters": [
+        {
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "description": "文書のID"
+        },
+        {
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_item_id",
+          "description": "入力項目のID"
+        }
+      ],
+      "patch": {
+        "summary": "入力項目に値を設定",
+        "operationId": "patch-v1-documents-document_id-document-items-document_item_id",
+        "description": "文書に付与した入力項目の値を設定する。",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "リクエストになんらかの問題がある場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "入力項目に設定する値\n入力タイプによっては値のフォーマットがあります。\n以下を参照して値を設定してください。\n\n* テキスト - 任意の文字列\n* プルダウン - 選択項目名と一致した文字列\n* 数値 - 任意の整数\n* 日付 - YYYY-MM-DD形式\n* 印鑑(文字列) - 任意の文字列\n* 印鑑(マイ印鑑) - 「マイ印鑑一覧の取得」で取得したnameを設定してください"
+                  },
+                  "seal_image_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 1,
+                    "example": 1,
+                    "description": "入力タイプが印鑑かつマイ印鑑を設定したい場合のみ、マイ印鑑のIDを設定してください。\nマイ印鑑のIDは「マイ印鑑一覧の取得」で取得可能です。\n\n※ マイ印鑑のIDが指定された場合、マイ印鑑を有効にするためvalueに任意の文字列を指定してもマイ印鑑のnameが登録されます。"
+                  }
+                },
+                "required": [
+                  "value"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "入力項目の削除",
+        "description": "文書に付与した入力項目を削除する。",
+        "operationId": "delete-v1-documents-document_id-document_items-document_item_id",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "200": {
+            "description": "削除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "アクセス権限がない場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "該当レコードがない場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{document_id}/meta": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "検索項目を付与する文書のID"
+        }
+      ],
+      "put": {
+        "summary": "検索項目付与",
+        "operationId": "put-v1-documents-document_id-meta",
+        "responses": {
+          "200": {
+            "description": "OK\n\n文書に設定されている検索項目が返る。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "文書に設定されている検索項目",
+                  "items": {
+                    "$ref": "#/components/schemas/MetaItem"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "文書に検索項目を付与する。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "description": "文書に付与する検索項目の配列\n\nすべてを置き換えるため、検索項目を追加したい場合は既存項目と追加したい項目を合わせてリクエストする。\n検索項目を削除する場合は既存項目から削除したい項目を除いたものをリクエストする。",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "item_id": {
+                          "$ref": "#/components/schemas/put-v1-documents-document_id-meta-items-item_id"
+                        },
+                        "value": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "検索項目の値"
+                        }
+                      },
+                      "required": [
+                        "item_id",
+                        "value"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "items"
+                ]
+              }
+            }
+          }
+        },
+        "tags": [
+          "文書"
+        ]
+      }
+    },
+    "/v1/documents/{document_id}/placeholder": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "作成中の文書のID"
+        }
+      ],
+      "get": {
+        "summary": "入力内容未反映の文書取得",
+        "operationId": "get-v1-documents-document_id-placeholder",
+        "description": "作成中の値が入っていない入力項目が配置された文書のPDFを取得する。\n\nMedia Type を application/pdf にしてください。\n\nPDF作成処理中はエラーとなる為、時間を置いてAPIを再実行してください。",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "該当レコードがない場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documents/{document_id}/re_confirmations": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "再送信する文書のID"
+        }
+      ],
+      "post": {
+        "summary": "文書再送信",
+        "operationId": "post-v1-documents-document_id-re-confirmations",
+        "responses": {
+          "200": {
+            "description": "送信成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "送信失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "文書を再送信する。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sender_id": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Sender-id"
+                      }
+                    ],
+                    "description": "送信するユーザーのID (APIクライアントを利用する場合は必須)"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "メッセージ\nメッセージを送らない場合は無し。\n\nSMSによる再送信の場合はパラメータに含めても送信内容には反映はされません。",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "description": "文書再送信パラメーター"
+        },
+        "tags": [
+          "文書"
+        ]
+      }
+    },
+    "/v1/documents/{document_id}/rejection": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "却下する文書のID"
+        }
+      ],
+      "post": {
+        "summary": "文書却下",
+        "operationId": "post-v1-documents-document_id-rejection",
+        "description": "要確認となった文書を却下する。",
+        "tags": [
+          "文書"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "リクエストになんらかの問題がある場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rejector_id": {
+                    "$ref": "#/components/schemas/Sender-id",
+                    "description": "却下するユーザーのID (APIクライアントを利用する場合は必須)"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "メッセージ\nメッセージを送らない場合は無し。",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "description": "文書却下パラメーター"
+        }
+      }
+    },
+    "/v1/documents/{document_id}/send_back": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "差し戻しする文書のID"
+        }
+      ],
+      "post": {
+        "summary": "文書差し戻し",
+        "operationId": "post-v1-documents-document_id-send_back",
+        "description": "要確認となった文書を差し戻しする。",
+        "tags": [
+          "文書"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "リクエストになんらかの問題がある場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "executor_id": {
+                    "$ref": "#/components/schemas/Sender-id",
+                    "description": "差し戻しするユーザーのID (APIクライアントを利用する場合は必須)"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "メッセージ\nメッセージを送らない場合は無し。",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "description": "文書差し戻しパラメーター"
+        }
+      }
+    },
+    "/v1/documents/{document_id}/signature_requests/cancel": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "document_id",
+          "in": "path",
+          "required": true,
+          "description": "承認依頼をキャンセルする文書のID"
+        }
+      ],
+      "put": {
+        "summary": "文書承認依頼キャンセル",
+        "operationId": "put-v1-documents-document_id-signature_requests-cancel",
+        "responses": {
+          "200": {
+            "description": "承認依頼キャンセル成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "承認依頼キャンセル失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "文書の承認依頼をキャンセルする。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "description": "承認依頼をキャンセルするユーザーのID (APIクライアントを利用する場合は必須)",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/User-id"
+                      }
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "メッセージ\nメッセージを送らない場合は無し。",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "description": "文書承認依頼キャンセルパラメーター"
+        },
+        "tags": [
+          "文書"
+        ]
+      }
+    },
+    "/v1/folders": {
+      "get": {
+        "summary": "フォルダ一覧の取得",
+        "description": "フォルダ一覧を取得する",
+        "operationId": "get-v1-folders",
+        "tags": [
+          "フォルダ"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "required": false,
+            "name": "page",
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-page"
+            }
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "per_page",
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-per_page"
+            }
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "parent_id",
+            "schema": {
+              "$ref": "#/components/schemas/Folder-id"
+            },
+            "description": "親フォルダID。IDで指定した親フォルダに格納されているフォルダ一覧を取得できる。"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "name",
+            "schema": {
+              "type": "string"
+            },
+            "description": "フォルダ名に一致する一覧を取得できる（部分一致も可）"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功\n\nホームもレスポンスに含まれます。\n",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "条件に一致したフォルダ一覧（作成日時降順）",
+                  "items": {
+                    "$ref": "#/components/schemas/Folder"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/items": {
+      "get": {
+        "summary": "入力項目・検索項目一覧の取得",
+        "operationId": "get-v1-items",
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "条件に一致した文書一覧（作成日時降順）",
+                  "items": {
+                    "$ref": "#/components/schemas/Item"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "入力項目・検索項目一覧を取得する。",
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-page",
+              "default": "1"
+            },
+            "in": "query",
+            "name": "page"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-per_page",
+              "default": "30"
+            },
+            "in": "query",
+            "name": "per_page"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "display_name",
+            "description": "入力項目・検索項目名に一致する一覧を取得できる（部分一致も可）。"
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "in": "query",
+            "name": "ids[]",
+            "description": "配列で項目IDを指定して、入力項目・検索項目一覧を取得できる。"
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "active",
+            "description": "有効, 無効を指定して、入力項目・検索項目一覧を取得できる。\n* true - 有効\n* false - 無効\n"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "date",
+                "image",
+                "number",
+                "select",
+                "string",
+                "acceptance"
+              ]
+            },
+            "in": "query",
+            "name": "input_type",
+            "description": "項目タイプを指定して、入力項目・検索項目一覧を取得できる。\n* date - 日付\n* image - 画像\n* number - 数値\n* select - プルダウン\n* string - テキスト\n* acceptance - チェックボックス\n"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "input_item",
+                "metadata"
+              ]
+            },
+            "in": "query",
+            "name": "role",
+            "description": "用途を指定して、入力項目・検索項目一覧を取得できる。\n* input_item - 入力項目\n* metadata - 検索項目\n"
+          }
+        ],
+        "tags": [
+          "入力項目・検索項目"
+        ]
+      },
+      "post": {
+        "summary": "入力項目・検索項目の登録",
+        "description": "入力項目・検索項目を登録する。",
+        "operationId": "post-v1-items",
+        "responses": {
+          "200": {
+            "description": "登録成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "作成された入力項目・検索項目",
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "executor_id": {
+                    "description": "実行するユーザーのID (APIクライアントを利用する場合は必須)",
+                    "$ref": "#/components/schemas/User-id"
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "description": "表示名"
+                  },
+                  "input_type": {
+                    "type": "string",
+                    "description": "入力項目のフォーマットを示す\n文書作成時の入力項目値はこのフォーマットに応じて入力する。\n* string - 型はstring。自由入力。\n* date - 型はstring。日付フォーマット（例：2000-10-10）\n* select - 型はstring。選択肢に指定した文字列のみ。\n* number - 型はstring。数字のみ。\n* acceptance - 型はstring。真偽値のみ。"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "項目の説明"
+                  },
+                  "owner_default_visible": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "自分方の入力項目設定フィールドにてItemを初期表示するかどうか\n指定しない場合は `false` が指定されたものとして扱います。"
+                  },
+                  "signer_default_visible": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "相手方の入力項目設定フィールドにてItemを初期表示するかどうか\n指定しない場合は `false` が指定されたものとして扱います。"
+                  },
+                  "item_options_attributes": {
+                    "type": "array",
+                    "description": "入力項目のフォーマットが `select` のときの選択肢",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": "string",
+                          "description": "選択肢の内容"
+                        }
+                      }
+                    }
+                  },
+                  "placeholder": {
+                    "type": "string",
+                    "description": "入力項目のフォーマットが `string` または `number` のときの入力例"
+                  },
+                  "date_format": {
+                    "type": "string",
+                    "example": "default",
+                    "description": "入力項目のフォーマットが`date`のときの日付の表示形式\n指定しない場合は `default` が指定されたものとして扱います。\n* default - 西暦（例：2020年1月1日）\n* japanese - 和暦（例：令和2年1月1日）"
+                  },
+                  "role": {
+                    "type": "string",
+                    "example": "input_item",
+                    "description": "入力項目の用途\n指定しない場合は `input_item` が指定されたものとして扱います。\n* input_item - 入力項目\n* metadata - 検索項目"
+                  },
+                  "encryption_required": {
+                    "type": "boolean",
+                    "description": "入力値の暗号化\n指定しない場合は `false` が指定されたものとして扱います。"
+                  }
+                },
+                "required": [
+                  "display_name",
+                  "input_type"
+                ]
+              }
+            }
+          },
+          "description": "入力項目・検索項目登録のパラメーター"
+        },
+        "tags": [
+          "入力項目・検索項目"
+        ]
+      }
+    },
+    "/v1/kintone": {
+      "get": {
+        "summary": "Kintone連携情報の取得",
+        "tags": [
+          "Kintone"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "kintone_plan": {
+                      "type": "boolean",
+                      "description": "Kintone連携が可能か否か"
+                    }
+                  },
+                  "required": [
+                    "kintone_plan"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/pdf_documents": {
+      "post": {
+        "summary": "文書アップロード",
+        "operationId": "post-v1-pdf_documents",
+        "description": "任意のフォルダに文書をアップロードする。作成された文書のステータスは「完了」になる",
+        "tags": [
+          "文書"
+        ],
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "document": {
+                      "$ref": "#/components/schemas/Document"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "メッセージ"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ユーザー または フォルダ が見つからない場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "フォルダにアクセスする権限がない または フォルダ選択必須設定が有効でフォルダ未選択の場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "アップロードファイルの形式、タイトル、サイズが条件を満たしていない場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pdf_file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "アップロードファイル\n\n- ファイル形式はPDF（application/pdf）のみ有効です。\n- PDFファイルのタイトルは255文字以内にしてください。\n- PDFファイルのサイズは10MB以下にしてください。\n"
+                  },
+                  "uploader_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "アップロードするユーザーのID (APIクライアントを利用する場合は必須)"
+                  },
+                  "folder_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "アップロードした文書の保存先フォルダのID"
+                  }
+                },
+                "required": [
+                  "pdf_file",
+                  "folder_id"
+                ]
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pdf_file": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "アップロードファイル名（拡張子込み）\n\n- PDFファイルのタイトルは255文字以内にしてください。"
+                      },
+                      "content": {
+                        "type": "string",
+                        "description": "アップロードファイルの内容\n\n- アップロードファイルのバイナリをBase64エンコードした文字列を指定してください。\n- ファイル形式はPDF（application/pdf）のみ有効です。\n- PDFファイルのサイズは10MB以下にしてください。"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "content"
+                    ]
+                  },
+                  "uploader_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "アップロードするユーザーのID"
+                  },
+                  "folder_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "アップロードした文書の保存先フォルダのID"
+                  }
+                },
+                "required": [
+                  "pdf_file",
+                  "uploader_id",
+                  "folder_id"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/seal_images": {
+      "get": {
+        "summary": "マイ印鑑一覧の取得",
+        "tags": [
+          "マイ印鑑"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SealImage"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "マイ印鑑機能が有効ではない場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-v1-seal_images",
+        "description": "マイ印鑑一覧を取得する",
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-page"
+            },
+            "in": "query",
+            "name": "page"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-per_page"
+            },
+            "in": "query",
+            "name": "per_page"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "name",
+            "description": "マイ印鑑名に一致する一覧を取得できる（部分一致も可）"
+          }
+        ]
+      }
+    },
+    "/v1/team": {
+      "get": {
+        "summary": "所属しているチームの取得",
+        "description": "自分が所属しているチームを取得する。",
+        "operationId": "get-v1-team",
+        "tags": [
+          "チーム"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Team"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/team/team_setting": {
+      "get": {
+        "summary": "所属しているチーム設定の取得",
+        "description": "自分が所属しているチームの設定を取得する。",
+        "operationId": "get-v1-team-team_setting",
+        "tags": [
+          "チーム"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamSetting"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/teams": {
+      "get": {
+        "summary": "チーム一覧の取得",
+        "tags": [
+          "チーム"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Team"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-v1-teams",
+        "description": "チーム一覧を取得する。\n自チームも含め、文書を交わした全てのチームを取得することができます。\n相手方がfreeeサイン上にアカウントを作成していない場合はチームは存在していないので取得できません。\n",
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-page"
+            },
+            "in": "query",
+            "name": "page"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-per_page"
+            },
+            "in": "query",
+            "name": "per_page"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "name",
+            "description": "チーム名に一致する一覧を取得できる（部分一致も可）"
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Team-id"
+              }
+            },
+            "in": "query",
+            "name": "ids[]",
+            "description": "配列でチームIDを指定して、チーム一覧を取得できる"
+          }
+        ]
+      }
+    },
+    "/v1/templates": {
+      "get": {
+        "summary": "テンプレート一覧取得",
+        "tags": [
+          "テンプレート"
+        ],
+        "responses": {
+          "200": {
+            "description": "テンプレート一覧取得成功",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "条件に一致したテンプレート一覧（作成日時降順）",
+                  "items": {
+                    "$ref": "#/components/schemas/Template"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-v1-templates",
+        "description": "テンプレート一覧を取得する",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "description": "テンプレート名に一致する一覧を取得できる（部分一致も可）",
+            "name": "title"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-page"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-per_page"
+            }
+          }
+        ]
+      },
+      "parameters": []
+    },
+    "/v1/templates/{template_id}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "template_id",
+          "in": "path",
+          "required": true,
+          "description": "テンプレートのID"
+        }
+      ],
+      "get": {
+        "summary": "テンプレート取得",
+        "operationId": "get-v1-template",
+        "description": "テンプレートを取得する。\n\nPDF を取得したい場合は、Media Type を application/pdf にしてください。",
+        "tags": [
+          "テンプレート"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateShow"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "取得失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/token": {
+      "post": {
+        "summary": "アクセストークン発行API",
+        "operationId": "post-v1-token",
+        "security": [],
+        "description": "APIにアクセスするためのアクセストークンを発行する。\n\n発行されたアクセストークンは他のAPIを使用する際にAuthorizationリクエストヘッダーでBearerトークンとして設定してください。\nアクセストークンには有効期限があります。有効期限が切れるとAPIはエラーレスポンスを返すため、新しいアクセストークンを発行して使用してください。\n有効期限切れ時のエラーレスポンスの詳細については `Error` の項目を参照してください。\n",
+        "tags": [
+          "アクセストークン"
+        ],
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string",
+                      "description": "発行されたアクセストークン"
+                    },
+                    "expires_in": {
+                      "type": "integer",
+                      "description": "アクセストークンの有効期限"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "description": "アクセストークンの種類"
+                    }
+                  },
+                  "required": [
+                    "access_token",
+                    "expires_in",
+                    "token_type"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "client_idまたはclient_secretが不正な場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "client_id": {
+                    "type": "string",
+                    "description": "APIクライアントのclient_id"
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "description": "APIクライアントのclient_secret"
+                  }
+                },
+                "required": [
+                  "client_id",
+                  "client_secret"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users": {
+      "get": {
+        "summary": "ユーザー一覧の取得",
+        "description": "ユーザー一覧を取得する。\nここで取得できるユーザーには、チーム内のユーザー、文書の作成者、文書の受領者が含まれます。\nそのため、複数のチームのユーザーが含まれる場合があります。\n",
+        "operationId": "get-v1-users",
+        "tags": [
+          "ユーザー"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-page"
+            },
+            "required": false
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-per_page"
+            },
+            "required": false
+          },
+          {
+            "name": "ids[]",
+            "in": "query",
+            "description": "配列でユーザーIDを指定して、ユーザー一覧を取得できる",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/User-id"
+              }
+            },
+            "required": false
+          },
+          {
+            "name": "team_id",
+            "in": "query",
+            "description": "チームIDを指定して、指定したチームのユーザー一覧を取得できる",
+            "schema": {
+              "$ref": "#/components/schemas/Team-id"
+            },
+            "required": false
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "メールアドレスを指定してユーザー情報を取得できる（完全一致）",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            },
+            "required": false
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "ユーザーのステータス\n* receiving_only - 文書を受領した未登録ユーザー\n* active - 登録済ユーザー\n* unconfirmed - 登録途中ユーザー\n* canceled - 退会済ユーザー",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "receiving_only",
+                "active",
+                "unconfirmed",
+                "canceled"
+              ]
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "条件に一致したユーザー一覧（ユーザーID昇順）",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "条件に一致したユーザー一覧（ユーザーID昇順）",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/invitations": {
+      "post": {
+        "summary": "ユーザーを招待する",
+        "operationId": "post-v1-users-invitations",
+        "description": "ユーザーを招待する。",
+        "tags": [
+          "ユーザー"
+        ],
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "ユーザーへ招待メール送付完了",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "自チームに所属していないユーザーが招待者",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "登録済みのメールアドレスを招待した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ユーザーの招待が失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inviter_id": {
+                    "description": "招待者となるユーザーのID (APIクライアントを利用する場合は必須)",
+                    "$ref": "#/components/schemas/Inviter-id"
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "被招待者のメールアドレス",
+                    "format": "email"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "chief_document_manager",
+                      "document_manager",
+                      "document_sender",
+                      "document_creator",
+                      "member"
+                    ],
+                    "example": "member",
+                    "default": "ご利用プランのアクセス制御が有効な場合 document_creator. 無効な場合 member",
+                    "description": "被招待者の権限\n* admin - 全権管理\n* chief_document_manager - 締結・文書管理\n* document_manager - 文書管理\n* document_sender - 作成・送信\n* document_creator - 作成\n* member - メンバー\nご利用プランのアクセス制御が無効な場合, admin と member 以外は指定できません"
+                  },
+                  "lastname": {
+                    "type": "string",
+                    "description": "被招待者の姓"
+                  },
+                  "firstname": {
+                    "type": "string",
+                    "description": "被招待者の名"
+                  },
+                  "affiliation": {
+                    "type": "string",
+                    "description": "被招待者の部署・役職"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "ユーザーの参加待ちの招待一覧",
+        "operationId": "get-v1-users-invitations",
+        "description": "ユーザーの参加待ちの招待一覧",
+        "tags": [
+          "ユーザー"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-page"
+            },
+            "in": "query",
+            "name": "page"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-per_page"
+            },
+            "in": "query",
+            "name": "per_page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "description": "ユーザーの参加待ちの招待一覧（招待ID昇順）",
+                  "items": {
+                    "$ref": "#/components/schemas/Invitation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/invitations/{invitation_id}/re_invitations": {
+      "post": {
+        "summary": "ユーザーを再招待する",
+        "operationId": "post-v1-users-invitations-invitation_id-re_invitations",
+        "description": "ユーザーを再招待する。",
+        "tags": [
+          "ユーザー"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "name": "invitation_id",
+            "in": "path",
+            "required": true,
+            "description": "再招待する招待のID"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "ユーザーへの再招待メール送付完了",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "自チームに所属していないユーザーが招待者",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ユーザー参加済みの招待に対して再招待しようとした",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inviter_id": {
+                    "description": "再招待を実行するユーザーID (APIクライアントを利用する場合は必須)",
+                    "$ref": "#/components/schemas/Inviter-id"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/activenesses": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "user_id",
+          "in": "path",
+          "required": true,
+          "description": "退会させるユーザーのID"
+        }
+      ],
+      "delete": {
+        "summary": "ユーザーの退会",
+        "tags": [
+          "ユーザー"
+        ],
+        "operationId": "delete-v1-users-user_id-activenesses",
+        "responses": {
+          "200": {
+            "description": "退会処理が成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "退会処理が失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "特定のユーザーを退会させる。",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "executor_id": {
+                    "description": "退会処理を実行するユーザーのID (APIクライアントを利用する場合は必須)",
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/User-id"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "description": "ユーザー退会のパラメーター"
+        }
+      }
+    },
+    "/v1/users/{user_id}/documents": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": "user_id",
+          "in": "path",
+          "description": "文書の一覧を取得したいユーザーのID",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "ユーザーがアクセスできる文書一覧の取得",
+        "tags": [
+          "文書"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "headers": {
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              },
+              "Current-Page": {
+                "$ref": "#/components/headers/Current-Page"
+              },
+              "Page-Items": {
+                "$ref": "#/components/headers/Page-Items"
+              },
+              "Total-Page": {
+                "$ref": "#/components/headers/Total-Page"
+              },
+              "Total-Count": {
+                "$ref": "#/components/headers/Total-Count"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Document"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-v1-users-user_id-documents",
+        "parameters": [
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-page"
+            },
+            "in": "query",
+            "name": "page"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/PaginationParameters-per_page"
+            },
+            "in": "query",
+            "name": "per_page"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/Folder-id"
+            },
+            "in": "query",
+            "description": "フォルダID。IDで指定したフォルダに格納されている文書一覧を取得できる。",
+            "name": "folder_id"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "title",
+            "description": "文書名に一致する一覧を取得できる（部分一致も可）。送信相手のメールアドレスに一致する一覧を取得できる（完全一致）。"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "in_progress",
+                "awaiting_receipt",
+                "approved",
+                "concluded",
+                "rejected",
+                "expired"
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "description": "ステータス毎に文書一覧を取得できる。\n  * draft - 作成中\n  * in_progress - 確認待ち\n  * awaiting_receipt - 受け取り待ち\n  * approved - 要確認\n  * concluded - 完了\n  * rejected - 却下\n  * expired - 有効期限切れ"
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "in": "query",
+            "name": "ids[]",
+            "description": "配列で文書IDを指定して、文書一覧を取得できる"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "created_at_from",
+            "schema": {
+              "$ref": "#/components/schemas/created_at",
+              "title": "作成日時(開始)"
+            },
+            "description": "作成日時が指定した作成日時以降である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "created_at_to",
+            "schema": {
+              "$ref": "#/components/schemas/created_at",
+              "title": "作成日時(終了)"
+            },
+            "description": "作成日時が指定した作成日時より過去である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "updated_at_from",
+            "schema": {
+              "$ref": "#/components/schemas/updated_at",
+              "title": "更新日時(開始)"
+            },
+            "description": "更新日時が指定した更新日時以降である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          },
+          {
+            "in": "query",
+            "required": false,
+            "name": "updated_at_to",
+            "schema": {
+              "$ref": "#/components/schemas/updated_at",
+              "title": "更新日時(終了)"
+            },
+            "description": "更新日時が指定した更新日時より過去である文書を取得できます。<br>\n開始は区切りを含みますが、終了は区切りを含みません。(左閉右開区間)"
+          }
+        ],
+        "description": "特定のユーザーがアクセスできる文書の一覧を取得する。<br>\nここで取得できる文書には、作成した文書と受領した文書が含まれます。 <br>\n文書は、新しく作成した順に取得されます。"
+      }
+    }
+  },
+  "components": {
+    "headers": {
+      "Link": {
+        "description": "ページ間を移動するためのリンク",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Current-Page": {
+        "description": "現在のページ番号",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Page-Items": {
+        "description": "現在のページのアイテム数",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Total-Page": {
+        "description": "総ページ数",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Total-Count": {
+        "description": "総アイテム数",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "title": "Error",
+        "type": "object",
+        "description": "エラーレスポンス",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "`bad_request` や `internal_server_error` 等のエラーの種類を表す文字列\n\n`access_token_expired` の場合はアクセストークンの有効期限切れなので再度アクセストークンの発行を行ってください。\n\n`too_many_requests` の場合はAPIへのアクセスが多過ぎます。`/v1/token`は秒間20リクエストまで、それ以外は秒間100リクエストまでにしてください。",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string",
+            "description": "詳細なエラー内容",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "error",
+          "message"
+        ],
+        "x-examples": {}
+      },
+      "PaginationParameters-page": {
+        "title": "PaginationParameters-page",
+        "description": "取得ページ番号",
+        "type": "integer",
+        "default": 1,
+        "minimum": 1
+      },
+      "PaginationParameters-per_page": {
+        "title": "PaginationParameters-per_page",
+        "description": "取得件数",
+        "type": "integer",
+        "default": 30,
+        "minimum": 1,
+        "maximum": 50
+      },
+      "Document": {
+        "title": "文書",
+        "type": "object",
+        "description": "文書",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "文書ID",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "description": "文書のタイトル",
+            "minLength": 1,
+            "example": "文書 忍者太郎様"
+          },
+          "owner_id": {
+            "$ref": "#/components/schemas/Document-owner_id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "in_progress",
+              "awaiting_receipt",
+              "approved",
+              "concluded",
+              "rejected",
+              "expired",
+              "trashed"
+            ],
+            "description": "文書のステータス\n* draft - 作成中\n* in_progress - 確認待ち\n* awaiting_receipt - 受け取り待ち\n* approved - 要確認\n* concluded - 完了\n* rejected - 却下\n* expired - 有効期限切れ\n* trashed - 削除済み"
+          },
+          "folder_id": {
+            "$ref": "#/components/schemas/Document-folder_id"
+          },
+          "folder_name": {
+            "$ref": "#/components/schemas/Document-folder_name"
+          },
+          "items": {
+            "type": "array",
+            "description": "入力項目 設定されていない場合は無し。",
+            "items": {
+              "$ref": "#/components/schemas/DocumentItem"
+            }
+          },
+          "meta_items": {
+            "type": "array",
+            "description": "検索項目 設定されていない場合は無し。",
+            "items": {
+              "$ref": "#/components/schemas/MetaItem"
+            }
+          },
+          "signers": {
+            "type": "array",
+            "description": "文書に設定されている署名者\n送信前は無し。",
+            "items": {
+              "type": "object",
+              "properties": {
+                "signer_id": {
+                  "$ref": "#/components/schemas/Document-signers-signer_id"
+                }
+              },
+              "required": [
+                "signer_id"
+              ]
+            }
+          },
+          "signer_url": {
+            "$ref": "#/components/schemas/SignerUrl"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/created_at"
+          },
+          "updated_at": {
+            "$ref": "#/components/schemas/updated_at"
+          },
+          "timestamped": {
+            "type": "boolean",
+            "title": "タイムスタンプが付与されているかどうか",
+            "description": "タイムスタンプが付与されているかどうか"
+          },
+          "expires_at": {
+            "$ref": "#/components/schemas/expires_at"
+          },
+          "sent_at": {
+            "type": "string",
+            "title": "送信日時",
+            "description": "送信日時",
+            "format": "date-time",
+            "nullable": true
+          },
+          "concluded_at": {
+            "type": "string",
+            "title": "締結完了日時",
+            "description": "締結完了日時",
+            "format": "date-time",
+            "nullable": true
+          },
+          "skip_approval": {
+            "type": "boolean",
+            "title": "配布文書かどうか",
+            "description": "trueの場合、配布文書（署名合意をスキップする文書）。\nfalseの場合、署名・合意文書。"
+          },
+          "signer_document_confirmation": {
+            "type": "boolean",
+            "title": "受領者確認済みかどうか",
+            "description": "配布文書の受領者が文書を確認済みかどうか。\n配布文書でない場合は常にfalse。"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "owner_id",
+          "status",
+          "folder_id",
+          "folder_name",
+          "created_at",
+          "updated_at",
+          "timestamped",
+          "skip_approval",
+          "signer_document_confirmation"
+        ]
+      },
+      "DocumentActivity": {
+        "title": "文書の操作履歴",
+        "type": "object",
+        "description": "文書の操作履歴",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "操作履歴ID",
+            "example": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "comment",
+              "confirmation",
+              "reconfirmation",
+              "cancel",
+              "forward",
+              "cancel_forward",
+              "send_back_forward",
+              "signing",
+              "approval",
+              "rejection",
+              "conclusion",
+              "share",
+              "send_back_approval",
+              "url_issued",
+              "signer_email_verified"
+            ],
+            "description": "操作履歴のステータス\n* comment - コメント\n* confirmation - 送信\n* reconfirmation - 再送\n* cancel - 依頼取消\n* forward - 転送\n* cancel_forward - 転送キャンセル\n* send_back_forward - 転送差し戻し\n* signing - 署名\n* approval - 合意\n* rejection - 却下\n* conclusion - 締結完了\n* share - 共有\n* send_back_approval - 署名差し戻し\n* url_issued - 署名URL発行\n* signer_email_verified - 署名URL受領"
+          },
+          "comment": {
+            "type": "string",
+            "description": "操作履歴のコメント"
+          },
+          "user_name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "操作履歴を作成したユーザーの名前"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/created_at"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "user_name",
+          "created_at"
+        ]
+      },
+      "AttachmentFile": {
+        "title": "添付ファイル",
+        "type": "object",
+        "description": "添付ファイル",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "ファイルID",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "ファイルの名前",
+            "minLength": 1,
+            "example": "文書 忍者太郎様 の添付ファイル"
+          },
+          "content_type": {
+            "type": "string",
+            "description": "ContentType",
+            "minLength": 1,
+            "example": "application/pdf"
+          },
+          "extension": {
+            "type": "string",
+            "description": "拡張子",
+            "minLength": 1,
+            "example": "pdf"
+          },
+          "creator_id": {
+            "$ref": "#/components/schemas/User-id"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "content_type",
+          "extension",
+          "creator_id"
+        ]
+      },
+      "DocumentShow": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Document"
+          },
+          {
+            "properties": {
+              "cloud_file_updated_at": {
+                "type": "string",
+                "title": "Google Doc または PDF 更新日時",
+                "description": "Google Doc または PDF 更新日時",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "cloud_file_updated_at"
+            ]
+          }
+        ]
+      },
+      "User-id": {
+        "type": "integer",
+        "title": "ユーザーID",
+        "minimum": 1,
+        "format": "int64",
+        "example": 1,
+        "description": "ユーザーID"
+      },
+      "Team-id": {
+        "type": "integer",
+        "title": "チームID",
+        "minimum": 1,
+        "format": "int64",
+        "example": 1,
+        "description": "チームID"
+      },
+      "post-v1-documents-creator_id": {
+        "title": "post-v1-documents-creator_id",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User-id"
+          }
+        ],
+        "description": "文書の作成者となるユーザーのID (APIクライアントを利用する場合は必須)"
+      },
+      "Template-id": {
+        "type": "integer",
+        "title": "文書テンプレートID",
+        "description": "文書テンプレートID",
+        "minimum": 1,
+        "example": 1,
+        "format": "int64"
+      },
+      "post-v1-documents-template_id": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Template-id"
+          }
+        ],
+        "description": "使用する文書テンプレートのID",
+        "title": "post-v1-documents-template_id"
+      },
+      "created_at": {
+        "type": "string",
+        "title": "作成日時",
+        "description": "作成日時。 ISO8601 形式を受け入れます。<br>\n<br>\n入力例: 2022-01-01T00:00:00+09:00",
+        "format": "date-time"
+      },
+      "updated_at": {
+        "type": "string",
+        "title": "更新日時",
+        "description": "更新日時。 ISO8601 形式を受け入れます。<br>\n<br>\n入力例: 2022-02-01T00:00:00+09:00",
+        "format": "date-time"
+      },
+      "Document-owner_id": {
+        "title": "文書作成者ユーザーID",
+        "description": "文書作成者ユーザーID",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User-id"
+          }
+        ]
+      },
+      "Folder-id": {
+        "type": "integer",
+        "title": "フォルダID",
+        "description": "フォルダID",
+        "format": "int64"
+      },
+      "post-v1-documents-folder_id": {
+        "title": "post-v1-documents-folder_id",
+        "description": "作成した文書の保存先フォルダのID",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Folder-id"
+          }
+        ]
+      },
+      "Document-folder_id": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Folder-id"
+          }
+        ],
+        "title": "フォルダID",
+        "description": "文書が保存されているフォルダのID"
+      },
+      "Document-folder_name": {
+        "type": "string",
+        "title": "フォルダ名",
+        "description": "文書が保存されているフォルダの名前"
+      },
+      "Document-items-user_id": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User-id"
+          }
+        ],
+        "title": "文書入力項目入力ユーザーID",
+        "description": "文書入力項目入力ユーザーID\n未入力の場合は無し。"
+      },
+      "Sender-id": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User-id"
+          }
+        ],
+        "title": "送信者ID",
+        "description": "文書の送信者となるユーザーのID"
+      },
+      "Document-signers-signer_id": {
+        "title": "Document-signers-signer_id",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User-id"
+          }
+        ],
+        "description": "文書の署名者となるユーザーのID"
+      },
+      "MetaItem": {
+        "title": "検索項目",
+        "type": "object",
+        "description": "文書に検索用に設定する項目",
+        "properties": {
+          "item_id": {
+            "$ref": "#/components/schemas/MetaItem-item_id"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "string",
+              "date",
+              "number",
+              "select",
+              "stamp",
+              "acceptance"
+            ],
+            "description": "検索項目の種類"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "検索項目の名前"
+          },
+          "value": {
+            "type": "string",
+            "description": "検索項目の値",
+            "nullable": true
+          }
+        },
+        "required": [
+          "item_id",
+          "type",
+          "name",
+          "value"
+        ]
+      },
+      "MetaItem-item_id": {
+        "type": "integer",
+        "title": "検索項目の項目ID",
+        "description": "検索項目の項目ID",
+        "format": "int64"
+      },
+      "DocumentItem": {
+        "type": "object",
+        "description": "入力項目",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "項目名"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "signer"
+            ],
+            "description": "どちら側の入力項目か\n* owner 送信者側\n* signer 承認側"
+          },
+          "order": {
+            "type": "integer",
+            "format": "int64",
+            "description": "署名の順番。以下の順で表示\n* ownerのアイテム群\n* signer1のアイテム群\n* signer2のアイテム群\n…",
+            "default": 1
+          },
+          "required": {
+            "type": "boolean",
+            "description": "必須項目かどうか"
+          },
+          "value": {
+            "type": "string",
+            "description": "入力された値\n未入力の場合は無し。"
+          },
+          "user_id": {
+            "$ref": "#/components/schemas/Document-items-user_id"
+          },
+          "seal_image_id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "マイ印鑑画像のID\n入力項目が印鑑でなかった場合またはマイ印鑑機能を使用していない場合は無し。"
+          },
+          "item_id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "入力項目のID"
+          }
+        },
+        "required": [
+          "name",
+          "role",
+          "order",
+          "required"
+        ]
+      },
+      "put-v1-documents-document_id-meta-items-item_id": {
+        "title": "put-v1-documents-document_id-meta-items-item_id",
+        "description": "検索項目の項目ID\n\nチームで設定されているものの中から選んで指定する。\n検索項目以外に、文書に入力項目として設定する項目も指定可能。",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MetaItem-item_id"
+          }
+        ]
+      },
+      "User": {
+        "title": "ユーザー",
+        "type": "object",
+        "description": "ユーザー",
+        "properties": {
+          "id": {
+            "title": "ユーザーID",
+            "description": "ユーザーID",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/User-id"
+              }
+            ]
+          },
+          "team_id": {
+            "title": "チームID",
+            "description": "チームID。本登録していないユーザーはチームに所属していない。",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Team-id"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "receiving_only",
+              "active",
+              "unconfirmed",
+              "canceled"
+            ],
+            "description": "ユーザーのステータス\n* receiving_only - 文書を受領した未登録ユーザー\n* active - 登録済ユーザー\n* unconfirmed - 登録途中ユーザー\n* canceled - 退会済ユーザー"
+          },
+          "email": {
+            "type": "string",
+            "description": "メールアドレス\n\nメールアドレスの登録がない場合は無し。",
+            "format": "email"
+          },
+          "sms_telephone_number": {
+            "type": "string",
+            "description": "SMS用の電話番号\n\nE.164形式。登録されていない場合は無し。\nex. +8190xxxxxxxx"
+          },
+          "full_name": {
+            "type": "string",
+            "description": "フルネーム。本登録していないユーザーは無い。"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      },
+      "Folder": {
+        "title": "フォルダ",
+        "type": "object",
+        "description": "フォルダ。\nUI上では確認できませんがUI上で作成された文書は、自動で生成されるrootという名前のフォルダにデフォルトで格納されるようになっています。\nまたUI上で作成されるフォルダもデフォルトではホームを親フォルダとしています。",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Folder-id"
+          },
+          "parent_id": {
+            "title": "親フォルダID",
+            "description": "入れ子になっている親フォルダID。\nホームの場合はなし。",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Folder-id"
+              }
+            ]
+          },
+          "name": {
+            "title": "フォルダ名",
+            "description": "フォルダの名前",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Template": {
+        "title": "テンプレート一覧",
+        "type": "object",
+        "description": "テンプレート一覧",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Template-id"
+          },
+          "title": {
+            "type": "string",
+            "description": "テンプレートのタイトル"
+          },
+          "message": {
+            "type": "string",
+            "description": "テンプレートのメッセージ。送信時にデフォルトメッセージとして相手方に表示されます",
+            "nullable": true
+          },
+          "folder_id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "テンプレートの保存先フォルダのID"
+          },
+          "signers_count": {
+            "type": "integer",
+            "description": "相手方の人数"
+          },
+          "skip_approval": {
+            "type": "boolean",
+            "title": "配布文書かどうか",
+            "description": "trueの場合、配布文書（署名合意をスキップする文書）のテンプレート。\nfalseの場合、署名・合意文書のテンプレート。"
+          },
+          "items": {
+            "type": "array",
+            "description": "テンプレート入力項目一覧",
+            "items": {
+              "$ref": "#/components/schemas/TemplateItem"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "folder_id",
+          "skip_approval"
+        ]
+      },
+      "TemplateShow": {
+        "title": "テンプレート",
+        "type": "object",
+        "description": "テンプレート",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Template-id"
+          },
+          "title": {
+            "type": "string",
+            "description": "テンプレートのタイトル"
+          },
+          "message": {
+            "type": "string",
+            "description": "テンプレートのメッセージ。送信時にデフォルトメッセージとして相手方に表示されます",
+            "nullable": true
+          },
+          "folder_id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "テンプレートの保存先フォルダのID"
+          },
+          "signers_count": {
+            "type": "integer",
+            "description": "相手方の人数"
+          },
+          "skip_approval": {
+            "type": "boolean",
+            "title": "配布文書かどうか",
+            "description": "trueの場合、配布文書（署名合意をスキップする文書）のテンプレート。\nfalseの場合、署名・合意文書のテンプレート。"
+          },
+          "items": {
+            "type": "array",
+            "description": "テンプレート入力項目一覧",
+            "items": {
+              "$ref": "#/components/schemas/TemplateItem"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "folder_id",
+          "skip_approval"
+        ]
+      },
+      "TemplateItem": {
+        "title": "テンプレート入力項目",
+        "type": "object",
+        "description": "テンプレート入力項目",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "入力項目の表示名"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "signer"
+            ],
+            "description": "入力項目が作成者のものか受領者のものか示す"
+          },
+          "item_id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "入力項目固有のID",
+            "minimum": 1
+          },
+          "order": {
+            "type": "integer",
+            "format": "int64",
+            "description": "署名の順番。以下の順で表示\n* ownerのアイテム群\n* signer1のアイテム群\n* signer2のアイテム群\n…",
+            "default": 1
+          },
+          "input_type": {
+            "type": "string",
+            "description": "入力項目のフォーマットを示す\n文書作成時の入力項目値はこのフォーマットに応じて入力する。\n* stamp - 印鑑として表示する文字列。マイ印鑑の場合は入力項目値ではなく別項目(`seal_image_id`)でマイ印鑑画像のIDを指定する。\n* string - 型はstring。自由入力。\n* date - 型はstring。日付フォーマット（例：2000-10-10）\n* select - 型はstring。選択肢に指定した文字列のみ。\n* number - 型はstring。数字のみ。\n* acceptance - 型はstring。真偽値のみ。"
+          },
+          "item_options": {
+            "type": "array",
+            "description": "入力項目のフォーマットが`select`のときの選択肢",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "description": "選択肢の内容"
+                }
+              }
+            }
+          },
+          "required": {
+            "type": "boolean",
+            "description": "入力項目が必須項目かどうか示す"
+          },
+          "signatures": {
+            "type": "array",
+            "description": "入力項目位置一覧",
+            "items": {
+              "$ref": "#/components/schemas/Signature"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "role",
+          "item_id",
+          "order",
+          "input_type",
+          "required"
+        ]
+      },
+      "Signature": {
+        "title": "入力項目位置",
+        "type": "object",
+        "description": "入力項目位置",
+        "properties": {
+          "x": {
+            "type": "integer",
+            "description": "入力項目座標指定：左上端を起点としたX軸（横軸）。右方向に正。"
+          },
+          "y": {
+            "type": "integer",
+            "description": "入力項目座標指定：左上端を起点としたY軸（縦軸）。下方向に正。"
+          },
+          "page": {
+            "type": "integer",
+            "description": "何ページ目の印鑑か指定する",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "page"
+        ]
+      },
+      "SealImage": {
+        "title": "マイ印鑑",
+        "type": "object",
+        "description": "文書作成時に使用できるマイ印鑑。",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SealImage-id"
+          },
+          "name": {
+            "type": "string",
+            "description": "マイ印鑑の名前"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "SealImage-id": {
+        "type": "integer",
+        "title": "マイ印鑑ID",
+        "format": "int64",
+        "example": 1,
+        "minimum": 1,
+        "description": "マイ印鑑のID"
+      },
+      "Team": {
+        "title": "チーム",
+        "type": "object",
+        "description": "チーム",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Team-id"
+          },
+          "name": {
+            "type": "string",
+            "description": "チームの名前",
+            "example": "freee株式会社"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "TeamSetting": {
+        "title": "チーム設定",
+        "type": "object",
+        "description": "チーム設定",
+        "properties": {
+          "document_password": {
+            "type": "boolean",
+            "description": "文書のパスワード設定が必須か否か",
+            "example": true
+          },
+          "folder_necessary": {
+            "type": "boolean",
+            "description": "フォルダ選択が必須か否か",
+            "example": true
+          },
+          "approval_workflow": {
+            "type": "boolean",
+            "description": "ワークフロー承認が必須か否か",
+            "example": true
+          },
+          "workflow_route": {
+            "type": "boolean",
+            "description": "ルートテンプレート選択が必須か否か",
+            "example": true
+          },
+          "multiple_approvals": {
+            "type": "boolean",
+            "description": "相手方による署名依頼の転送が必須か否か",
+            "example": true
+          },
+          "verify_signer_telephone_number": {
+            "type": "boolean",
+            "description": "相手方の電話番号確認が必須か否か",
+            "example": true
+          }
+        },
+        "required": [
+          "document_password",
+          "folder_necessary",
+          "approval_workflow",
+          "workflow_route",
+          "multiple_approvals",
+          "verify_signer_telephone_number"
+        ]
+      },
+      "Invitation": {
+        "title": "ユーザー招待",
+        "type": "object",
+        "description": "ユーザー招待",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ユーザー招待ID"
+          },
+          "team_id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Team-id"
+              }
+            ],
+            "description": "招待先のチームID"
+          },
+          "inviter_id": {
+            "$ref": "#/components/schemas/Inviter-id"
+          },
+          "email": {
+            "type": "string",
+            "description": "被招待者のメールアドレス",
+            "format": "email"
+          },
+          "status": {
+            "type": "string",
+            "description": "招待の状態\n* waiting - 被招待者の確認待ち\n* registered - 被招待者のユーザー登録が完了",
+            "enum": [
+              "waiting",
+              "registered"
+            ]
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "招待された側が招待を承認する期限"
+          },
+          "invitation_user_profile": {
+            "$ref": "#/components/schemas/InvitationUserProfile"
+          }
+        },
+        "required": [
+          "id",
+          "team_id",
+          "inviter_id",
+          "email",
+          "status",
+          "invitation_user_profile"
+        ]
+      },
+      "InvitationUserProfile": {
+        "title": "被招待ユーザーのプロフィール",
+        "type": "object",
+        "description": "被招待ユーザーのプロフィール",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "被招待ユーザーのプロフィールID"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "chief_document_manager",
+              "document_manager",
+              "document_sender",
+              "document_creator",
+              "member"
+            ],
+            "description": "権限\n* admin - 全権管理\n* chief_document_manager - 締結・文書管理\n* document_manager - 文書管理\n* document_sender - 作成・送信\n* document_creator - 作成\n* member - メンバー",
+            "example": "member"
+          },
+          "firstname": {
+            "type": "string",
+            "description": "名",
+            "example": "太郎"
+          },
+          "lastname": {
+            "type": "string",
+            "description": "姓",
+            "example": "フリー"
+          },
+          "affiliation": {
+            "type": "string",
+            "description": "部署・役職",
+            "example": "法務部"
+          }
+        },
+        "required": [
+          "id",
+          "role"
+        ]
+      },
+      "Inviter-id": {
+        "title": "招待者ID",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User-id"
+          }
+        ],
+        "description": "招待を実行するユーザーID"
+      },
+      "ContractCertificate": {
+        "title": "電子契約締結に関する情報",
+        "type": "object",
+        "description": "電子契約締結に関する情報",
+        "properties": {
+          "title": {
+            "description": "文書名",
+            "type": "string",
+            "example": "秘密保持契約書"
+          },
+          "document_code": {
+            "description": "書類コード",
+            "type": "string",
+            "example": "acd3f41ee1bc0acb339f60ef3e0b2712b05eb323616cf18c386705de4dc0e9ae"
+          },
+          "es_type": {
+            "description": "署名方法",
+            "type": "string",
+            "example": "esign"
+          },
+          "sending": {
+            "description": "送信情報",
+            "type": "object",
+            "properties": {
+              "sender": {
+                "description": "送信者",
+                "type": "string",
+                "example": "忍者太郎"
+              },
+              "email": {
+                "description": "送信者のメールアドレス",
+                "type": "string",
+                "format": "email",
+                "example": "taro@ninja-sign.com"
+              },
+              "sent_at": {
+                "description": "送信日時",
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "signatures": {
+            "description": "署名情報",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignatureInformation"
+            }
+          },
+          "conclusion": {
+            "description": "締結情報",
+            "type": "object",
+            "properties": {
+              "concluder": {
+                "description": "締結完了者",
+                "type": "string",
+                "example": "忍者二郎"
+              },
+              "email": {
+                "description": "締結完了者のメールアドレス",
+                "type": "string",
+                "format": "email",
+                "example": "jiro@ninja-sign.com"
+              },
+              "concluded_at": {
+                "description": "締結完了日時",
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "timestamps": {
+            "description": "タイムスタンプ情報",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimestampInformation"
+            }
+          }
+        }
+      },
+      "SignatureInformation": {
+        "properties": {
+          "signer": {
+            "description": "署名者の名前",
+            "type": "string",
+            "example": "忍者一郎"
+          },
+          "email": {
+            "description": "署名者のメールアドレス",
+            "type": "string",
+            "format": "email",
+            "example": "ichiro@ninja-sign.com"
+          },
+          "signed_at": {
+            "description": "署名日時",
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TimestampInformation": {
+        "properties": {
+          "action": {
+            "description": "付与時のアクション",
+            "type": "string",
+            "example": "締結完了"
+          },
+          "date": {
+            "description": "付与日時",
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "expires_at": {
+        "type": "string",
+        "title": "有効期限日時",
+        "description": "有効期限日時",
+        "format": "date-time"
+      },
+      "Item": {
+        "title": "入力項目・検索項目",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1,
+            "minimum": 1
+          },
+          "display_name": {
+            "type": "string",
+            "example": "部署名",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0,
+            "example": "セレクトボックスから部署を選択してください。"
+          },
+          "input_type": {
+            "type": "string",
+            "example": "select"
+          },
+          "item_options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemOption"
+            }
+          },
+          "role": {
+            "type": "string",
+            "example": "input_type"
+          }
+        },
+        "required": [
+          "id",
+          "display_name",
+          "input_type",
+          "role"
+        ]
+      },
+      "ItemOption": {
+        "title": "項目オプション",
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "example": "法務部"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      },
+      "SignerUrl": {
+        "title": "署名者用URL",
+        "type": "object",
+        "description": "署名者用URLを受け取った相手は、そのURLから署名依頼の手続きを進めることができます",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "ID",
+            "example": 1
+          },
+          "url": {
+            "type": "string",
+            "title": "URL",
+            "description": "短縮URL"
+          },
+          "expires_at": {
+            "$ref": "#/components/schemas/expires_at"
+          }
+        },
+        "nullable": true
+      }
+    },
+    "securitySchemes": {
+      "AccessTokenAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "OAuth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "/oauth/authorize",
+            "tokenUrl": "/oauth/token",
+            "scopes": {
+              "all": "freeeサイン Web API の利用"
+            }
+          }
+        }
+      }
+    }
+  }
+}
