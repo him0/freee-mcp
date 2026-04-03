@@ -22,7 +22,7 @@ describe('sign/config', () => {
   const validConfig: SignConfig = {
     clientId: 'sign-test-client-id',
     clientSecret: 'sign-test-client-secret',
-    callbackPort: 54321,
+    callbackPort: 54322,
   };
 
   beforeEach(async () => {

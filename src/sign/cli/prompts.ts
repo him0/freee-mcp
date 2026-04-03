@@ -1,5 +1,5 @@
 import prompts from 'prompts';
-import { DEFAULT_CALLBACK_PORT } from '../../constants.js';
+import { SIGN_DEFAULT_CALLBACK_PORT } from '../config.js';
 import { loadSignConfig } from '../config.js';
 
 export interface SignCredentials {
@@ -19,7 +19,7 @@ export async function collectSignCredentials(): Promise<SignCredentials> {
 
   console.log('ステップ 1/2: freee サイン OAuth認証情報の入力\n');
 
-  const defaultPort = existingConfig.callbackPort || DEFAULT_CALLBACK_PORT;
+  const defaultPort = existingConfig.callbackPort || SIGN_DEFAULT_CALLBACK_PORT;
   console.log(
     `freee サインアプリのコールバックURLには http://127.0.0.1:${defaultPort}/callback を設定してください。\n`,
   );

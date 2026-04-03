@@ -9,7 +9,7 @@ vi.mock('./config.js', () => ({
   SIGN_TOKEN_ENDPOINT: 'https://ninja-sign.com/oauth/token',
   SIGN_OAUTH_SCOPE: 'all',
   getSignCredentials: (): Promise<{ clientId: string; clientSecret: string; callbackPort: number }> =>
-    Promise.resolve({ clientId: 'id', clientSecret: 'secret', callbackPort: 54321 }),
+    Promise.resolve({ clientId: 'id', clientSecret: 'secret', callbackPort: 54322 }),
 }));
 
 vi.mock('./tokens.js', () => ({

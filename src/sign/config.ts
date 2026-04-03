@@ -1,7 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
-import { CONFIG_FILE_PERMISSION, DEFAULT_CALLBACK_PORT, getConfigDir } from '../constants.js';
+import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
+
+/** サイン専用のデフォルトコールバックポート（freee 本体の 54321 と競合しないようにする） */
+export const SIGN_DEFAULT_CALLBACK_PORT = 54322;
 
 // Sign OAuth endpoints
 export const SIGN_API_URL = process.env.FREEE_SIGN_API_URL || 'https://ninja-sign.com';
@@ -108,7 +111,7 @@ export async function getSignCredentials(): Promise<{
     return {
       clientId: envClientId,
       clientSecret: envClientSecret,
-      callbackPort: DEFAULT_CALLBACK_PORT,
+      callbackPort: SIGN_DEFAULT_CALLBACK_PORT,
     };
   }
 
@@ -129,7 +132,7 @@ export async function getSignCredentials(): Promise<{
   return {
     clientId: config.clientId,
     clientSecret: config.clientSecret,
-    callbackPort: config.callbackPort ?? 54321,
+    callbackPort: config.callbackPort ?? SIGN_DEFAULT_CALLBACK_PORT,
   };
 }
 

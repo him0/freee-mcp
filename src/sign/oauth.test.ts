@@ -9,7 +9,7 @@ vi.mock('./config.js', () => ({
     Promise.resolve({
       clientId: 'sign-test-client-id',
       clientSecret: 'sign-test-client-secret',
-      callbackPort: 54321,
+      callbackPort: 54322,
     }),
 }));
 
