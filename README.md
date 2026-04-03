@@ -199,7 +199,7 @@ freee サインの API は専用コマンド `freee-sign-mcp` で利用できま
 ### セットアップ
 
 ```bash
-npx freee-sign-mcp configure
+npx --package=freee-mcp -- freee-sign-mcp configure
 ```
 
 対話式ウィザードが認証情報の設定と OAuth 認証を行います。
@@ -211,7 +211,7 @@ npx freee-sign-mcp configure
   "mcpServers": {
     "freee-sign-mcp": {
       "command": "npx",
-      "args": ["freee-sign-mcp"]
+      "args": ["--package=freee-mcp", "--", "freee-sign-mcp"]
     }
   }
 }
