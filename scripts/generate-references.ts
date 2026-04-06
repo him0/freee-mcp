@@ -552,6 +552,11 @@ function extractAllTags(schema: OpenAPISchema): string[] {
   return Array.from(tags).sort();
 }
 
+// リファレンス生成対象外のタグ（認証フロー等、ユーザーが直接操作しないエンドポイント）
+const TAG_BLACKLIST: Record<string, string[]> = {
+  "sign-api": ["OAuth 2.0"],
+};
+
 /**
  * Sync tag mappings: add any tags found in schemas but missing from mappings.
  * Returns true if mappings were updated.
@@ -568,12 +573,14 @@ async function syncTagMappings(
     const schemaText = await readFile(schemaFile, "utf-8");
     const schema: OpenAPISchema = JSON.parse(schemaText);
     const tags = extractAllTags(schema);
+    const blacklisted = TAG_BLACKLIST[apiKey] ?? [];
 
     if (!mappings[apiKey]) {
       mappings[apiKey] = {};
     }
 
     for (const tag of tags) {
+      if (blacklisted.includes(tag)) continue;
       if (!(tag in mappings[apiKey])) {
         const englishName = tagNameToEnglishName(tag);
         if (englishName === null) {
