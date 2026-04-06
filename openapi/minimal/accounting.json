@@ -4772,6 +4772,200 @@
         "description": "\n<h2 id=\"_1\">概要</h2>\n<p>指定した事業所の決算書表示名を作成する</p>",
         "hasJsonBody": true
       }
+    },
+    "/api/1/user_matchers": {
+      "get": {
+        "summary": "自動登録ルール一覧の取得",
+        "description": "\n<h2 id=\"\">概要</h2>\n\n<p>指定した事業所の自動登録ルール一覧を取得する</p>",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer",
+            "description": "取得レコードの件数 (デフォルト: 30, 最大: 100)"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "integer",
+            "description": "取得レコードのオフセット (デフォルト: 0)。offsetはlimitの倍数である必要があります。"
+          },
+          {
+            "name": "walletable",
+            "in": "query",
+            "type": "string",
+            "description": "口座名で絞込"
+          },
+          {
+            "name": "description",
+            "in": "query",
+            "type": "string",
+            "description": "説明文で絞込"
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "type": "string",
+            "description": "有効/無効/全てで絞込 (有効: active, 無効: inactive, 全て: all)"
+          },
+          {
+            "name": "act",
+            "in": "query",
+            "type": "integer",
+            "description": "登録タイプで絞込\n* 0: 取引を推測する(manual_standard)\n* 1: 取引を登録する(auto_standard)\n* 2: 振替を推測する(manual_transfer)\n* 3: 振替を登録する(auto_transfer)\n* 4: 無視する取引を登録する(auto_ignore)\n* 5: 取引テンプレートを推測する(manual_template)\n* 6: 未決済取引の消込を推測する(manual_scrub)\n* 7: 未決済取引の消込を登録する(auto_scrub)\n* 8: 一括振込ファイル消込を推測する(manual_output_zengin_scrub)\n* 9: 一括振込ファイル消込を登録する(auto_output_zengin_scrub)\n* 10: 無視する取引を推測する(manual_ignore)\n* 11: プライベート取引を推測する(manual_private)\n* 12: プライベート取引を登録する(auto_private)\n"
+          },
+          {
+            "name": "created_by",
+            "in": "query",
+            "type": "integer",
+            "description": "作成経由で絞込\n* 0: ユーザーが作成(user)\n* 1: freeeが作成(freee)\n"
+          },
+          {
+            "name": "min_amount",
+            "in": "query",
+            "type": "integer",
+            "description": "最小金額で絞込"
+          },
+          {
+            "name": "max_amount",
+            "in": "query",
+            "type": "integer",
+            "description": "最大金額で絞込"
+          },
+          {
+            "name": "min_priority",
+            "in": "query",
+            "type": "integer",
+            "description": "最小優先度で絞込"
+          },
+          {
+            "name": "max_priority",
+            "in": "query",
+            "type": "integer",
+            "description": "最大優先度で絞込"
+          },
+          {
+            "name": "min_corrected_wallet_txn_count",
+            "in": "query",
+            "type": "integer",
+            "description": "最小正答件数で絞込"
+          },
+          {
+            "name": "max_corrected_wallet_txn_count",
+            "in": "query",
+            "type": "integer",
+            "description": "最大正答件数で絞込"
+          },
+          {
+            "name": "min_corrected_wallet_txn_count_percentage",
+            "in": "query",
+            "type": "integer",
+            "description": "最小正答率で絞込"
+          },
+          {
+            "name": "max_corrected_wallet_txn_count_percentage",
+            "in": "query",
+            "type": "integer",
+            "description": "最大正答率で絞込"
+          },
+          {
+            "name": "card_label_id",
+            "in": "query",
+            "type": "integer",
+            "description": "カードラベルIDで絞込"
+          },
+          {
+            "name": "entry_side_str",
+            "in": "query",
+            "type": "string",
+            "description": "入金/出金で絞込 (入金: income, 出金: expense)"
+          }
+        ]
+      },
+      "post": {
+        "summary": "自動登録ルールの作成",
+        "description": "\n<h2 id=\"\">概要</h2>\n\n<p>指定した事業所の自動登録ルールを作成する</p>",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          }
+        ],
+        "hasJsonBody": true
+      }
+    },
+    "/api/1/user_matchers/{id}": {
+      "get": {
+        "summary": "自動登録ルールの取得",
+        "description": "\n<h2 id=\"\">概要</h2>\n\n<p>指定した事業所の自動登録ルールを取得する</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer",
+            "required": true,
+            "description": "自動登録ルールID"
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          }
+        ]
+      },
+      "put": {
+        "summary": "自動登録ルールの更新",
+        "description": "\n<h2 id=\"\">概要</h2>\n\n<p>指定した事業所の自動登録ルールを更新する</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer",
+            "required": true,
+            "description": "自動登録ルールID"
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          }
+        ],
+        "hasJsonBody": true
+      },
+      "delete": {
+        "summary": "自動登録ルールの削除",
+        "description": "\n<h2 id=\"\">概要</h2>\n\n<p>指定した事業所の自動登録ルールを削除する</p>\n\n<p>このAPIでは以下のact(登録タイプ)の自動登録ルールは削除できません: 5(manual_template), 6(manual_scrub), 7(auto_scrub), 8(manual_output_zengin_scrub), 9(auto_output_zengin_scrub)</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer",
+            "required": true,
+            "description": "自動登録ルールID"
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          }
+        ]
+      }
     }
   }
 }

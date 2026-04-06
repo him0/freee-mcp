@@ -30,7 +30,8 @@
     "Quotations": "quotations",
     "Fixed assets": "fixed-assets",
     "General ledgers": "general-ledgers",
-    "Account groups": "account-groups"
+    "Account groups": "account-groups",
+    "User matchers": "user-matchers"
   },
   "hr-api": {
     "ログインユーザー": "login-user",
