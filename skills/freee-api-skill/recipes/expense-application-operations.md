@@ -14,6 +14,17 @@ freee会計APIを使った経費申請のガイド。
 | `/api/1/expense_applications/{id}` | 経費申請詳細・更新・削除 |
 | `/api/1/expense_application_line_templates` | 経費科目一覧 |
 
+## 取得前の注意
+
+経費申請の作成に必要な経費科目ID（`expense_application_line_template_id`）は事業所ごとに異なる。推測せず、必ず事前にAPIで取得すること。
+
+```
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/expense_application_line_templates"
+}
+```
+
 ## 使用例
 
 ### 経費申請一覧を取得
