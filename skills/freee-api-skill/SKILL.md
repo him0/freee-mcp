@@ -119,6 +119,7 @@ serviceパラメータ (必須):
 - `recipes/deal-operations.md` - 取引（収入・支出）
 - `recipes/manual-journal-operations.md` - 振替伝票
 - `recipes/payment-request-operations.md` - 支払依頼
+- `recipes/memo-tag-operations.md` - メモタグ（取得・作成、freee-mcp タグ運用）
 - `recipes/hr-employee-operations.md` - 人事労務（従業員・給与）
 - `recipes/hr-attendance-operations.md` - 勤怠（出退勤・打刻・休憩の登録）
 - `recipes/invoice-operations.md` - 請求書・見積書・納品書
