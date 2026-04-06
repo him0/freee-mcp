@@ -204,7 +204,7 @@ describe('E2E: Authentication Flow', () => {
       const handler = registeredTools.get('freee_auth_status')?.handler;
       const result = (await handler({})) as { content: Array<{ type: string; text: string }> };
 
-      expect(result.content[0].text).toContain('有効');
+      expect(result.content[1].text).toContain('有効');
     });
 
     it('should return expired status when tokens expired', async () => {
@@ -219,7 +219,7 @@ describe('E2E: Authentication Flow', () => {
       const handler = registeredTools.get('freee_auth_status')?.handler;
       const result = (await handler({})) as { content: Array<{ type: string; text: string }> };
 
-      expect(result.content[0].text).toContain('期限切れ');
+      expect(result.content[1].text).toContain('期限切れ');
     });
   });
 
@@ -289,8 +289,8 @@ describe('E2E: Authentication Flow', () => {
 
       const result = (await handler({})) as { content: Array<{ type: string; text: string }> };
 
-      expect(result.content[0].text).toContain('事業所');
-      expect(result.content[0].text).toContain('12345');
+      expect(result.content[1].text).toContain('事業所');
+      expect(result.content[1].text).toContain('12345');
     });
   });
 
@@ -352,7 +352,7 @@ describe('E2E: Authentication Flow', () => {
       // Step 4: Check status should now be authenticated
       handler = registeredTools.get('freee_auth_status')?.handler;
       result = (await handler({})) as { content: Array<{ type: string; text: string }> };
-      expect(result.content[0].text).toContain('有効');
+      expect(result.content[1].text).toContain('有効');
 
       // Step 5: Get current user
       handler = registeredTools.get('freee_current_user')?.handler;

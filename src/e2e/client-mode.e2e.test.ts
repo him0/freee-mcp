@@ -297,8 +297,8 @@ describe('E2E: Client Mode Tools', () => {
 
       const result = (await handler({})) as { content: Array<{ type: string; text: string }> };
 
-      expect(result.content[0].text).toContain('freee API');
-      expect(result.content[0].text).toContain('使用例');
+      expect(result.content[1].text).toContain('freee API');
+      expect(result.content[1].text).toContain('使用例');
     });
   });
 

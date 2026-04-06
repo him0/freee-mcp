@@ -222,8 +222,8 @@ describe('tools', () => {
 
         const result = await handler();
 
-        expect(result.content[0].text).toContain('認証状態: 有効');
-        expect(result.content[0].text).toContain('有効期限:');
+        expect(result.content[1].text).toContain('認証状態: 有効');
+        expect(result.content[1].text).toContain('有効期限:');
       });
 
       it('should return expired token status', async () => {
@@ -242,8 +242,8 @@ describe('tools', () => {
 
         const result = await handler();
 
-        expect(result.content[0].text).toContain('認証状態: 期限切れ');
-        expect(result.content[0].text).toContain('次回API使用時に自動更新されます');
+        expect(result.content[1].text).toContain('認証状態: 期限切れ');
+        expect(result.content[1].text).toContain('次回API使用時に自動更新されます');
       });
 
       it('should handle no tokens', async () => {

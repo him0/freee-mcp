@@ -5,7 +5,7 @@ import { createChildLogger, getLogger, sanitizePath } from '../server/logger.js'
 import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
 import { registerTracedTool, setToolAttributes } from '../telemetry/tool-tracer.js';
-import { createTextResponse, formatErrorMessage } from '../utils/error.js';
+import { createTextResponse, createTextResponseWithSkillHint, formatErrorMessage } from '../utils/error.js';
 import { type ApiType, listAllAvailablePaths, validatePathForService } from './schema-loader.js';
 
 const SUPPORTED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
@@ -231,7 +231,7 @@ export function generateClientModeTool(server: McpServer): void {
     async () => {
       getLogger().info({ component: 'tool', tool: 'freee_api_list_paths' }, 'Tool call completed');
       const pathsList = listAllAvailablePaths();
-      return createTextResponse(
+      return createTextResponseWithSkillHint(
         `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +
           `使用例:\n` +
           `freee_api_get { "service": "accounting", "path": "/api/1/deals", "query": { "limit": 10 } }\n` +

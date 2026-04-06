@@ -14,7 +14,7 @@ import { createChildLogger, getLogger } from '../server/logger.js';
 import type { AuthExtra } from '../storage/context.js';
 import { registerTracedTool } from '../telemetry/tool-tracer.js';
 import { extractTokenContext, resolveCompanyId } from '../storage/context.js';
-import { createTextResponse, formatErrorMessage } from '../utils/error.js';
+import { createTextResponse, createTextResponseWithSkillHint, formatErrorMessage } from '../utils/error.js';
 
 export function addAuthenticationTools(server: McpServer, options?: { remote?: boolean }): void {
   const logs = {
@@ -134,7 +134,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         const expiryDate = new Date(tokens.expires_at).toLocaleString();
 
         log.info('Tool call completed');
-        return createTextResponse(
+        return createTextResponseWithSkillHint(
           `認証状態: ${isValid ? '有効' : '期限切れ'}\n有効期限: ${expiryDate}` +
             (isValid ? '' : '\n次回API使用時に自動更新されます。'),
         );
@@ -219,10 +219,10 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
 
         log.info('Tool call completed');
         if (!companyInfo) {
-          return createTextResponse(`事業所ID: ${companyId} (詳細情報なし)`);
+          return createTextResponseWithSkillHint(`事業所ID: ${companyId} (詳細情報なし)`);
         }
 
-        return createTextResponse(`事業所: ${companyInfo.name} (ID: ${companyInfo.id})`);
+        return createTextResponseWithSkillHint(`事業所: ${companyInfo.name} (ID: ${companyInfo.id})`);
       } catch (error) {
         log.error({ err: error }, 'Tool call failed');
         return createTextResponse(`事業所情報の取得に失敗: ${formatErrorMessage(error)}`);
