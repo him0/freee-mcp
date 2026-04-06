@@ -148,28 +148,6 @@ freee_api_post {
 
 3. 取得したタグIDを `details[].tag_ids` に指定して振替伝票を作成します（上記の作成例を参照）。
 
-### 貸借区分
-
-| entry_side | 説明 |
-|-----------|------|
-| `debit` | 借方 |
-| `credit` | 貸方 |
-
-### 注意事項
-
-- 貸借合わせて100行まで登録可能
-- 貸方と借方の合計金額は一致する必要がある
-- 決算整理仕訳の場合は `adjustment: true` を指定
-
-## 関連API
-
-振替伝票作成時に必要なマスタ情報:
-
-- `/api/1/account_items` - 勘定科目一覧
-- `/api/1/taxes` - 税区分一覧
-- `/api/1/partners` - 取引先一覧
-- `/api/1/tags` - メモタグ一覧
-
 ## リファレンス
 
 詳細なAPIパラメータは `references/accounting-manual-journals.md` を参照。

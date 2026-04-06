@@ -128,57 +128,6 @@ freee_api_post {
 
 3. 取得したタグIDを `payment_request_lines[].tag_ids` に指定して支払依頼を作成します（上記の作成例を参照）。
 
-### 申請ステータス
-
-| status | 説明 |
-|--------|------|
-| `draft` | 下書き |
-| `in_progress` | 申請中 |
-| `approved` | 承認済 |
-| `rejected` | 却下 |
-| `feedback` | 差戻し |
-
-### 取引ステータス（承認後）
-
-| deal_status | 説明 |
-|-------------|------|
-| `unsettled` | 支払待ち |
-| `settled` | 支払済み |
-
-### 支払方法
-
-| payment_method | 説明 |
-|----------------|------|
-| `none` | 指定なし |
-| `domestic_bank_transfer` | 国内振込 |
-| `abroad_bank_transfer` | 国外振込 |
-| `account_transfer` | 口座振替 |
-| `credit_card` | クレジットカード |
-
-### 行の種類
-
-| line_type | 説明 |
-|-----------|------|
-| `deal_line` | 通常取引行 |
-| `negative_line` | 控除・マイナス行 |
-| `withholding_tax` | 源泉所得税行 |
-
-## 注意点
-
-- 申請経路に部門役職データ連携を使用している支払依頼はAPI経由で作成・更新できません
-- 申請の削除は下書き・差戻し状態の場合のみ可能
-- 項目行は最大100行まで
-
-## 関連API
-
-支払依頼作成時に必要なマスタ情報:
-
-- `/api/1/account_items` - 勘定科目一覧
-- `/api/1/taxes` - 税区分一覧
-- `/api/1/partners` - 取引先一覧
-- `/api/1/tags` - メモタグ一覧
-- `/api/1/approval_flow_routes` - 申請経路一覧
-
 ## リファレンス
 
 詳細なAPIパラメータは `references/accounting-payment-requests.md` を参照。
