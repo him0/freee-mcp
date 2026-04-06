@@ -38,6 +38,7 @@ freee_api_post {
     "company_id": 123456,
     "title": "交通費",
     "issue_date": "2025-01-15",
+    "tag_ids": [TAG_ID],
     "expense_application_lines": [
       {
         "transaction_date": "2025-01-15",
@@ -61,6 +62,36 @@ freee_api_get {
 ```
 
 ## Tips
+
+### メモタグ「freee-mcp」の付与
+
+経費申請作成時に「freee-mcp」メモタグを付けることで、freee-mcp 経由で作成したデータを識別できます。
+
+1. メモタグ一覧から「freee-mcp」のIDを取得:
+
+```
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/tags"
+}
+```
+
+レスポンスの `tags` 配列から `name` が `freee-mcp` のものを探し、`id` を取得します。
+
+2. 存在しない場合は作成:
+
+```
+freee_api_post {
+  "service": "accounting",
+  "path": "/api/1/tags",
+  "body": {
+    "company_id": 123456,
+    "name": "freee-mcp"
+  }
+}
+```
+
+3. 取得したタグIDをリクエストボディの `tag_ids` に指定して経費申請を作成します（上記の作成例を参照）。
 
 ### 作成後のWeb確認URL
 
