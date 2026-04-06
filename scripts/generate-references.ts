@@ -439,7 +439,7 @@ async function generateReference(
 
   // Get tag description from schema
   const tag = schema.tags?.find((t) => t.name === tagName);
-  const tagDesc = tag?.description ? stripHtmlTags(tag.description) : "";
+  const tagDesc = tag?.description ? stripHtmlTags(tag.description) : `${tagName}の操作`;
 
   // Extract endpoints for this tag
   const endpoints = extractEndpointsByTag(schema, tagName);
@@ -464,6 +464,10 @@ async function generateReference(
         }
 
         if (cleanDesc) {
+          // 「定義」「注意点」等のキーワードの前に改行を挿入して可読性を向上
+          cleanDesc = cleanDesc
+            .replace(/\s*(定義)\s+/g, "\n\n$1\n")
+            .replace(/\s*(注意点)\s+/g, "\n\n$1\n");
           endpointsMd += `説明: ${cleanDesc}\n\n`;
         }
       }
@@ -485,9 +489,6 @@ async function generateReference(
     }
   }
 
-  // Get schema basename
-  const schemaBasename = `${apiName}-schema.json`;
-
   // Generate markdown document
   const markdown = `# ${tagName}
 
@@ -502,7 +503,6 @@ ${endpointsMd}
 ## 参考情報
 
 - freee API公式ドキュメント: https://developer.freee.co.jp/docs
-- OpenAPIスキーマ: [${schemaBasename}](../../openapi/${schemaBasename})
 `;
 
   await writeFile(outputFile, markdown, "utf-8");

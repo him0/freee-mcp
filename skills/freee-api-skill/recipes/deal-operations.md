@@ -15,6 +15,40 @@ freee会計APIを使った取引の登録・検索ガイド。
 | `/api/1/deals/{id}/payments` | 支払行の作成 |
 | `/api/1/deals/{id}/renews` | +更新行の作成 |
 
+## 取引作成の前準備
+
+取引を作成するには、事業所固有のマスタID（勘定科目ID、税区分コード、口座ID等）が必要になる。これらのIDは事業所ごとに異なるため、推測やハードコードせず、必ず事前にAPIで取得すること。
+
+### 1. 勘定科目IDを取得
+
+```
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/account_items"
+}
+```
+
+レスポンスの `account_items` から目的の勘定科目（例: 「消耗品費」「旅費交通費」）の `id` を使用する。
+
+### 2. 税区分コードを取得
+
+```
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/taxes"
+}
+```
+
+### 3. 口座IDを取得（決済済み取引の場合）
+
+```
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/walletables",
+  "query": { "type": "wallet" }
+}
+```
+
 ## 使用例
 
 ### 取引一覧を取得
@@ -45,6 +79,8 @@ freee_api_get {
 
 ### 支出を作成（未決済）
 
+account_item_id、tax_code は上記の前準備で取得した実際の値を使用すること。
+
 ```
 freee_api_post {
   "service": "accounting",
@@ -55,8 +91,8 @@ freee_api_post {
     "type": "expense",
     "details": [
       {
-        "account_item_id": 101,
-        "tax_code": 1,
+        "account_item_id": <取得した勘定科目ID>,
+        "tax_code": <取得した税区分コード>,
         "amount": 10000,
         "description": "消耗品購入",
         "tag_ids": [TAG_ID]
@@ -78,8 +114,8 @@ freee_api_post {
     "type": "expense",
     "details": [
       {
-        "account_item_id": 101,
-        "tax_code": 1,
+        "account_item_id": <取得した勘定科目ID>,
+        "tax_code": <取得した税区分コード>,
         "amount": 10000,
         "description": "消耗品購入",
         "tag_ids": [TAG_ID]
@@ -89,7 +125,7 @@ freee_api_post {
       {
         "amount": 10000,
         "from_walletable_type": "wallet",
-        "from_walletable_id": 1,
+        "from_walletable_id": <取得した口座ID>,
         "date": "2025-01-15"
       }
     ]
@@ -101,33 +137,7 @@ freee_api_post {
 
 ### メモタグ「freee-mcp」の付与
 
-取引作成時に「freee-mcp」メモタグを付けることで、freee-mcp 経由で作成したデータを識別できます。
-
-1. メモタグ一覧から「freee-mcp」のIDを取得:
-
-```
-freee_api_get {
-  "service": "accounting",
-  "path": "/api/1/tags"
-}
-```
-
-レスポンスの `tags` 配列から `name` が `freee-mcp` のものを探し、`id` を取得します。
-
-2. 存在しない場合は作成:
-
-```
-freee_api_post {
-  "service": "accounting",
-  "path": "/api/1/tags",
-  "body": {
-    "company_id": 123456,
-    "name": "freee-mcp"
-  }
-}
-```
-
-3. 取得したタグIDを `details[].tag_ids` に指定して取引を作成します（上記の作成例を参照）。
+取引を作成する際は、freee-mcp 経由で作成したデータであることを識別できるよう、メモタグ「freee-mcp」を必ず付与すること。手順は `recipes/freee-mcp-tag.md` を参照。取引では `details[].tag_ids` にタグIDを指定する。
 
 ### 作成後のWeb確認URL
 
@@ -139,38 +149,6 @@ https://secure.freee.co.jp/deals#deal_id={id}
 
 `{id}` は API レスポンスで返される取引ID（`deal.id`）を使用します。
 
-### 収支区分
-
-| type | 説明 |
-|------|------|
-| `income` | 収入 |
-| `expense` | 支出 |
-
-### 決済状況
-
-| status | 説明 |
-|--------|------|
-| `unsettled` | 未決済 |
-| `settled` | 完了 |
-
-### 口座区分（from_walletable_type）
-
-| 値 | 説明 |
-|----|------|
-| `bank_account` | 銀行口座 |
-| `credit_card` | クレジットカード |
-| `wallet` | 現金 |
-| `private_account_item` | プライベート資金 |
-
-## 関連API
-
-取引作成時に必要なマスタ情報:
-
-- `/api/1/account_items` - 勘定科目一覧
-- `/api/1/taxes` - 税区分一覧
-- `/api/1/walletables` - 口座一覧
-- `/api/1/partners` - 取引先一覧
-
 ## リファレンス
 
-詳細なAPIパラメータは `references/accounting-deals.md` を参照。
+詳細なAPIパラメータ（収支区分、決済状況、口座区分等）は `references/accounting-deals.md` を参照。

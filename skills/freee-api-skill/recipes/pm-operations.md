@@ -98,25 +98,6 @@ freee_api_get {
 
 ## Tips
 
-### 運用ステータス
-
-| 値 | 説明 |
-|----|------|
-| `planning` | 計画中 |
-| `awaiting_approval` | 承認待ち |
-| `in_progress` | 進行中 |
-| `rejected` | 却下 |
-| `done` | 完了 |
-
-### 従業員スコープ（workloads/workload_summaries）
-
-| 値 | 説明 |
-|----|------|
-| `all` | 全従業員 |
-| `team` | チーム単位（team_ids で絞り込み） |
-| `employee` | 従業員単位（person_ids で絞り込み） |
-| 未指定 | ログインユーザーのみ |
-
 ### 人事労務APIとの連携
 
 `/people` レスポンスの `payroll_employee_id` が人事労務側の `employee_id` に対応します。

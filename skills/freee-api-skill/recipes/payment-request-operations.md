@@ -13,6 +13,10 @@ freee会計APIを使った支払依頼の登録・検索ガイド。
 | `/api/1/payment_requests` | 支払依頼一覧・作成 |
 | `/api/1/payment_requests/{id}` | 支払依頼詳細・更新・削除 |
 
+## 作成前の注意
+
+支払依頼の作成に必要な勘定科目ID（`account_item_id`）、税区分コード（`tax_code`）、申請経路ID（`approval_flow_route_id`）は事業所ごとに異なる。推測せず、必ず事前にAPIで取得すること（勘定科目・税区分の取得方法は `recipes/deal-operations.md` の「取引作成の前準備」を参照）。
+
 ## 使用例
 
 ### 支払依頼一覧を取得
@@ -59,8 +63,8 @@ freee_api_post {
         "line_type": "deal_line",
         "description": "商品仕入",
         "amount": 50000,
-        "account_item_id": 101,
-        "tax_code": 1,
+        "account_item_id": <取得した勘定科目ID>,
+        "tax_code": <取得した税区分コード>,
         "tag_ids": [TAG_ID]
       }
     ]
@@ -87,8 +91,8 @@ freee_api_post {
         "line_type": "deal_line",
         "description": "1月分外注費",
         "amount": 100000,
-        "account_item_id": 101,
-        "tax_code": 1,
+        "account_item_id": <取得した勘定科目ID>,
+        "tax_code": <取得した税区分コード>,
         "tag_ids": [TAG_ID]
       }
     ]
@@ -100,33 +104,7 @@ freee_api_post {
 
 ### メモタグ「freee-mcp」の付与
 
-支払依頼作成時に「freee-mcp」メモタグを付けることで、freee-mcp 経由で作成したデータを識別できます。
-
-1. メモタグ一覧から「freee-mcp」のIDを取得:
-
-```
-freee_api_get {
-  "service": "accounting",
-  "path": "/api/1/tags"
-}
-```
-
-レスポンスの `tags` 配列から `name` が `freee-mcp` のものを探し、`id` を取得します。
-
-2. 存在しない場合は作成:
-
-```
-freee_api_post {
-  "service": "accounting",
-  "path": "/api/1/tags",
-  "body": {
-    "company_id": 123456,
-    "name": "freee-mcp"
-  }
-}
-```
-
-3. 取得したタグIDを `payment_request_lines[].tag_ids` に指定して支払依頼を作成します（上記の作成例を参照）。
+支払依頼を作成する際は、freee-mcp 経由で作成したデータであることを識別できるよう、メモタグ「freee-mcp」を必ず付与すること。手順は `recipes/freee-mcp-tag.md` を参照。支払依頼では `payment_request_lines[].tag_ids` にタグIDを指定する。
 
 ## リファレンス
 

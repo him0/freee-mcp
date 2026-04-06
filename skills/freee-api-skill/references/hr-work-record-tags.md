@@ -60,7 +60,10 @@ successful operation
 
 操作: 勤怠タグの更新
 
-説明: 概要 指定した従業員・日付の勤怠タグを更新します。 注意点 指定した従業員・日付の勤怠タグが存在する場合は、上書き更新されます。 指定がなかった勤怠タグは削除されます。
+説明: 概要 指定した従業員・日付の勤怠タグを更新します。
+
+注意点
+指定した従業員・日付の勤怠タグが存在する場合は、上書き更新されます。 指定がなかった勤怠タグは削除されます。
 
 ### パラメータ
 
@@ -91,4 +94,3 @@ successful operation
 ## 参考情報
 
 - freee API公式ドキュメント: https://developer.freee.co.jp/docs
-- OpenAPIスキーマ: [hr-api-schema.json](../../openapi/hr-api-schema.json)

@@ -14,6 +14,10 @@ freee会計APIを使った振替伝票の登録・検索ガイド。
 | `/api/1/manual_journals` | 振替伝票一覧・作成 |
 | `/api/1/manual_journals/{id}` | 振替伝票詳細・更新・削除 |
 
+## 作成前の注意
+
+振替伝票の作成に必要な勘定科目ID（`account_item_id`）、税区分コード（`tax_code`）は事業所ごとに異なる。推測せず、必ず事前にAPIで取得すること（取得方法は `recipes/deal-operations.md` の「取引作成の前準備」を参照）。
+
 ## 使用例
 
 ### 振替伝票一覧を取得
@@ -55,16 +59,16 @@ freee_api_post {
     "details": [
       {
         "entry_side": "debit",
-        "account_item_id": 101,
-        "tax_code": 1,
+        "account_item_id": <取得した勘定科目ID>,
+        "tax_code": <取得した税区分コード>,
         "amount": 10000,
         "description": "前払費用の振替",
         "tag_ids": [TAG_ID]
       },
       {
         "entry_side": "credit",
-        "account_item_id": 202,
-        "tax_code": 1,
+        "account_item_id": <取得した勘定科目ID>,
+        "tax_code": <取得した税区分コード>,
         "amount": 10000,
         "description": "前払費用の振替",
         "tag_ids": [TAG_ID]
@@ -89,16 +93,16 @@ freee_api_put {
       {
         "id": 1,
         "entry_side": "debit",
-        "account_item_id": 101,
-        "tax_code": 1,
+        "account_item_id": <取得した勘定科目ID>,
+        "tax_code": <取得した税区分コード>,
         "amount": 15000,
         "tag_ids": [TAG_ID]
       },
       {
         "id": 2,
         "entry_side": "credit",
-        "account_item_id": 202,
-        "tax_code": 1,
+        "account_item_id": <取得した勘定科目ID>,
+        "tax_code": <取得した税区分コード>,
         "amount": 15000,
         "tag_ids": [TAG_ID]
       }
@@ -120,33 +124,7 @@ freee_api_delete {
 
 ### メモタグ「freee-mcp」の付与
 
-振替伝票作成時に「freee-mcp」メモタグを付けることで、freee-mcp 経由で作成したデータを識別できます。
-
-1. メモタグ一覧から「freee-mcp」のIDを取得:
-
-```
-freee_api_get {
-  "service": "accounting",
-  "path": "/api/1/tags"
-}
-```
-
-レスポンスの `tags` 配列から `name` が `freee-mcp` のものを探し、`id` を取得します。
-
-2. 存在しない場合は作成:
-
-```
-freee_api_post {
-  "service": "accounting",
-  "path": "/api/1/tags",
-  "body": {
-    "company_id": 123456,
-    "name": "freee-mcp"
-  }
-}
-```
-
-3. 取得したタグIDを `details[].tag_ids` に指定して振替伝票を作成します（上記の作成例を参照）。
+振替伝票を作成する際は、freee-mcp 経由で作成したデータであることを識別できるよう、メモタグ「freee-mcp」を必ず付与すること。手順は `recipes/freee-mcp-tag.md` を参照。振替伝票では `details[].tag_ids` にタグIDを指定する。
 
 ## リファレンス
 

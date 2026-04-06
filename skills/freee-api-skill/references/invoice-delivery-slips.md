@@ -519,4 +519,3 @@ The request has succeeded.
 ## 参考情報
 
 - freee API公式ドキュメント: https://developer.freee.co.jp/docs
-- OpenAPIスキーマ: [invoice-api-schema.json](../../openapi/invoice-api-schema.json)

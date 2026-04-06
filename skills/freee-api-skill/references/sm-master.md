@@ -101,4 +101,3 @@
 ## 参考情報
 
 - freee API公式ドキュメント: https://developer.freee.co.jp/docs
-- OpenAPIスキーマ: [sm-api-schema.json](../../openapi/sm-api-schema.json)

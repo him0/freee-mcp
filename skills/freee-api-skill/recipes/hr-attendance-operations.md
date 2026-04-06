@@ -71,15 +71,6 @@ freee_api_put {
 
 ## Tips
 
-### 打刻タイプ
-
-| type | 説明 |
-|------|------|
-| `clock_in` | 出勤 |
-| `clock_out` | 退勤 |
-| `break_begin` | 休憩開始 |
-| `break_end` | 休憩終了 |
-
 ### self_only 権限について
 
 `/api/v1/employees` は管理者権限が必要ですが、`/api/v1/users/me` で自分の `employee_id` を取得すれば、自分の勤怠は操作可能です。

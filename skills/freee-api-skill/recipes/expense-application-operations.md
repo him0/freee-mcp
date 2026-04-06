@@ -14,6 +14,17 @@ freee会計APIを使った経費申請のガイド。
 | `/api/1/expense_applications/{id}` | 経費申請詳細・更新・削除 |
 | `/api/1/expense_application_line_templates` | 経費科目一覧 |
 
+## 取得前の注意
+
+経費申請の作成に必要な経費科目ID（`expense_application_line_template_id`）は事業所ごとに異なる。推測せず、必ず事前にAPIで取得すること。
+
+```
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/expense_application_line_templates"
+}
+```
+
 ## 使用例
 
 ### 経費申請一覧を取得
@@ -65,33 +76,7 @@ freee_api_get {
 
 ### メモタグ「freee-mcp」の付与
 
-経費申請作成時に「freee-mcp」メモタグを付けることで、freee-mcp 経由で作成したデータを識別できます。
-
-1. メモタグ一覧から「freee-mcp」のIDを取得:
-
-```
-freee_api_get {
-  "service": "accounting",
-  "path": "/api/1/tags"
-}
-```
-
-レスポンスの `tags` 配列から `name` が `freee-mcp` のものを探し、`id` を取得します。
-
-2. 存在しない場合は作成:
-
-```
-freee_api_post {
-  "service": "accounting",
-  "path": "/api/1/tags",
-  "body": {
-    "company_id": 123456,
-    "name": "freee-mcp"
-  }
-}
-```
-
-3. 取得したタグIDをリクエストボディの `tag_ids` に指定して経費申請を作成します（上記の作成例を参照）。
+経費申請を作成する際は、freee-mcp 経由で作成したデータであることを識別できるよう、メモタグ「freee-mcp」を必ず付与すること。手順は `recipes/freee-mcp-tag.md` を参照。経費申請では `tag_ids` にタグIDを指定する。
 
 ### 作成後のWeb確認URL
 
@@ -102,23 +87,6 @@ https://secure.freee.co.jp/expense_applications/{id}
 ```
 
 `{id}` は API レスポンスで返される経費申請ID（`expense_application.id`）を使用します。
-
-### 申請ステータス
-
-| status | 説明 |
-|--------|------|
-| `draft` | 下書き |
-| `in_progress` | 申請中 |
-| `approved` | 承認済 |
-| `rejected` | 却下 |
-| `feedback` | 差戻し |
-
-### 取引ステータス（承認後）
-
-| deal_status | 説明 |
-|-------------|------|
-| `unsettled` | 清算待ち |
-| `settled` | 精算済み |
 
 ## 注意点
 

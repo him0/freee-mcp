@@ -67,33 +67,7 @@ freee_api_post {
 
 ### メモタグ「freee-mcp」の付与
 
-請求書作成時に「freee-mcp」メモタグを付けることで、freee-mcp 経由で作成したデータを識別できます。
-
-1. メモタグ一覧から「freee-mcp」のIDを取得:
-
-```
-freee_api_get {
-  "service": "accounting",
-  "path": "/api/1/tags"
-}
-```
-
-レスポンスの `tags` 配列から `name` が `freee-mcp` のものを探し、`id` を取得します。
-
-2. 存在しない場合は作成:
-
-```
-freee_api_post {
-  "service": "accounting",
-  "path": "/api/1/tags",
-  "body": {
-    "company_id": 123456,
-    "name": "freee-mcp"
-  }
-}
-```
-
-3. 取得したタグIDを `lines[].tag_ids` に指定して請求書を作成します（上記の作成例を参照）。見積書・納品書も同様に `lines[].tag_ids` で指定可能です。
+請求書・見積書・納品書を作成する際は、freee-mcp 経由で作成したデータであることを識別できるよう、メモタグ「freee-mcp」を必ず付与すること。手順は `recipes/freee-mcp-tag.md` を参照。`lines[].tag_ids` にタグIDを指定する。
 
 ### 作成後のWeb確認URL
 

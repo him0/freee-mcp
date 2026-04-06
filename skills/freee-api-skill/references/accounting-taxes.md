@@ -10,7 +10,10 @@
 
 操作: 税区分一覧の取得（廃止予定）
 
-説明: 概要 税区分一覧を取得する 注意点 このAPIは廃止予定のため非推奨です。api/1/taxes/companies/{company_id}（指定した事業所の税区分一覧の取得）をご利用ください。
+説明: 概要 税区分一覧を取得する
+
+注意点
+このAPIは廃止予定のため非推奨です。api/1/taxes/companies/{company_id}（指定した事業所の税区分一覧の取得）をご利用ください。
 
 ### レスポンス (200)
 
@@ -68,4 +71,3 @@
 ## 参考情報
 
 - freee API公式ドキュメント: https://developer.freee.co.jp/docs
-- OpenAPIスキーマ: [accounting-api-schema.json](../../openapi/accounting-api-schema.json)
