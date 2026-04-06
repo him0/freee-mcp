@@ -18,6 +18,26 @@ const serviceSchema = z
   .describe('対象のfreeeサービス');
 
 /**
+ * Some MCP clients send object parameters as JSON strings.
+ * This wrapper accepts both a plain object and a JSON string, coercing the latter.
+ */
+function coercibleRecord(description: string) {
+  return z.preprocess(
+    (val) => {
+      if (typeof val === 'string') {
+        try {
+          return JSON.parse(val);
+        } catch {
+          return val;
+        }
+      }
+      return val;
+    },
+    z.record(z.string(), z.unknown()),
+  ).describe(description);
+}
+
+/**
  * Creates a tool handler for a specific HTTP method
  */
 function createMethodTool(method: string) {
@@ -126,10 +146,7 @@ export function generateClientModeTool(server: McpServer): void {
       inputSchema: {
         service: serviceSchema,
         path: z.string().describe('APIパス (例: /api/1/deals)'),
-        query: z
-          .record(z.string(), z.unknown())
-          .optional()
-          .describe('クエリパラメータ (オプション)'),
+        query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
       annotations: { readOnlyHint: true },
     },
@@ -145,11 +162,8 @@ export function generateClientModeTool(server: McpServer): void {
       inputSchema: {
         service: serviceSchema,
         path: z.string().describe('APIパス (例: /api/1/deals)'),
-        body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
-        query: z
-          .record(z.string(), z.unknown())
-          .optional()
-          .describe('クエリパラメータ (オプション)'),
+        body: coercibleRecord('リクエストボディ'),
+        query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
       annotations: { destructiveHint: false },
     },
@@ -165,11 +179,8 @@ export function generateClientModeTool(server: McpServer): void {
       inputSchema: {
         service: serviceSchema,
         path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-        body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
-        query: z
-          .record(z.string(), z.unknown())
-          .optional()
-          .describe('クエリパラメータ (オプション)'),
+        body: coercibleRecord('リクエストボディ'),
+        query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
       annotations: { destructiveHint: false, idempotentHint: true },
     },
@@ -185,10 +196,7 @@ export function generateClientModeTool(server: McpServer): void {
       inputSchema: {
         service: serviceSchema,
         path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-        query: z
-          .record(z.string(), z.unknown())
-          .optional()
-          .describe('クエリパラメータ (オプション)'),
+        query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
       annotations: { idempotentHint: true },
     },
@@ -204,11 +212,8 @@ export function generateClientModeTool(server: McpServer): void {
       inputSchema: {
         service: serviceSchema,
         path: z.string().describe('APIパス (例: /api/1/deals/123)'),
-        body: z.record(z.string(), z.unknown()).describe('リクエストボディ'),
-        query: z
-          .record(z.string(), z.unknown())
-          .optional()
-          .describe('クエリパラメータ (オプション)'),
+        body: coercibleRecord('リクエストボディ'),
+        query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
       annotations: { destructiveHint: false },
     },
