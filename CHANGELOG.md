@@ -1,5 +1,15 @@
 # freee-mcp
 
+## 0.19.0
+
+### Minor Changes
+
+- [`799e201`](https://github.com/freee/freee-mcp/commit/799e201ffad8158173499bb2578fdeccbd648b69): OAuth 認証完了時にデフォルト事業所を自動設定するようにした。初回認証後に current company が未設定(ID: 0)の場合、会計 API（または HR API）から事業所一覧を取得し、最初の事業所を自動で設定する。 ([#362](https://github.com/freee/freee-mcp/pull/362))
+
+### Patch Changes
+
+- [`546273e`](https://github.com/freee/freee-mcp/commit/546273eed194207861715f14921d8c22f6d2f348): MCP クライアントがオブジェクト型パラメータ(query/body)を JSON 文字列として送信した場合にバリデーションエラーになる問題を修正 ([#364](https://github.com/freee/freee-mcp/pull/364))
+
 ## 0.18.0
 
 ### Minor Changes
