@@ -118,6 +118,16 @@ freee_api_delete {
 
 ## Tips
 
+### 作成後のWeb確認URL
+
+振替伝票を作成した後、以下のURLでWeb画面から確認できます:
+
+```
+https://secure.freee.co.jp/manual_journals#?deal_id={id}
+```
+
+`{id}` は API レスポンスで返される振替伝票ID（`manual_journal.id`）を使用します。
+
 ### メモタグ「freee-mcp」の付与
 
 振替伝票作成時に「freee-mcp」メモタグを付けることで、freee-mcp 経由で作成したデータを識別できます。
