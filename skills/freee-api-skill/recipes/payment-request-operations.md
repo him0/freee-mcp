@@ -100,7 +100,7 @@ freee_api_post {
 
 ### メモタグ「freee-mcp」の付与
 
-`recipes/freee-mcp-tag.md` を参照。支払依頼では `payment_request_lines[].tag_ids` にタグIDを指定します。
+支払依頼を作成する際は、freee-mcp 経由で作成したデータであることを識別できるよう、メモタグ「freee-mcp」を必ず付与すること。手順は `recipes/freee-mcp-tag.md` を参照。支払依頼では `payment_request_lines[].tag_ids` にタグIDを指定する。
 
 ## リファレンス
 

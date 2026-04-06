@@ -120,7 +120,7 @@ freee_api_delete {
 
 ### メモタグ「freee-mcp」の付与
 
-`recipes/freee-mcp-tag.md` を参照。振替伝票では `details[].tag_ids` にタグIDを指定します。
+振替伝票を作成する際は、freee-mcp 経由で作成したデータであることを識別できるよう、メモタグ「freee-mcp」を必ず付与すること。手順は `recipes/freee-mcp-tag.md` を参照。振替伝票では `details[].tag_ids` にタグIDを指定する。
 
 ## リファレンス
 

@@ -67,7 +67,7 @@ freee_api_post {
 
 ### メモタグ「freee-mcp」の付与
 
-`recipes/freee-mcp-tag.md` を参照。請求書・見積書・納品書では `lines[].tag_ids` にタグIDを指定します。
+請求書・見積書・納品書を作成する際は、freee-mcp 経由で作成したデータであることを識別できるよう、メモタグ「freee-mcp」を必ず付与すること。手順は `recipes/freee-mcp-tag.md` を参照。`lines[].tag_ids` にタグIDを指定する。
 
 ### 作成後のWeb確認URL
 
