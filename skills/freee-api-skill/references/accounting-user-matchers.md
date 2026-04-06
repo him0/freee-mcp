@@ -673,4 +673,3 @@ act=0,1(取引を推測/登録)の場合のみ値が返ります。
 ## 参考情報
 
 - freee API公式ドキュメント: https://developer.freee.co.jp/docs
-- OpenAPIスキーマ: [accounting-api-schema.json](../../openapi/accounting-api-schema.json)

@@ -2,7 +2,7 @@
 
 ## 概要
 
-
+UnitCostsの操作
 
 ## エンドポイント一覧
 
@@ -37,4 +37,3 @@
 ## 参考情報
 
 - freee API公式ドキュメント: https://developer.freee.co.jp/docs
-- OpenAPIスキーマ: [pm-api-schema.json](../../openapi/pm-api-schema.json)

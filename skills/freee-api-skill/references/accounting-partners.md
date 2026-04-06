@@ -568,4 +568,3 @@
 ## 参考情報
 
 - freee API公式ドキュメント: https://developer.freee.co.jp/docs
-- OpenAPIスキーマ: [accounting-api-schema.json](../../openapi/accounting-api-schema.json)
