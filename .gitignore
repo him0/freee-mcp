@@ -149,3 +149,6 @@ compose.override.yaml
 
 # Generated VERSION.md in skill directory
 skills/freee-api-skill/VERSION.md
+
+# Skill eval workspace (execution results)
+skills/*-workspace/
