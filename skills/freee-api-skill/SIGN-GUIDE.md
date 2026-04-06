@@ -45,7 +45,6 @@ API リファレンスが `sign-references/` に含まれます:
 - `sign-folders.md` - フォルダ管理
 - `sign-items.md` - 入力項目
 - `sign-kintone.md` - kintone 連携
-- `sign-oauth-2.0.md` - OAuth 2.0 認証
 - `sign-seal-images.md` - マイ印鑑
 - `sign-teams.md` - チーム管理
 - `sign-templates.md` - テンプレート
