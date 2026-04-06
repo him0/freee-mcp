@@ -100,33 +100,7 @@ freee_api_post {
 
 ### メモタグ「freee-mcp」の付与
 
-支払依頼作成時に「freee-mcp」メモタグを付けることで、freee-mcp 経由で作成したデータを識別できます。
-
-1. メモタグ一覧から「freee-mcp」のIDを取得:
-
-```
-freee_api_get {
-  "service": "accounting",
-  "path": "/api/1/tags"
-}
-```
-
-レスポンスの `tags` 配列から `name` が `freee-mcp` のものを探し、`id` を取得します。
-
-2. 存在しない場合は作成:
-
-```
-freee_api_post {
-  "service": "accounting",
-  "path": "/api/1/tags",
-  "body": {
-    "company_id": 123456,
-    "name": "freee-mcp"
-  }
-}
-```
-
-3. 取得したタグIDを `payment_request_lines[].tag_ids` に指定して支払依頼を作成します（上記の作成例を参照）。
+`recipes/freee-mcp-tag.md` を参照。支払依頼では `payment_request_lines[].tag_ids` にタグIDを指定します。
 
 ## リファレンス
 

@@ -101,33 +101,7 @@ freee_api_post {
 
 ### メモタグ「freee-mcp」の付与
 
-取引作成時に「freee-mcp」メモタグを付けることで、freee-mcp 経由で作成したデータを識別できます。
-
-1. メモタグ一覧から「freee-mcp」のIDを取得:
-
-```
-freee_api_get {
-  "service": "accounting",
-  "path": "/api/1/tags"
-}
-```
-
-レスポンスの `tags` 配列から `name` が `freee-mcp` のものを探し、`id` を取得します。
-
-2. 存在しない場合は作成:
-
-```
-freee_api_post {
-  "service": "accounting",
-  "path": "/api/1/tags",
-  "body": {
-    "company_id": 123456,
-    "name": "freee-mcp"
-  }
-}
-```
-
-3. 取得したタグIDを `details[].tag_ids` に指定して取引を作成します（上記の作成例を参照）。
+`recipes/freee-mcp-tag.md` を参照。取引では `details[].tag_ids` にタグIDを指定します。
 
 ### 作成後のWeb確認URL
 
@@ -139,38 +113,6 @@ https://secure.freee.co.jp/deals#deal_id={id}
 
 `{id}` は API レスポンスで返される取引ID（`deal.id`）を使用します。
 
-### 収支区分
-
-| type | 説明 |
-|------|------|
-| `income` | 収入 |
-| `expense` | 支出 |
-
-### 決済状況
-
-| status | 説明 |
-|--------|------|
-| `unsettled` | 未決済 |
-| `settled` | 完了 |
-
-### 口座区分（from_walletable_type）
-
-| 値 | 説明 |
-|----|------|
-| `bank_account` | 銀行口座 |
-| `credit_card` | クレジットカード |
-| `wallet` | 現金 |
-| `private_account_item` | プライベート資金 |
-
-## 関連API
-
-取引作成時に必要なマスタ情報:
-
-- `/api/1/account_items` - 勘定科目一覧
-- `/api/1/taxes` - 税区分一覧
-- `/api/1/walletables` - 口座一覧
-- `/api/1/partners` - 取引先一覧
-
 ## リファレンス
 
-詳細なAPIパラメータは `references/accounting-deals.md` を参照。
+詳細なAPIパラメータ（収支区分、決済状況、口座区分等）は `references/accounting-deals.md` を参照。

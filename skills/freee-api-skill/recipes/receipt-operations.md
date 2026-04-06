@@ -116,32 +116,6 @@ https://secure.freee.co.jp/receipts/{id}
 - 1分間あたりのアップロード数: 300ファイルまで
 - プランによる月間アップロード数制限あり
 
-### 書類の種類（document_type）
-
-| 値 | 説明 |
-|----|------|
-| `receipt` | 領収書 |
-| `invoice` | 請求書 |
-| `other` | その他 |
-
-### ステータス
-
-| 値 | 説明 |
-|----|------|
-| `confirmed` | 確認済み |
-| `deleted` | 削除済み |
-| `ignored` | 無視 |
-
-### カテゴリ（一覧取得時のフィルタ）
-
-| 値 | 説明 |
-|----|------|
-| `all` | すべて |
-| `without_deal` | 未登録 |
-| `with_expense_application_line` | 経費申請中 |
-| `with_deal` | 登録済み |
-| `ignored` | 無視 |
-
 ## リファレンス
 
-詳細なAPIパラメータは `references/accounting-receipts.md` を参照。
+詳細なAPIパラメータ（書類の種類、ステータス、カテゴリ等）は `references/accounting-receipts.md` を参照。
