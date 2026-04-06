@@ -31,9 +31,11 @@
       "expected_output": "recipes/hr-attendance-operations.md を参照した上で、freee_get_current_company → freee_api_post (service=hr, 打刻API) の手順を説明する。",
       "assertions": [
         "freee_get_current_company を最初に呼び出す手順を説明している",
-        "recipes/hr-attendance-operations.md を実際に参照している",
+        "recipes/ または references/ 内の勤怠関連ファイルを実際に参照している",
         "freee_api_post を service=hr で呼び出す計画を示している",
         "打刻タイプとして clock_in（出勤）を指定する計画を示している",
+        "従業員IDの取得手順（/api/v1/users/me 等）を説明している",
+        "打刻可能種別の事前確認（available_types）に言及している",
         "MCPツール（freee_api_post 等）を実際には呼び出していない"
       ]
     },
@@ -58,6 +60,7 @@
       "assertions": [
         "recipes/invoice-operations.md を実際に参照している",
         "請求書作成に必要なパラメータや手順を説明している",
+        "請求書APIのパスとして /invoices（invoice サービス）を使用する計画を示している（会計APIの /api/1/invoices ではない）",
         "必要な情報をユーザーに確認している（取引先、品目、金額など）",
         "いきなりAPIを呼ぶ計画ではなく、まず情報を整理している",
         "MCPツールを実際には呼び出していない"
@@ -94,6 +97,8 @@
       "assertions": [
         "freee_api_list_paths ツールを呼び出す計画を示している",
         "会計・人事労務・請求書・工数管理・販売の各サービスについて言及している",
+        "各サービスの service パラメータ値（accounting, hr, invoice, pm, sm）を正確に示している",
+        "各サービスのパス体系の違い（/api/1/ vs /api/v1/ vs /invoices 等）に言及している",
         "MCPツール（freee_api_list_paths 等）を実際には呼び出していない"
       ]
     },
@@ -119,6 +124,8 @@
         "ユーザーにどの事業所に切り替えるか確認する手順を説明している",
         "freee_set_current_company で切り替える手順を説明している",
         "いきなり切り替えずに、まず一覧を提示する計画を示している",
+        "切り替え後に freee_get_current_company で確認する手順を含んでいる",
+        "company_id の不一致がエラーになることに言及している",
         "MCPツール（freee_list_companies 等）を実際には呼び出していない"
       ]
     }
