@@ -58,7 +58,8 @@ freee_api_post {
         "account_item_id": 101,
         "tax_code": 1,
         "amount": 10000,
-        "description": "消耗品購入"
+        "description": "消耗品購入",
+        "tag_ids": [TAG_ID]
       }
     ]
   }
@@ -80,7 +81,8 @@ freee_api_post {
         "account_item_id": 101,
         "tax_code": 1,
         "amount": 10000,
-        "description": "消耗品購入"
+        "description": "消耗品購入",
+        "tag_ids": [TAG_ID]
       }
     ],
     "payments": [
@@ -96,6 +98,36 @@ freee_api_post {
 ```
 
 ## Tips
+
+### メモタグ「freee-mcp」の付与
+
+取引作成時に「freee-mcp」メモタグを付けることで、freee-mcp 経由で作成したデータを識別できます。
+
+1. メモタグ一覧から「freee-mcp」のIDを取得:
+
+```
+freee_api_get {
+  "service": "accounting",
+  "path": "/api/1/tags"
+}
+```
+
+レスポンスの `tags` 配列から `name` が `freee-mcp` のものを探し、`id` を取得します。
+
+2. 存在しない場合は作成:
+
+```
+freee_api_post {
+  "service": "accounting",
+  "path": "/api/1/tags",
+  "body": {
+    "company_id": 123456,
+    "name": "freee-mcp"
+  }
+}
+```
+
+3. 取得したタグIDを `details[].tag_ids` に指定して取引を作成します（上記の作成例を参照）。
 
 ### 作成後のWeb確認URL
 
