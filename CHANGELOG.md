@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.21.0
+
+### Minor Changes
+
+- [`160b717`](https://github.com/freee/freee-mcp/commit/160b7176696e5fde79c0c8de2a12ff274f052fb9): freee サイン（電子契約）の MCP サーバーサポートを追加。`freee-sign-mcp` コマンドでサイン専用 MCP サーバーを起動し、OAuth2 認証・文書 CRUD などのサイン Public API を MCP 経由で操作可能に。 ([#375](https://github.com/freee/freee-mcp/pull/375))
+
 ## 0.20.0
 
 ### Minor Changes
