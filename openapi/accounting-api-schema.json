@@ -15635,6 +15635,16 @@
             "example": "2"
           },
           {
+            "name": "section_id",
+            "in": "query",
+            "description": "部門IDで絞込",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          },
+          {
             "name": "offset",
             "in": "query",
             "description": "取得レコードのオフセット (デフォルト: 0)",

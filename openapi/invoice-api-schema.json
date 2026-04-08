@@ -14,6 +14,10 @@
   },
   "tags": [
     {
+      "name": "Receipts",
+      "description": "領収書"
+    },
+    {
       "name": "DeliverySlips",
       "description": "納品書"
     },
@@ -1736,6 +1740,572 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/QuotationRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/receipts": {
+      "get": {
+        "operationId": "receipts/index",
+        "summary": "領収書一覧の取得\n",
+        "description": "領収書の一覧を返します。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "description": "事業所ID",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1,
+              "maximum": 9223372036854776000
+            }
+          },
+          {
+            "name": "receipt_number",
+            "in": "query",
+            "required": false,
+            "description": "領収書番号",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            }
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "description": "件名",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            }
+          },
+          {
+            "name": "partner_ids",
+            "in": "query",
+            "required": false,
+            "description": "取引先ID（半角数字のidを半角カンマ区切りスペースなしで指定してください。最大3件まで指定できます。）",
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            }
+          },
+          {
+            "name": "deal_status",
+            "in": "query",
+            "required": false,
+            "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "registered",
+                "unregistered"
+              ]
+            }
+          },
+          {
+            "name": "sending_status",
+            "in": "query",
+            "required": false,
+            "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "sent",
+                "unsent"
+              ]
+            }
+          },
+          {
+            "name": "payment_status",
+            "in": "query",
+            "required": false,
+            "description": "決済ステータス（unsettled: 決済待ち, settled: 決済済み）",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "settled",
+                "unsettled"
+              ]
+            }
+          },
+          {
+            "name": "cancel_status",
+            "in": "query",
+            "required": false,
+            "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "canceled",
+                "uncanceled"
+              ]
+            }
+          },
+          {
+            "name": "start_receipt_date",
+            "in": "query",
+            "required": false,
+            "description": "領収日の開始日",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            }
+          },
+          {
+            "name": "end_receipt_date",
+            "in": "query",
+            "required": false,
+            "description": "領収日の終了日",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "取得レコードの件数 (デフォルト: 20, 最小: 1, 最大: 100)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "取得レコードのオフセット (デフォルト: 0)",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptIndexResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The server could not understand the request due to invalid syntax.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/badRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access is unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access is forbidden.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/accessDeniedError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internalServerError"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Receipts"
+        ]
+      },
+      "post": {
+        "operationId": "receipts/create",
+        "summary": "領収書の作成\n",
+        "description": "領収書の作成をします。\n\nissue_date, account_item_id, tax_code, item_id, section_id, tag_ids, segment_1_tag_id, segment_2_tag_id, segment_3_tag_id は、取引登録の下書き保存で利用されます。\n\ntag_idsは10個まで設定可能です。",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The request has succeeded and a new resource has been created as a result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The server could not understand the request due to invalid syntax.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/badRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access is unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access is forbidden.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/accessDeniedError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internalServerError"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Receipts"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiptRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/receipts/templates": {
+      "get": {
+        "operationId": "receipts/templates/index",
+        "summary": "使用可能な領収書の帳票テンプレート一覧の取得\n",
+        "description": "使用可能な領収書の帳票テンプレート一覧を返します。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "description": "事業所ID",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1,
+              "maximum": 9223372036854776000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateIndexResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The server could not understand the request due to invalid syntax.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/badRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access is unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access is forbidden.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/accessDeniedError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internalServerError"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Receipts"
+        ]
+      }
+    },
+    "/receipts/{id}": {
+      "get": {
+        "operationId": "receipts/show",
+        "summary": "領収書の取得\n",
+        "description": "指定されたIDの領収書を返します。",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "description": "事業所ID",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1,
+              "maximum": 9223372036854776000
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "領収書ID",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptShowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The server could not understand the request due to invalid syntax.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/badRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access is unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access is forbidden.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/accessDeniedError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The server cannot find the requested resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/notfoundError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internalServerError"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Receipts"
+        ]
+      },
+      "put": {
+        "operationId": "receipts/update",
+        "summary": "領収書の更新\n",
+        "description": "領収書の更新をします。\n\nissue_date, account_item_id, tax_code, item_id, section_id, tag_ids, segment_1_tag_id, segment_2_tag_id, segment_3_tag_id は、取引登録の下書き保存で利用されます。\n\ntag_idsは10個まで設定可能です。",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "領収書ID",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request has succeeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceiptResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The server could not understand the request due to invalid syntax.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/badRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access is unauthorized.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access is forbidden.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/accessDeniedError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The server cannot find the requested resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/notfoundError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internalServerError"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Receipts"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiptRequest"
               }
             }
           }
@@ -6236,6 +6806,1468 @@
               "text"
             ],
             "description": "明細の種類\n- item: 品目行\n- text: テキスト行\n- textの時はsales_date、quantity、unit_price、tax_rate、amount_excluding_taxはnullになります。"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "摘要（品名）"
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "明細の単位名"
+          },
+          "quantity": {
+            "type": "number",
+            "nullable": true,
+            "minimum": -99999999.999,
+            "maximum": 99999999.999,
+            "description": "明細の数量 (整数部は8桁まで、小数部は3桁まで)"
+          },
+          "unit_price": {
+            "type": "string",
+            "nullable": true,
+            "description": "明細の単価 (整数部は13桁まで、小数部は3桁まで)"
+          },
+          "tax_rate": {
+            "type": "number",
+            "enum": [
+              0,
+              8,
+              10
+            ],
+            "nullable": true,
+            "description": "税率（%）"
+          },
+          "reduced_tax_rate": {
+            "type": "boolean",
+            "description": "軽減税率対象（true: 対象、 false: 対象外）"
+          },
+          "withholding": {
+            "type": "boolean",
+            "description": "源泉徴収対象"
+          },
+          "amount_excluding_tax": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "税別金額"
+          }
+        }
+      },
+      "ReceiptIndexResponse": {
+        "type": "object",
+        "required": [
+          "receipts"
+        ],
+        "properties": {
+          "receipts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceiptIndexResponse_receipts"
+            }
+          }
+        }
+      },
+      "ReceiptIndexResponse_receipts": {
+        "type": "object",
+        "required": [
+          "id",
+          "company_id",
+          "receipt_number",
+          "subject",
+          "receipt_date",
+          "memo",
+          "sending_status",
+          "payment_status",
+          "cancel_status",
+          "deal_status",
+          "total_amount",
+          "amount_including_tax",
+          "amount_excluding_tax",
+          "amount_tax",
+          "partner_id"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "領収書ID"
+          },
+          "company_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "事業所ID"
+          },
+          "receipt_number": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "領収書番号"
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "件名"
+          },
+          "template_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "帳票テンプレートID"
+          },
+          "receipt_date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "format": "date",
+            "description": "領収日"
+          },
+          "issue_date": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "format": "date",
+            "description": "発生日"
+          },
+          "memo": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "社内メモ"
+          },
+          "sending_status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "unsent"
+            ],
+            "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
+          },
+          "payment_status": {
+            "type": "string",
+            "enum": [
+              "settled",
+              "unsettled"
+            ],
+            "description": "決済ステータス（unsettled: 決済待ち, settled: 決済済み）"
+          },
+          "cancel_status": {
+            "type": "string",
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
+            "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
+          },
+          "deal_status": {
+            "type": "string",
+            "enum": [
+              "registered",
+              "unregistered"
+            ],
+            "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）"
+          },
+          "deal_id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "取引ID （deal_statusがunregisteredの場合、nullになります。）"
+          },
+          "total_amount": {
+            "type": "number",
+            "format": "double",
+            "description": "合計金額"
+          },
+          "amount_withholding_tax": {
+            "type": "number",
+            "nullable": true,
+            "description": "源泉所得税"
+          },
+          "amount_including_tax": {
+            "type": "number",
+            "format": "double",
+            "description": "税込金額"
+          },
+          "amount_excluding_tax": {
+            "type": "number",
+            "description": "小計（税別）"
+          },
+          "amount_tax": {
+            "type": "number",
+            "description": "消費税額"
+          },
+          "partner_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "取引先ID"
+          },
+          "partner_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "取引先コード"
+          },
+          "partner_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先名\n- partner_nameに空文字が戻る場合は、対象レコードをweb画面から更新するか、freee請求書APIから更新すると解消されます。"
+          },
+          "partner_display_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先宛名\n- 帳票の宛名に利用されます。"
+          },
+          "company_contact_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "自社担当者 (デフォルト: 表示ユーザー名)"
+          },
+          "email_url_file_downloaded_at": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$",
+            "format": "string",
+            "description": "URL共有で送付された送付先のメールのダウンロード時刻"
+          },
+          "email_url_file_downloaded_status": {
+            "type": "string",
+            "enum": [
+              "downloaded",
+              "undownloaded"
+            ],
+            "nullable": true,
+            "description": "URL共有で送付された送付先のメールのダウンロードステータス"
+          }
+        }
+      },
+      "ReceiptRequest": {
+        "type": "object",
+        "required": [
+          "company_id",
+          "receipt_date",
+          "tax_entry_method",
+          "tax_fraction",
+          "withholding_tax_entry_method",
+          "partner_title",
+          "lines"
+        ],
+        "properties": {
+          "company_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "事業所ID"
+          },
+          "template_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "帳票テンプレートID（指定しない場合、事業所の既定のテンプレートが指定されます。）"
+          },
+          "receipt_number": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "領収書番号<br>\n- 採番の設定が、[自動採番する]の場合、指定できません。\n- 採番の設定が、[自動採番する]以外の場合、必須になります。"
+          },
+          "branch_no": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647,
+            "description": "枝番"
+          },
+          "receipt_date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "format": "date",
+            "description": "領収日"
+          },
+          "issue_date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "format": "date",
+            "description": "発生日（取引登録の下書き保存で利用されます。）\n- 入力がない場合、領収日が補完されます。"
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "件名"
+          },
+          "tax_entry_method": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out"
+            ],
+            "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
+          },
+          "tax_fraction": {
+            "type": "string",
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
+            "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
+          },
+          "line_amount_fraction": {
+            "type": "string",
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
+            "nullable": true,
+            "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
+          },
+          "withholding_tax_entry_method": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out"
+            ],
+            "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
+          },
+          "receipt_note": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 4000,
+            "description": "備考"
+          },
+          "memo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "社内メモ"
+          },
+          "partner_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "取引先ID<br>\n取引先IDと取引先コードはどちらか一方を必ず指定してください。<br>\n<a href='https://support.freee.co.jp/hc/ja/articles/12515437008409-取引先を登録する#:~:text=確認ください。-,取引先役割,-種別' target='_blank'>取引先役割に関してはヘルプページを御覧ください。</a>"
+          },
+          "partner_code": {
+            "type": "string",
+            "description": "取引先コード<br>\n取引先コードと取引先IDはどちらか一方を必ず指定してください。<br>\n<a href='https://support.freee.co.jp/hc/ja/articles/12515437008409-取引先を登録する#:~:text=確認ください。-,取引先役割,-種別' target='_blank'>取引先役割に関してはヘルプページを御覧ください。</a>"
+          },
+          "partner_title": {
+            "type": "string",
+            "enum": [
+              "御中",
+              "様",
+              "(空白)",
+              "（空白）"
+            ],
+            "description": "敬称（御中、様、(空白)の3つから選択）\n- [非推奨]全角カッコの（空白）は削除予定です。\n- 全角カッコの（空白）を指定した場合、はレスポンスは、半角カッコの(空白)になります。"
+          },
+          "partner_address_zipcode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "pattern": "^[0-9]{3}-?[0-9]{4}$",
+            "description": "郵便番号\n- 入力がない場合、帳票に指定されたpartner_id, partner_codeに紐づく郵便番号が利用されます。"
+          },
+          "partner_address_prefecture_code": {
+            "type": "integer",
+            "minimum": -1,
+            "maximum": 46,
+            "description": "都道府県コード（-1: 設定しない、0: 北海道、1:青森、2:岩手、3:宮城、4:秋田、5:山形、6:福島、7:茨城、8:栃木、9:群馬、10:埼玉、11:千葉、12:東京、13:神奈川、14:新潟、15:富山、16:石川、17:福井、18:山梨、19:長野、20:岐阜、21:静岡、22:愛知、23:三重、24:滋賀、25:京都、26:大阪、27:兵庫、28:奈良、29:和歌山、30:鳥取、31:島根、32:岡山、33:広島、34:山口、35:徳島、36:香川、37:愛媛、38:高知、39:福岡、40:佐賀、41:長崎、42:熊本、43:大分、44:宮崎、45:鹿児島、46:沖縄）\n- 入力がない場合、帳票に指定されたpartner_id, partner_codeに紐づく都道府県コードが利用されます。"
+          },
+          "partner_address_street_name1": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "取引先 市区町村・番地\n- 入力がない場合、帳票に指定されたpartner_id, partner_codeに紐づく取引先 市区町村・番地が利用されます。"
+          },
+          "partner_address_street_name2": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "取引先 建物名・部屋番号など\n- 入力がない場合、帳票に指定されたpartner_id, partner_codeに紐づく取引先 建物名・部屋番号などが利用されます。"
+          },
+          "partner_contact_department": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "取引先部署\n- 入力がない場合、帳票に指定されたpartner_id, partner_codeに紐づく取引先部署が利用されます。"
+          },
+          "partner_contact_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "取引先担当者名\n- 入力がない場合、帳票に指定されたpartner_id, partner_codeに紐づく取引先担当者名が利用されます。"
+          },
+          "partner_display_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先宛名\n- 帳票の宛名に利用されます。\n- 入力がない場合、帳票に指定されたpartner_id, partner_codeに紐づく取引先名称が利用されます。"
+          },
+          "company_contact_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "自社担当者(デフォルトは表示ユーザー名が補完されます)"
+          },
+          "company_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "自社名を上書きする場合に指定します。"
+          },
+          "company_description": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "自社説明を上書きする場合に指定します。"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceiptRequest_lines"
+            },
+            "description": "領収書の明細行"
+          }
+        }
+      },
+      "ReceiptRequest_lines": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "item",
+              "text"
+            ],
+            "description": "明細の種類\n- item: 品目行\n- tax_rate、quantityは必須になります。\n- text: テキスト行\n- descriptionのみ入力可能です。\n- 入力がない場合、itemが利用されます。",
+            "default": "item"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "摘要（品名）"
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "明細の単位名"
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": -99999999.999,
+            "maximum": 99999999.999,
+            "description": "明細の数量 (整数部は8桁まで、小数部は3桁まで)"
+          },
+          "unit_price": {
+            "type": "string",
+            "pattern": "^-?[0-9]{0,13}(\\.[0-9]{1,3})?$",
+            "description": "明細の単価 (整数部は13桁まで、小数部は3桁まで)"
+          },
+          "tax_rate": {
+            "type": "number",
+            "enum": [
+              0,
+              8,
+              10
+            ],
+            "description": "税率（%）（帳票の税額計算に用います。）"
+          },
+          "reduced_tax_rate": {
+            "type": "boolean",
+            "description": "軽減税率対象（true: 対象、 false: 対象外）trueはtax_rate:8の時のみ指定可能です。"
+          },
+          "withholding": {
+            "type": "boolean",
+            "description": "源泉徴収対象"
+          },
+          "account_item_id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "勘定科目ID（取引登録の下書き保存で利用されます。）"
+          },
+          "tax_code": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647,
+            "description": "税区分コード（取引登録の下書き保存で利用されます。）"
+          },
+          "item_id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "品目ID（取引登録の下書き保存で利用されます。）"
+          },
+          "section_id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "部門ID<br>\n- 取引登録の下書き保存で利用されます。\n- 親部門は利用できません。\n- グループ管理で制限された部門は利用できません。\n<br>\n<a href=\"https://support.freee.co.jp/hc/ja/articles/215225263\" target=\"_blank\">グループ管理の設定はヘルプページを御覧ください。</a>"
+          },
+          "tag_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "segment_1_tag_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "セグメント１ID<br>\n- 取引登録の下書き保存で利用されます。\n- freee会計法人向け プロフェッショナルプラン以上で利用可能です。\n<br>\n<a href=\"https://support.freee.co.jp/hc/ja/articles/360020679611\" target=\"_blank\">セグメント（分析用タグ）の設定はヘルプページを御覧ください。</a>"
+          },
+          "segment_2_tag_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "セグメント２ID<br>\n- 取引登録の下書き保存で利用されます。\n- freee会計法人向け エンタープライズプランで利用可能です。\n<br>\n<a href=\"https://support.freee.co.jp/hc/ja/articles/360020679611\" target=\"_blank\">セグメント（分析用タグ）の設定はヘルプページを御覧ください。</a>"
+          },
+          "segment_3_tag_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "セグメント３ID<br>\n- 取引登録の下書き保存で利用されます。\n- freee会計法人向け エンタープライズプランで利用可能です。\n<br>\n<a href=\"https://support.freee.co.jp/hc/ja/articles/360020679611\" target=\"_blank\">セグメント（分析用タグ）の設定はヘルプページを御覧ください。</a>"
+          }
+        }
+      },
+      "ReceiptResponse": {
+        "type": "object",
+        "required": [
+          "receipt"
+        ],
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/ReceiptResponse_receipt"
+          }
+        }
+      },
+      "ReceiptResponse_receipt": {
+        "type": "object",
+        "required": [
+          "id",
+          "company_id",
+          "receipt_number",
+          "subject",
+          "receipt_date",
+          "receipt_note",
+          "memo",
+          "sending_status",
+          "payment_status",
+          "cancel_status",
+          "deal_status",
+          "total_amount",
+          "created_at",
+          "amount_including_tax",
+          "amount_excluding_tax",
+          "amount_tax",
+          "partner_id",
+          "lines"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "領収書ID"
+          },
+          "company_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "事業所ID"
+          },
+          "receipt_number": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "領収書番号"
+          },
+          "branch_no": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 2147483647,
+            "description": "枝番"
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "件名"
+          },
+          "template_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "帳票テンプレートID"
+          },
+          "template_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "帳票テンプレート名"
+          },
+          "receipt_date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "format": "date",
+            "description": "領収日"
+          },
+          "issue_date": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "format": "date",
+            "description": "発生日"
+          },
+          "receipt_note": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "備考"
+          },
+          "memo": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "社内メモ"
+          },
+          "sending_status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "unsent"
+            ],
+            "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
+          },
+          "payment_status": {
+            "type": "string",
+            "enum": [
+              "settled",
+              "unsettled"
+            ],
+            "description": "決済ステータス（unsettled: 決済待ち, settled: 決済済み）"
+          },
+          "cancel_status": {
+            "type": "string",
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
+            "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
+          },
+          "deal_status": {
+            "type": "string",
+            "enum": [
+              "registered",
+              "unregistered"
+            ],
+            "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）"
+          },
+          "deal_id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "取引ID （deal_statusがunregisteredの場合、nullになります。）"
+          },
+          "tax_entry_method": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out"
+            ],
+            "nullable": true,
+            "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
+          },
+          "tax_fraction": {
+            "type": "string",
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
+            "nullable": true,
+            "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
+          },
+          "line_amount_fraction": {
+            "type": "string",
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
+            "nullable": true,
+            "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
+          },
+          "withholding_tax_entry_method": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out"
+            ],
+            "nullable": true,
+            "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
+          },
+          "total_amount": {
+            "type": "number",
+            "format": "double",
+            "description": "合計金額"
+          },
+          "created_at": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$",
+            "description": "作成日時"
+          },
+          "amount_withholding_tax": {
+            "type": "number",
+            "nullable": true,
+            "description": "源泉所得税"
+          },
+          "amount_including_tax": {
+            "type": "number",
+            "format": "double",
+            "description": "税込金額"
+          },
+          "amount_excluding_tax": {
+            "type": "number",
+            "description": "小計（税別）"
+          },
+          "amount_tax": {
+            "type": "number",
+            "description": "消費税額"
+          },
+          "amount_including_tax_10": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "10%対象 税込"
+          },
+          "amount_excluding_tax_10": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "10%対象 税抜"
+          },
+          "amount_tax_10": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "10%対象 消費税"
+          },
+          "amount_including_tax_8": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "8%対象 税込"
+          },
+          "amount_excluding_tax_8": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "8%対象 税抜"
+          },
+          "amount_tax_8": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "8%対象 消費税"
+          },
+          "amount_including_tax_8_reduced": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "軽減税率8%対象 税込"
+          },
+          "amount_excluding_tax_8_reduced": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "軽減税率8%対象 税抜"
+          },
+          "amount_tax_8_reduced": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "軽減税率8%対象 消費税"
+          },
+          "amount_including_tax_0": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "0%対象 税込"
+          },
+          "amount_excluding_tax_0": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "0%対象 税抜"
+          },
+          "amount_tax_0": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "0%対象 消費税"
+          },
+          "partner_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "取引先ID"
+          },
+          "partner_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "取引先コード"
+          },
+          "partner_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先名\n- partner_nameに空文字が戻る場合は、対象レコードをweb画面から更新するか、freee請求書APIから更新すると解消されます。"
+          },
+          "partner_title": {
+            "type": "string",
+            "enum": [
+              "御中",
+              "様",
+              "(空白)"
+            ],
+            "description": "敬称（御中、様、(空白)の3つから選択）"
+          },
+          "partner_address_zipcode": {
+            "type": "string",
+            "maxLength": 10,
+            "description": "郵便番号"
+          },
+          "partner_address_prefecture_code": {
+            "type": "integer",
+            "minimum": -1,
+            "maximum": 46,
+            "description": "都道府県コード（-1: 設定しない、0: 北海道、1:青森、2:岩手、3:宮城、4:秋田、5:山形、6:福島、7:茨城、8:栃木、9:群馬、10:埼玉、11:千葉、12:東京、13:神奈川、14:新潟、15:富山、16:石川、17:福井、18:山梨、19:長野、20:岐阜、21:静岡、22:愛知、23:三重、24:滋賀、25:京都、26:大阪、27:兵庫、28:奈良、29:和歌山、30:鳥取、31:島根、32:岡山、33:広島、34:山口、35:徳島、36:香川、37:愛媛、38:高知、39:福岡、40:佐賀、41:長崎、42:熊本、43:大分、44:宮崎、45:鹿児島、46:沖縄）"
+          },
+          "partner_address_street_name1": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先 市区町村・番地"
+          },
+          "partner_address_street_name2": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先 建物名・部屋番号など"
+          },
+          "partner_contact_department": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先部署"
+          },
+          "partner_contact_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先担当者名"
+          },
+          "partner_display_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先宛名\n- 帳票の宛名に利用されます。"
+          },
+          "company_contact_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "自社担当者名"
+          },
+          "company_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "自社名"
+          },
+          "company_description": {
+            "type": "string",
+            "description": "自社情報"
+          },
+          "template": {
+            "$ref": "#/components/schemas/ReceiptResponse_receipt_template"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceiptResponse_receipt_lines"
+            },
+            "description": "領収書の明細行"
+          }
+        }
+      },
+      "ReceiptResponse_receipt_lines": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "description",
+          "withholding"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "明細行ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "item",
+              "text"
+            ],
+            "description": "明細の種類\n- item: 品目行\n- text: テキスト行\n- textの時はquantity、unit_price、tax_rate、amount_excluding_tax、account_item_id、tax_code、item_id、section_id、segment_1_tag_id、segment_2_tag_id、segment_3_tag_idはnullになります。"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "摘要（品名）"
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "明細の単位名"
+          },
+          "quantity": {
+            "type": "number",
+            "nullable": true,
+            "minimum": -99999999.999,
+            "maximum": 99999999.999,
+            "description": "明細の数量 (整数部は8桁まで、小数部は3桁まで)"
+          },
+          "unit_price": {
+            "type": "string",
+            "nullable": true,
+            "description": "明細の単価 (整数部は13桁まで、小数部は3桁まで)"
+          },
+          "tax_rate": {
+            "type": "number",
+            "enum": [
+              0,
+              8,
+              10
+            ],
+            "nullable": true,
+            "description": "税率（%）"
+          },
+          "reduced_tax_rate": {
+            "type": "boolean",
+            "description": "軽減税率対象（true: 対象、 false: 対象外）"
+          },
+          "withholding": {
+            "type": "boolean",
+            "description": "源泉徴収対象"
+          },
+          "amount_excluding_tax": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "税別金額"
+          },
+          "account_item_id": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "勘定科目ID"
+          },
+          "tax_code": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 2147483647,
+            "description": "税区分コード"
+          },
+          "item_id": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "品目ID"
+          },
+          "section_id": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "部門ID"
+          },
+          "tag_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "segment_1_tag_id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "セグメント１ID"
+          },
+          "segment_2_tag_id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "セグメント２ID"
+          },
+          "segment_3_tag_id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "セグメント３ID"
+          }
+        }
+      },
+      "ReceiptResponse_receipt_template": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "領収書タイトル"
+          },
+          "invoice_registration_number": {
+            "type": "string",
+            "description": "インボイス制度適格請求書発行事業者登録番号\n- 先頭T数字13桁の固定14桁の文字列\n<a target=\"_blank\" href=\"https://www.invoice-kohyo.nta.go.jp/index.html\">国税庁インボイス制度適格請求書発行事業者公表サイト</a>"
+          },
+          "company_name": {
+            "type": "string",
+            "description": "自社名"
+          },
+          "company_description": {
+            "type": "string",
+            "description": "自社情報"
+          },
+          "message": {
+            "type": "string",
+            "description": "メッセージ"
+          }
+        },
+        "description": "帳票テンプレート情報（帳票テンプレート作成の際に設定できる項目です。）"
+      },
+      "ReceiptShowResponse": {
+        "type": "object",
+        "required": [
+          "receipt"
+        ],
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/ReceiptShowResponse_receipt"
+          }
+        }
+      },
+      "ReceiptShowResponse_receipt": {
+        "type": "object",
+        "required": [
+          "id",
+          "company_id",
+          "receipt_number",
+          "subject",
+          "receipt_date",
+          "receipt_note",
+          "memo",
+          "sending_status",
+          "payment_status",
+          "cancel_status",
+          "deal_status",
+          "total_amount",
+          "created_at",
+          "amount_including_tax",
+          "amount_excluding_tax",
+          "amount_tax",
+          "partner_id",
+          "lines"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "領収書ID"
+          },
+          "company_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "事業所ID"
+          },
+          "receipt_number": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "領収書番号"
+          },
+          "branch_no": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 2147483647,
+            "description": "枝番"
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "件名"
+          },
+          "template_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "帳票テンプレートID"
+          },
+          "template_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "帳票テンプレート名"
+          },
+          "receipt_date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "format": "date",
+            "description": "領収日"
+          },
+          "issue_date": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "format": "date",
+            "description": "発生日"
+          },
+          "receipt_note": {
+            "type": "string",
+            "maxLength": 4000,
+            "description": "備考"
+          },
+          "memo": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "社内メモ"
+          },
+          "sending_status": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "unsent"
+            ],
+            "description": "送付ステータス（sent: 送付済み、 unsent: 送付待ち）"
+          },
+          "payment_status": {
+            "type": "string",
+            "enum": [
+              "settled",
+              "unsettled"
+            ],
+            "description": "決済ステータス（unsettled: 決済待ち, settled: 決済済み）"
+          },
+          "cancel_status": {
+            "type": "string",
+            "enum": [
+              "canceled",
+              "uncanceled"
+            ],
+            "description": "取消済み（canceled: 該当する、 uncanceled: 該当しない）"
+          },
+          "deal_status": {
+            "type": "string",
+            "enum": [
+              "registered",
+              "unregistered"
+            ],
+            "description": "取引ステータス（registered: 登録済み、 unregistered: 登録待ち）"
+          },
+          "deal_id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "取引ID （deal_statusがunregisteredの場合、nullになります。）"
+          },
+          "tax_entry_method": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out"
+            ],
+            "nullable": true,
+            "description": "消費税の内税・外税区分（in: 税込表示（内税）、out: 税別表示（外税））"
+          },
+          "tax_fraction": {
+            "type": "string",
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
+            "nullable": true,
+            "description": "消費税端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
+          },
+          "line_amount_fraction": {
+            "type": "string",
+            "enum": [
+              "omit",
+              "round_up",
+              "round"
+            ],
+            "nullable": true,
+            "description": "金額端数の計算方法（omit: 切り捨て、round_up: 切り上げ、round: 四捨五入）"
+          },
+          "withholding_tax_entry_method": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out"
+            ],
+            "nullable": true,
+            "description": "源泉徴収の計算方法（in: 税込み価格で計算、out: 税別価格で計算）"
+          },
+          "total_amount": {
+            "type": "number",
+            "format": "double",
+            "description": "合計金額"
+          },
+          "created_at": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$",
+            "description": "作成日時"
+          },
+          "amount_withholding_tax": {
+            "type": "number",
+            "nullable": true,
+            "description": "源泉所得税"
+          },
+          "amount_including_tax": {
+            "type": "number",
+            "format": "double",
+            "description": "税込金額"
+          },
+          "amount_excluding_tax": {
+            "type": "number",
+            "description": "小計（税別）"
+          },
+          "amount_tax": {
+            "type": "number",
+            "description": "消費税額"
+          },
+          "amount_including_tax_10": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "10%対象 税込"
+          },
+          "amount_excluding_tax_10": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "10%対象 税抜"
+          },
+          "amount_tax_10": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "10%対象 消費税"
+          },
+          "amount_including_tax_8": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "8%対象 税込"
+          },
+          "amount_excluding_tax_8": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "8%対象 税抜"
+          },
+          "amount_tax_8": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "8%対象 消費税"
+          },
+          "amount_including_tax_8_reduced": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "軽減税率8%対象 税込"
+          },
+          "amount_excluding_tax_8_reduced": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "軽減税率8%対象 税抜"
+          },
+          "amount_tax_8_reduced": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "軽減税率8%対象 消費税"
+          },
+          "amount_including_tax_0": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "0%対象 税込"
+          },
+          "amount_excluding_tax_0": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "0%対象 税抜"
+          },
+          "amount_tax_0": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "0%対象 消費税"
+          },
+          "partner_id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "取引先ID"
+          },
+          "partner_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "取引先コード"
+          },
+          "partner_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先名\n- partner_nameに空文字が戻る場合は、対象レコードをweb画面から更新するか、freee請求書APIから更新すると解消されます。"
+          },
+          "partner_title": {
+            "type": "string",
+            "enum": [
+              "御中",
+              "様",
+              "(空白)"
+            ],
+            "description": "敬称（御中、様、(空白)の3つから選択）"
+          },
+          "partner_address_zipcode": {
+            "type": "string",
+            "maxLength": 10,
+            "description": "郵便番号"
+          },
+          "partner_address_prefecture_code": {
+            "type": "integer",
+            "minimum": -1,
+            "maximum": 46,
+            "description": "都道府県コード（-1: 設定しない、0: 北海道、1:青森、2:岩手、3:宮城、4:秋田、5:山形、6:福島、7:茨城、8:栃木、9:群馬、10:埼玉、11:千葉、12:東京、13:神奈川、14:新潟、15:富山、16:石川、17:福井、18:山梨、19:長野、20:岐阜、21:静岡、22:愛知、23:三重、24:滋賀、25:京都、26:大阪、27:兵庫、28:奈良、29:和歌山、30:鳥取、31:島根、32:岡山、33:広島、34:山口、35:徳島、36:香川、37:愛媛、38:高知、39:福岡、40:佐賀、41:長崎、42:熊本、43:大分、44:宮崎、45:鹿児島、46:沖縄）"
+          },
+          "partner_address_street_name1": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先 市区町村・番地"
+          },
+          "partner_address_street_name2": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先 建物名・部屋番号など"
+          },
+          "partner_contact_department": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先部署"
+          },
+          "partner_contact_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先担当者名"
+          },
+          "partner_display_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "取引先宛名\n- 帳票の宛名に利用されます。"
+          },
+          "company_contact_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "自社担当者名"
+          },
+          "company_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "自社名 (上書きした場合のみ反映されます、デフォルトがテンプレートの自社名になります。)"
+          },
+          "company_description": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "自社情報 (上書きした場合のみ反映されます、デフォルトがテンプレートの自社情報になります。)"
+          },
+          "template": {
+            "$ref": "#/components/schemas/ReceiptResponse_receipt_template"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceiptShowResponse_receipt_lines"
+            },
+            "description": "領収書の明細行"
+          },
+          "email_url_file_downloaded_at": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$",
+            "format": "string",
+            "description": "URL共有で送付された送付先のメールのダウンロード時刻"
+          },
+          "email_url_file_downloaded_status": {
+            "type": "string",
+            "enum": [
+              "downloaded",
+              "undownloaded"
+            ],
+            "nullable": true,
+            "description": "URL共有で送付された送付先のメールのダウンロードステータス"
+          }
+        }
+      },
+      "ReceiptShowResponse_receipt_lines": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "description",
+          "withholding"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 9223372036854775000,
+            "description": "明細行ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "item",
+              "text"
+            ],
+            "description": "明細の種類\n- item: 品目行\n- text: テキスト行\n- textの時はquantity、unit_price、tax_rate、amount_excluding_taxはnullになります。"
           },
           "description": {
             "type": "string",
