@@ -4259,6 +4259,12 @@
             "description": "請求書番号で絞込"
           },
           {
+            "name": "section_id",
+            "in": "query",
+            "type": "integer",
+            "description": "部門IDで絞込"
+          },
+          {
             "name": "offset",
             "in": "query",
             "type": "integer",
