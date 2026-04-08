@@ -2,7 +2,7 @@
 
 ## 概要
 
-
+入力項目・検索項目の操作
 
 ## エンドポイント一覧
 
@@ -97,4 +97,3 @@
 ## 参考情報
 
 - freee API公式ドキュメント: https://developer.freee.co.jp/docs
-- OpenAPIスキーマ: [sign-api-schema.json](../../openapi/sign-api-schema.json)

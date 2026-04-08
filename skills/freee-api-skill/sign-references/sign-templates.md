@@ -2,7 +2,7 @@
 
 ## 概要
 
-
+テンプレートの操作
 
 ## エンドポイント一覧
 
@@ -69,4 +69,3 @@ falseの場合、署名・合意文書のテンプレート。
 ## 参考情報
 
 - freee API公式ドキュメント: https://developer.freee.co.jp/docs
-- OpenAPIスキーマ: [sign-api-schema.json](../../openapi/sign-api-schema.json)
