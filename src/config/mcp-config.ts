@@ -129,21 +129,29 @@ export async function checkMcpConfigStatus(target: McpTarget): Promise<McpConfig
  * Preserves existing configuration while adding/updating the freee-mcp entry.
  */
 export async function addFreeeMcpConfig(target: McpTarget): Promise<void> {
+  await addMcpServerConfig(target, FREEE_MCP_SERVER_NAME, FREEE_MCP_SERVER_CONFIG);
+}
+
+/**
+ * Add a named MCP server configuration to the specified target.
+ */
+export async function addMcpServerConfig(
+  target: McpTarget,
+  serverName: string,
+  serverConfig: McpServerEntry,
+): Promise<void> {
   const configPath = getMcpConfigPath(target);
 
-  // Read existing config or start with empty object
   let config = await readMcpConfig(configPath);
   if (!config) {
     config = {};
   }
 
-  // Ensure mcpServers object exists
   if (!config.mcpServers) {
     config.mcpServers = {};
   }
 
-  // Add/update freee-mcp entry
-  config.mcpServers[FREEE_MCP_SERVER_NAME] = { ...FREEE_MCP_SERVER_CONFIG };
+  config.mcpServers[serverName] = { ...serverConfig };
 
   await writeMcpConfig(configPath, config);
 }
