@@ -111,6 +111,7 @@ Common issues:
 
 - `skills/freee-api-skill/` 内の `VERSION.md` は npm publish 時に自動生成されるため、開発環境（ローカル）には存在しない
 - 開発環境では `freee_server_info` のバージョンが `dev` と返る（正常動作）。実際のバージョンは `package.json` の `version` を参照する
+- Skill の更新（レシピ・リファレンスの追加・修正など）は changeset で `patch` バージョンとする
 
 ## Skill レシピの書き方
 
