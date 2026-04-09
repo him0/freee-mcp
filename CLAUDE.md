@@ -112,6 +112,11 @@ Common issues:
 - `skills/freee-api-skill/` 内の `VERSION.md` は npm publish 時に自動生成されるため、開発環境（ローカル）には存在しない
 - 開発環境では `freee_server_info` のバージョンが `dev` と返る（正常動作）。実際のバージョンは `package.json` の `version` を参照する
 
+## Skill レシピの書き方
+
+- レシピ（`skills/*/recipes/`）は操作の流れと注意点に集中し、APIの仕様詳細（パス一覧・パラメータ・レスポンス・制約等）はリファレンス（`references/`）へのパス参照に留める
+- レシピにリファレンスと同じ情報を重複して書かない
+
 ## Writing Style
 
 - Do not use markdown bold syntax (`**`)  in any files
