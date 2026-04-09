@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.22.1
+
+### Patch Changes
+
+- [`9883703`](https://github.com/freee/freee-mcp/commit/988370358b2a02527bd2fe5791a8e5cc384bf945): freee-api-skill の SKILL.md にカラールールセクションを追加 ([#383](https://github.com/freee/freee-mcp/pull/383))
+
 ## 0.22.0
 
 ### Minor Changes
