@@ -21,6 +21,7 @@
         "freee_get_current_company を最初に呼び出す手順を説明している",
         "references/ 内のリファレンスを実際に検索・参照している",
         "試算表関連のAPIパス（/api/1/reports/trial_pl 等）を使用する計画を示している",
+        "未承認仕訳（approval_flow_status）についてユーザーに確認する手順を含んでいる",
         "期間パラメータ（start_date, end_date 等）に先月の日付を指定する計画を示している",
         "MCPツール（freee_api_get 等）を実際には呼び出していない"
       ]
@@ -127,6 +128,18 @@
         "切り替え後に freee_get_current_company で確認する手順を含んでいる",
         "company_id の不一致がエラーになることに言及している",
         "MCPツール（freee_list_companies 等）を実際には呼び出していない"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "今期の貸借対照表を見せて\n\n注意: これはドライランです。実際にMCPツールは呼び出さず、どのツールをどのパラメータで呼び出すべきかを手順として説明してください。レシピやリファレンスの参照は実際に行ってください。",
+      "expected_output": "recipes/report-operations.md を参照し、approval_flow_status についてユーザーに確認した上で、freee_get_current_company → freee_api_get (試算表API) の手順を説明する。",
+      "assertions": [
+        "freee_get_current_company を最初に呼び出す手順を説明している",
+        "recipes/report-operations.md を実際に参照している",
+        "未承認仕訳（approval_flow_status）についてユーザーに確認する手順を含んでいる",
+        "freee_api_get を service=accounting、path=/api/1/reports/trial_bs で呼び出す計画を示している",
+        "MCPツール（freee_api_get 等）を実際には呼び出していない"
       ]
     }
   ]
