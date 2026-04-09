@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.22.0
+
+### Minor Changes
+
+- [`2a75c12`](https://github.com/freee/freee-mcp/commit/2a75c12e5c208e5726b68d091d3bcabc292c8674): 試算表・総勘定元帳の操作レシピを追加し、未承認仕訳（approval_flow_status）の確認フローを導入 ([#380](https://github.com/freee/freee-mcp/pull/380))
+
 ## 0.21.1
 
 ### Patch Changes
