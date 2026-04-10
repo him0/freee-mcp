@@ -83,42 +83,20 @@ Sign development mode: Use `"command": "bun", "args": ["run", "src/sign/index.ts
 
 ### Remote モードのロギング (canonical log line)
 
-Remote (`mcp.freee.co.jp`) モードでは 1 HTTP リクエスト = 1 ログ行 = 1 trace のパターンで JSON 構造化ログを出力する。個別イベントログ (`API request completed` 等) は存在せず、`src/telemetry/middleware.ts` の `res.on('finish')` で 1 本にまとめて emit される。
+Remote モードは「1 HTTP リクエスト = 1 ログ行 = 1 trace」パターン。ペイロード形状は `CanonicalLogPayload` (`src/server/request-context.ts`)、emit は `src/telemetry/middleware.ts` の `res.on('finish')`。
 
-ログ行の構造:
+読み落としやすい注意点:
 
-```json
-{
-  "msg": "mcp request completed",
-  "request_id": "...",
-  "trace_id": "...",
-  "source_ip": "...",
-  "user_agent": "ClaudeDesktop/1.2.3 (macOS 15.1)",
-  "user_id": "...",
-  "http": { "method": "POST", "path": "/mcp", "status": 200, "duration_ms": 842 },
-  "mcp": { "tool_calls": [...], "tool_call_count": 1 },
-  "api_calls": [...],
-  "api_call_count": 1,
-  "errors": []
-}
-```
-
-実装の要点:
-
-- tool handler・API client・エラーハンドラは `getCurrentRecorder()?.recordX(...)` でリクエスト単位バッファ (`src/server/request-context.ts`) に情報を追記する。AsyncLocalStorage 経由で伝播
-- エラーは `serializeErrorChain()` (`src/server/error-serializer.ts`) で `Error.cause` チェーンを展開。実際の `Error` オブジェクトを持たない synthetic error (validation 失敗、routing 404 等) は `makeErrorChain(name, message)` 経由で登録すること。素の `[{ name, message }]` リテラルは `scrubErrorMessage()` を通らず privacy 漏洩の原因になる
-- プライバシー: `ToolCallInfo` の型が query 値や body を表現できないよう設計されており、型システムで漏洩を防止する。pino.redact と `scrubErrorMessage()` (6 桁以上の数値 ID とメールアドレスをマスク) が二重の防御層として働く
-- `http.status` はクライアントへの最終応答コード、`api_calls[].status_code` は内部 freee API の応答コードで意味が異なる。freee API が 500 でも MCP 応答は 200 で包む場合があるため両方を参照する
-- Inbound `User-Agent` は `normalizeUserAgent()` (`src/telemetry/middleware.ts`) で scrub → 256 文字切り詰め。UA に 6 桁以上の連続数字が含まれる場合は `[REDACTED_ID]` に置換される (例: `Chrome/120.0.987654.1` → `Chrome/120.0.[REDACTED_ID].1`)。4 桁以下のビルド番号は素通し
-- Outbound の User-Agent (freee API 向け) は `getUserAgent()` (`src/server/user-agent.ts`) が返す。エントリポイントで `initUserAgentTransportMode('remote' | 'stdio')` を起動時 1 回だけ呼ぶこと
+- synthetic error (validation 失敗、routing 404 等) は `makeErrorChain(name, message)` 経由で登録すること。素の `[{ name, message }]` リテラルは `scrubErrorMessage()` を通らず privacy 漏洩の原因になる
+- `http.status` は MCP クライアントへの最終応答、`api_calls[].status_code` は freee API からの応答。freee API 500 でも MCP 応答は 200 で wrap する場合があり、両方を見る必要がある
 
 Datadog 検索例:
 
 - `@http.status:500` — MCP サーバー自体の 5xx
-- `@api_calls.error_type:timeout` — 外部 API タイムアウトの集計 (envoy アラームとの相関分析用)
-- `@http.status:200 @errors:*` — 見かけ上は成功だが内部的に失敗した (MCP 応答に error content を wrap したもの)
-- `@request_id:<uuid>` — 特定リクエストのすべての情報 (1 行にまとまっている)
-- `@user_agent:ClaudeDesktop*` — 特定の MCP クライアント種別だけを抽出 (クライアント別のタイムアウト / エラー分布分析)
+- `@api_calls.error_type:timeout` — 外部 API タイムアウト
+- `@http.status:200 @errors:*` — 見かけ上は成功だが内部的に失敗
+- `@request_id:<uuid>` — 特定リクエストの全情報
+- `@user_agent:ClaudeDesktop*` — MCP クライアント種別でフィルタ
 
 ## PR Creation Pre-flight Checklist
 
