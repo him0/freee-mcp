@@ -175,6 +175,7 @@ export interface RemoteServerConfig {
   freeeAuthorizationEndpoint: string;
   freeeTokenEndpoint: string;
   freeeScope: string;
+  freeeApiUrl: string;
   redisUrl: string;
   corsAllowedOrigins?: string;
   rateLimitEnabled: boolean;
@@ -216,6 +217,7 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
       process.env.FREEE_AUTHORIZATION_ENDPOINT || FREEE_AUTHORIZATION_ENDPOINT,
     freeeTokenEndpoint: process.env.FREEE_TOKEN_ENDPOINT || FREEE_TOKEN_ENDPOINT,
     freeeScope: process.env.FREEE_SCOPE || FREEE_OAUTH_SCOPE,
+    freeeApiUrl: process.env.FREEE_API_BASE_URL?.replace(/\/+$/, '') || FREEE_API_URL,
     redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
     corsAllowedOrigins: process.env.CORS_ALLOWED_ORIGINS,
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED === 'true',
@@ -230,7 +232,7 @@ export function initRemoteConfig(remoteConfig: RemoteServerConfig): void {
       clientId: remoteConfig.freeeClientId,
       clientSecret: remoteConfig.freeeClientSecret,
       companyId: '0',
-      apiUrl: FREEE_API_URL,
+      apiUrl: remoteConfig.freeeApiUrl,
     },
     oauth: {
       callbackPort: DEFAULT_CALLBACK_PORT,

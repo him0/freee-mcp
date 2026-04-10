@@ -29,6 +29,7 @@ describe('loadRemoteServerConfig', () => {
       freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
       freeeTokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
       freeeScope: 'read write',
+      freeeApiUrl: 'https://api.freee.co.jp',
       redisUrl: 'redis://localhost:6379',
       corsAllowedOrigins: undefined,
       rateLimitEnabled: false,
@@ -80,6 +81,22 @@ describe('loadRemoteServerConfig', () => {
 
     expect(config.redisUrl).toBe('redis://custom:6380');
   });
+
+  it('should use custom FREEE_API_BASE_URL', async () => {
+    process.env.FREEE_API_BASE_URL = 'https://staging.example.com';
+    const { loadRemoteServerConfig } = await import('./config.js');
+    const config = loadRemoteServerConfig();
+
+    expect(config.freeeApiUrl).toBe('https://staging.example.com');
+  });
+
+  it('should strip trailing slashes from FREEE_API_BASE_URL', async () => {
+    process.env.FREEE_API_BASE_URL = 'https://staging.example.com///';
+    const { loadRemoteServerConfig } = await import('./config.js');
+    const config = loadRemoteServerConfig();
+
+    expect(config.freeeApiUrl).toBe('https://staging.example.com');
+  });
 });
 
 describe('initRemoteConfig', () => {
@@ -103,16 +120,38 @@ describe('initRemoteConfig', () => {
       freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
       freeeTokenEndpoint: 'https://test.freee.co.jp/token',
       freeeScope: 'read write',
+      freeeApiUrl: 'https://api.freee.co.jp',
       redisUrl: 'redis://localhost:6379',
     });
 
     const config = getConfig();
     expect(config.freee.clientId).toBe('cid');
     expect(config.freee.clientSecret).toBe('csec');
+    expect(config.freee.apiUrl).toBe('https://api.freee.co.jp');
     expect(config.oauth.tokenEndpoint).toBe('https://test.freee.co.jp/token');
     expect(config.oauth.authorizationEndpoint).toBe(
       'https://accounts.secure.freee.co.jp/public_api/authorize',
     );
     expect(config.server.name).toBe('freee');
+  });
+
+  it('should reflect custom freeeApiUrl in config', async () => {
+    const { initRemoteConfig, getConfig } = await import('./config.js');
+
+    initRemoteConfig({
+      port: 3000,
+      issuerUrl: 'https://mcp.example.com',
+      jwtSecret: 'a-test-secret-that-is-at-least-32-characters-long',
+      freeeClientId: 'cid',
+      freeeClientSecret: 'csec',
+      freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
+      freeeTokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
+      freeeScope: 'read write',
+      freeeApiUrl: 'https://staging.example.com',
+      redisUrl: 'redis://localhost:6379',
+    });
+
+    const config = getConfig();
+    expect(config.freee.apiUrl).toBe('https://staging.example.com');
   });
 });
