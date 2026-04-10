@@ -1,10 +1,11 @@
 import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
 import { getConfig } from '../config.js';
-import { FETCH_TIMEOUT_API_MS, USER_AGENT } from '../constants.js';
+import { FETCH_TIMEOUT_API_MS } from '../constants.js';
 import { serializeErrorChain } from '../server/error-serializer.js';
 import { sanitizePath } from '../server/logger.js';
 import { getCurrentRecorder } from '../server/request-context.js';
+import { getUserAgent } from '../server/user-agent.js';
 import { type TokenContext, resolveCompanyId } from '../storage/context.js';
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
@@ -102,7 +103,7 @@ export async function makeApiRequest(
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        'User-Agent': USER_AGENT,
+        'User-Agent': getUserAgent(),
       },
       body: body ? JSON.stringify(typeof body === 'string' ? JSON.parse(body) : body) : undefined,
       signal: AbortSignal.timeout(FETCH_TIMEOUT_API_MS),

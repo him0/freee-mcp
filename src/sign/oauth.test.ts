@@ -108,7 +108,7 @@ describe('sign/oauth', () => {
   });
 
   describe('リクエストヘッダー', () => {
-    it('User-Agent ヘッダーが USER_AGENT 定数と一致する', async () => {
+    it('User-Agent ヘッダーが freee-mcp プレフィックスで始まる', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         json: () =>

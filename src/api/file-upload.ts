@@ -3,10 +3,10 @@ import path from 'node:path';
 import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
 import { getConfig } from '../config.js';
-import { USER_AGENT } from '../constants.js';
 import { serializeErrorChain } from '../server/error-serializer.js';
 import type { ApiCallErrorType } from '../server/request-context.js';
 import { getCurrentRecorder } from '../server/request-context.js';
+import { getUserAgent } from '../server/user-agent.js';
 import { type TokenContext, resolveCompanyId } from '../storage/context.js';
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
@@ -144,7 +144,7 @@ export async function uploadReceipt(
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'User-Agent': USER_AGENT,
+        'User-Agent': getUserAgent(),
       },
       body: formData,
     });

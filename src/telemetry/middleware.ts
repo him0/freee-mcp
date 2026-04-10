@@ -1,11 +1,56 @@
 import { randomUUID } from 'node:crypto';
 import { SpanKind, SpanStatusCode, context, trace, type Span } from '@opentelemetry/api';
 import type { NextFunction, Request, Response } from 'express';
+import { scrubErrorMessage } from '../server/error-serializer.js';
 import { getClientIp } from '../server/http-utils.js';
 import { getLogger } from '../server/logger.js';
 import { RequestRecorder, withRequestRecorder } from '../server/request-context.js';
 import { isOtelEnabled } from './init.js';
 import { getHttpRequestDuration, getHttpRequestErrorCount } from './metrics.js';
+
+/**
+ * Hard cap on the inbound User-Agent string length before it is logged.
+ *
+ * A well-behaved MCP client sends a UA well under 100 chars, but a malicious
+ * or buggy client could send arbitrary-length headers and blow up the log
+ * stream size. 256 is generous enough for every real user-agent we expect
+ * to see (browser/OS/version combinations rarely exceed 200).
+ */
+const MAX_USER_AGENT_LENGTH = 256;
+
+/**
+ * Normalize and scrub the inbound `User-Agent` header before storing it in
+ * the canonical log line.
+ *
+ * Steps:
+ * 1. Reject non-string values (`req.headers['user-agent']` is typed as
+ *    `string | string[] | undefined`; only scalars are accepted).
+ * 2. Treat empty strings as "missing".
+ * 3. Run the value through `scrubErrorMessage` so any 6+ digit ID or email
+ *    that a custom client might have stuffed into its UA gets masked. This
+ *    is defense-in-depth — real user-agents rarely contain such data.
+ * 4. Truncate to `MAX_USER_AGENT_LENGTH` AFTER scrubbing.
+ *
+ * The scrub-then-truncate order is critical for correctness: scrub
+ * replacements (`[REDACTED_ID]` 13 chars, `[REDACTED_EMAIL]` 16 chars) are
+ * longer than the 6-char minimum they replace, so scrubbing CAN grow the
+ * string. Truncating first would let a 256-char input with a 6-digit ID
+ * expand to 263 chars after scrub, silently violating the documented cap.
+ *
+ * DoS note: running scrub on the raw (pre-truncation) value is safe because
+ * (a) `scrubErrorMessage` uses two character-class regexes with no nested
+ * quantifiers — both run in O(n) with a small constant — and (b) Node's
+ * HTTP parser already bounds the total headers block to ~16KB by default
+ * (`--max-http-header-size`), so a single header can never be pathologically
+ * long in practice.
+ */
+export function normalizeUserAgent(raw: unknown): string | undefined {
+  if (typeof raw !== 'string' || raw.length === 0) return undefined;
+  const scrubbed = scrubErrorMessage(raw);
+  return scrubbed.length > MAX_USER_AGENT_LENGTH
+    ? scrubbed.slice(0, MAX_USER_AGENT_LENGTH)
+    : scrubbed;
+}
 
 /**
  * Express middleware responsible for per-request observability.
@@ -49,6 +94,7 @@ export function createTracingMiddleware(): (
     const recorder = new RequestRecorder({
       request_id: req.requestId,
       source_ip: getClientIp(req),
+      user_agent: normalizeUserAgent(req.headers['user-agent']),
       method: req.method,
       path: req.path,
     });

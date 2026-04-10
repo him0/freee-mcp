@@ -5,7 +5,7 @@ import {
   getSignCredentials,
 } from './config.js';
 import { OAuthTokenResponseSchema, saveSignTokens, type TokenData } from './tokens.js';
-import { USER_AGENT } from '../constants.js';
+import { getUserAgent } from '../server/user-agent.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
 import { createTokenData } from '../auth/token-utils.js';
 
@@ -31,7 +31,7 @@ export async function exchangeSignCodeForTokens(
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': USER_AGENT,
+      'User-Agent': getUserAgent(),
     },
     body: new URLSearchParams({
       grant_type: 'authorization_code',

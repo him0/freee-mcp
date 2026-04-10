@@ -1,8 +1,15 @@
 import { configure } from './cli.js';
 import { createAndStartServer } from './mcp/handlers.js';
 import { getLogger, initLogger } from './server/logger.js';
+import { initUserAgentTransportMode } from './server/user-agent.js';
 
 const main = async (): Promise<void> => {
+  // Set the transport mode at the very top of main() so both `configure` and
+  // the MCP server code paths share the same outbound User-Agent convention.
+  // `configure` does not currently issue outbound freee API calls, but placing
+  // this here removes the need to re-audit that assumption on every change.
+  initUserAgentTransportMode('stdio');
+
   const args = process.argv.slice(2);
   const subcommand = args.find((arg) => !arg.startsWith('--'));
 

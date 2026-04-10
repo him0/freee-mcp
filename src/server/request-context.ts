@@ -64,6 +64,8 @@ export interface ErrorInfo {
 export interface RequestRecorderContext {
   request_id: string;
   source_ip: string;
+  /** Inbound HTTP User-Agent header from the MCP client, normalized and truncated. */
+  user_agent?: string;
   user_id?: string;
   session_id?: string;
   method: string;
@@ -141,6 +143,7 @@ export class RequestRecorder {
     return {
       request_id: this.context.request_id,
       source_ip: this.context.source_ip,
+      user_agent: this.context.user_agent ?? null,
       user_id: this.context.user_id ?? null,
       session_id: this.context.session_id ?? null,
       http: {

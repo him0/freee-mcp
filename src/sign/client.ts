@@ -1,9 +1,10 @@
 // freee-mcp パッケージとして配布されるため、User-Agent は freee 本体と共通
-import { FETCH_TIMEOUT_API_MS, USER_AGENT } from '../constants.js';
+import { FETCH_TIMEOUT_API_MS } from '../constants.js';
 import { serializeErrorChain } from '../server/error-serializer.js';
 import { sanitizePath } from '../server/logger.js';
 import type { ApiCallErrorType } from '../server/request-context.js';
 import { getCurrentRecorder } from '../server/request-context.js';
+import { getUserAgent } from '../server/user-agent.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
 import { SIGN_API_URL } from './config.js';
 import { getValidSignAccessToken } from './tokens.js';
@@ -45,7 +46,7 @@ export async function makeSignApiRequest(
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
-        'User-Agent': USER_AGENT,
+        'User-Agent': getUserAgent(),
       },
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(FETCH_TIMEOUT_API_MS),

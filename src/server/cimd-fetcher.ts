@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { OAuthClientMetadata } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { OAuthClientMetadataSchema } from '@modelcontextprotocol/sdk/shared/auth.js';
-import { USER_AGENT } from '../constants.js';
+import { getUserAgent } from './user-agent.js';
 
 const CIMD_FETCH_TIMEOUT_MS = 5000;
 const MAX_RESPONSE_BYTES = 1_048_576; // 1MB
@@ -79,7 +79,7 @@ export class HttpCIMDFetcher implements CIMDFetcher {
       method: 'GET',
       headers: {
         Accept: 'application/json',
-        'User-Agent': USER_AGENT,
+        'User-Agent': getUserAgent(),
       },
       redirect: 'error', // Do not follow redirects (prevents SSRF via redirect)
       signal: AbortSignal.timeout(CIMD_FETCH_TIMEOUT_MS),

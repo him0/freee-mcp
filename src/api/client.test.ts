@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { USER_AGENT } from '../constants.js';
+import { getUserAgent } from '../server/user-agent.js';
 import { type BinaryFileResponse, isBinaryFileResponse, makeApiRequest } from './client.js';
 
 // Test constants (defined after mocks due to hoisting)
@@ -132,7 +132,7 @@ describe('client', () => {
           headers: {
             Authorization: `Bearer ${TEST_ACCESS_TOKEN}`,
             'Content-Type': 'application/json',
-            'User-Agent': USER_AGENT,
+            'User-Agent': getUserAgent(),
           },
           body: undefined,
           signal: expect.any(AbortSignal),
@@ -180,7 +180,7 @@ describe('client', () => {
           headers: {
             Authorization: `Bearer ${TEST_ACCESS_TOKEN}`,
             'Content-Type': 'application/json',
-            'User-Agent': USER_AGENT,
+            'User-Agent': getUserAgent(),
           },
           body: JSON.stringify(requestBody),
           signal: expect.any(AbortSignal),

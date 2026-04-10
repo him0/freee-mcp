@@ -6,8 +6,8 @@ import {
   CONFIG_FILE_PERMISSION,
   FETCH_TIMEOUT_TOKEN_MS,
   getConfigDir,
-  USER_AGENT,
 } from '../constants.js';
+import { getUserAgent } from '../server/user-agent.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
 import { clearLegacyTokens, tryMigrateLegacyTokens } from './token-migration.js';
 import { createTokenData } from './token-utils.js';
@@ -106,7 +106,7 @@ export async function refreshFreeeTokenRaw(
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': USER_AGENT,
+      'User-Agent': getUserAgent(),
     },
     body: new URLSearchParams({
       grant_type: 'refresh_token',

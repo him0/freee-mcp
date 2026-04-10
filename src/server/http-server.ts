@@ -15,6 +15,7 @@ import { initLogger } from './logger.js';
 import { FreeeOAuthProvider } from './oauth-provider.js';
 import { OAuthStateStore } from './oauth-store.js';
 import { getCurrentRecorder } from './request-context.js';
+import { initUserAgentTransportMode } from './user-agent.js';
 
 const BODY_SIZE_LIMIT = 1_048_576; // 1 MB
 
@@ -34,6 +35,7 @@ export async function startHttpServer(options?: {
   initRemoteConfig(remoteConfig);
 
   const logger = initLogger({ level: remoteConfig.logLevel, transportMode: 'remote' });
+  initUserAgentTransportMode('remote');
 
   const redis = getRedisClient(remoteConfig.redisUrl);
 

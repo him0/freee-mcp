@@ -93,6 +93,7 @@ Remote (`mcp.freee.co.jp`) モードでは 1 HTTP リクエスト = 1 ログ行 
   "request_id": "...",
   "trace_id": "...",
   "source_ip": "...",
+  "user_agent": "ClaudeDesktop/1.2.3 (macOS 15.1)",
   "user_id": "...",
   "http": { "method": "POST", "path": "/mcp", "status": 200, "duration_ms": 842 },
   "mcp": { "tool_calls": [...], "tool_call_count": 1 },
@@ -108,6 +109,8 @@ Remote (`mcp.freee.co.jp`) モードでは 1 HTTP リクエスト = 1 ログ行 
 - エラー発生時は `serializeErrorChain()` (`src/server/error-serializer.ts`) で `Error.cause` チェーンを展開し、`errors[].chain[]` に stack trace 付きで格納される
 - プライバシー: `ToolCallInfo` の型が query 値や body を表現できないよう設計されており、型システムで漏洩を防止する。pino.redact と `scrubErrorMessage()` (6 桁以上の数値 ID とメールアドレスをマスク) が二重の防御層として働く
 - `http.status` はクライアントへの最終応答コード、`api_calls[].status_code` は内部 freee API の応答コードで意味が異なる。freee API が 500 でも MCP 応答は 200 で包む場合があるため両方を参照する
+- Inbound `User-Agent` ヘッダは `src/telemetry/middleware.ts` の `normalizeUserAgent()` で scrub → 256 文字切り詰めを行った上で `user_agent` フィールドに記録される。どの MCP クライアント (Claude Desktop / Cursor / 自作スクリプトなど) が呼び出したかを Datadog で分析可能。UA に 6 桁以上の連続数字が含まれる場合は `[REDACTED_ID]` に置換される点に注意 (例: `Chrome/120.0.987654.1` → `Chrome/120.0.[REDACTED_ID].1`)。4 桁以下のビルド番号 (実際の Chrome, Safari など) は素通し
+- Outbound の User-Agent (freee API 向け) は `src/server/user-agent.ts` の `getUserAgent()` が transport mode を含む文字列を返す: `freee-mcp/<version> (MCP Server; stdio|remote; +url)`。エントリポイントで `initUserAgentTransportMode('remote' | 'stdio')` を起動時 1 回だけ呼ぶ
 - 詳細な個別イベントを見たい場合は環境変数 `LOG_LEVEL=debug` で再起動する (ただし現在 debug ログは運用では用意していない)
 
 Datadog 検索例:
@@ -116,6 +119,7 @@ Datadog 検索例:
 - `@api_calls.error_type:timeout` — 外部 API タイムアウトの集計 (envoy アラームとの相関分析用)
 - `@http.status:200 @errors:*` — 見かけ上は成功だが内部的に失敗した (MCP 応答に error content を wrap したもの)
 - `@request_id:<uuid>` — 特定リクエストのすべての情報 (1 行にまとまっている)
+- `@user_agent:ClaudeDesktop*` — 特定の MCP クライアント種別だけを抽出 (クライアント別のタイムアウト / エラー分布分析)
 
 ## PR Creation Pre-flight Checklist
 

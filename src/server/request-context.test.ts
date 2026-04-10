@@ -96,6 +96,7 @@ describe('RequestRecorder', () => {
       expect(payload).toEqual({
         request_id: 'req-canonical',
         source_ip: '10.0.0.1',
+        user_agent: null,
         user_id: 'user-42',
         session_id: 'sess-xyz',
         http: {
@@ -119,6 +120,20 @@ describe('RequestRecorder', () => {
       const payload = recorder.buildPayload({ status: 200, duration_ms: 10 });
       expect(payload.user_id).toBeNull();
       expect(payload.session_id).toBeNull();
+    });
+
+    it('includes user_agent in the payload when set on the context', () => {
+      const recorder = makeRecorder({
+        user_agent: 'ClaudeDesktop/1.2.3 (macOS 15.1)',
+      });
+      const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
+      expect(payload.user_agent).toBe('ClaudeDesktop/1.2.3 (macOS 15.1)');
+    });
+
+    it('serializes user_agent as null when unset', () => {
+      const recorder = makeRecorder();
+      const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
+      expect(payload.user_agent).toBeNull();
     });
   });
 
