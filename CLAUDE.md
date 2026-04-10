@@ -105,13 +105,12 @@ Remote (`mcp.freee.co.jp`) モードでは 1 HTTP リクエスト = 1 ログ行 
 
 実装の要点:
 
-- `src/server/request-context.ts` の `RequestRecorder` が AsyncLocalStorage 経由でリクエスト単位の状態を保持する。tool handler・API client・エラーハンドラは `getCurrentRecorder()?.recordToolCall(...)` / `recordApiCall(...)` / `recordError(...)` で情報を追記する
-- エラー発生時は `serializeErrorChain()` (`src/server/error-serializer.ts`) で `Error.cause` チェーンを展開し、`errors[].chain[]` に stack trace 付きで格納される
+- tool handler・API client・エラーハンドラは `getCurrentRecorder()?.recordX(...)` でリクエスト単位バッファ (`src/server/request-context.ts`) に情報を追記する。AsyncLocalStorage 経由で伝播
+- エラーは `serializeErrorChain()` (`src/server/error-serializer.ts`) で `Error.cause` チェーンを展開。実際の `Error` オブジェクトを持たない synthetic error (validation 失敗、routing 404 等) は `makeErrorChain(name, message)` 経由で登録すること。素の `[{ name, message }]` リテラルは `scrubErrorMessage()` を通らず privacy 漏洩の原因になる
 - プライバシー: `ToolCallInfo` の型が query 値や body を表現できないよう設計されており、型システムで漏洩を防止する。pino.redact と `scrubErrorMessage()` (6 桁以上の数値 ID とメールアドレスをマスク) が二重の防御層として働く
 - `http.status` はクライアントへの最終応答コード、`api_calls[].status_code` は内部 freee API の応答コードで意味が異なる。freee API が 500 でも MCP 応答は 200 で包む場合があるため両方を参照する
-- Inbound `User-Agent` ヘッダは `src/telemetry/middleware.ts` の `normalizeUserAgent()` で scrub → 256 文字切り詰めを行った上で `user_agent` フィールドに記録される。どの MCP クライアント (Claude Desktop / Cursor / 自作スクリプトなど) が呼び出したかを Datadog で分析可能。UA に 6 桁以上の連続数字が含まれる場合は `[REDACTED_ID]` に置換される点に注意 (例: `Chrome/120.0.987654.1` → `Chrome/120.0.[REDACTED_ID].1`)。4 桁以下のビルド番号 (実際の Chrome, Safari など) は素通し
-- Outbound の User-Agent (freee API 向け) は `src/server/user-agent.ts` の `getUserAgent()` が transport mode を含む文字列を返す: `freee-mcp/<version> (MCP Server; stdio|remote; +url)`。エントリポイントで `initUserAgentTransportMode('remote' | 'stdio')` を起動時 1 回だけ呼ぶ
-- 詳細な個別イベントを見たい場合は環境変数 `LOG_LEVEL=debug` で再起動する (ただし現在 debug ログは運用では用意していない)
+- Inbound `User-Agent` は `normalizeUserAgent()` (`src/telemetry/middleware.ts`) で scrub → 256 文字切り詰め。UA に 6 桁以上の連続数字が含まれる場合は `[REDACTED_ID]` に置換される (例: `Chrome/120.0.987654.1` → `Chrome/120.0.[REDACTED_ID].1`)。4 桁以下のビルド番号は素通し
+- Outbound の User-Agent (freee API 向け) は `getUserAgent()` (`src/server/user-agent.ts`) が返す。エントリポイントで `initUserAgentTransportMode('remote' | 'stdio')` を起動時 1 回だけ呼ぶこと
 
 Datadog 検索例:
 
