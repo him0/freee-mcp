@@ -10,7 +10,7 @@ import {
 } from '../auth/server.js';
 import { getConfig } from '../config.js';
 import { AUTH_TIMEOUT_MS, PACKAGE_VERSION } from '../constants.js';
-import { serializeErrorChain } from '../server/error-serializer.js';
+import { makeErrorChain, serializeErrorChain } from '../server/error-serializer.js';
 import { getCurrentRecorder } from '../server/request-context.js';
 import type { AuthExtra } from '../storage/context.js';
 import { registerTracedTool } from '../telemetry/tool-tracer.js';
@@ -341,7 +341,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           recorder?.recordError({
             source: 'tool_handler',
             error_type: 'schema_mismatch',
-            chain: [{ name: 'ZodError', message: parseResult.error.message }],
+            chain: makeErrorChain('ZodError', parseResult.error.message),
           });
           return {
             content: [

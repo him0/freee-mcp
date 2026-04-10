@@ -8,7 +8,7 @@ import { closeRedisClient, getRedisClient } from '../storage/redis-client.js';
 import { RedisTokenStore } from '../storage/redis-token-store.js';
 import { createTracingMiddleware } from '../telemetry/middleware.js';
 import { RedisClientStore } from './client-store.js';
-import { serializeErrorChain } from './error-serializer.js';
+import { makeErrorChain, serializeErrorChain } from './error-serializer.js';
 import { RedisUnavailableError } from './errors.js';
 import { createFreeeCallbackHandler } from './freee-callback.js';
 import { initLogger } from './logger.js';
@@ -133,9 +133,6 @@ export async function startHttpServer(options?: {
     next();
   });
 
-  // Note: `req.requestId` and per-request canonical logging are handled by
-  // `createTracingMiddleware` above. No separate request-id middleware needed.
-
   // --- Rate limiting (opt-in) ---
   if (remoteConfig.rateLimitEnabled) {
     await setupRateLimiting(app, redis, logger);
@@ -205,7 +202,7 @@ export async function startHttpServer(options?: {
         source: 'mcp_handler',
         status_code: 404,
         error_type: 'unknown_session',
-        chain: [{ name: 'SessionNotFound', message: 'Unknown session id supplied' }],
+        chain: makeErrorChain('SessionNotFound', 'Unknown session id supplied'),
       });
       res.status(404).json({ error: 'Session not found' });
       return;

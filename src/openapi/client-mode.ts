@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { isBinaryFileResponse, makeApiRequest } from '../api/client.js';
-import { serializeErrorChain } from '../server/error-serializer.js';
+import { makeErrorChain, serializeErrorChain } from '../server/error-serializer.js';
 import { sanitizePath } from '../server/logger.js';
 import { getCurrentRecorder } from '../server/request-context.js';
 import type { AuthExtra } from '../storage/context.js';
@@ -57,9 +57,7 @@ function createMethodTool(method: string) {
     const recorder = getCurrentRecorder();
     const startTime = Date.now();
     const safePath = sanitizePath(args.path);
-    // PRIVACY: Only key names, never values. Callers of recordToolCall below
-    // must not pass `args.query` or `args.body` themselves — the type of
-    // ToolCallInfo refuses any value-bearing field.
+    // PRIVACY: key names only, never values.
     const queryKeys = args.query ? Object.keys(args.query) : undefined;
     const tokenContext = extractTokenContext(extra);
 
@@ -81,7 +79,7 @@ function createMethodTool(method: string) {
         recorder?.recordError({
           source: 'validation',
           error_type: 'path_validation_failed',
-          chain: [{ name: 'ValidationError', message: validation.message ?? 'unknown validation error' }],
+          chain: makeErrorChain('ValidationError', validation.message ?? 'unknown validation error'),
         });
         return createTextResponse(
           `パス検証エラー: ${validation.message}\n\n` +

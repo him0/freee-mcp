@@ -73,6 +73,32 @@ export interface RequestRecorderContext {
 }
 
 /**
+ * Canonical log line: the complete payload emitted as one JSON log entry
+ * per HTTP request at `res.on('finish')`. Consumers (pino, Datadog) see
+ * exactly this shape.
+ */
+export interface CanonicalLogPayload {
+  request_id: string;
+  source_ip: string;
+  user_agent: string | null;
+  user_id: string | null;
+  session_id: string | null;
+  http: {
+    method: string;
+    path: string;
+    status: number;
+    duration_ms: number;
+  };
+  mcp: {
+    tool_calls: ToolCallInfo[];
+    tool_call_count: number;
+  };
+  api_calls: ApiCallInfo[];
+  api_call_count: number;
+  errors: ErrorInfo[];
+}
+
+/**
  * RequestRecorder is the single place that buffers all per-request observability
  * data for the duration of one HTTP request. At request end the recorder is
  * flushed as a single "canonical log line" JSON log entry.
@@ -86,7 +112,6 @@ export interface RequestRecorderContext {
  *   `res.on('close')` race.
  */
 export class RequestRecorder {
-  private readonly startTimeMs: number;
   private readonly toolCalls: ToolCallInfo[] = [];
   private readonly apiCalls: ApiCallInfo[] = [];
   private readonly errors: ErrorInfo[] = [];
@@ -94,7 +119,6 @@ export class RequestRecorder {
   private flushed = false;
 
   constructor(initial: RequestRecorderContext) {
-    this.startTimeMs = Date.now();
     this.context = initial;
   }
 
@@ -119,11 +143,6 @@ export class RequestRecorder {
     this.errors.push({ ...info, timestamp: Date.now() });
   }
 
-  /** @returns milliseconds elapsed since recorder construction */
-  elapsedMs(): number {
-    return Date.now() - this.startTimeMs;
-  }
-
   /**
    * Return true on the first call, false afterwards. Used by the HTTP
    * middleware to ensure the canonical log line is emitted exactly once
@@ -139,7 +158,7 @@ export class RequestRecorder {
    * Build the canonical log line payload. Does not emit anything — the
    * caller is responsible for passing this object to pino.
    */
-  buildPayload(http: { status: number; duration_ms: number }): Record<string, unknown> {
+  buildPayload(http: { status: number; duration_ms: number }): CanonicalLogPayload {
     return {
       request_id: this.context.request_id,
       source_ip: this.context.source_ip,

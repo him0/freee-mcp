@@ -208,8 +208,6 @@ export async function makeApiRequest(
   // Check Content-Type for binary response
   const contentType = response.headers.get('content-type') || '';
 
-  // Shared metadata for all success-path recorder calls. One recorder entry
-  // per fetch attempt — repeated across the four return paths below.
   const successApiCall = {
     method,
     path_pattern: safePath,

@@ -37,6 +37,16 @@ export function scrubErrorMessage(input: string): string {
 }
 
 /**
+ * Build a single-entry error chain for synthetic errors (validation failures,
+ * routing 404s) that don't have an actual thrown Error object. The `message`
+ * is scrubbed so callers cannot accidentally bypass the privacy protection
+ * that `serializeErrorChain()` provides for real thrown errors.
+ */
+export function makeErrorChain(name: string, message: string): ErrorChainEntry[] {
+  return [{ name, message: scrubErrorMessage(message) }];
+}
+
+/**
  * Walk the `Error.cause` chain of a thrown value and return a flattened
  * array of entries, each containing the bare minimum needed for log-based
  * debugging (name, message, stack, code).
