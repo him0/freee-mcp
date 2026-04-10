@@ -112,29 +112,58 @@ export async function makeSignApiRequest(
     );
   }
 
-  // Success path: record the api call once with a null error_type
-  recorder?.recordApiCall({
-    method,
-    path_pattern: safePath,
-    status_code: response.status,
-    duration_ms: Date.now() - startTime,
-    error_type: null,
-  });
-
   if (response.status === 204) {
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: response.status,
+      duration_ms: Date.now() - startTime,
+      error_type: null,
+    });
     return null;
   }
 
   const text = await response.text();
   if (!text) {
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: response.status,
+      duration_ms: Date.now() - startTime,
+      error_type: null,
+    });
     return null;
   }
 
   try {
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    // Record success only after JSON.parse succeeds to avoid a misleading
+    // "successful" api_call entry alongside a json_parse_error in the log.
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: response.status,
+      duration_ms: Date.now() - startTime,
+      error_type: null,
+    });
+    return parsed;
   } catch {
-    throw new Error(
+    const parseError = new Error(
       `Failed to parse Sign API response as JSON. Status: ${response.status}, Body preview: ${text.slice(0, 200)}`,
     );
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: response.status,
+      duration_ms: Date.now() - startTime,
+      error_type: 'json_parse_error',
+    });
+    recorder?.recordError({
+      source: 'sign_client',
+      status_code: response.status,
+      error_type: 'json_parse_error',
+      chain: serializeErrorChain(parseError),
+    });
+    throw parseError;
   }
 }

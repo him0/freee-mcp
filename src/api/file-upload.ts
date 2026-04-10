@@ -200,25 +200,36 @@ export async function uploadReceipt(
     recordFailure(response.status, 'http_error', new Error(errorMessage));
   }
 
-  // Success path: record the api call once with a null error_type.
-  recorder?.recordApiCall({
-    method: 'POST',
-    path_pattern: safePath,
-    status_code: response.status,
-    duration_ms: Date.now() - startTime,
-    company_id: String(companyId ?? ''),
-    user_id: userId,
-    error_type: null,
-    file_size_bytes: buffer.byteLength,
-  });
-
   const text = await response.text();
   try {
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    // Record success only after JSON.parse succeeds to avoid a misleading
+    // "successful" api_call entry alongside a json_parse_error in the log.
+    recorder?.recordApiCall({
+      method: 'POST',
+      path_pattern: safePath,
+      status_code: response.status,
+      duration_ms: Date.now() - startTime,
+      company_id: String(companyId ?? ''),
+      user_id: userId,
+      error_type: null,
+      file_size_bytes: buffer.byteLength,
+    });
+    return parsed;
   } catch {
     const parseError = new Error(
       `Failed to parse API response as JSON. Status: ${response.status}, Body preview: ${text.slice(0, 200)}`,
     );
+    recorder?.recordApiCall({
+      method: 'POST',
+      path_pattern: safePath,
+      status_code: response.status,
+      duration_ms: Date.now() - startTime,
+      company_id: String(companyId ?? ''),
+      user_id: userId,
+      error_type: 'json_parse_error',
+      file_size_bytes: buffer.byteLength,
+    });
     recorder?.recordError({
       source: 'file_upload',
       status_code: response.status,
