@@ -4,10 +4,10 @@ import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
 import { getConfig } from '../config.js';
 import { USER_AGENT } from '../constants.js';
-import { createChildLogger } from '../server/logger.js';
+import { serializeErrorChain } from '../server/error-serializer.js';
+import type { ApiCallErrorType } from '../server/request-context.js';
+import { getCurrentRecorder } from '../server/request-context.js';
 import { type TokenContext, resolveCompanyId } from '../storage/context.js';
-
-const getLog = createChildLogger({ component: 'api-client' });
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
 const MAX_FILE_SIZE_BYTES = 64 * 1024 * 1024; // 64MB
@@ -42,7 +42,7 @@ export async function uploadReceipt(
   options?: UploadReceiptOptions,
   tokenContext?: TokenContext,
 ): Promise<unknown> {
-  const log = getLog();
+  const recorder = getCurrentRecorder();
   const startTime = Date.now();
   const safePath = '/api/:id/receipts';
   const userId = tokenContext?.userId ?? 'local';
@@ -114,6 +114,30 @@ export async function uploadReceipt(
   const apiUrl = getConfig().freee.apiUrl;
   const url = `${apiUrl}/api/1/receipts`;
 
+  const recordFailure = (
+    statusCode: number | null,
+    errorType: ApiCallErrorType,
+    err: Error,
+  ): never => {
+    recorder?.recordApiCall({
+      method: 'POST',
+      path_pattern: safePath,
+      status_code: statusCode,
+      duration_ms: Date.now() - startTime,
+      company_id: String(companyId ?? ''),
+      user_id: userId,
+      error_type: errorType,
+      file_size_bytes: buffer.byteLength,
+    });
+    recorder?.recordError({
+      source: 'file_upload',
+      status_code: statusCode ?? undefined,
+      error_type: errorType,
+      chain: serializeErrorChain(err),
+    });
+    throw err;
+  };
+
   let response: Response;
   try {
     response = await fetch(url, {
@@ -125,66 +149,82 @@ export async function uploadReceipt(
       body: formData,
     });
   } catch (fetchError) {
-    const errorType =
+    const errorType: ApiCallErrorType =
       fetchError instanceof Error && fetchError.name === 'TimeoutError' ? 'timeout' : 'network_error';
-    log.error(
-      { method: 'POST', path: safePath, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, file_size: buffer.byteLength, error_type: errorType, err: fetchError },
-      'File upload network error',
-    );
+    recorder?.recordApiCall({
+      method: 'POST',
+      path_pattern: safePath,
+      status_code: null,
+      duration_ms: Date.now() - startTime,
+      company_id: String(companyId ?? ''),
+      user_id: userId,
+      error_type: errorType,
+      file_size_bytes: buffer.byteLength,
+    });
+    recorder?.recordError({
+      source: 'file_upload',
+      error_type: errorType,
+      chain: serializeErrorChain(fetchError),
+    });
     throw fetchError;
   }
 
   if (response.status === 401) {
-    log.warn(
-      { method: 'POST', path: safePath, status: 401, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'auth_error' },
-      'File upload failed',
-    );
     const errorInfo = await formatResponseErrorInfo(response);
-    throw new Error(
-      `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
-        `現在の事業所ID: ${companyId}\n` +
-        `エラー詳細: ${response.status} ${errorInfo}`,
+    recordFailure(
+      401,
+      'auth_error',
+      new Error(
+        `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
+          `現在の事業所ID: ${companyId}\n` +
+          `エラー詳細: ${response.status} ${errorInfo}`,
+      ),
     );
   }
 
   if (response.status === 403) {
-    log.warn(
-      { method: 'POST', path: safePath, status: 403, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'forbidden' },
-      'File upload failed',
-    );
     const errorInfo = await formatResponseErrorInfo(response);
-    throw new Error(
-      `アクセス拒否 (403): ${errorInfo}\n` +
-        `事業所ID: ${companyId}\n\n` +
-        `レートリミットの可能性があります。数分待ってから再試行してください。`,
+    recordFailure(
+      403,
+      'forbidden',
+      new Error(
+        `アクセス拒否 (403): ${errorInfo}\n` +
+          `事業所ID: ${companyId}\n\n` +
+          `レートリミットの可能性があります。数分待ってから再試行してください。`,
+      ),
     );
   }
 
   if (!response.ok) {
-    const logLevel = response.status >= 500 ? 'error' : 'warn';
-    log[logLevel](
-      { method: 'POST', path: safePath, status: response.status, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'http_error' },
-      'File upload failed',
-    );
     const errorMessage = await formatApiErrorMessage(response, response.status);
-    throw new Error(errorMessage);
+    recordFailure(response.status, 'http_error', new Error(errorMessage));
   }
+
+  // Success path: record the api call once with a null error_type.
+  recorder?.recordApiCall({
+    method: 'POST',
+    path_pattern: safePath,
+    status_code: response.status,
+    duration_ms: Date.now() - startTime,
+    company_id: String(companyId ?? ''),
+    user_id: userId,
+    error_type: null,
+    file_size_bytes: buffer.byteLength,
+  });
 
   const text = await response.text();
   try {
-    const parsed = JSON.parse(text);
-    log.info(
-      { method: 'POST', path: safePath, status: response.status, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, file_size: buffer.byteLength },
-      'File upload completed',
-    );
-    return parsed;
+    return JSON.parse(text);
   } catch {
-    log.error(
-      { method: 'POST', path: safePath, status: response.status, error_type: 'json_parse_error' },
-      'Failed to parse upload response',
-    );
-    throw new Error(
+    const parseError = new Error(
       `Failed to parse API response as JSON. Status: ${response.status}, Body preview: ${text.slice(0, 200)}`,
     );
+    recorder?.recordError({
+      source: 'file_upload',
+      status_code: response.status,
+      error_type: 'json_parse_error',
+      chain: serializeErrorChain(parseError),
+    });
+    throw parseError;
   }
 }

@@ -1,15 +1,14 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { uploadReceipt } from '../api/file-upload.js';
-import { createChildLogger } from '../server/logger.js';
+import { serializeErrorChain } from '../server/error-serializer.js';
+import { getCurrentRecorder } from '../server/request-context.js';
 import type { AuthExtra } from '../storage/context.js';
 import { registerTracedTool } from '../telemetry/tool-tracer.js';
 import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
 export function addFileUploadTool(server: McpServer): void {
-  const getLog = createChildLogger({ component: 'tool', tool: 'freee_file_upload' });
-
   registerTracedTool(server,
     'freee_file_upload',
     {
@@ -46,7 +45,8 @@ export function addFileUploadTool(server: McpServer): void {
       },
       extra?: AuthExtra,
     ) => {
-      const log = getLog();
+      const recorder = getCurrentRecorder();
+      const toolStart = Date.now();
       try {
         const { file_path, ...options } = args;
         const tokenContext = extractTokenContext(extra);
@@ -64,10 +64,19 @@ export function addFileUploadTool(server: McpServer): void {
         }
         lines.push('', JSON.stringify(result, null, 2));
 
-        log.info('Tool call completed');
+        recorder?.recordToolCall({
+          tool: 'freee_file_upload',
+          status: 'success',
+          duration_ms: Date.now() - toolStart,
+        });
         return createTextResponse(lines.join('\n'));
       } catch (error) {
-        log.error({ err: error }, 'Tool call failed');
+        recorder?.recordToolCall({
+          tool: 'freee_file_upload',
+          status: 'error',
+          duration_ms: Date.now() - toolStart,
+        });
+        recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
         return createTextResponse(`ファイルアップロードに失敗: ${formatErrorMessage(error)}`);
       }
     },

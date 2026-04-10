@@ -1,5 +1,9 @@
 // freee-mcp パッケージとして配布されるため、User-Agent は freee 本体と共通
 import { FETCH_TIMEOUT_API_MS, USER_AGENT } from '../constants.js';
+import { serializeErrorChain } from '../server/error-serializer.js';
+import { sanitizePath } from '../server/logger.js';
+import type { ApiCallErrorType } from '../server/request-context.js';
+import { getCurrentRecorder } from '../server/request-context.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
 import { SIGN_API_URL } from './config.js';
 import { getValidSignAccessToken } from './tokens.js';
@@ -10,6 +14,10 @@ export async function makeSignApiRequest(
   params?: Record<string, unknown>,
   body?: Record<string, unknown>,
 ): Promise<unknown> {
+  const recorder = getCurrentRecorder();
+  const startTime = Date.now();
+  const safePath = sanitizePath(apiPath);
+
   const accessToken = await getValidSignAccessToken();
 
   if (!accessToken) {
@@ -30,35 +38,88 @@ export async function makeSignApiRequest(
     }
   }
 
-  const response = await fetch(url.toString(), {
-    method,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      'User-Agent': USER_AGENT,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_API_MS),
-  });
+  let response: Response;
+  try {
+    response = await fetch(url.toString(), {
+      method,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'User-Agent': USER_AGENT,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_API_MS),
+    });
+  } catch (fetchError) {
+    const errorType: ApiCallErrorType =
+      fetchError instanceof Error && fetchError.name === 'TimeoutError' ? 'timeout' : 'network_error';
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: null,
+      duration_ms: Date.now() - startTime,
+      error_type: errorType,
+    });
+    recorder?.recordError({
+      source: 'sign_client',
+      error_type: errorType,
+      chain: serializeErrorChain(fetchError),
+    });
+    throw fetchError;
+  }
+
+  const recordFailure = (statusCode: number, errorType: ApiCallErrorType, err: Error): never => {
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: statusCode,
+      duration_ms: Date.now() - startTime,
+      error_type: errorType,
+    });
+    recorder?.recordError({
+      source: 'sign_client',
+      status_code: statusCode,
+      error_type: errorType,
+      chain: serializeErrorChain(err),
+    });
+    throw err;
+  };
 
   if (response.status === 401) {
     const errorInfo = await formatResponseErrorInfo(response);
-    throw new Error(
-      '認証エラーが発生しました。sign_authenticate ツールを使用して再認証を行ってください。\n' +
-        `エラー詳細: ${response.status} ${errorInfo}`,
+    recordFailure(
+      401,
+      'auth_error',
+      new Error(
+        '認証エラーが発生しました。sign_authenticate ツールを使用して再認証を行ってください。\n' +
+          `エラー詳細: ${response.status} ${errorInfo}`,
+      ),
     );
   }
 
   if (response.status === 429) {
     const retryAfter = response.headers.get('RateLimit-Reset') || response.headers.get('Retry-After');
     const retryMsg = retryAfter ? `${retryAfter}秒後に再試行してください。` : '数分待ってから再試行してください。';
-    throw new Error(`レートリミットに達しました (429)。${retryMsg}`);
+    recordFailure(429, 'http_error', new Error(`レートリミットに達しました (429)。${retryMsg}`));
   }
 
   if (!response.ok) {
     const errorInfo = await formatResponseErrorInfo(response);
-    throw new Error(`Sign API request failed: ${response.status} ${errorInfo}`);
+    recordFailure(
+      response.status,
+      'http_error',
+      new Error(`Sign API request failed: ${response.status} ${errorInfo}`),
+    );
   }
+
+  // Success path: record the api call once with a null error_type
+  recorder?.recordApiCall({
+    method,
+    path_pattern: safePath,
+    status_code: response.status,
+    duration_ms: Date.now() - startTime,
+    error_type: null,
+  });
 
   if (response.status === 204) {
     return null;

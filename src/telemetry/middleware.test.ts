@@ -214,3 +214,178 @@ describe('createTracingMiddleware', () => {
     });
   });
 });
+
+describe('createTracingMiddleware - canonical log line', () => {
+  let server: http.Server;
+  let port: number;
+
+  afterEach(async () => {
+    if (server?.listening) {
+      await new Promise<void>((resolve) => {
+        server.close(() => resolve());
+      });
+    }
+    vi.resetModules();
+    vi.restoreAllMocks();
+  });
+
+  async function setupAppWithLoggerSpy(
+    routeHandler: (req: express.Request, res: express.Response) => void,
+    routePath = '/mcp',
+  ): Promise<{ logInfo: ReturnType<typeof vi.fn>; app: express.Express }> {
+    const logInfo = vi.fn();
+    vi.doMock('../server/logger.js', () => ({
+      getLogger: (): { info: ReturnType<typeof vi.fn> } => ({ info: logInfo }),
+    }));
+
+    const { createTracingMiddleware } = await import('./middleware.js');
+    const { getCurrentRecorder } = await import('../server/request-context.js');
+
+    const app = express();
+    app.use(createTracingMiddleware());
+    app.all(routePath, (req, res) => {
+      // Expose recorder access to the route so it can record tool/api calls.
+      (req as unknown as { recorder: unknown }).recorder = getCurrentRecorder();
+      routeHandler(req, res);
+    });
+    return { logInfo, app };
+  }
+
+  function listen(app: express.Express): Promise<{ srv: http.Server; port: number }> {
+    return new Promise((resolve) => {
+      const srv = app.listen(0, () => {
+        const addr = srv.address();
+        resolve({ srv, port: typeof addr === 'object' && addr ? addr.port : 0 });
+      });
+    });
+  }
+
+  it('emits exactly one canonical log line per request with the full payload shape', async () => {
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    const result = await makeRequest(port, '/mcp');
+    expect(result.statusCode).toBe(200);
+
+    // Give res.on('finish') a tick to flush synchronously before assertions.
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(logInfo).toHaveBeenCalledTimes(1);
+    const [payload, message] = logInfo.mock.calls[0];
+    expect(message).toBe('mcp request completed');
+
+    expect(payload).toMatchObject({
+      request_id: expect.any(String),
+      source_ip: expect.any(String),
+      user_id: null,
+      session_id: null,
+      http: {
+        method: 'GET',
+        path: '/mcp',
+        status: 200,
+        duration_ms: expect.any(Number),
+      },
+      mcp: { tool_calls: [], tool_call_count: 0 },
+      api_calls: [],
+      api_call_count: 0,
+      errors: [],
+    });
+  });
+
+  it('reflects 500 status in http.status', async () => {
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(500).json({ error: 'boom' });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp');
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(logInfo).toHaveBeenCalledTimes(1);
+    const [payload] = logInfo.mock.calls[0];
+    expect((payload as { http: { status: number } }).http.status).toBe(500);
+  });
+
+  it('reflects 400 status in http.status (addresses the missing-400-logs bug)', async () => {
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(400).json({ error: 'invalid request' });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp');
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(logInfo).toHaveBeenCalledTimes(1);
+    const [payload] = logInfo.mock.calls[0];
+    expect((payload as { http: { status: number } }).http.status).toBe(400);
+  });
+
+  it('flushes only once even if both finish and close events fire', async () => {
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp');
+    await new Promise((r) => setTimeout(r, 20));
+
+    // flushOnce() in the middleware guarantees at most one emit.
+    expect(logInfo).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips /health entirely — no canonical log emitted', async () => {
+    const { logInfo, app } = await setupAppWithLoggerSpy(
+      (_req, res) => {
+        res.status(200).json({ status: 'ok' });
+      },
+      '/health',
+    );
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/health');
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(logInfo).not.toHaveBeenCalled();
+  });
+
+  it('includes recorded tool_calls and api_calls from downstream handlers', async () => {
+    type Recorder = import('../server/request-context.js').RequestRecorder;
+    const { logInfo, app } = await setupAppWithLoggerSpy(async (req, res) => {
+      // Simulate a tool handler recording activity on the in-context recorder.
+      const recorder = (req as unknown as { recorder?: Recorder }).recorder;
+      recorder?.recordToolCall({
+        tool: 'freee_api_get',
+        service: 'accounting',
+        api_method: 'GET',
+        api_path_pattern: '/api/:id/deals',
+        query_keys: ['limit'],
+        status: 'success',
+        duration_ms: 5,
+      });
+      recorder?.recordApiCall({
+        method: 'GET',
+        path_pattern: '/api/:id/deals',
+        status_code: 200,
+        duration_ms: 3,
+        company_id: '12345',
+        user_id: 'user-1',
+        error_type: null,
+      });
+      res.status(200).json({ ok: true });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp');
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(logInfo).toHaveBeenCalledTimes(1);
+    const [payload] = logInfo.mock.calls[0] as [Record<string, unknown>];
+    expect((payload.mcp as { tool_call_count: number }).tool_call_count).toBe(1);
+    expect(payload.api_call_count).toBe(1);
+    expect(payload.api_calls).toEqual([
+      expect.objectContaining({ method: 'GET', status_code: 200 }),
+    ]);
+  });
+});

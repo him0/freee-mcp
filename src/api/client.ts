@@ -2,9 +2,9 @@ import { getValidAccessToken } from '../auth/tokens.js';
 import { getCurrentCompanyId } from '../config/companies.js';
 import { getConfig } from '../config.js';
 import { FETCH_TIMEOUT_API_MS, USER_AGENT } from '../constants.js';
-import { createChildLogger, sanitizePath } from '../server/logger.js';
-
-const getLog = createChildLogger({ component: 'api-client' });
+import { serializeErrorChain } from '../server/error-serializer.js';
+import { sanitizePath } from '../server/logger.js';
+import { getCurrentRecorder } from '../server/request-context.js';
 import { type TokenContext, resolveCompanyId } from '../storage/context.js';
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
@@ -46,7 +46,7 @@ export async function makeApiRequest(
   baseUrl?: string,
   tokenContext?: TokenContext,
 ): Promise<unknown | BinaryFileResponse> {
-  const log = getLog();
+  const recorder = getCurrentRecorder();
   const startTime = Date.now();
   const safePath = sanitizePath(apiPath);
   const userId = tokenContext?.userId ?? 'local';
@@ -109,22 +109,28 @@ export async function makeApiRequest(
     });
   } catch (fetchError) {
     const durationMs = Date.now() - startTime;
-    const errorType =
+    const errorType: 'timeout' | 'network_error' =
       fetchError instanceof Error && fetchError.name === 'TimeoutError' ? 'timeout' : 'network_error';
-    log.error(
-      { method, path: safePath, duration_ms: durationMs, user_id: userId, company_id: companyId, error_type: errorType, err: fetchError },
-      'API request network error',
-    );
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: null,
+      duration_ms: durationMs,
+      company_id: String(companyId ?? ''),
+      user_id: userId,
+      error_type: errorType,
+    });
+    recorder?.recordError({
+      source: 'api_client',
+      error_type: errorType,
+      chain: serializeErrorChain(fetchError),
+    });
     throw fetchError;
   }
 
   if (response.status === 401) {
     const errorInfo = await formatResponseErrorInfo(response);
-    log.warn(
-      { method, path: safePath, status: 401, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'auth_error', error_detail: errorInfo },
-      'API request failed',
-    );
-    throw new Error(
+    const authError = new Error(
       `認証エラーが発生しました。freee_authenticate ツールを使用して再認証を行ってください。\n` +
         `現在の事業所ID: ${companyId}\n` +
         `エラー詳細: ${response.status} ${errorInfo}\n\n` +
@@ -133,47 +139,88 @@ export async function makeApiRequest(
         `2. トークンの有効期限が切れていないか\n` +
         `3. 事業所IDが正しいか（freee_get_current_company で確認）`,
     );
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: 401,
+      duration_ms: Date.now() - startTime,
+      company_id: String(companyId ?? ''),
+      user_id: userId,
+      error_type: 'auth_error',
+    });
+    recorder?.recordError({
+      source: 'api_client',
+      status_code: 401,
+      error_type: 'auth_error',
+      chain: serializeErrorChain(authError),
+    });
+    throw authError;
   }
 
   if (response.status === 403) {
     const errorInfo = await formatResponseErrorInfo(response);
-    log.warn(
-      { method, path: safePath, status: 403, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'forbidden', error_detail: errorInfo },
-      'API request failed',
-    );
-    throw new Error(
+    const forbiddenError = new Error(
       `アクセス拒否 (403): ${errorInfo}\n` +
         `事業所ID: ${companyId}\n\n` +
         `レートリミットの可能性があります。数分待ってから再試行してください。\n` +
         `それでも解決しない場合は、アプリの権限設定を確認するか、freee_authenticate で再認証してください。`,
     );
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: 403,
+      duration_ms: Date.now() - startTime,
+      company_id: String(companyId ?? ''),
+      user_id: userId,
+      error_type: 'forbidden',
+    });
+    recorder?.recordError({
+      source: 'api_client',
+      status_code: 403,
+      error_type: 'forbidden',
+      chain: serializeErrorChain(forbiddenError),
+    });
+    throw forbiddenError;
   }
 
   if (!response.ok) {
     const errorMessage = await formatApiErrorMessage(response, response.status);
-    const logLevel = response.status >= 500 ? 'error' : 'warn';
-    log[logLevel](
-      { method, path: safePath, status: response.status, duration_ms: Date.now() - startTime, user_id: userId, company_id: companyId, error_type: 'http_error', error_detail: errorMessage },
-      'API request failed',
-    );
-    throw new Error(errorMessage);
+    const httpError = new Error(errorMessage);
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: response.status,
+      duration_ms: Date.now() - startTime,
+      company_id: String(companyId ?? ''),
+      user_id: userId,
+      error_type: 'http_error',
+    });
+    recorder?.recordError({
+      source: 'api_client',
+      status_code: response.status,
+      error_type: 'http_error',
+      chain: serializeErrorChain(httpError),
+    });
+    throw httpError;
   }
 
   // Check Content-Type for binary response
   const contentType = response.headers.get('content-type') || '';
 
-  const baseLogFields = {
+  // Shared metadata for all success-path recorder calls. One recorder entry
+  // per fetch attempt — repeated across the four return paths below.
+  const successApiCall = {
     method,
-    path: safePath,
-    status: response.status,
+    path_pattern: safePath,
+    status_code: response.status,
+    company_id: String(companyId ?? ''),
     user_id: userId,
-    company_id: companyId,
-    content_type: contentType || undefined,
+    error_type: null as null,
   };
 
   if (isBinaryContentType(contentType)) {
     const buffer = Buffer.from(await response.arrayBuffer());
-    log.info({ ...baseLogFields, duration_ms: Date.now() - startTime }, 'API request completed');
+    recorder?.recordApiCall({ ...successApiCall, duration_ms: Date.now() - startTime });
     return {
       type: 'binary',
       data: buffer,
@@ -184,27 +231,39 @@ export async function makeApiRequest(
 
   // Handle empty responses (e.g., 204 No Content from DELETE)
   if (response.status === 204) {
-    log.info({ ...baseLogFields, duration_ms: Date.now() - startTime }, 'API request completed');
+    recorder?.recordApiCall({ ...successApiCall, duration_ms: Date.now() - startTime });
     return null;
   }
 
   const text = await response.text();
   if (!text) {
-    log.info({ ...baseLogFields, duration_ms: Date.now() - startTime }, 'API request completed');
+    recorder?.recordApiCall({ ...successApiCall, duration_ms: Date.now() - startTime });
     return null;
   }
 
   try {
     const parsed = JSON.parse(text);
-    log.info({ ...baseLogFields, duration_ms: Date.now() - startTime }, 'API request completed');
+    recorder?.recordApiCall({ ...successApiCall, duration_ms: Date.now() - startTime });
     return parsed;
   } catch {
-    log.error(
-      { method, path: safePath, status: response.status, content_type: contentType, error_type: 'json_parse_error' },
-      'Failed to parse API response',
-    );
-    throw new Error(
+    const parseError = new Error(
       `Failed to parse API response as JSON. Status: ${response.status}, Content-Type: ${contentType}, Body preview: ${text.slice(0, 200)}`,
     );
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: response.status,
+      duration_ms: Date.now() - startTime,
+      company_id: String(companyId ?? ''),
+      user_id: userId,
+      error_type: 'json_parse_error',
+    });
+    recorder?.recordError({
+      source: 'api_client',
+      status_code: response.status,
+      error_type: 'json_parse_error',
+      chain: serializeErrorChain(parseError),
+    });
+    throw parseError;
   }
 }

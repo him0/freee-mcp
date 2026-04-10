@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { Request, Response } from 'express';
 import { getConfig, initRemoteConfig, loadRemoteServerConfig } from '../config.js';
@@ -9,21 +8,15 @@ import { closeRedisClient, getRedisClient } from '../storage/redis-client.js';
 import { RedisTokenStore } from '../storage/redis-token-store.js';
 import { createTracingMiddleware } from '../telemetry/middleware.js';
 import { RedisClientStore } from './client-store.js';
+import { serializeErrorChain } from './error-serializer.js';
 import { RedisUnavailableError } from './errors.js';
 import { createFreeeCallbackHandler } from './freee-callback.js';
 import { initLogger } from './logger.js';
 import { FreeeOAuthProvider } from './oauth-provider.js';
 import { OAuthStateStore } from './oauth-store.js';
+import { getCurrentRecorder } from './request-context.js';
 
 const BODY_SIZE_LIMIT = 1_048_576; // 1 MB
-
-function getClientIp(req: Request): string {
-  const xff = req.headers['x-forwarded-for'];
-  if (typeof xff === 'string') {
-    return xff.split(',')[0].trim();
-  }
-  return req.ip || 'unknown';
-}
 
 // Extend Express Request with request ID
 declare module 'express' {
@@ -138,12 +131,8 @@ export async function startHttpServer(options?: {
     next();
   });
 
-  // Request ID + request logging middleware
-  app.use((req: Request, _res: Response, next: () => void) => {
-    req.requestId = randomUUID();
-    logger.debug({ requestId: req.requestId, method: req.method, path: req.path }, 'request');
-    next();
-  });
+  // Note: `req.requestId` and per-request canonical logging are handled by
+  // `createTracingMiddleware` above. No separate request-id middleware needed.
 
   // --- Rate limiting (opt-in) ---
   if (remoteConfig.rateLimitEnabled) {
@@ -199,26 +188,23 @@ export async function startHttpServer(options?: {
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
-    // Access log with security-relevant fields
-    const sourceIp = getClientIp(req);
+    // Patch the request recorder with user_id / session_id now that bearer
+    // auth has run. These are not known at middleware creation time.
     const authExtra = (req as unknown as Record<string, unknown>).auth as
       | { extra?: Record<string, unknown> }
       | undefined;
     const userId =
       typeof authExtra?.extra?.userId === 'string' ? authExtra.extra.userId : undefined;
-    logger.info(
-      {
-        source_ip: sourceIp,
-        session_id: sessionId,
-        user_id: userId,
-        method: req.method,
-        path: req.path,
-      },
-      'mcp request',
-    );
+    getCurrentRecorder()?.updateContext({ user_id: userId, session_id: sessionId });
 
     // Unknown session ID: return 404 per MCP spec (stateless mode never issues session IDs)
     if (sessionId) {
+      getCurrentRecorder()?.recordError({
+        source: 'mcp_handler',
+        status_code: 404,
+        error_type: 'unknown_session',
+        chain: [{ name: 'SessionNotFound', message: 'Unknown session id supplied' }],
+      });
       res.status(404).json({ error: 'Session not found' });
       return;
     }
@@ -240,25 +226,14 @@ export async function startHttpServer(options?: {
     await transport.handleRequest(req, res);
   }
 
-  function extractRequestContext(req: Request): Record<string, string | undefined> {
-    const authExtra = (req as unknown as Record<string, unknown>).auth as
-      | { extra?: Record<string, unknown> }
-      | undefined;
-    const userId =
-      typeof authExtra?.extra?.userId === 'string' ? authExtra.extra.userId : undefined;
-    return {
-      source_ip: getClientIp(req),
-      session_id: req.headers['mcp-session-id'] as string | undefined,
-      user_id: userId,
-      method: req.method,
-      path: req.path,
-    };
-  }
-
   function mcpHandler(req: Request, res: Response): void {
     handleMcpRequest(req, res).catch((err: unknown) => {
-      const ctx = extractRequestContext(req);
-      logger.error({ err, requestId: req.requestId, ...ctx }, 'MCP request error');
+      getCurrentRecorder()?.recordError({
+        source: 'mcp_handler',
+        status_code: 500,
+        error_type: 'unhandled_exception',
+        chain: serializeErrorChain(err),
+      });
       if (!res.headersSent) {
         res.status(500).json({ error: 'Internal server error' });
       }
@@ -271,8 +246,7 @@ export async function startHttpServer(options?: {
   app.delete('/mcp', bearerAuth, mcpHandler);
 
   // Express error handler (must be after all routes)
-  app.use((err: unknown, req: Request, res: Response, next: (err?: unknown) => void) => {
-    const ctx = extractRequestContext(req);
+  app.use((err: unknown, _req: Request, res: Response, next: (err?: unknown) => void) => {
     if (err instanceof RedisUnavailableError) {
       if (!res.headersSent) {
         res.status(503).json({
@@ -280,7 +254,12 @@ export async function startHttpServer(options?: {
           message: 'Storage backend temporarily unavailable',
         });
       }
-      logger.error({ err, requestId: req.requestId, ...ctx }, 'Redis unavailable');
+      getCurrentRecorder()?.recordError({
+        source: 'redis_unavailable',
+        status_code: 503,
+        error_type: 'redis_unavailable',
+        chain: serializeErrorChain(err),
+      });
       return;
     }
     if (res.headersSent) {
@@ -288,7 +267,12 @@ export async function startHttpServer(options?: {
       return;
     }
     res.status(500).json({ error: 'Internal server error' });
-    logger.error({ err, requestId: req.requestId, ...ctx }, 'Unhandled middleware error');
+    getCurrentRecorder()?.recordError({
+      source: 'middleware',
+      status_code: 500,
+      error_type: 'unhandled_middleware_error',
+      chain: serializeErrorChain(err),
+    });
   });
 
   const server = app.listen(remoteConfig.port, () => {

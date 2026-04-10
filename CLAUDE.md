@@ -81,6 +81,42 @@ Sign development mode: Use `"command": "bun", "args": ["run", "src/sign/index.ts
 - `FREEE_API_BASE_URL_SM` - 販売API
 - `FREEE_SIGN_API_URL` - サインAPI（`src/sign/config.ts` で処理）
 
+### Remote モードのロギング (canonical log line)
+
+Remote (`mcp.freee.co.jp`) モードでは 1 HTTP リクエスト = 1 ログ行 = 1 trace のパターンで JSON 構造化ログを出力する。個別イベントログ (`API request completed` 等) は存在せず、`src/telemetry/middleware.ts` の `res.on('finish')` で 1 本にまとめて emit される。
+
+ログ行の構造:
+
+```json
+{
+  "msg": "mcp request completed",
+  "request_id": "...",
+  "trace_id": "...",
+  "source_ip": "...",
+  "user_id": "...",
+  "http": { "method": "POST", "path": "/mcp", "status": 200, "duration_ms": 842 },
+  "mcp": { "tool_calls": [...], "tool_call_count": 1 },
+  "api_calls": [...],
+  "api_call_count": 1,
+  "errors": []
+}
+```
+
+実装の要点:
+
+- `src/server/request-context.ts` の `RequestRecorder` が AsyncLocalStorage 経由でリクエスト単位の状態を保持する。tool handler・API client・エラーハンドラは `getCurrentRecorder()?.recordToolCall(...)` / `recordApiCall(...)` / `recordError(...)` で情報を追記する
+- エラー発生時は `serializeErrorChain()` (`src/server/error-serializer.ts`) で `Error.cause` チェーンを展開し、`errors[].chain[]` に stack trace 付きで格納される
+- プライバシー: `ToolCallInfo` の型が query 値や body を表現できないよう設計されており、型システムで漏洩を防止する。pino.redact と `scrubErrorMessage()` (6 桁以上の数値 ID とメールアドレスをマスク) が二重の防御層として働く
+- `http.status` はクライアントへの最終応答コード、`api_calls[].status_code` は内部 freee API の応答コードで意味が異なる。freee API が 500 でも MCP 応答は 200 で包む場合があるため両方を参照する
+- 詳細な個別イベントを見たい場合は環境変数 `LOG_LEVEL=debug` で再起動する (ただし現在 debug ログは運用では用意していない)
+
+Datadog 検索例:
+
+- `@http.status:500` — MCP サーバー自体の 5xx
+- `@api_calls.error_type:timeout` — 外部 API タイムアウトの集計 (envoy アラームとの相関分析用)
+- `@http.status:200 @errors:*` — 見かけ上は成功だが内部的に失敗した (MCP 応答に error content を wrap したもの)
+- `@request_id:<uuid>` — 特定リクエストのすべての情報 (1 行にまとまっている)
+
 ## PR Creation Pre-flight Checklist
 
 Always run before creating a PR:
