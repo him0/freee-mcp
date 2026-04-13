@@ -136,6 +136,12 @@ export function parseRulesFromEnv(rulesEnv: string | undefined): CompiledRuleSet
         getLogger().warn({ rule: trimmed }, 'sampler rule: default ratio invalid, skipped');
         continue;
       }
+      // Multiple `default=` segments would silently let the last one win and
+      // mask copy-paste mistakes. Warn so the operator notices, then take the
+      // later value (tests assert this last-wins behavior).
+      if (fallback) {
+        getLogger().warn({ rule: trimmed }, 'sampler rule: duplicate default, last value wins');
+      }
       fallback = ratioToSampler(ratio);
       continue;
     }
@@ -216,6 +222,17 @@ export function resolveRootSampler(
   if (compiledRules) {
     return new RuleBasedSampler(compiledRules);
   }
-  return ratioToSampler(Number.parseFloat(legacyRatioArg ?? '1.0'));
+  // Legacy path. `OTEL_TRACES_SAMPLER_ARG=garbage` would silently parse to NaN
+  // and ratioToSampler(NaN) → AlwaysOn (100% sampling). That is the worst-case
+  // misconfiguration for cost: warn loudly so the operator notices, then keep
+  // the AlwaysOn fallback so production doesn't refuse to start.
+  const ratio = Number.parseFloat(legacyRatioArg ?? '1.0');
+  if (Number.isNaN(ratio)) {
+    getLogger().warn(
+      { OTEL_TRACES_SAMPLER_ARG: legacyRatioArg },
+      'sampler: legacy ratio is not a number, defaulting to AlwaysOn',
+    );
+  }
+  return ratioToSampler(ratio);
 }
 

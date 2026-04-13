@@ -195,4 +195,82 @@ describe('sign/client', () => {
       await expect(makeSignApiRequest('GET', '/v1/documents')).rejects.toThrow('429');
     });
   });
+
+  describe('canonical log の query_keys 連携', () => {
+    it('クエリキー名のみが api.calls[].query_keys に記録され、値は流出しない', async () => {
+      // Sign client のプライバシーガード:
+      // makeSignApiRequest 経由でも api.calls[].query_keys にキー名のみが
+      // 入り、値は絶対にペイロードへ漏れないことを保証する。
+      const { getValidSignAccessToken } = await import('./tokens.js');
+      vi.mocked(getValidSignAccessToken).mockResolvedValue('test-token');
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: () => Promise.resolve('[]'),
+      });
+
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
+      const recorder = new RequestRecorder({
+        request_id: 'req-sign-success',
+        source_ip: '127.0.0.1',
+        method: 'POST',
+        path: '/mcp',
+      });
+
+      await withRequestRecorder(recorder, () =>
+        makeSignApiRequest('GET', '/v1/documents', { page: 1, per: 10 }),
+      );
+
+      const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
+      const apiCalls = payload.api.calls as Array<Record<string, unknown>>;
+      expect(apiCalls).toHaveLength(1);
+      expect(apiCalls[0]).toMatchObject({
+        method: 'GET',
+        status_code: 200,
+        error_type: null,
+        query_keys: ['page', 'per'],
+      });
+      // Query values must never leak into the payload.
+      const serialized = JSON.stringify(apiCalls[0]);
+      expect(serialized).not.toContain('page=1');
+      expect(serialized).not.toContain('per=10');
+      expect(serialized).not.toMatch(/"1"/);
+      expect(serialized).not.toMatch(/"10"/);
+    });
+
+    it('params が {} のときは query_keys を記録しない (空配列を index しない)', async () => {
+      const { getValidSignAccessToken } = await import('./tokens.js');
+      vi.mocked(getValidSignAccessToken).mockResolvedValue('test-token');
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: () => Promise.resolve('{}'),
+      });
+
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
+      const recorder = new RequestRecorder({
+        request_id: 'req-sign-empty-params',
+        source_ip: '127.0.0.1',
+        method: 'POST',
+        path: '/mcp',
+      });
+
+      await withRequestRecorder(recorder, () =>
+        makeSignApiRequest('GET', '/v1/documents', {}),
+      );
+
+      const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
+      const apiCalls = payload.api.calls as Array<Record<string, unknown>>;
+      expect(apiCalls).toHaveLength(1);
+      expect(apiCalls[0]?.query_keys).toBeUndefined();
+    });
+  });
 });

@@ -403,6 +403,36 @@ describe('client', () => {
       expect(JSON.stringify(apiCalls[0])).not.toContain('limit=10');
     });
 
+    it('omits query_keys (rather than logging an empty array) when params is {}', async () => {
+      // Regression guard: an empty params object is semantically "no query
+      // string" and Datadog must not index an empty-array facet for it.
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: createMockHeaders('application/json'),
+        json: (): Promise<unknown> => Promise.resolve({ ok: true }),
+        text: (): Promise<string> => Promise.resolve(JSON.stringify({ ok: true })),
+      });
+
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
+      const recorder = new RequestRecorder({
+        request_id: 'req-api-empty-params',
+        source_ip: '127.0.0.1',
+        method: 'POST',
+        path: '/mcp',
+      });
+
+      await withRequestRecorder(recorder, () => makeApiRequest('GET', '/api/1/users/me', {}));
+
+      const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
+      const apiCalls = payload.api.calls as Array<Record<string, unknown>>;
+      expect(apiCalls).toHaveLength(1);
+      expect(apiCalls[0]?.query_keys).toBeUndefined();
+    });
+
     it('records an api_call with error_type=http_error on 500 response', async () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
       mockFetch.mockResolvedValue(createErrorResponse(500, { error: 'oops' }));

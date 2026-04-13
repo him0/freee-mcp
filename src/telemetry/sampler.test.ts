@@ -188,4 +188,31 @@ describe('resolveRootSampler', () => {
     );
     expect(result.decision).toBe(SamplingDecision.NOT_RECORD);
   });
+
+  it('falls back to AlwaysOn when the legacy ratio env is non-numeric (loud warn, no crash)', () => {
+    // Misconfigured `OTEL_TRACES_SAMPLER_ARG=garbage` must not crash the
+    // process. The legacy path defaults to AlwaysOn (worst-case for cost) but
+    // still serves traffic — the operator gets a warn log to investigate.
+    const sampler = resolveRootSampler(undefined, 'garbage');
+    const result = sampler.shouldSample(
+      ROOT_CONTEXT,
+      TRACE_ID,
+      'arbitrary',
+      SpanKind.INTERNAL,
+      {},
+      [],
+    );
+    expect(result.decision).toBe(SamplingDecision.RECORD_AND_SAMPLED);
+  });
+});
+
+describe('parseRulesFromEnv duplicate default', () => {
+  it('lets the later default win when default= is repeated', () => {
+    // Regression guard: tolerate duplicate default= but warn (warn observed
+    // via getLogger, not asserted here). Last value must win behaviourally,
+    // so a non-matching span follows the second default=1.0 and gets sampled.
+    const sampler = compile('default=0.0,default=1.0');
+    const result = decide(sampler, 'arbitrary', SpanKind.INTERNAL);
+    expect(result.decision).toBe(SamplingDecision.RECORD_AND_SAMPLED);
+  });
 });
