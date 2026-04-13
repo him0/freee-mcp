@@ -1,5 +1,29 @@
 # freee-mcp
 
+## 0.23.0
+
+### Minor Changes
+
+- [`a38d2be`](https://github.com/freee/freee-mcp/commit/a38d2be7717d624d30824a3f0e45ba0fb29a80f9): Remote モードのロギングを canonical log line パターンに再構成 ([#385](https://github.com/freee/freee-mcp/pull/385))
+
+  1 HTTP リクエスト = 1 ログ行 = 1 trace の形式で、リクエスト単位のメタデータ
+  (method, status, duration, tool_calls, api_calls, errors) を 1 本の JSON ログに集約して出力します。
+  既存の個別イベントログ (API request completed, Tool call completed 等) は削除。
+
+  - 新規ログフィールド: request_id, source_ip, user_id, session_id, http.\*, mcp.tool_calls[], api_calls[], errors[]
+  - エラー発生時は `Error.cause` チェーンと stack trace を `errors[].chain` に含める (serialize-error 経由)
+  - プライバシー保護: query 値や request body などユーザー入力はログに一切含まれない (型システムで強制)
+  - 400/500 エラーも canonical log で自動捕捉 (従来ログに残らなかった 400 系をカバー)
+  - pino.redact による defense-in-depth で stray log 経路からの漏洩も防止
+
+### Patch Changes
+
+- [`a38d2be`](https://github.com/freee/freee-mcp/commit/a38d2be7717d624d30824a3f0e45ba0fb29a80f9): Remote モードの canonical log line に inbound `user_agent` フィールドを追加、外部 freee API 向けの outbound User-Agent に transport mode (`stdio` / `remote`) を含めた ([#385](https://github.com/freee/freee-mcp/pull/385))
+
+  - Remote: MCP クライアントから届いた `User-Agent` ヘッダを 256 文字に切り詰め、`scrubErrorMessage` で数値 ID とメールをマスクした上で canonical log line に記録。Datadog で `@user_agent:ClaudeDesktop*` のように MCP クライアント別の分析が可能になる
+  - Outbound: freee API への fetch で送る User-Agent を `freee-mcp/<version> (MCP Server; stdio; +url)` / `freee-mcp/<version> (MCP Server; remote; +url)` の 2 形式に分離。freee 側ログでどの transport からの呼び出しかを区別できる
+  - 新モジュール `src/server/user-agent.ts` (`getUserAgent()` / `setUserAgentTransportMode()`) が `src/constants.ts` の旧 `USER_AGENT` 定数を置き換える。初期化はエントリポイント (`src/index.ts`, `src/sign/index.ts`, `src/server/http-server.ts`) で 1 度だけ実行
+
 ## 0.22.1
 
 ### Patch Changes
