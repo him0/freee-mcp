@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { USER_AGENT } from '../constants.js';
+import { getUserAgent } from '../server/user-agent.js';
 import { type BinaryFileResponse, isBinaryFileResponse, makeApiRequest } from './client.js';
 
 // Test constants (defined after mocks due to hoisting)
@@ -132,7 +132,7 @@ describe('client', () => {
           headers: {
             Authorization: `Bearer ${TEST_ACCESS_TOKEN}`,
             'Content-Type': 'application/json',
-            'User-Agent': USER_AGENT,
+            'User-Agent': getUserAgent(),
           },
           body: undefined,
           signal: expect.any(AbortSignal),
@@ -180,7 +180,7 @@ describe('client', () => {
           headers: {
             Authorization: `Bearer ${TEST_ACCESS_TOKEN}`,
             'Content-Type': 'application/json',
-            'User-Agent': USER_AGENT,
+            'User-Agent': getUserAgent(),
           },
           body: JSON.stringify(requestBody),
           signal: expect.any(AbortSignal),
@@ -359,6 +359,114 @@ describe('client', () => {
       expect(binaryResult.type).toBe('binary');
       expect(binaryResult.mimeType).toBe('image/png');
       expect(binaryResult.data).toEqual(Buffer.from(pngMagicBytes));
+    });
+  });
+
+  describe('makeApiRequest - recorder integration', () => {
+    it('records an api_call with the success path pattern', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      // The shared createJsonResponse helper omits `status`, but the recorder
+      // captures it verbatim — set it explicitly so the assertion is meaningful.
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: createMockHeaders('application/json'),
+        json: (): Promise<unknown> => Promise.resolve({ ok: true }),
+        text: (): Promise<string> => Promise.resolve(JSON.stringify({ ok: true })),
+      });
+
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
+      const recorder = new RequestRecorder({
+        request_id: 'req-api-success',
+        source_ip: '127.0.0.1',
+        method: 'POST',
+        path: '/mcp',
+      });
+
+      await withRequestRecorder(recorder, () =>
+        makeApiRequest('GET', '/api/1/deals/98765', { limit: 10 }),
+      );
+
+      const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
+      const apiCalls = payload.api_calls as Array<Record<string, unknown>>;
+      expect(apiCalls).toHaveLength(1);
+      expect(apiCalls[0]).toMatchObject({
+        method: 'GET',
+        path_pattern: '/api/:id/deals/:id',
+        status_code: 200,
+        error_type: null,
+      });
+      // Query values must not be in the path_pattern.
+      expect(JSON.stringify(apiCalls[0])).not.toContain('limit=10');
+    });
+
+    it('records an api_call with error_type=http_error on 500 response', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue(createErrorResponse(500, { error: 'oops' }));
+
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
+      const recorder = new RequestRecorder({
+        request_id: 'req-api-500',
+        source_ip: '127.0.0.1',
+        method: 'POST',
+        path: '/mcp',
+      });
+
+      await expect(
+        withRequestRecorder(recorder, () => makeApiRequest('GET', '/api/1/users/me')),
+      ).rejects.toThrow(/API request failed: 500/);
+
+      const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
+      const apiCalls = payload.api_calls as Array<Record<string, unknown>>;
+      expect(apiCalls).toHaveLength(1);
+      expect(apiCalls[0]).toMatchObject({
+        method: 'GET',
+        status_code: 500,
+        error_type: 'http_error',
+      });
+
+      const errors = payload.errors as Array<{ source: string; chain: Array<{ message: string }> }>;
+      expect(errors).toHaveLength(1);
+      expect(errors[0].source).toBe('api_client');
+      expect(errors[0].chain[0].message).toMatch(/API request failed: 500/);
+    });
+
+    it('records an api_call with error_type=auth_error on 401 response', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue(createErrorResponse(401, { error: 'invalid_token' }));
+
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
+      const recorder = new RequestRecorder({
+        request_id: 'req-api-401',
+        source_ip: '127.0.0.1',
+        method: 'POST',
+        path: '/mcp',
+      });
+
+      await expect(
+        withRequestRecorder(recorder, () => makeApiRequest('GET', '/api/1/users/me')),
+      ).rejects.toThrow();
+
+      const apiCalls = recorder.buildPayload({ status: 200, duration_ms: 1 }).api_calls as Array<
+        Record<string, unknown>
+      >;
+      expect(apiCalls[0]).toMatchObject({ status_code: 401, error_type: 'auth_error' });
+    });
+
+    it('does nothing (null-safe) when no recorder is installed', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue(createJsonResponse({ ok: true }));
+
+      // Called OUTSIDE of withRequestRecorder — getCurrentRecorder() returns undefined
+      // (this is the CLI mode path). Must still succeed without throwing.
+      const result = await makeApiRequest('GET', '/api/1/users/me');
+      expect(result).toEqual({ ok: true });
     });
   });
 });

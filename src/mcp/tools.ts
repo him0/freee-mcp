@@ -10,23 +10,14 @@ import {
 } from '../auth/server.js';
 import { getConfig } from '../config.js';
 import { AUTH_TIMEOUT_MS, PACKAGE_VERSION } from '../constants.js';
-import { createChildLogger, getLogger } from '../server/logger.js';
+import { makeErrorChain, serializeErrorChain } from '../server/error-serializer.js';
+import { getCurrentRecorder } from '../server/request-context.js';
 import type { AuthExtra } from '../storage/context.js';
 import { registerTracedTool } from '../telemetry/tool-tracer.js';
 import { extractTokenContext, resolveCompanyId } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
 export function addAuthenticationTools(server: McpServer, options?: { remote?: boolean }): void {
-  const logs = {
-    currentUser: createChildLogger({ component: 'tool', tool: 'freee_current_user' }),
-    authenticate: createChildLogger({ component: 'tool', tool: 'freee_authenticate' }),
-    authStatus: createChildLogger({ component: 'tool', tool: 'freee_auth_status' }),
-    clearAuth: createChildLogger({ component: 'tool', tool: 'freee_clear_auth' }),
-    setCompany: createChildLogger({ component: 'tool', tool: 'freee_set_current_company' }),
-    getCompany: createChildLogger({ component: 'tool', tool: 'freee_get_current_company' }),
-    listCompanies: createChildLogger({ component: 'tool', tool: 'freee_list_companies' }),
-  };
-
   registerTracedTool(server,
     'freee_current_user',
     {
@@ -35,12 +26,18 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true },
     },
     async (extra: AuthExtra) => {
-      const log = logs.currentUser();
+      const recorder = getCurrentRecorder();
+      const toolStart = Date.now();
       try {
         const tokenContext = extractTokenContext(extra);
         const companyId = await resolveCompanyId(tokenContext);
 
         if (!companyId) {
+          recorder?.recordToolCall({
+            tool: 'freee_current_user',
+            status: 'success',
+            duration_ms: Date.now() - toolStart,
+          });
           return createTextResponse(
             '会社IDが設定されていません。freee_set_current_company で設定してください。',
           );
@@ -51,7 +48,11 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           makeApiRequest('GET', '/api/1/users/me', undefined, undefined, undefined, tokenContext),
         ]);
 
-        log.info({ company_id: companyId }, 'Tool call completed');
+        recorder?.recordToolCall({
+          tool: 'freee_current_user',
+          status: 'success',
+          duration_ms: Date.now() - toolStart,
+        });
         return createTextResponse(
           `現在のユーザー情報:\n` +
             `会社ID: ${companyId}\n` +
@@ -59,7 +60,12 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
             `ユーザー詳細:\n${JSON.stringify(userInfo, null, 2)}`,
         );
       } catch (error) {
-        log.error({ err: error }, 'Tool call failed');
+        recorder?.recordToolCall({
+          tool: 'freee_current_user',
+          status: 'error',
+          duration_ms: Date.now() - toolStart,
+        });
+        recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
         return createTextResponse(`ユーザー情報の取得に失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -74,11 +80,17 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         annotations: { destructiveHint: false },
       },
       async () => {
-        const log = logs.authenticate();
+        const recorder = getCurrentRecorder();
+        const toolStart = Date.now();
         try {
           const { clientId, clientSecret } = getConfig().freee;
 
           if (!clientId) {
+            recorder?.recordToolCall({
+              tool: 'freee_authenticate',
+              status: 'success',
+              duration_ms: Date.now() - toolStart,
+            });
             return createTextResponse(
               'クライアントIDが設定されていません。\n' +
                 '`freee-mcp configure` を実行してセットアップしてください。',
@@ -86,6 +98,11 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           }
 
           if (!clientSecret) {
+            recorder?.recordToolCall({
+              tool: 'freee_authenticate',
+              status: 'success',
+              duration_ms: Date.now() - toolStart,
+            });
             return createTextResponse(
               'クライアントシークレットが設定されていません。\n' +
                 '`freee-mcp configure` を実行してセットアップしてください。',
@@ -101,13 +118,22 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
 
           registerAuthenticationRequest(state, codeVerifier);
 
-          log.info('Authentication URL generated');
+          recorder?.recordToolCall({
+            tool: 'freee_authenticate',
+            status: 'success',
+            duration_ms: Date.now() - toolStart,
+          });
 
           return createTextResponse(
             `認証URL: ${authUrl}\n\nブラウザで開いて認証してください。5分でタイムアウトします。`,
           );
         } catch (error) {
-          log.error({ err: error }, 'Tool call failed');
+          recorder?.recordToolCall({
+            tool: 'freee_authenticate',
+            status: 'error',
+            duration_ms: Date.now() - toolStart,
+          });
+          recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
           return createTextResponse(`認証開始に失敗: ${formatErrorMessage(error)}`);
         }
       },
@@ -122,24 +148,39 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true },
     },
     async (extra: AuthExtra) => {
-      const log = logs.authStatus();
+      const recorder = getCurrentRecorder();
+      const toolStart = Date.now();
       try {
         const tokenContext = extractTokenContext(extra);
         const tokens = await tokenContext.tokenStore.loadTokens(tokenContext.userId);
         if (!tokens) {
+          recorder?.recordToolCall({
+            tool: 'freee_auth_status',
+            status: 'success',
+            duration_ms: Date.now() - toolStart,
+          });
           return createTextResponse('未認証。freee_authenticate で認証してください。');
         }
 
         const isValid = Date.now() < tokens.expires_at;
         const expiryDate = new Date(tokens.expires_at).toLocaleString();
 
-        log.info('Tool call completed');
+        recorder?.recordToolCall({
+          tool: 'freee_auth_status',
+          status: 'success',
+          duration_ms: Date.now() - toolStart,
+        });
         return createTextResponse(
           `認証状態: ${isValid ? '有効' : '期限切れ'}\n有効期限: ${expiryDate}` +
             (isValid ? '' : '\n次回API使用時に自動更新されます。'),
         );
       } catch (error) {
-        log.error({ err: error }, 'Tool call failed');
+        recorder?.recordToolCall({
+          tool: 'freee_auth_status',
+          status: 'error',
+          duration_ms: Date.now() - toolStart,
+        });
+        recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
         return createTextResponse(`認証状態の確認に失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -153,16 +194,26 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { idempotentHint: true, openWorldHint: false },
     },
     async (extra: AuthExtra) => {
-      const log = logs.clearAuth();
+      const recorder = getCurrentRecorder();
+      const toolStart = Date.now();
       try {
         const tokenContext = extractTokenContext(extra);
         await tokenContext.tokenStore.clearTokens(tokenContext.userId);
-        log.info('Tool call completed');
+        recorder?.recordToolCall({
+          tool: 'freee_clear_auth',
+          status: 'success',
+          duration_ms: Date.now() - toolStart,
+        });
         return createTextResponse(
           '認証情報をクリアしました。再認証するには freee_authenticate を使用。',
         );
       } catch (error) {
-        log.error({ err: error }, 'Tool call failed');
+        recorder?.recordToolCall({
+          tool: 'freee_clear_auth',
+          status: 'error',
+          duration_ms: Date.now() - toolStart,
+        });
+        recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
         return createTextResponse(`認証情報のクリアに失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -185,7 +236,8 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       args: { company_id: string; name?: string; description?: string },
       extra?: AuthExtra,
     ) => {
-      const log = logs.setCompany();
+      const recorder = getCurrentRecorder();
+      const toolStart = Date.now();
       try {
         const { company_id, name, description } = args;
         const tokenContext = extractTokenContext(extra);
@@ -194,10 +246,19 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
 
         const companyInfo = await tokenContext.tokenStore.getCompanyInfo(tokenContext.userId, company_id);
 
-        log.info('Tool call completed');
+        recorder?.recordToolCall({
+          tool: 'freee_set_current_company',
+          status: 'success',
+          duration_ms: Date.now() - toolStart,
+        });
         return createTextResponse(`事業所を設定: ${companyInfo?.name || company_id}`);
       } catch (error) {
-        log.error({ err: error }, 'Tool call failed');
+        recorder?.recordToolCall({
+          tool: 'freee_set_current_company',
+          status: 'error',
+          duration_ms: Date.now() - toolStart,
+        });
+        recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
         return createTextResponse(`事業所の設定に失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -211,20 +272,30 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async (extra: AuthExtra) => {
-      const log = logs.getCompany();
+      const recorder = getCurrentRecorder();
+      const toolStart = Date.now();
       try {
         const tokenContext = extractTokenContext(extra);
         const companyId = await resolveCompanyId(tokenContext);
         const companyInfo = await tokenContext.tokenStore.getCompanyInfo(tokenContext.userId, companyId);
 
-        log.info('Tool call completed');
+        recorder?.recordToolCall({
+          tool: 'freee_get_current_company',
+          status: 'success',
+          duration_ms: Date.now() - toolStart,
+        });
         if (!companyInfo) {
           return createTextResponse(`事業所ID: ${companyId} (詳細情報なし)`);
         }
 
         return createTextResponse(`事業所: ${companyInfo.name} (ID: ${companyInfo.id})`);
       } catch (error) {
-        log.error({ err: error }, 'Tool call failed');
+        recorder?.recordToolCall({
+          tool: 'freee_get_current_company',
+          status: 'error',
+          duration_ms: Date.now() - toolStart,
+        });
+        recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
         return createTextResponse(`事業所情報の取得に失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -238,7 +309,8 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true },
     },
     async (extra: AuthExtra) => {
-      const log = logs.listCompanies();
+      const recorder = getCurrentRecorder();
+      const toolStart = Date.now();
       try {
         const tokenContext = extractTokenContext(extra);
         const CompanyResponseSchema = z.object({
@@ -261,6 +333,16 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         );
         const parseResult = CompanyResponseSchema.safeParse(rawResponse);
         if (!parseResult.success) {
+          recorder?.recordToolCall({
+            tool: 'freee_list_companies',
+            status: 'error',
+            duration_ms: Date.now() - toolStart,
+          });
+          recorder?.recordError({
+            source: 'tool_handler',
+            error_type: 'schema_mismatch',
+            chain: makeErrorChain('ZodError', parseResult.error.message),
+          });
           return {
             content: [
               {
@@ -274,6 +356,11 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         const currentCompanyId = await resolveCompanyId(tokenContext);
 
         if (!apiCompanies?.companies?.length) {
+          recorder?.recordToolCall({
+            tool: 'freee_list_companies',
+            status: 'success',
+            duration_ms: Date.now() - toolStart,
+          });
           return createTextResponse('事業所情報を取得できませんでした。');
         }
 
@@ -284,10 +371,19 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           })
           .join('\n');
 
-        log.info('Tool call completed');
+        recorder?.recordToolCall({
+          tool: 'freee_list_companies',
+          status: 'success',
+          duration_ms: Date.now() - toolStart,
+        });
         return createTextResponse(`事業所一覧:\n${companyList}`);
       } catch (error) {
-        log.error({ err: error }, 'Tool call failed');
+        recorder?.recordToolCall({
+          tool: 'freee_list_companies',
+          status: 'error',
+          duration_ms: Date.now() - toolStart,
+        });
+        recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
         return createTextResponse(`事業所一覧の取得に失敗: ${formatErrorMessage(error)}`);
       }
     },
@@ -301,8 +397,14 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async () => {
-      getLogger().info({ component: 'tool', tool: 'freee_server_info' }, 'Tool call completed');
+      const recorder = getCurrentRecorder();
+      const toolStart = Date.now();
       const transport = options?.remote ? 'remote' : 'stdio';
+      recorder?.recordToolCall({
+        tool: 'freee_server_info',
+        status: 'success',
+        duration_ms: Date.now() - toolStart,
+      });
       return createTextResponse(
         `freee-mcp server info:\n- version: ${PACKAGE_VERSION}\n- transport: ${transport}`,
       );

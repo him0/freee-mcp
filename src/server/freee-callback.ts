@@ -8,11 +8,11 @@ import {
   FETCH_TIMEOUT_USERINFO_MS,
   FREEE_API_URL,
   FREEE_CALLBACK_PATH,
-  USER_AGENT,
 } from '../constants.js';
 import type { TokenStore } from '../storage/token-store.js';
 import { getLogger } from './logger.js';
 import type { OAuthStateStore } from './oauth-store.js';
+import { getUserAgent } from './user-agent.js';
 
 export interface FreeeCallbackDeps {
   oauthStore: OAuthStateStore;
@@ -38,7 +38,7 @@ async function exchangeFreeeCode(
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': USER_AGENT,
+      'User-Agent': getUserAgent(),
     },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
@@ -73,7 +73,7 @@ async function fetchFreeeUserId(accessToken: string, apiUrl: string): Promise<st
   const response = await fetch(`${apiUrl}/api/1/users/me`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      'User-Agent': USER_AGENT,
+      'User-Agent': getUserAgent(),
     },
     signal: AbortSignal.timeout(FETCH_TIMEOUT_USERINFO_MS),
   });
@@ -99,7 +99,7 @@ async function fetchFirstCompany(
     const response = await fetch(`${apiUrl}/api/1/companies`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'User-Agent': USER_AGENT,
+        'User-Agent': getUserAgent(),
       },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_USERINFO_MS),
     });
@@ -122,7 +122,7 @@ async function fetchFirstCompany(
     const response = await fetch(`${apiUrl}/hr/api/v1/users/me`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'User-Agent': USER_AGENT,
+        'User-Agent': getUserAgent(),
       },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_USERINFO_MS),
     });

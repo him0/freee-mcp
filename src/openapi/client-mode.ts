@@ -1,7 +1,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { isBinaryFileResponse, makeApiRequest } from '../api/client.js';
-import { createChildLogger, getLogger, sanitizePath } from '../server/logger.js';
+import { makeErrorChain, serializeErrorChain } from '../server/error-serializer.js';
+import { sanitizePath } from '../server/logger.js';
+import { getCurrentRecorder } from '../server/request-context.js';
 import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
 import { registerTracedTool, setToolAttributes } from '../telemetry/tool-tracer.js';
@@ -42,7 +44,6 @@ function coercibleRecord(description: string) {
  */
 function createMethodTool(method: string) {
   const toolName = `freee_api_${method.toLowerCase()}`;
-  const getLog = createChildLogger({ component: 'tool', tool: toolName });
 
   return async (
     args: {
@@ -53,9 +54,11 @@ function createMethodTool(method: string) {
     },
     extra?: AuthExtra,
   ) => {
-    const log = getLog();
+    const recorder = getCurrentRecorder();
     const startTime = Date.now();
     const safePath = sanitizePath(args.path);
+    // PRIVACY: key names only, never values.
+    const queryKeys = args.query ? Object.keys(args.query) : undefined;
     const tokenContext = extractTokenContext(extra);
 
     try {
@@ -64,7 +67,20 @@ function createMethodTool(method: string) {
 
       const validation = validatePathForService(method, path, service);
       if (!validation.isValid) {
-        log.warn({ service, path: safePath, method, user_id: tokenContext.userId }, 'Tool path validation failed');
+        recorder?.recordToolCall({
+          tool: toolName,
+          service,
+          api_method: method,
+          api_path_pattern: safePath,
+          query_keys: queryKeys,
+          status: 'error',
+          duration_ms: Date.now() - startTime,
+        });
+        recorder?.recordError({
+          source: 'validation',
+          error_type: 'path_validation_failed',
+          chain: makeErrorChain('ValidationError', validation.message ?? 'unknown validation error'),
+        });
         return createTextResponse(
           `パス検証エラー: ${validation.message}\n\n` +
             `利用可能なパスを確認するには freee_api_list_paths ツールを使用してください。`,
@@ -74,11 +90,15 @@ function createMethodTool(method: string) {
       const actualPath = validation.actualPath ?? path;
       const result = await makeApiRequest(method, actualPath, query, body, validation.baseUrl, tokenContext);
 
-      const resultType = isBinaryFileResponse(result) ? 'binary' : result === null ? 'empty' : 'json';
-      log.info(
-        { service, path: safePath, method, duration_ms: Date.now() - startTime, user_id: tokenContext.userId, result_type: resultType },
-        'Tool call completed',
-      );
+      recorder?.recordToolCall({
+        tool: toolName,
+        service,
+        api_method: method,
+        api_path_pattern: safePath,
+        query_keys: queryKeys,
+        status: 'success',
+        duration_ms: Date.now() - startTime,
+      });
 
       if (isBinaryFileResponse(result)) {
         const baseMimeType = result.mimeType.split(';')[0].trim();
@@ -124,10 +144,16 @@ function createMethodTool(method: string) {
 
       return createTextResponse(JSON.stringify(result, null, 2));
     } catch (error) {
-      log.error(
-        { service: args.service, path: safePath, method, duration_ms: Date.now() - startTime, user_id: tokenContext.userId, err: error },
-        'Tool call failed',
-      );
+      recorder?.recordToolCall({
+        tool: toolName,
+        service: args.service,
+        api_method: method,
+        api_path_pattern: safePath,
+        query_keys: queryKeys,
+        status: 'error',
+        duration_ms: Date.now() - startTime,
+      });
+      recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
       return createTextResponse(`APIリクエストエラー: ${formatErrorMessage(error)}`);
     }
   };
@@ -229,8 +255,14 @@ export function generateClientModeTool(server: McpServer): void {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async () => {
-      getLogger().info({ component: 'tool', tool: 'freee_api_list_paths' }, 'Tool call completed');
+      const recorder = getCurrentRecorder();
+      const toolStart = Date.now();
       const pathsList = listAllAvailablePaths();
+      recorder?.recordToolCall({
+        tool: 'freee_api_list_paths',
+        status: 'success',
+        duration_ms: Date.now() - toolStart,
+      });
       return createTextResponse(
         `# freee API 利用可能なエンドポイント一覧${pathsList}\n\n` +
           `使用例:\n` +

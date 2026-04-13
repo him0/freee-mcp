@@ -1,8 +1,11 @@
 import { configure } from './cli.js';
 import { createAndStartServer } from './mcp/handlers.js';
 import { getLogger, initLogger } from './server/logger.js';
+import { initUserAgentTransportMode } from './server/user-agent.js';
 
 const main = async (): Promise<void> => {
+  initUserAgentTransportMode('stdio');
+
   const args = process.argv.slice(2);
   const subcommand = args.find((arg) => !arg.startsWith('--'));
 

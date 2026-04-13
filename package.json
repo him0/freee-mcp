@@ -70,6 +70,7 @@
     "pino": "^10.3.1",
     "prompts": "^2.4.2",
     "rate-limit-redis": "^4.3.1",
+    "serialize-error": "^13.0.1",
     "zod": "^3.25.76"
   },
   "keywords": [

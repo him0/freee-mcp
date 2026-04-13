@@ -1,7 +1,10 @@
+import { initUserAgentTransportMode } from '../server/user-agent.js';
 import { signConfigure } from './cli/index.js';
 import { createAndStartSignServer } from './handlers.js';
 
 const main = async (): Promise<void> => {
+  initUserAgentTransportMode('stdio');
+
   const args = process.argv.slice(2);
   const subcommand = args.find((arg) => !arg.startsWith('--'));
 

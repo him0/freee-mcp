@@ -81,6 +81,23 @@ Sign development mode: Use `"command": "bun", "args": ["run", "src/sign/index.ts
 - `FREEE_API_BASE_URL_SM` - 販売API
 - `FREEE_SIGN_API_URL` - サインAPI（`src/sign/config.ts` で処理）
 
+### Remote モードのロギング (canonical log line)
+
+Remote モードは「1 HTTP リクエスト = 1 ログ行 = 1 trace」パターン。ペイロード形状は `CanonicalLogPayload` (`src/server/request-context.ts`)、emit は `src/telemetry/middleware.ts` の `res.on('finish')`。
+
+読み落としやすい注意点:
+
+- synthetic error (validation 失敗、routing 404 等) は `makeErrorChain(name, message)` 経由で登録すること。素の `[{ name, message }]` リテラルは `scrubErrorMessage()` を通らず privacy 漏洩の原因になる
+- `http.status` は MCP クライアントへの最終応答、`api_calls[].status_code` は freee API からの応答。freee API 500 でも MCP 応答は 200 で wrap する場合があり、両方を見る必要がある
+
+Datadog 検索例:
+
+- `@http.status:500` — MCP サーバー自体の 5xx
+- `@api_calls.error_type:timeout` — 外部 API タイムアウト
+- `@http.status:200 @errors:*` — 見かけ上は成功だが内部的に失敗
+- `@request_id:<uuid>` — 特定リクエストの全情報
+- `@user_agent:ClaudeDesktop*` — MCP クライアント種別でフィルタ
+
 ## PR Creation Pre-flight Checklist
 
 Always run before creating a PR:
