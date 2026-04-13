@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scrubErrorMessage, serializeErrorChain } from './error-serializer.js';
+import { makeErrorChain, scrubErrorMessage, serializeErrorChain } from './error-serializer.js';
 
 describe('scrubErrorMessage', () => {
   it('masks 6+ digit numeric IDs', () => {
@@ -125,5 +125,56 @@ describe('serializeErrorChain', () => {
     err.code = 'ENOENT';
     const chain = serializeErrorChain(err);
     expect(chain[0].code).toBe('ENOENT');
+  });
+});
+
+describe('makeErrorChain', () => {
+  it('preserves the supplied name and message', () => {
+    const chain = makeErrorChain('ValidationError', 'path /foo not found in schema');
+    expect(chain).toHaveLength(1);
+    expect(chain[0].name).toBe('ValidationError');
+    expect(chain[0].message).toBe('path /foo not found in schema');
+  });
+
+  it('produces a populated stack so synthetic errors are debuggable', () => {
+    // Pre-fix this entry was a literal `{name, message}` with no `stack` —
+    // operators staring at a 400 in Datadog had nothing to grep for. The
+    // new implementation routes through `serializeErrorChain` which fills
+    // `stack` from a real Error object.
+    const chain = makeErrorChain('RoutingError', 'unknown session id');
+    expect(typeof chain[0].stack).toBe('string');
+    expect((chain[0].stack as string).length).toBeGreaterThan(0);
+  });
+
+  // Bun and Node both expose `Error.captureStackTrace`. The runtime guard
+  // here mirrors the production code so this assertion only runs where
+  // captureStackTrace exists; on hypothetical non-V8 runtimes the helper
+  // frame may legitimately remain in the stack and the production code
+  // documents that as an accepted fallback.
+  it.skipIf(typeof Error.captureStackTrace !== 'function')(
+    'elides its own helper frame from the stack via captureStackTrace',
+    () => {
+      // The `Error.captureStackTrace(err, makeErrorChain)` second argument
+      // tells V8/Bun to drop everything from `makeErrorChain` upwards. The
+      // resulting top frame must therefore be the *caller* of makeErrorChain
+      // (in this test: the test fn), never makeErrorChain itself.
+      function callerFrame(): ReturnType<typeof makeErrorChain> {
+        return makeErrorChain('SyntheticError', 'demo');
+      }
+      const chain = callerFrame();
+      const stack = chain[0].stack ?? '';
+      expect(stack).not.toMatch(/at makeErrorChain/);
+    },
+  );
+
+  it('still scrubs sensitive identifiers from message and stack', () => {
+    // Regression guard: the rewrite must not bypass the privacy protection
+    // serializeErrorChain applies. Numeric IDs (6+ digits) and emails are
+    // both masked.
+    const chain = makeErrorChain('PrivacyTest', 'company_id 87654321 contact ops@example.com');
+    expect(chain[0].message).toContain('[REDACTED_ID]');
+    expect(chain[0].message).toContain('[REDACTED_EMAIL]');
+    expect(chain[0].message).not.toContain('87654321');
+    expect(chain[0].message).not.toContain('ops@example.com');
   });
 });

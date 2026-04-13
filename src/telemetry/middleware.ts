@@ -18,6 +18,41 @@ import { getHttpRequestDuration, getHttpRequestErrorCount } from './metrics.js';
  */
 const MAX_USER_AGENT_LENGTH = 256;
 
+export type CanonicalLogLevel = 'info' | 'warn' | 'error';
+
+/**
+ * Map an HTTP response status code to the pino log level used for the
+ * canonical log line of that request.
+ *
+ * - 5xx → `error` so Datadog's default Status Remapper raises severity and
+ *   on-call alerts can fire on `status:error`.
+ * - 4xx → `warn` including 401/403/404/422. All client errors become
+ *   warnings per ECS / Datadog convention — the server is healthy but the
+ *   caller misused it, which is still an observability signal worth
+ *   tracking in dashboards.
+ * - Everything else → `info`.
+ */
+export function levelFor(status: number): CanonicalLogLevel {
+  if (status >= 500) return 'error';
+  if (status >= 400) return 'warn';
+  return 'info';
+}
+
+const MSG_OK = 'mcp request ok';
+const MSG_CLIENT_ERROR = 'mcp request client_error';
+const MSG_SERVER_ERROR = 'mcp request server_error';
+
+/**
+ * Return the `msg` string attached to the canonical log line for a given
+ * HTTP status. A tiny number of distinct values keeps Datadog facet
+ * cardinality low while still letting engineers eyeball logs at a glance.
+ */
+export function messageFor(status: number): string {
+  if (status >= 500) return MSG_SERVER_ERROR;
+  if (status >= 400) return MSG_CLIENT_ERROR;
+  return MSG_OK;
+}
+
 /**
  * Normalize and scrub the inbound `User-Agent` header before storing it in
  * the canonical log line.
@@ -120,7 +155,23 @@ export function createTracingMiddleware(): (
       const status = res.statusCode;
 
       const payload = recorder.buildPayload({ status, duration_ms: durationMs });
-      getLogger().info(payload, 'mcp request completed');
+      const message = messageFor(status);
+      // Explicit dispatch (rather than `getLogger()[level](...)`) keeps the
+      // call sites consistent with the rest of the codebase and avoids
+      // bracket-access against pino's `BaseLogger` interface, which has no
+      // index signature.
+      const logger = getLogger();
+      switch (levelFor(status)) {
+        case 'error':
+          logger.error(payload, message);
+          break;
+        case 'warn':
+          logger.warn(payload, message);
+          break;
+        default:
+          logger.info(payload, message);
+          break;
+      }
 
       if (otelSpan) {
         const attrs = { method: req.method, path: req.path, status: String(status) };

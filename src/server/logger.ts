@@ -1,4 +1,4 @@
-import { trace } from '@opentelemetry/api';
+import { TraceFlags, trace } from '@opentelemetry/api';
 import pino from 'pino';
 import { APP_NAME, PACKAGE_VERSION } from '../constants.js';
 import { serializeErrorChain } from './error-serializer.js';
@@ -21,16 +21,23 @@ function getStderrDest(): pino.DestinationStream {
 }
 
 /**
- * Inject trace_id / span_id from the active OpenTelemetry span.
- * Returns an empty object when no span is active (OTel disabled).
+ * Inject trace_id / span_id / trace_sampled from the active OpenTelemetry span.
+ *
+ * When no span is active (OTel disabled, or code path outside a traced
+ * context) the function still returns `trace_sampled: false` so Datadog
+ * queries can select "logs whose trace was actually exported" without
+ * joining on trace_id presence.
  */
-function otelMixin(): Record<string, string> {
+function otelMixin(): Record<string, unknown> {
   const span = trace.getActiveSpan();
-  if (!span) return {};
+  if (!span) {
+    return { trace_sampled: false };
+  }
   const ctx = span.spanContext();
   return {
     trace_id: ctx.traceId,
     span_id: ctx.spanId,
+    trace_sampled: (ctx.traceFlags & TraceFlags.SAMPLED) === TraceFlags.SAMPLED,
   };
 }
 
@@ -90,14 +97,33 @@ const REDACT_OPTIONS: pino.redactOptions = {
   remove: false,
 };
 
-export function initLogger(levelOrOptions?: string | LoggerOptions): pino.Logger {
-  const options = resolveOptions(levelOrOptions);
-  const level = options.level || process.env.LOG_LEVEL || 'info';
-  const transportMode = options.transportMode ?? 'stdio';
+/**
+ * Emit `level` as a lowercase string ('info' | 'warn' | 'error') instead of
+ * pino's default numeric form (30 | 40 | 50).
+ *
+ * Rationale: Datadog's default Status Remapper recognises string levels out
+ * of the box, so `service:freee-mcp* status:error` queries work without
+ * enabling the pino integration pipeline on the collector side. Pino's
+ * internal level filtering (LOG_LEVEL threshold, child loggers) still
+ * operates on the numeric value — formatters only affect output
+ * serialization.
+ */
+const LEVEL_FORMATTER: NonNullable<pino.LoggerOptions['formatters']>['level'] = (label) => ({
+  level: label,
+});
 
-  const baseOptions: pino.LoggerOptions = {
+/**
+ * Single source of truth for pino options. Both eager (`initLogger`) and
+ * lazy (`getLogger`) construction paths funnel through here so that adding
+ * a new field — e.g. another formatter or redact path — only touches one
+ * place. Drift between the two paths previously had to be caught by code
+ * review.
+ */
+function buildBaseOptions(level: string, transportMode: 'stdio' | 'remote'): pino.LoggerOptions {
+  return {
     level,
     mixin: otelMixin,
+    formatters: { level: LEVEL_FORMATTER },
     serializers: { err: errSerializer },
     redact: REDACT_OPTIONS,
     base: {
@@ -106,8 +132,14 @@ export function initLogger(levelOrOptions?: string | LoggerOptions): pino.Logger
       transport_mode: transportMode,
     },
   };
+}
 
-  _logger = pino(baseOptions, getStderrDest());
+export function initLogger(levelOrOptions?: string | LoggerOptions): pino.Logger {
+  const options = resolveOptions(levelOrOptions);
+  const level = options.level || process.env.LOG_LEVEL || 'info';
+  const transportMode = options.transportMode ?? 'stdio';
+
+  _logger = pino(buildBaseOptions(level, transportMode), getStderrDest());
 
   return _logger;
 }
@@ -115,17 +147,7 @@ export function initLogger(levelOrOptions?: string | LoggerOptions): pino.Logger
 export function getLogger(): pino.Logger {
   if (!_logger) {
     _logger = pino(
-      {
-        level: process.env.LOG_LEVEL || 'info',
-        mixin: otelMixin,
-        serializers: { err: errSerializer },
-        redact: REDACT_OPTIONS,
-        base: {
-          service: APP_NAME,
-          version: PACKAGE_VERSION,
-          transport_mode: 'stdio',
-        },
-      },
+      buildBaseOptions(process.env.LOG_LEVEL || 'info', 'stdio'),
       getStderrDest(),
     );
   }

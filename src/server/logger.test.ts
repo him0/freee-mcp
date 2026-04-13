@@ -1,4 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Writable } from 'node:stream';
+import pino from 'pino';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('logger', () => {
   afterEach(() => {
@@ -39,6 +41,86 @@ describe('logger', () => {
     const logger = getLogger();
     expect(logger).toBeDefined();
     expect(logger.level).toBe('info');
+  });
+});
+
+/**
+ * Verify the pino output shape end-to-end by intercepting `pino.destination`
+ * with a captured-in-memory Writable. We test the actual emitted JSON
+ * because that is the contract Datadog ingests, not internal helpers.
+ */
+describe('logger pino output', () => {
+  let lines: string[];
+  let destSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    lines = [];
+    const stream = new Writable({
+      write(chunk, _enc, cb) {
+        lines.push(chunk.toString());
+        cb();
+      },
+    });
+    // pino.destination(2) returns a SonicBoom; substituting a Writable
+    // works because pino accepts any Node stream as its destination.
+    destSpy = vi
+      .spyOn(pino, 'destination')
+      .mockReturnValue(stream as unknown as ReturnType<typeof pino.destination>);
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    destSpy.mockRestore();
+  });
+
+  it('emits level as string label, not numeric (Datadog Status Remapper compat)', async () => {
+    const { initLogger } = await import('./logger.js');
+    const logger = initLogger();
+    logger.info({ x: 1 }, 'hello');
+
+    expect(lines.length).toBeGreaterThan(0);
+    const parsed = JSON.parse(lines[lines.length - 1]);
+    expect(parsed.level).toBe('info');
+    expect(typeof parsed.level).toBe('string');
+  });
+
+  it('emits warn and error as their string labels', async () => {
+    const { initLogger } = await import('./logger.js');
+    const logger = initLogger();
+    logger.warn('w');
+    logger.error('e');
+
+    const parsed = lines.map((l) => JSON.parse(l));
+    expect(parsed.find((p) => p.msg === 'w')?.level).toBe('warn');
+    expect(parsed.find((p) => p.msg === 'e')?.level).toBe('error');
+  });
+
+  it('emits trace_sampled:false when no active OpenTelemetry span is set', async () => {
+    // Without an active span, otelMixin must still publish trace_sampled
+    // (as `false`) so Datadog facets work uniformly across requests with
+    // and without traces. Absence of the field would force consumers to
+    // distinguish "missing" from "false" everywhere.
+    const { initLogger } = await import('./logger.js');
+    const logger = initLogger();
+    logger.info('hi');
+
+    const parsed = JSON.parse(lines[lines.length - 1]);
+    expect(parsed.trace_sampled).toBe(false);
+    expect(parsed.trace_id).toBeUndefined();
+    expect(parsed.span_id).toBeUndefined();
+  });
+
+  it('serialises freee-mcp service base fields alongside the level', async () => {
+    // Smoke test: verify base fields (service, version, transport_mode)
+    // still flow through with the new formatter wiring in place.
+    const { initLogger } = await import('./logger.js');
+    const logger = initLogger({ level: 'info', transportMode: 'remote' });
+    logger.info('boot');
+
+    const parsed = JSON.parse(lines[lines.length - 1]);
+    expect(parsed.service).toBeDefined();
+    expect(parsed.transport_mode).toBe('remote');
+    expect(parsed.level).toBe('info');
   });
 });
 
