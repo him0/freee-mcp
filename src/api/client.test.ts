@@ -390,13 +390,14 @@ describe('client', () => {
       );
 
       const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
-      const apiCalls = payload.api_calls as Array<Record<string, unknown>>;
+      const apiCalls = payload.api.calls as Array<Record<string, unknown>>;
       expect(apiCalls).toHaveLength(1);
       expect(apiCalls[0]).toMatchObject({
         method: 'GET',
         path_pattern: '/api/:id/deals/:id',
         status_code: 200,
         error_type: null,
+        query_keys: ['limit'],
       });
       // Query values must not be in the path_pattern.
       expect(JSON.stringify(apiCalls[0])).not.toContain('limit=10');
@@ -421,7 +422,7 @@ describe('client', () => {
       ).rejects.toThrow(/API request failed: 500/);
 
       const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
-      const apiCalls = payload.api_calls as Array<Record<string, unknown>>;
+      const apiCalls = payload.api.calls as Array<Record<string, unknown>>;
       expect(apiCalls).toHaveLength(1);
       expect(apiCalls[0]).toMatchObject({
         method: 'GET',
@@ -453,7 +454,7 @@ describe('client', () => {
         withRequestRecorder(recorder, () => makeApiRequest('GET', '/api/1/users/me')),
       ).rejects.toThrow();
 
-      const apiCalls = recorder.buildPayload({ status: 200, duration_ms: 1 }).api_calls as Array<
+      const apiCalls = recorder.buildPayload({ status: 200, duration_ms: 1 }).api.calls as Array<
         Record<string, unknown>
       >;
       expect(apiCalls[0]).toMatchObject({ status_code: 401, error_type: 'auth_error' });

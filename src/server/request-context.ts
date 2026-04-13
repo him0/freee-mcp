@@ -4,6 +4,11 @@ import type { ErrorChainEntry } from './error-serializer.js';
 /**
  * Canonical log line: tool call sub-event.
  *
+ * Records only "which MCP tool was invoked, in what shape, with what
+ * outcome". The HTTP-level details of any outgoing API request the tool
+ * fired are kept on `ApiCallInfo` (one tool can issue zero or many api
+ * calls), so this struct is intentionally narrow.
+ *
  * Only operational metadata is accepted here. User input (body, query values)
  * MUST NOT be passed — the type intentionally omits any field that could hold
  * user-supplied content, so TypeScript rejects privacy regressions at compile time.
@@ -11,10 +16,6 @@ import type { ErrorChainEntry } from './error-serializer.js';
 export interface ToolCallInfo {
   tool: string;
   service?: string;
-  api_method?: string;
-  api_path_pattern?: string;
-  /** Names only, never values. Enforced by the type and by recorder callers. */
-  query_keys?: string[];
   status: 'success' | 'error';
   duration_ms: number;
 }
@@ -29,6 +30,11 @@ export type ApiCallErrorType =
 
 /**
  * Canonical log line: outgoing HTTP API call sub-event.
+ *
+ * `query_keys` lives here because the query string is an HTTP-level
+ * property of the outgoing request, not of the MCP tool that issued it.
+ * Names only, never values — Datadog operators should not be able to
+ * reconstruct user input from this field.
  */
 export interface ApiCallInfo {
   method: string;
@@ -38,6 +44,8 @@ export interface ApiCallInfo {
   company_id?: string | null;
   user_id?: string | null;
   error_type: ApiCallErrorType | null;
+  /** Names only, never values. Enforced by the type and by recorder callers. */
+  query_keys?: string[];
   /** Upload size (bytes). Not user data; safe to log for debugging file uploads. */
   file_size_bytes?: number;
 }
@@ -76,6 +84,18 @@ export interface RequestRecorderContext {
  * Canonical log line: the complete payload emitted as one JSON log entry
  * per HTTP request at `res.on('finish')`. Consumers (pino, Datadog) see
  * exactly this shape.
+ *
+ * Section layout:
+ * - Top-level scalars: identity (`request_id`, IP, agent, user, session).
+ * - `http`: inbound MCP request properties (status, duration, path).
+ * - `mcp`: MCP-protocol layer events (tool calls, counts).
+ * - `api`: outbound freee/freee-sign HTTP calls (calls + count).
+ * - `errors`: serialized error chains.
+ *
+ * Trace-related fields (`trace_id`, `span_id`, `trace_sampled`) are
+ * intentionally NOT declared here. They are merged into the final pino log
+ * record at runtime by `otelMixin` so the recorder layer stays orthogonal
+ * to the OpenTelemetry layer.
  */
 export interface CanonicalLogPayload {
   request_id: string;
@@ -93,8 +113,10 @@ export interface CanonicalLogPayload {
     tool_calls: ToolCallInfo[];
     tool_call_count: number;
   };
-  api_calls: ApiCallInfo[];
-  api_call_count: number;
+  api: {
+    calls: ApiCallInfo[];
+    call_count: number;
+  };
   errors: ErrorInfo[];
 }
 
@@ -175,8 +197,10 @@ export class RequestRecorder {
         tool_calls: this.toolCalls,
         tool_call_count: this.toolCalls.length,
       },
-      api_calls: this.apiCalls,
-      api_call_count: this.apiCalls.length,
+      api: {
+        calls: this.apiCalls,
+        call_count: this.apiCalls.length,
+      },
       errors: this.errors,
     };
   }

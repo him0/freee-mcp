@@ -55,7 +55,13 @@ afterEach(() => {
 });
 
 describe('generateClientModeTool - privacy', () => {
-  it('captures query keys but never values in the recorder payload', async () => {
+  it('never leaks query values into the recorder payload', async () => {
+    // ToolCallInfo no longer carries query_keys (those live on ApiCallInfo,
+    // populated inside `makeApiRequest`). Here `makeApiRequest` is mocked so
+    // no api_call is recorded — the assertion is therefore strictly about the
+    // tool layer not capturing user-supplied query values. The matching
+    // key-name + value-keep-out coverage for the api layer lives in
+    // `src/api/client.test.ts`.
     const { generateClientModeTool } = await import('./client-mode.js');
     const { RequestRecorder, withRequestRecorder } = await import('../server/request-context.js');
 
@@ -88,14 +94,7 @@ describe('generateClientModeTool - privacy', () => {
     const payload = recorder.buildPayload({ status: 200, duration_ms: 10 });
     const payloadJson = JSON.stringify(payload);
 
-    // Key names are allowed
-    const toolCalls = (payload.mcp as { tool_calls: Array<{ query_keys?: string[] }> }).tool_calls;
-    expect(toolCalls).toHaveLength(1);
-    expect(toolCalls[0].query_keys).toEqual(
-      expect.arrayContaining(['start_issue_date', 'partner_name', 'internal_memo']),
-    );
-
-    // Values must NOT appear anywhere in the payload JSON.
+    // Tool-layer recording must not contain query values.
     expect(payloadJson).not.toContain('2024-01-01');
     expect(payloadJson).not.toContain('Acme Corp');
     expect(payloadJson).not.toContain('SECRET');
@@ -141,41 +140,9 @@ describe('generateClientModeTool - privacy', () => {
     expect(payloadJson).not.toContain('ceo@example.com');
   });
 
-  it('records api_path_pattern via sanitizePath, not raw path', async () => {
-    const { generateClientModeTool } = await import('./client-mode.js');
-    const { RequestRecorder, withRequestRecorder } = await import('../server/request-context.js');
-
-    generateClientModeTool(stubServer);
-    const getHandler = capturedHandlers.get('freee_api_get');
-
-    const recorder = new RequestRecorder({
-      request_id: 'req-path-1',
-      source_ip: '127.0.0.1',
-      method: 'POST',
-      path: '/mcp',
-    });
-
-    await withRequestRecorder(recorder, () =>
-      getHandler?.(
-        {
-          service: 'accounting',
-          path: '/api/1/deals/54321?limit=5',
-        },
-        undefined,
-      ),
-    );
-
-    const toolCalls = (
-      recorder.buildPayload({ status: 200, duration_ms: 1 }).mcp as {
-        tool_calls: Array<{ api_path_pattern?: string }>;
-      }
-    ).tool_calls;
-
-    // The specific IDs are replaced with :id and the query string is stripped.
-    expect(toolCalls[0].api_path_pattern).toBe('/api/:id/deals/:id');
-    expect(toolCalls[0].api_path_pattern).not.toContain('54321');
-    expect(toolCalls[0].api_path_pattern).not.toContain('limit=5');
-  });
+  // Path sanitization coverage moved to `src/api/client.test.ts` —
+  // `path_pattern` now lives on `ApiCallInfo` (which is recorded inside
+  // `makeApiRequest`), and that path is mocked in this test file.
 
   it('records tool_call with error status when validation fails', async () => {
     const schemaLoader = await import('./schema-loader.js');

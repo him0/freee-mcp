@@ -50,6 +50,16 @@ export async function makeApiRequest(
   const recorder = getCurrentRecorder();
   const startTime = Date.now();
   const safePath = sanitizePath(apiPath);
+  // PRIVACY: key names only, never values. Names are stable per endpoint
+  // (`limit`, `type`, etc.), so they are safe to facet on in Datadog.
+  // Skip the allocation entirely when no recorder is installed (CLI mode),
+  // and treat an empty params object as "no keys" so Datadog doesn't index
+  // an empty-array facet.
+  let queryKeys: string[] | undefined;
+  if (recorder && params) {
+    const keys = Object.keys(params);
+    if (keys.length > 0) queryKeys = keys;
+  }
   const userId = tokenContext?.userId ?? 'local';
   const apiUrl = baseUrl || getConfig().freee.apiUrl;
   const [companyId, accessToken] = tokenContext
@@ -120,6 +130,7 @@ export async function makeApiRequest(
       company_id: String(companyId ?? ''),
       user_id: userId,
       error_type: errorType,
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'api_client',
@@ -148,6 +159,7 @@ export async function makeApiRequest(
       company_id: String(companyId ?? ''),
       user_id: userId,
       error_type: 'auth_error',
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'api_client',
@@ -174,6 +186,7 @@ export async function makeApiRequest(
       company_id: String(companyId ?? ''),
       user_id: userId,
       error_type: 'forbidden',
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'api_client',
@@ -195,6 +208,7 @@ export async function makeApiRequest(
       company_id: String(companyId ?? ''),
       user_id: userId,
       error_type: 'http_error',
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'api_client',
@@ -215,6 +229,7 @@ export async function makeApiRequest(
     company_id: String(companyId ?? ''),
     user_id: userId,
     error_type: null as null,
+    query_keys: queryKeys,
   };
 
   if (isBinaryContentType(contentType)) {
@@ -256,6 +271,7 @@ export async function makeApiRequest(
       company_id: String(companyId ?? ''),
       user_id: userId,
       error_type: 'json_parse_error',
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'api_client',

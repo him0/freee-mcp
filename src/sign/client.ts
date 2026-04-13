@@ -18,6 +18,16 @@ export async function makeSignApiRequest(
   const recorder = getCurrentRecorder();
   const startTime = Date.now();
   const safePath = sanitizePath(apiPath);
+  // PRIVACY: key names only, never values. Names are stable per endpoint
+  // (`limit`, `type`, etc.), so they are safe to facet on in Datadog.
+  // Skip the allocation entirely when no recorder is installed (CLI mode),
+  // and treat an empty params object as "no keys" so Datadog doesn't index
+  // an empty-array facet.
+  let queryKeys: string[] | undefined;
+  if (recorder && params) {
+    const keys = Object.keys(params);
+    if (keys.length > 0) queryKeys = keys;
+  }
 
   const accessToken = await getValidSignAccessToken();
 
@@ -60,6 +70,7 @@ export async function makeSignApiRequest(
       status_code: null,
       duration_ms: Date.now() - startTime,
       error_type: errorType,
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'sign_client',
@@ -76,6 +87,7 @@ export async function makeSignApiRequest(
       status_code: statusCode,
       duration_ms: Date.now() - startTime,
       error_type: errorType,
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'sign_client',
@@ -120,6 +132,7 @@ export async function makeSignApiRequest(
       status_code: response.status,
       duration_ms: Date.now() - startTime,
       error_type: null,
+      query_keys: queryKeys,
     });
     return null;
   }
@@ -132,6 +145,7 @@ export async function makeSignApiRequest(
       status_code: response.status,
       duration_ms: Date.now() - startTime,
       error_type: null,
+      query_keys: queryKeys,
     });
     return null;
   }
@@ -146,6 +160,7 @@ export async function makeSignApiRequest(
       status_code: response.status,
       duration_ms: Date.now() - startTime,
       error_type: null,
+      query_keys: queryKeys,
     });
     return parsed;
   } catch {
@@ -158,6 +173,7 @@ export async function makeSignApiRequest(
       status_code: response.status,
       duration_ms: Date.now() - startTime,
       error_type: 'json_parse_error',
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'sign_client',
