@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   RequestRecorder,
+  UNRECORDED_ERROR_NAME,
+  UNRECORDED_ERROR_TYPE,
   getCurrentRecorder,
   withRequestRecorder,
 } from './request-context.js';
@@ -150,6 +152,73 @@ describe('RequestRecorder', () => {
       expect(recorder.flushOnce()).toBe(true);
       expect(recorder.flushOnce()).toBe(false);
       expect(recorder.flushOnce()).toBe(false);
+    });
+  });
+
+  describe('synthesizeFallbackErrorIfMissing', () => {
+    it('synthesizes a placeholder ErrorInfo when errors[] is empty', () => {
+      const recorder = makeRecorder();
+
+      recorder.synthesizeFallbackErrorIfMissing(500);
+
+      const payload = recorder.buildPayload({ status: 500, duration_ms: 1 });
+      expect(payload.errors).toHaveLength(1);
+      expect(payload.errors[0]).toMatchObject({
+        source: 'response',
+        status_code: 500,
+        error_type: UNRECORDED_ERROR_TYPE,
+      });
+      expect(payload.errors[0]?.chain[0]?.name).toBe(UNRECORDED_ERROR_NAME);
+      expect(payload.errors[0]?.chain[0]?.message).toContain('HTTP 500');
+    });
+
+    it('embeds method and path into the synthesized message for Datadog drilldown', () => {
+      const recorder = makeRecorder({ method: 'GET', path: '/authorize' });
+
+      recorder.synthesizeFallbackErrorIfMissing(400);
+
+      const payload = recorder.buildPayload({ status: 400, duration_ms: 1 });
+      const message = payload.errors[0]?.chain[0]?.message ?? '';
+      expect(message).toContain('GET');
+      expect(message).toContain('/authorize');
+      expect(message).toContain('HTTP 400');
+    });
+
+    it('is a no-op when an explicit recordError was already called', () => {
+      const recorder = makeRecorder();
+      recorder.recordError({
+        source: 'redis_unavailable',
+        status_code: 503,
+        error_type: 'redis_unavailable',
+        chain: [{ name: 'RedisUnavailableError', message: 'down' }],
+      });
+
+      recorder.synthesizeFallbackErrorIfMissing(503);
+
+      const payload = recorder.buildPayload({ status: 503, duration_ms: 1 });
+      expect(payload.errors).toHaveLength(1);
+      expect(payload.errors[0]?.source).toBe('redis_unavailable');
+    });
+
+    it('embeds the actual status code into the synthesized message', () => {
+      const recorder = makeRecorder();
+      recorder.synthesizeFallbackErrorIfMissing(401);
+
+      const payload = recorder.buildPayload({ status: 401, duration_ms: 1 });
+      expect(payload.errors[0]?.status_code).toBe(401);
+      expect(payload.errors[0]?.chain[0]?.message).toContain('HTTP 401');
+    });
+
+    it('is idempotent — calling twice produces exactly one synthesized entry', () => {
+      // The middleware's flushOnce() guarantees one call per request, but
+      // this method is public — lock the contract so a future bypass of
+      // the errors.length guard cannot silently double-append.
+      const recorder = makeRecorder();
+      recorder.synthesizeFallbackErrorIfMissing(500);
+      recorder.synthesizeFallbackErrorIfMissing(500);
+
+      const payload = recorder.buildPayload({ status: 500, duration_ms: 1 });
+      expect(payload.errors).toHaveLength(1);
     });
   });
 

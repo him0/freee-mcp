@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { ErrorChainEntry } from './error-serializer.js';
+import { makeErrorChain, type ErrorChainEntry } from './error-serializer.js';
 
 /**
  * Canonical log line: tool call sub-event.
@@ -59,7 +59,13 @@ export type ErrorSource =
   | 'middleware'
   | 'validation'
   | 'redis_unavailable'
-  | 'auth';
+  | 'auth'
+  | 'response';
+
+// Datadog facet: @errors.error_type:unrecorded identifies requests where a
+// middleware bypassed recordError and the fallback safety net fired instead.
+export const UNRECORDED_ERROR_TYPE = 'unrecorded' as const;
+export const UNRECORDED_ERROR_NAME = 'UnrecordedError' as const;
 
 export interface ErrorInfo {
   source: ErrorSource;
@@ -121,17 +127,9 @@ export interface CanonicalLogPayload {
 }
 
 /**
- * RequestRecorder is the single place that buffers all per-request observability
- * data for the duration of one HTTP request. At request end the recorder is
- * flushed as a single "canonical log line" JSON log entry.
- *
- * Design notes:
- * - Stored in an AsyncLocalStorage so every async downstream context (tool
- *   handlers, fetch calls, etc.) can reach it via `getCurrentRecorder()`.
- * - All mutation methods accept typed inputs that intentionally exclude user
- *   input. Callers must construct the input with metadata only.
- * - `flushOnce()` provides idempotency for the `res.on('finish')` /
- *   `res.on('close')` race.
+ * Buffers per-request observability data and flushes it as a single canonical
+ * log line at request end. Stored in AsyncLocalStorage so downstream async
+ * contexts can reach it via `getCurrentRecorder()`.
  */
 export class RequestRecorder {
   private readonly toolCalls: ToolCallInfo[] = [];
@@ -144,11 +142,7 @@ export class RequestRecorder {
     this.context = initial;
   }
 
-  /**
-   * Patch context fields that become known after the recorder was created
-   * (typically `user_id` and `session_id` are only available after the bearer
-   * auth middleware runs).
-   */
+  /** Patch fields available only after bearer auth runs (user_id, session_id). */
   updateContext(patch: Partial<Pick<RequestRecorderContext, 'user_id' | 'session_id'>>): void {
     this.context = { ...this.context, ...patch };
   }
@@ -166,20 +160,31 @@ export class RequestRecorder {
   }
 
   /**
-   * Return true on the first call, false afterwards. Used by the HTTP
-   * middleware to ensure the canonical log line is emitted exactly once
-   * even when both `res.on('finish')` and `res.on('close')` fire.
+   * Safety net for middleware (e.g. MCP SDK bearerAuth) that calls
+   * `res.status().json()` directly, bypassing the Express error handler and
+   * leaving `errors[]` empty. No-op when `errors[]` is already non-empty.
    */
+  synthesizeFallbackErrorIfMissing(status: number): void {
+    if (this.errors.length > 0) return;
+    this.recordError({
+      source: 'response',
+      status_code: status,
+      error_type: UNRECORDED_ERROR_TYPE,
+      chain: makeErrorChain(
+        UNRECORDED_ERROR_NAME,
+        `HTTP ${status} ${this.context.method} ${this.context.path} response emitted without explicit recordError`,
+      ),
+    });
+  }
+
+  /** Returns true on the first call, false afterwards — guards the finish/close race. */
   flushOnce(): boolean {
     if (this.flushed) return false;
     this.flushed = true;
     return true;
   }
 
-  /**
-   * Build the canonical log line payload. Does not emit anything — the
-   * caller is responsible for passing this object to pino.
-   */
+  /** Builds the canonical log payload; caller passes it to pino. */
   buildPayload(http: { status: number; duration_ms: number }): CanonicalLogPayload {
     return {
       request_id: this.context.request_id,
@@ -208,14 +213,7 @@ export class RequestRecorder {
 
 const requestContextStorage = new AsyncLocalStorage<RequestRecorder>();
 
-/**
- * Returns the RequestRecorder associated with the current async context,
- * or `undefined` if called outside any request (CLI mode, server startup,
- * background tasks).
- *
- * Callers must treat this as optional and use the `?.` operator:
- *   getCurrentRecorder()?.recordApiCall({...})
- */
+/** Returns the recorder for the current async context, or `undefined` outside a request. */
 export function getCurrentRecorder(): RequestRecorder | undefined {
   return requestContextStorage.getStore();
 }
@@ -223,11 +221,9 @@ export function getCurrentRecorder(): RequestRecorder | undefined {
 /**
  * Derive `query_keys` for `ApiCallInfo` from a params object.
  *
- * PRIVACY: key names only, never values. Names are stable per endpoint
- * (`limit`, `type`, etc.), so they are safe to facet on in Datadog.
- * Returns `undefined` when no recorder is installed (CLI mode) or when
- * the params object has no keys, so Datadog doesn't index an empty-array
- * facet.
+ * PRIVACY: key names only, never values. Returns `undefined` when no recorder
+ * is installed (CLI mode) or when params has no keys, so Datadog doesn't
+ * index an empty-array facet.
  */
 export function deriveQueryKeys(
   recorder: RequestRecorder | undefined,
@@ -238,11 +234,7 @@ export function deriveQueryKeys(
   return keys.length > 0 ? keys : undefined;
 }
 
-/**
- * Run `fn` with `recorder` installed as the current request recorder.
- * All downstream async operations will see the recorder via
- * `getCurrentRecorder()` for the lifetime of the returned promise.
- */
+/** Runs `fn` with `recorder` as the current request recorder in AsyncLocalStorage. */
 export function withRequestRecorder<T>(recorder: RequestRecorder, fn: () => T): T {
   return requestContextStorage.run(recorder, fn);
 }

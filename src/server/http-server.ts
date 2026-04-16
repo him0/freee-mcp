@@ -127,6 +127,15 @@ export async function startHttpServer(options?: {
   app.use((req: Request, res: Response, next: () => void) => {
     const contentLength = req.headers['content-length'];
     if (contentLength && Number.parseInt(contentLength, 10) > BODY_SIZE_LIMIT) {
+      getCurrentRecorder()?.recordError({
+        source: 'middleware',
+        status_code: 413,
+        error_type: 'payload_too_large',
+        chain: makeErrorChain(
+          'PayloadTooLargeError',
+          'Content-Length exceeds configured body size limit',
+        ),
+      });
       res.status(413).json({ error: 'Payload too large' });
       return;
     }

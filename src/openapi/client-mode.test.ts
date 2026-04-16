@@ -1,15 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-/**
- * Privacy regression tests for the generated freee_api_* tools.
- *
- * The single most important guarantee of the RequestRecorder design is that
- * user-supplied query values and request bodies NEVER leave the process via
- * the canonical log line. The type system already excludes those fields from
- * `ToolCallInfo`, but a reviewer could still accidentally pass them; these
- * runtime tests catch that regression.
- */
+// Privacy regression tests: query values and request bodies must never appear
+// in the canonical log payload emitted by RequestRecorder.
 
 type CapturedHandler = (
   args: Record<string, unknown>,
@@ -94,7 +87,6 @@ describe('generateClientModeTool - privacy', () => {
     const payload = recorder.buildPayload({ status: 200, duration_ms: 10 });
     const payloadJson = JSON.stringify(payload);
 
-    // Tool-layer recording must not contain query values.
     expect(payloadJson).not.toContain('2024-01-01');
     expect(payloadJson).not.toContain('Acme Corp');
     expect(payloadJson).not.toContain('SECRET');
@@ -133,8 +125,6 @@ describe('generateClientModeTool - privacy', () => {
 
     const payloadJson = JSON.stringify(recorder.buildPayload({ status: 200, duration_ms: 10 }));
 
-    // No body field in ToolCallInfo means body is not even representable; assert the
-    // actual values are absent so a future refactor that adds `args.body` fails loudly.
     expect(payloadJson).not.toContain('99999999');
     expect(payloadJson).not.toContain('confidential');
     expect(payloadJson).not.toContain('ceo@example.com');

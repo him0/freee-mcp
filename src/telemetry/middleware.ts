@@ -137,6 +137,12 @@ export function createTracingMiddleware(): (
       const durationMs = Math.round(performance.now() - startTime);
       const status = res.statusCode;
 
+      // Safety net for the canonical-log "1 line = full debug context"
+      // promise. See RequestRecorder.synthesizeFallbackErrorIfMissing.
+      if (status >= 400) {
+        recorder.synthesizeFallbackErrorIfMissing(status);
+      }
+
       const payload = recorder.buildPayload({ status, duration_ms: durationMs });
       const message = messageFor(status);
       const level = levelFor(status);

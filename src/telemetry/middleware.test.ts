@@ -356,6 +356,96 @@ describe('createTracingMiddleware - canonical log line', () => {
     expect(logWarn).toHaveBeenCalledTimes(1);
   });
 
+  it('synthesizes a fallback errors[0] for 5xx when no recordError was called', async () => {
+    const { UNRECORDED_ERROR_TYPE } = await import('../server/request-context.js');
+    const { logError, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(500).json({ error: 'opaque' });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp');
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logError.mock.calls[0] as [Record<string, unknown>];
+    const errors = payload.errors as Array<Record<string, unknown>>;
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatchObject({
+      source: 'response',
+      status_code: 500,
+      error_type: UNRECORDED_ERROR_TYPE,
+    });
+  });
+
+  it('synthesizes a fallback errors[0] for 4xx as well, not only 5xx', async () => {
+    const { UNRECORDED_ERROR_TYPE } = await import('../server/request-context.js');
+    const { logWarn, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(401).json({ error: 'unauthorized' });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp');
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logWarn.mock.calls[0] as [Record<string, unknown>];
+    const errors = payload.errors as Array<Record<string, unknown>>;
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatchObject({
+      source: 'response',
+      status_code: 401,
+      error_type: UNRECORDED_ERROR_TYPE,
+    });
+  });
+
+  it('does NOT synthesize a fallback when an explicit recordError was already called', async () => {
+    type Recorder = import('../server/request-context.js').RequestRecorder;
+    const { logError, app } = await setupAppWithLoggerSpy((req, res) => {
+      const recorder = (req as unknown as { recorder?: Recorder }).recorder;
+      recorder?.recordError({
+        source: 'redis_unavailable',
+        status_code: 503,
+        error_type: 'redis_unavailable',
+        chain: [{ name: 'RedisUnavailableError', message: 'down' }],
+      });
+      res.status(503).json({ error: 'service_unavailable' });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp');
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logError.mock.calls[0] as [Record<string, unknown>];
+    const errors = payload.errors as Array<Record<string, unknown>>;
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.source).toBe('redis_unavailable');
+  });
+
+  it('does NOT synthesize a fallback for 2xx responses', async () => {
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp');
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logInfo.mock.calls[0] as [Record<string, unknown>];
+    expect(payload.errors).toEqual([]);
+  });
+
+  it('does NOT synthesize a fallback for 3xx redirects', async () => {
+    // Locks the gate at status >= 400 so OAuth redirects never get flagged.
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(302).set('Location', '/somewhere').end();
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp');
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logInfo.mock.calls[0] as [Record<string, unknown>];
+    expect(payload.errors).toEqual([]);
+  });
+
   it('flushes only once even if both finish and close events fire', async () => {
     const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
       res.status(200).json({ ok: true });
