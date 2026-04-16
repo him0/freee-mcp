@@ -4,7 +4,7 @@ import { getConfig } from '../config.js';
 import { FETCH_TIMEOUT_API_MS } from '../constants.js';
 import { serializeErrorChain } from '../server/error-serializer.js';
 import { sanitizePath } from '../server/logger.js';
-import { getCurrentRecorder } from '../server/request-context.js';
+import { deriveQueryKeys, getCurrentRecorder } from '../server/request-context.js';
 import { getUserAgent } from '../server/user-agent.js';
 import { type TokenContext, resolveCompanyId } from '../storage/context.js';
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
@@ -50,16 +50,7 @@ export async function makeApiRequest(
   const recorder = getCurrentRecorder();
   const startTime = Date.now();
   const safePath = sanitizePath(apiPath);
-  // PRIVACY: key names only, never values. Names are stable per endpoint
-  // (`limit`, `type`, etc.), so they are safe to facet on in Datadog.
-  // Skip the allocation entirely when no recorder is installed (CLI mode),
-  // and treat an empty params object as "no keys" so Datadog doesn't index
-  // an empty-array facet.
-  let queryKeys: string[] | undefined;
-  if (recorder && params) {
-    const keys = Object.keys(params);
-    if (keys.length > 0) queryKeys = keys;
-  }
+  const queryKeys = deriveQueryKeys(recorder, params);
   const userId = tokenContext?.userId ?? 'local';
   const apiUrl = baseUrl || getConfig().freee.apiUrl;
   const [companyId, accessToken] = tokenContext

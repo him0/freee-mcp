@@ -3,7 +3,7 @@ import { FETCH_TIMEOUT_API_MS } from '../constants.js';
 import { serializeErrorChain } from '../server/error-serializer.js';
 import { sanitizePath } from '../server/logger.js';
 import type { ApiCallErrorType } from '../server/request-context.js';
-import { getCurrentRecorder } from '../server/request-context.js';
+import { deriveQueryKeys, getCurrentRecorder } from '../server/request-context.js';
 import { getUserAgent } from '../server/user-agent.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
 import { SIGN_API_URL } from './config.js';
@@ -18,16 +18,7 @@ export async function makeSignApiRequest(
   const recorder = getCurrentRecorder();
   const startTime = Date.now();
   const safePath = sanitizePath(apiPath);
-  // PRIVACY: key names only, never values. Names are stable per endpoint
-  // (`limit`, `type`, etc.), so they are safe to facet on in Datadog.
-  // Skip the allocation entirely when no recorder is installed (CLI mode),
-  // and treat an empty params object as "no keys" so Datadog doesn't index
-  // an empty-array facet.
-  let queryKeys: string[] | undefined;
-  if (recorder && params) {
-    const keys = Object.keys(params);
-    if (keys.length > 0) queryKeys = keys;
-  }
+  const queryKeys = deriveQueryKeys(recorder, params);
 
   const accessToken = await getValidSignAccessToken();
 

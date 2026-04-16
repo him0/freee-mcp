@@ -221,6 +221,24 @@ export function getCurrentRecorder(): RequestRecorder | undefined {
 }
 
 /**
+ * Derive `query_keys` for `ApiCallInfo` from a params object.
+ *
+ * PRIVACY: key names only, never values. Names are stable per endpoint
+ * (`limit`, `type`, etc.), so they are safe to facet on in Datadog.
+ * Returns `undefined` when no recorder is installed (CLI mode) or when
+ * the params object has no keys, so Datadog doesn't index an empty-array
+ * facet.
+ */
+export function deriveQueryKeys(
+  recorder: RequestRecorder | undefined,
+  params: Record<string, unknown> | undefined,
+): string[] | undefined {
+  if (!recorder || !params) return undefined;
+  const keys = Object.keys(params);
+  return keys.length > 0 ? keys : undefined;
+}
+
+/**
  * Run `fn` with `recorder` installed as the current request recorder.
  * All downstream async operations will see the recorder via
  * `getCurrentRecorder()` for the lifetime of the returned promise.
