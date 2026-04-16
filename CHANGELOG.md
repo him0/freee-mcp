@@ -1,5 +1,46 @@
 # freee-mcp
 
+## 0.24.0
+
+### Minor Changes
+
+- [`186ffec`](https://github.com/freee/freee-mcp/commit/186ffecf7b0a740d9d2fbf46f9e6088d57a31dff): Remote モードの canonical log line を Datadog の status マッピングと整合するよう改善。 ([#390](https://github.com/freee/freee-mcp/pull/390))
+
+  - HTTP status に応じて pino の log level を `info` / `warn` / `error` に分岐 (5xx → error, 4xx → warn, それ以外 → info)。401/403/404/422 もすべて warn に集約。
+  - `formatters.level` で level を文字列ラベル (`"info"` / `"warn"` / `"error"`) として出力するよう変更。Datadog の Status Remapper が追加 pipeline 設定なしで `service:freee-mcp* status:error` クエリを解釈できるようになる。
+  - canonical log の `msg` フィールドを HTTP status に応じた動的文字列 (`mcp request ok` / `mcp request client_error` / `mcp request server_error`) に変更。Datadog UI 上での目視判別が容易になる。
+  - `makeErrorChain` を `new Error` + `Error.captureStackTrace` ベースに再実装。validation / routing 由来の synthetic error にも stack trace が付与され、Datadog から呼び出し位置を直接追跡可能。プライバシー scrub は従来通り適用。
+  - pino otelMixin に `trace_sampled` フィールドを追加。アクティブな span がない場合も `trace_sampled: false` として明示的に出力するため、Datadog 上で「sampler が sampled と判定したログのみ」を facet で抽出できる(エクスポーター段階の drop は含まない)。
+
+- [`06c5d06`](https://github.com/freee/freee-mcp/commit/06c5d060b81155fadc14668d58b004424d95cb9d): Remote モードの canonical log payload を整理し、tool/method 別の OTel sampler を導入。 ([#391](https://github.com/freee/freee-mcp/pull/391))
+
+  - `CanonicalLogPayload` を `http` / `mcp` / `api` の 3 セクション構成に整理。`api_calls` / `api_call_count` を `api.calls` / `api.call_count` に移動し、tool 層と api 層で重複していた `api_method` / `api_path_pattern` / `query_keys` を `api.calls[]` 側に集約。
+  - `query_keys` (privacy: 値ではなくキー名のみ) を `makeApiRequest` / `makeSignApiRequest` 内部で `params` から導出し、5xx / 4xx / json_parse_error / 成功すべてのパスに付与。tool 層からは消えたので、ToolCallInfo は意図として「どの MCP ツールが呼ばれたか」だけを保持する純粋メタデータとなる。
+  - 新しい head-based custom sampler `RuleBasedSampler` を追加。環境変数 `OTEL_TRACES_SAMPLER_RULES` で `tool=freee_api_get:0.1,method=POST:1.0,http=GET /mcp:0.2,default=0.5` のような DSL を定義し、tool / HTTP method / inbound HTTP route 別に異なる ratio をかけられる。`OTEL_TRACES_SAMPLER_RULES` 未設定時は従来通り `OTEL_TRACES_SAMPLER_ARG` (単一 ratio) にフォールバック。DSL の構文エラーは throw せず warn ログ + skip で degrade するため、起動失敗の懸念なし。
+
+  BREAKING (Datadog ログ検索のみ): `@api_calls.*` / `@api_call_count` / `@mcp.tool_calls.api_method` / `@mcp.tool_calls.api_path_pattern` / `@mcp.tool_calls.query_keys` を facet している既存ダッシュボードは移行が必要。新しいパスは `@api.calls.*` / `@api.call_count` / `@api.calls.method` / `@api.calls.path_pattern` / `@api.calls.query_keys`。
+
+### Patch Changes
+
+- [`40dd52c`](https://github.com/freee/freee-mcp/commit/40dd52c9a54a81da62cd5888f9ccdd3f73a2b8ea): Canonical log の `errors[]` が 4xx/5xx 応答で常に空になる hole を修正。 ([#392](https://github.com/freee/freee-mcp/pull/392))
+  `res.status().json()` で応答を直接送出して Express エラーハンドラを bypass
+  する third-party middleware のケースで `errors[]` が空のまま emit されて
+  いた問題を、`flush()` の universal fallback で補完。`source: "response"`,
+  `error_type: "unrecorded"` の placeholder ErrorInfo を合成し、Datadog
+  operator が `status:error` で filter した後でも最低限のドリルダウン情報を
+  得られるようにした。
+
+  Fallback の `chain[0].message` には `HTTP <status> <method> <path>` を
+  埋め込み、Datadog の scrubbing を通過する状態で route の特定が可能に
+  なるようにした。
+
+  body-size limit middleware (`http-server.ts`) は我々のコードなので
+  fallback 経由ではなく explicit `recordError({source: "middleware",
+error_type: "payload_too_large"})` を直接呼ぶように更新。
+
+  明示的な `recordError` が呼ばれているケースでは fallback は no-op となる
+  ため、既存の挙動には影響しない。
+
 ## 0.23.0
 
 ### Minor Changes
