@@ -137,27 +137,14 @@ describe('makeErrorChain', () => {
   });
 
   it('produces a populated stack so synthetic errors are debuggable', () => {
-    // Pre-fix this entry was a literal `{name, message}` with no `stack` —
-    // operators staring at a 400 in Datadog had nothing to grep for. The
-    // new implementation routes through `serializeErrorChain` which fills
-    // `stack` from a real Error object.
     const chain = makeErrorChain('RoutingError', 'unknown session id');
     expect(typeof chain[0].stack).toBe('string');
     expect((chain[0].stack as string).length).toBeGreaterThan(0);
   });
 
-  // Bun and Node both expose `Error.captureStackTrace`. The runtime guard
-  // here mirrors the production code so this assertion only runs where
-  // captureStackTrace exists; on hypothetical non-V8 runtimes the helper
-  // frame may legitimately remain in the stack and the production code
-  // documents that as an accepted fallback.
   it.skipIf(typeof Error.captureStackTrace !== 'function')(
     'elides its own helper frame from the stack via captureStackTrace',
     () => {
-      // The `Error.captureStackTrace(err, makeErrorChain)` second argument
-      // tells V8/Bun to drop everything from `makeErrorChain` upwards. The
-      // resulting top frame must therefore be the *caller* of makeErrorChain
-      // (in this test: the test fn), never makeErrorChain itself.
       function callerFrame(): ReturnType<typeof makeErrorChain> {
         return makeErrorChain('SyntheticError', 'demo');
       }
@@ -168,9 +155,6 @@ describe('makeErrorChain', () => {
   );
 
   it('still scrubs sensitive identifiers from message and stack', () => {
-    // Regression guard: the rewrite must not bypass the privacy protection
-    // serializeErrorChain applies. Numeric IDs (6+ digits) and emails are
-    // both masked.
     const chain = makeErrorChain('PrivacyTest', 'company_id 87654321 contact ops@example.com');
     expect(chain[0].message).toContain('[REDACTED_ID]');
     expect(chain[0].message).toContain('[REDACTED_EMAIL]');

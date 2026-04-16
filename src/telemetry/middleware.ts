@@ -21,16 +21,8 @@ const MAX_USER_AGENT_LENGTH = 256;
 export type CanonicalLogLevel = 'info' | 'warn' | 'error';
 
 /**
- * Map an HTTP response status code to the pino log level used for the
- * canonical log line of that request.
- *
- * - 5xx → `error` so Datadog's default Status Remapper raises severity and
- *   on-call alerts can fire on `status:error`.
- * - 4xx → `warn` including 401/403/404/422. All client errors become
- *   warnings per ECS / Datadog convention — the server is healthy but the
- *   caller misused it, which is still an observability signal worth
- *   tracking in dashboards.
- * - Everything else → `info`.
+ * 4xx (incl. 401/403/404/422) → `warn`, 5xx → `error`. Per ECS/Datadog
+ * convention: client misuse is a warning, server fault is an error.
  */
 export function levelFor(status: number): CanonicalLogLevel {
   if (status >= 500) return 'error';
@@ -38,19 +30,10 @@ export function levelFor(status: number): CanonicalLogLevel {
   return 'info';
 }
 
-const MSG_OK = 'mcp request ok';
-const MSG_CLIENT_ERROR = 'mcp request client_error';
-const MSG_SERVER_ERROR = 'mcp request server_error';
-
-/**
- * Return the `msg` string attached to the canonical log line for a given
- * HTTP status. A tiny number of distinct values keeps Datadog facet
- * cardinality low while still letting engineers eyeball logs at a glance.
- */
 export function messageFor(status: number): string {
-  if (status >= 500) return MSG_SERVER_ERROR;
-  if (status >= 400) return MSG_CLIENT_ERROR;
-  return MSG_OK;
+  if (status >= 500) return 'mcp request server_error';
+  if (status >= 400) return 'mcp request client_error';
+  return 'mcp request ok';
 }
 
 /**
@@ -156,12 +139,9 @@ export function createTracingMiddleware(): (
 
       const payload = recorder.buildPayload({ status, duration_ms: durationMs });
       const message = messageFor(status);
-      // Explicit dispatch (rather than `getLogger()[level](...)`) keeps the
-      // call sites consistent with the rest of the codebase and avoids
-      // bracket-access against pino's `BaseLogger` interface, which has no
-      // index signature.
+      const level = levelFor(status);
       const logger = getLogger();
-      switch (levelFor(status)) {
+      switch (level) {
         case 'error':
           logger.error(payload, message);
           break;
@@ -177,7 +157,7 @@ export function createTracingMiddleware(): (
         const attrs = { method: req.method, path: req.path, status: String(status) };
         otelSpan.setAttribute('http.response.status_code', status);
         getHttpRequestDuration().record(durationMs / 1000, attrs);
-        if (status >= 500) {
+        if (level === 'error') {
           otelSpan.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${status}` });
           getHttpRequestErrorCount().add(1, attrs);
         }

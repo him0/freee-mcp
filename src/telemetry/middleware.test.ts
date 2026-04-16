@@ -242,9 +242,6 @@ describe('createTracingMiddleware - canonical log line', () => {
     logError: ReturnType<typeof vi.fn>;
     app: express.Express;
   }> {
-    // Middleware dispatches `getLogger()[level](payload, msg)` based on HTTP
-    // status (see `levelFor`). Spy on all three levels so individual tests
-    // can assert which one actually fired.
     const logInfo = vi.fn();
     const logWarn = vi.fn();
     const logError = vi.fn();
@@ -313,10 +310,6 @@ describe('createTracingMiddleware - canonical log line', () => {
   });
 
   it('emits canonical log at error level for 5xx with server_error message', async () => {
-    // `levelFor(500)` dispatches the canonical log line through
-    // `logger.error()` (numeric pino level 50 → Datadog `status:error`),
-    // not `logger.info()`. This assertion locks that mapping in place so a
-    // regression would immediately break the Datadog error dashboard.
     const { logInfo, logWarn, logError, app } = await setupAppWithLoggerSpy((_req, res) => {
       res.status(500).json({ error: 'boom' });
     });
@@ -334,8 +327,6 @@ describe('createTracingMiddleware - canonical log line', () => {
   });
 
   it('emits canonical log at warn level for 4xx with client_error message', async () => {
-    // 4xx (400/401/403/404/422) all map to `warn` per ECS/Datadog
-    // convention — server is healthy, client misused it.
     const { logInfo, logWarn, logError, app } = await setupAppWithLoggerSpy((_req, res) => {
       res.status(400).json({ error: 'invalid request' });
     });
@@ -352,10 +343,7 @@ describe('createTracingMiddleware - canonical log line', () => {
     expect((payload as { http: { status: number } }).http.status).toBe(400);
   });
 
-  it('also maps 404 to warn (regression: previously emitted as info)', async () => {
-    // 404 is especially important because both upstream freee API "not
-    // found" responses and our own synthetic routing errors look identical
-    // in the canonical log. Both must show up on a `status:warn` filter.
+  it('maps 404 to warn (covers both upstream and synthetic routing not-found)', async () => {
     const { logInfo, logWarn, logError, app } = await setupAppWithLoggerSpy((_req, res) => {
       res.status(404).json({ error: 'not found' });
     });
@@ -612,13 +600,6 @@ describe('normalizeUserAgent', () => {
   });
 });
 
-/**
- * Unit-level tests for the HTTP-status → pino-level and msg helpers. The
- * end-to-end tests above already cover the happy path through Express;
- * these exercise the boundary values and every 4xx code we care about in a
- * single-line call each so a broken mapping fails loudly without requiring
- * a real server.
- */
 describe('levelFor', () => {
   it('maps 2xx and 3xx to info', async () => {
     const { levelFor } = await import('./middleware.js');

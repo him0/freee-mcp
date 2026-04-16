@@ -44,11 +44,6 @@ describe('logger', () => {
   });
 });
 
-/**
- * Verify the pino output shape end-to-end by intercepting `pino.destination`
- * with a captured-in-memory Writable. We test the actual emitted JSON
- * because that is the contract Datadog ingests, not internal helpers.
- */
 describe('logger pino output', () => {
   let lines: string[];
   let destSpy: ReturnType<typeof vi.spyOn>;
@@ -61,8 +56,6 @@ describe('logger pino output', () => {
         cb();
       },
     });
-    // pino.destination(2) returns a SonicBoom; substituting a Writable
-    // works because pino accepts any Node stream as its destination.
     destSpy = vi
       .spyOn(pino, 'destination')
       .mockReturnValue(stream as unknown as ReturnType<typeof pino.destination>);
@@ -96,10 +89,8 @@ describe('logger pino output', () => {
   });
 
   it('emits trace_sampled:false when no active OpenTelemetry span is set', async () => {
-    // Without an active span, otelMixin must still publish trace_sampled
-    // (as `false`) so Datadog facets work uniformly across requests with
-    // and without traces. Absence of the field would force consumers to
-    // distinguish "missing" from "false" everywhere.
+    // Always present (even as false) so Datadog facets don't have to
+    // distinguish "missing" from "false".
     const { initLogger } = await import('./logger.js');
     const logger = initLogger();
     logger.info('hi');
@@ -111,8 +102,6 @@ describe('logger pino output', () => {
   });
 
   it('serialises freee-mcp service base fields alongside the level', async () => {
-    // Smoke test: verify base fields (service, version, transport_mode)
-    // still flow through with the new formatter wiring in place.
     const { initLogger } = await import('./logger.js');
     const logger = initLogger({ level: 'info', transportMode: 'remote' });
     logger.info('boot');
