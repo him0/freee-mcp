@@ -38,27 +38,13 @@ export function scrubErrorMessage(input: string): string {
 
 /**
  * Build a single-entry error chain for synthetic errors (validation failures,
- * routing 404s) that don't have an actual thrown Error object.
- *
- * Instantiates a real `Error` so the `stack` property reflects the call site.
- * `captureStackTrace(err, makeErrorChain)` elides this helper from the stack
- * frames, so the top frame becomes the caller (e.g., the validation branch in
- * client-mode.ts). Routing the result through `serializeErrorChain` keeps the
- * scrub + shape identical to real thrown errors.
- *
- * Intentionally hard-coded to `maxDepth: 1` — synthetic errors are
- * single-event by definition, with no `Error.cause` chain to walk. If a
- * caller ever needs cause-chain support, they should construct the wrapped
- * `Error` themselves and pass it to `serializeErrorChain` directly rather
- * than reusing this helper.
+ * routing 404s) that don't have an actual thrown Error object. Routes through
+ * `serializeErrorChain` so the result gets the same scrub + shape as a real
+ * thrown error, and a stack rooted at the caller (this helper frame elided).
  */
 export function makeErrorChain(name: string, message: string): ErrorChainEntry[] {
   const err = new Error(message);
   err.name = name;
-  // V8-only API; Bun/JSC also expose it but the guard keeps this portable.
-  // On runtimes without it, the built-in `new Error().stack` is used as-is
-  // (may include this helper frame at the top — still strictly better than
-  // the previous no-stack behavior).
   if (typeof Error.captureStackTrace === 'function') {
     Error.captureStackTrace(err, makeErrorChain);
   }

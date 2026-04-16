@@ -98,27 +98,14 @@ const REDACT_OPTIONS: pino.redactOptions = {
 };
 
 /**
- * Emit `level` as a lowercase string ('info' | 'warn' | 'error') instead of
- * pino's default numeric form (30 | 40 | 50).
- *
- * Rationale: Datadog's default Status Remapper recognises string levels out
- * of the box, so `service:freee-mcp* status:error` queries work without
- * enabling the pino integration pipeline on the collector side. Pino's
- * internal level filtering (LOG_LEVEL threshold, child loggers) still
- * operates on the numeric value — formatters only affect output
- * serialization.
+ * Emit `level` as a lowercase string label so Datadog's default Status
+ * Remapper works without custom pipeline config. Pino's threshold filtering
+ * still uses the numeric level internally.
  */
 const LEVEL_FORMATTER: NonNullable<pino.LoggerOptions['formatters']>['level'] = (label) => ({
   level: label,
 });
 
-/**
- * Single source of truth for pino options. Both eager (`initLogger`) and
- * lazy (`getLogger`) construction paths funnel through here so that adding
- * a new field — e.g. another formatter or redact path — only touches one
- * place. Drift between the two paths previously had to be caught by code
- * review.
- */
 function buildBaseOptions(level: string, transportMode: 'stdio' | 'remote'): pino.LoggerOptions {
   return {
     level,
