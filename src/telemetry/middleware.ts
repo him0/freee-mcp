@@ -18,6 +18,24 @@ import { getHttpRequestDuration, getHttpRequestErrorCount } from './metrics.js';
  */
 const MAX_USER_AGENT_LENGTH = 256;
 
+export type CanonicalLogLevel = 'info' | 'warn' | 'error';
+
+/**
+ * 4xx (incl. 401/403/404/422) → `warn`, 5xx → `error`. Per ECS/Datadog
+ * convention: client misuse is a warning, server fault is an error.
+ */
+export function levelFor(status: number): CanonicalLogLevel {
+  if (status >= 500) return 'error';
+  if (status >= 400) return 'warn';
+  return 'info';
+}
+
+export function messageFor(status: number): string {
+  if (status >= 500) return 'mcp request server_error';
+  if (status >= 400) return 'mcp request client_error';
+  return 'mcp request ok';
+}
+
 /**
  * Normalize and scrub the inbound `User-Agent` header before storing it in
  * the canonical log line.
@@ -120,13 +138,26 @@ export function createTracingMiddleware(): (
       const status = res.statusCode;
 
       const payload = recorder.buildPayload({ status, duration_ms: durationMs });
-      getLogger().info(payload, 'mcp request completed');
+      const message = messageFor(status);
+      const level = levelFor(status);
+      const logger = getLogger();
+      switch (level) {
+        case 'error':
+          logger.error(payload, message);
+          break;
+        case 'warn':
+          logger.warn(payload, message);
+          break;
+        default:
+          logger.info(payload, message);
+          break;
+      }
 
       if (otelSpan) {
         const attrs = { method: req.method, path: req.path, status: String(status) };
         otelSpan.setAttribute('http.response.status_code', status);
         getHttpRequestDuration().record(durationMs / 1000, attrs);
-        if (status >= 500) {
+        if (level === 'error') {
           otelSpan.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${status}` });
           getHttpRequestErrorCount().add(1, attrs);
         }

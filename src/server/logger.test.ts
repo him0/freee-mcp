@@ -1,4 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Writable } from 'node:stream';
+import pino from 'pino';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('logger', () => {
   afterEach(() => {
@@ -39,6 +41,75 @@ describe('logger', () => {
     const logger = getLogger();
     expect(logger).toBeDefined();
     expect(logger.level).toBe('info');
+  });
+});
+
+describe('logger pino output', () => {
+  let lines: string[];
+  let destSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    lines = [];
+    const stream = new Writable({
+      write(chunk, _enc, cb) {
+        lines.push(chunk.toString());
+        cb();
+      },
+    });
+    destSpy = vi
+      .spyOn(pino, 'destination')
+      .mockReturnValue(stream as unknown as ReturnType<typeof pino.destination>);
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    destSpy.mockRestore();
+  });
+
+  it('emits level as string label, not numeric (Datadog Status Remapper compat)', async () => {
+    const { initLogger } = await import('./logger.js');
+    const logger = initLogger();
+    logger.info({ x: 1 }, 'hello');
+
+    expect(lines.length).toBeGreaterThan(0);
+    const parsed = JSON.parse(lines[lines.length - 1]);
+    expect(parsed.level).toBe('info');
+    expect(typeof parsed.level).toBe('string');
+  });
+
+  it('emits warn and error as their string labels', async () => {
+    const { initLogger } = await import('./logger.js');
+    const logger = initLogger();
+    logger.warn('w');
+    logger.error('e');
+
+    const parsed = lines.map((l) => JSON.parse(l));
+    expect(parsed.find((p) => p.msg === 'w')?.level).toBe('warn');
+    expect(parsed.find((p) => p.msg === 'e')?.level).toBe('error');
+  });
+
+  it('emits trace_sampled:false when no active OpenTelemetry span is set', async () => {
+    // Always present (even as false) so Datadog facets don't have to
+    // distinguish "missing" from "false".
+    const { initLogger } = await import('./logger.js');
+    const logger = initLogger();
+    logger.info('hi');
+
+    const parsed = JSON.parse(lines[lines.length - 1]);
+    expect(parsed.trace_sampled).toBe(false);
+    expect(parsed.trace_id).toBeUndefined();
+    expect(parsed.span_id).toBeUndefined();
+  });
+
+  it('serialises freee-mcp service base fields alongside the level', async () => {
+    const { initLogger } = await import('./logger.js');
+    const logger = initLogger({ level: 'info', transportMode: 'remote' });
+    logger.info('boot');
+
+    const parsed = JSON.parse(lines[lines.length - 1]);
+    expect(parsed.service).toBeDefined();
+    expect(parsed.transport_mode).toBe('remote');
+    expect(parsed.level).toBe('info');
   });
 });
 

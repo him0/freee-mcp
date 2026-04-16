@@ -38,12 +38,17 @@ export function scrubErrorMessage(input: string): string {
 
 /**
  * Build a single-entry error chain for synthetic errors (validation failures,
- * routing 404s) that don't have an actual thrown Error object. The `message`
- * is scrubbed so callers cannot accidentally bypass the privacy protection
- * that `serializeErrorChain()` provides for real thrown errors.
+ * routing 404s) that don't have an actual thrown Error object. Routes through
+ * `serializeErrorChain` so the result gets the same scrub + shape as a real
+ * thrown error, and a stack rooted at the caller (this helper frame elided).
  */
 export function makeErrorChain(name: string, message: string): ErrorChainEntry[] {
-  return [{ name, message: scrubErrorMessage(message) }];
+  const err = new Error(message);
+  err.name = name;
+  if (typeof Error.captureStackTrace === 'function') {
+    Error.captureStackTrace(err, makeErrorChain);
+  }
+  return serializeErrorChain(err, 1);
 }
 
 /**

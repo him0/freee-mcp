@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scrubErrorMessage, serializeErrorChain } from './error-serializer.js';
+import { makeErrorChain, scrubErrorMessage, serializeErrorChain } from './error-serializer.js';
 
 describe('scrubErrorMessage', () => {
   it('masks 6+ digit numeric IDs', () => {
@@ -125,5 +125,40 @@ describe('serializeErrorChain', () => {
     err.code = 'ENOENT';
     const chain = serializeErrorChain(err);
     expect(chain[0].code).toBe('ENOENT');
+  });
+});
+
+describe('makeErrorChain', () => {
+  it('preserves the supplied name and message', () => {
+    const chain = makeErrorChain('ValidationError', 'path /foo not found in schema');
+    expect(chain).toHaveLength(1);
+    expect(chain[0].name).toBe('ValidationError');
+    expect(chain[0].message).toBe('path /foo not found in schema');
+  });
+
+  it('produces a populated stack so synthetic errors are debuggable', () => {
+    const chain = makeErrorChain('RoutingError', 'unknown session id');
+    expect(typeof chain[0].stack).toBe('string');
+    expect((chain[0].stack as string).length).toBeGreaterThan(0);
+  });
+
+  it.skipIf(typeof Error.captureStackTrace !== 'function')(
+    'elides its own helper frame from the stack via captureStackTrace',
+    () => {
+      function callerFrame(): ReturnType<typeof makeErrorChain> {
+        return makeErrorChain('SyntheticError', 'demo');
+      }
+      const chain = callerFrame();
+      const stack = chain[0].stack ?? '';
+      expect(stack).not.toMatch(/at makeErrorChain/);
+    },
+  );
+
+  it('still scrubs sensitive identifiers from message and stack', () => {
+    const chain = makeErrorChain('PrivacyTest', 'company_id 87654321 contact ops@example.com');
+    expect(chain[0].message).toContain('[REDACTED_ID]');
+    expect(chain[0].message).toContain('[REDACTED_EMAIL]');
+    expect(chain[0].message).not.toContain('87654321');
+    expect(chain[0].message).not.toContain('ops@example.com');
   });
 });
