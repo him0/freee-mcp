@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { ErrorChainEntry } from './error-serializer.js';
+import { makeErrorChain, type ErrorChainEntry } from './error-serializer.js';
 
 /**
  * Canonical log line: tool call sub-event.
@@ -59,7 +59,18 @@ export type ErrorSource =
   | 'middleware'
   | 'validation'
   | 'redis_unavailable'
-  | 'auth';
+  | 'auth'
+  | 'response';
+
+/**
+ * Marker values for the fallback ErrorInfo synthesized by
+ * `RequestRecorder.synthesizeFallbackErrorIfMissing`. Exported so dashboards,
+ * alerting code, and tests can reference the same symbol — Datadog operators
+ * filter on `@errors.error_type:unrecorded` to find canonical logs that hit
+ * the universal safety net (i.e. some middleware bypassed `recordError`).
+ */
+export const UNRECORDED_ERROR_TYPE = 'unrecorded' as const;
+export const UNRECORDED_ERROR_NAME = 'UnrecordedError' as const;
 
 export interface ErrorInfo {
   source: ErrorSource;
@@ -163,6 +174,37 @@ export class RequestRecorder {
 
   recordError(info: Omit<ErrorInfo, 'timestamp'>): void {
     this.errors.push({ ...info, timestamp: Date.now() });
+  }
+
+  /**
+   * Synthesize a placeholder ErrorInfo when no explicit `recordError` was
+   * called for a 4xx/5xx response. Universal safety net for any middleware
+   * that responds without going through Express's error handler (and so
+   * never gives our handler a chance to call `recordError`).
+   *
+   * No-op if `errors[]` is already non-empty — explicit recording wins,
+   * preserving the more specific source/error_type that handlers know about.
+   *
+   * Why this exists: the canonical log promise is "1 line = full debug
+   * context". Without this, a Datadog operator who filters `status:error`
+   * sees the row but cannot drill down to know what went wrong.
+   *
+   * `status_code` here is the MCP server's outbound HTTP status (i.e.
+   * `res.statusCode`), distinct from `api_calls[].status_code` which
+   * records freee API responses to us. Datadog facets that overload these
+   * across both directions need to disambiguate via `errors[].source`.
+   */
+  synthesizeFallbackErrorIfMissing(status: number): void {
+    if (this.errors.length > 0) return;
+    this.recordError({
+      source: 'response',
+      status_code: status,
+      error_type: UNRECORDED_ERROR_TYPE,
+      chain: makeErrorChain(
+        UNRECORDED_ERROR_NAME,
+        `HTTP ${status} response emitted without explicit recordError`,
+      ),
+    });
   }
 
   /**
