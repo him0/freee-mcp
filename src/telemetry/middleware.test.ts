@@ -303,8 +303,7 @@ describe('createTracingMiddleware - canonical log line', () => {
         duration_ms: expect.any(Number),
       },
       mcp: { tool_calls: [], tool_call_count: 0 },
-      api_calls: [],
-      api_call_count: 0,
+      api: { calls: [], call_count: 0 },
       errors: [],
     });
   });
@@ -393,9 +392,6 @@ describe('createTracingMiddleware - canonical log line', () => {
       recorder?.recordToolCall({
         tool: 'freee_api_get',
         service: 'accounting',
-        api_method: 'GET',
-        api_path_pattern: '/api/:id/deals',
-        query_keys: ['limit'],
         status: 'success',
         duration_ms: 5,
       });
@@ -407,6 +403,7 @@ describe('createTracingMiddleware - canonical log line', () => {
         company_id: '12345',
         user_id: 'user-1',
         error_type: null,
+        query_keys: ['limit'],
       });
       res.status(200).json({ ok: true });
     });
@@ -418,9 +415,14 @@ describe('createTracingMiddleware - canonical log line', () => {
     expect(logInfo).toHaveBeenCalledTimes(1);
     const [payload] = logInfo.mock.calls[0] as [Record<string, unknown>];
     expect((payload.mcp as { tool_call_count: number }).tool_call_count).toBe(1);
-    expect(payload.api_call_count).toBe(1);
-    expect(payload.api_calls).toEqual([
-      expect.objectContaining({ method: 'GET', status_code: 200 }),
+    const api = payload.api as { call_count: number; calls: unknown[] };
+    expect(api.call_count).toBe(1);
+    expect(api.calls).toEqual([
+      expect.objectContaining({
+        method: 'GET',
+        status_code: 200,
+        query_keys: ['limit'],
+      }),
     ]);
   });
 

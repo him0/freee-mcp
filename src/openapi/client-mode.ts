@@ -57,8 +57,6 @@ function createMethodTool(method: string) {
     const recorder = getCurrentRecorder();
     const startTime = Date.now();
     const safePath = sanitizePath(args.path);
-    // PRIVACY: key names only, never values.
-    const queryKeys = args.query ? Object.keys(args.query) : undefined;
     const tokenContext = extractTokenContext(extra);
 
     try {
@@ -70,9 +68,6 @@ function createMethodTool(method: string) {
         recorder?.recordToolCall({
           tool: toolName,
           service,
-          api_method: method,
-          api_path_pattern: safePath,
-          query_keys: queryKeys,
           status: 'error',
           duration_ms: Date.now() - startTime,
         });
@@ -93,9 +88,6 @@ function createMethodTool(method: string) {
       recorder?.recordToolCall({
         tool: toolName,
         service,
-        api_method: method,
-        api_path_pattern: safePath,
-        query_keys: queryKeys,
         status: 'success',
         duration_ms: Date.now() - startTime,
       });
@@ -147,9 +139,6 @@ function createMethodTool(method: string) {
       recorder?.recordToolCall({
         tool: toolName,
         service: args.service,
-        api_method: method,
-        api_path_pattern: safePath,
-        query_keys: queryKeys,
         status: 'error',
         duration_ms: Date.now() - startTime,
       });

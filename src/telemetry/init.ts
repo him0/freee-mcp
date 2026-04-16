@@ -6,12 +6,11 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { MeterProvider, PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import {
-  AlwaysOnSampler,
   BasicTracerProvider,
   BatchSpanProcessor,
   ParentBasedSampler,
-  TraceIdRatioBasedSampler,
 } from '@opentelemetry/sdk-trace-base';
+import { resolveRootSampler } from './sampler.js';
 
 let _enabled = false;
 
@@ -114,7 +113,6 @@ export function initTelemetry(serviceVersion: string): OtelHandle | null {
 
   const serviceName = process.env.OTEL_SERVICE_NAME || 'freee-mcp';
   const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318';
-  const sampleRate = Number.parseFloat(process.env.OTEL_TRACES_SAMPLER_ARG || '1.0');
 
   const resource = resourceFromAttributes({
     'service.name': serviceName,
@@ -125,10 +123,14 @@ export function initTelemetry(serviceVersion: string): OtelHandle | null {
     url: `${endpoint}/v1/traces`,
   });
 
+  // ParentBasedSampler wrap preserves downstream W3C traceparent propagation —
+  // when there's an incoming parent span, its decision wins regardless of how
+  // the root sampler would have judged the new span.
   const sampler = new ParentBasedSampler({
-    root: Number.isNaN(sampleRate) || sampleRate >= 1.0
-      ? new AlwaysOnSampler()
-      : new TraceIdRatioBasedSampler(sampleRate),
+    root: resolveRootSampler(
+      process.env.OTEL_TRACES_SAMPLER_RULES,
+      process.env.OTEL_TRACES_SAMPLER_ARG,
+    ),
   });
 
   const provider = new BasicTracerProvider({

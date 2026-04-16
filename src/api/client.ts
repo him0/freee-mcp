@@ -4,7 +4,7 @@ import { getConfig } from '../config.js';
 import { FETCH_TIMEOUT_API_MS } from '../constants.js';
 import { serializeErrorChain } from '../server/error-serializer.js';
 import { sanitizePath } from '../server/logger.js';
-import { getCurrentRecorder } from '../server/request-context.js';
+import { deriveQueryKeys, getCurrentRecorder } from '../server/request-context.js';
 import { getUserAgent } from '../server/user-agent.js';
 import { type TokenContext, resolveCompanyId } from '../storage/context.js';
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
@@ -50,6 +50,7 @@ export async function makeApiRequest(
   const recorder = getCurrentRecorder();
   const startTime = Date.now();
   const safePath = sanitizePath(apiPath);
+  const queryKeys = deriveQueryKeys(recorder, params);
   const userId = tokenContext?.userId ?? 'local';
   const apiUrl = baseUrl || getConfig().freee.apiUrl;
   const [companyId, accessToken] = tokenContext
@@ -120,6 +121,7 @@ export async function makeApiRequest(
       company_id: String(companyId ?? ''),
       user_id: userId,
       error_type: errorType,
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'api_client',
@@ -148,6 +150,7 @@ export async function makeApiRequest(
       company_id: String(companyId ?? ''),
       user_id: userId,
       error_type: 'auth_error',
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'api_client',
@@ -174,6 +177,7 @@ export async function makeApiRequest(
       company_id: String(companyId ?? ''),
       user_id: userId,
       error_type: 'forbidden',
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'api_client',
@@ -195,6 +199,7 @@ export async function makeApiRequest(
       company_id: String(companyId ?? ''),
       user_id: userId,
       error_type: 'http_error',
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'api_client',
@@ -215,6 +220,7 @@ export async function makeApiRequest(
     company_id: String(companyId ?? ''),
     user_id: userId,
     error_type: null as null,
+    query_keys: queryKeys,
   };
 
   if (isBinaryContentType(contentType)) {
@@ -256,6 +262,7 @@ export async function makeApiRequest(
       company_id: String(companyId ?? ''),
       user_id: userId,
       error_type: 'json_parse_error',
+      query_keys: queryKeys,
     });
     recorder?.recordError({
       source: 'api_client',

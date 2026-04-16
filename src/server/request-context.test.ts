@@ -23,9 +23,6 @@ describe('RequestRecorder', () => {
       recorder.recordToolCall({
         tool: 'freee_api_get',
         service: 'accounting',
-        api_method: 'GET',
-        api_path_pattern: '/api/:id/deals',
-        query_keys: ['limit', 'offset'],
         status: 'success',
         duration_ms: 123,
       });
@@ -36,13 +33,15 @@ describe('RequestRecorder', () => {
         tool_calls: [
           expect.objectContaining({
             tool: 'freee_api_get',
-            query_keys: ['limit', 'offset'],
+            service: 'accounting',
+            status: 'success',
+            duration_ms: 123,
           }),
         ],
       });
     });
 
-    it('buffers api calls', () => {
+    it('buffers api calls with query_keys (privacy-safe key names)', () => {
       const recorder = makeRecorder();
 
       recorder.recordApiCall({
@@ -53,12 +52,18 @@ describe('RequestRecorder', () => {
         company_id: '12345',
         user_id: 'user-1',
         error_type: null,
+        query_keys: ['limit', 'offset'],
       });
 
       const payload = recorder.buildPayload({ status: 200, duration_ms: 100 });
-      expect(payload.api_call_count).toBe(1);
-      expect(payload.api_calls).toEqual([
-        expect.objectContaining({ method: 'GET', status_code: 200, error_type: null }),
+      expect(payload.api.call_count).toBe(1);
+      expect(payload.api.calls).toEqual([
+        expect.objectContaining({
+          method: 'GET',
+          status_code: 200,
+          error_type: null,
+          query_keys: ['limit', 'offset'],
+        }),
       ]);
     });
 
@@ -109,8 +114,10 @@ describe('RequestRecorder', () => {
           tool_calls: [],
           tool_call_count: 0,
         },
-        api_calls: [],
-        api_call_count: 0,
+        api: {
+          calls: [],
+          call_count: 0,
+        },
         errors: [],
       });
     });
