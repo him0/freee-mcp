@@ -10,5 +10,13 @@ Canonical log の `errors[]` が 4xx/5xx 応答で常に空になる hole を修
 operator が `status:error` で filter した後でも最低限のドリルダウン情報を
 得られるようにした。
 
+Fallback の `chain[0].message` には `HTTP <status> <method> <path>` を
+埋め込み、Datadog の scrubbing を通過する状態で route の特定が可能に
+なるようにした。
+
+body-size limit middleware (`http-server.ts`) は我々のコードなので
+fallback 経由ではなく explicit `recordError({source: "middleware",
+error_type: "payload_too_large"})` を直接呼ぶように更新。
+
 明示的な `recordError` が呼ばれているケースでは fallback は no-op となる
 ため、既存の挙動には影響しない。

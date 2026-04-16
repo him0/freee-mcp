@@ -172,7 +172,7 @@ export class RequestRecorder {
       error_type: UNRECORDED_ERROR_TYPE,
       chain: makeErrorChain(
         UNRECORDED_ERROR_NAME,
-        `HTTP ${status} response emitted without explicit recordError`,
+        `HTTP ${status} ${this.context.method} ${this.context.path} response emitted without explicit recordError`,
       ),
     });
   }

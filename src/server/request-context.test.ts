@@ -172,6 +172,18 @@ describe('RequestRecorder', () => {
       expect(payload.errors[0]?.chain[0]?.message).toContain('HTTP 500');
     });
 
+    it('embeds method and path into the synthesized message for Datadog drilldown', () => {
+      const recorder = makeRecorder({ method: 'GET', path: '/authorize' });
+
+      recorder.synthesizeFallbackErrorIfMissing(400);
+
+      const payload = recorder.buildPayload({ status: 400, duration_ms: 1 });
+      const message = payload.errors[0]?.chain[0]?.message ?? '';
+      expect(message).toContain('GET');
+      expect(message).toContain('/authorize');
+      expect(message).toContain('HTTP 400');
+    });
+
     it('is a no-op when an explicit recordError was already called', () => {
       const recorder = makeRecorder();
       recorder.recordError({
