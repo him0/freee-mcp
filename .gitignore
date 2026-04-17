@@ -142,6 +142,7 @@ out
 **/bin/freee-mcp.js
 **/bin/freee-remote-mcp.js
 **/bin/freee-sign-mcp.js
+**/bin/freee-sign-remote-mcp.js
 
 # Local Docker build helpers
 Dockerfile.local

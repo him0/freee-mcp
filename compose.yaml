@@ -21,6 +21,27 @@ services:
           cpus: "2"
     restart: unless-stopped
 
+  freee-sign-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.sign
+    ports:
+      - "3002:3002"
+    env_file: .env
+    environment:
+      OTEL_ENABLED: "true"
+      OTEL_SERVICE_NAME: freee-sign-mcp
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2"
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     ports:

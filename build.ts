@@ -6,6 +6,7 @@ const entries = [
   { entrypoint: 'src/index.ts', output: './bin/freee-mcp.js' },
   { entrypoint: 'src/entry-remote.ts', output: './bin/freee-remote-mcp.js' },
   { entrypoint: 'src/sign/index.ts', output: './bin/freee-sign-mcp.js' },
+  { entrypoint: 'src/sign/entry-remote.ts', output: './bin/freee-sign-remote-mcp.js' },
 ];
 
 for (const { entrypoint, output } of entries) {
