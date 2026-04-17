@@ -78,7 +78,7 @@ async function fetchSignUserId(accessToken: string, apiUrl: string): Promise<str
 
   const data = (await response.json()) as { id?: number };
   const userId = data.id;
-  if (!userId) {
+  if (userId == null) {
     throw new Error('Sign /v1/users/me did not return id');
   }
   return String(userId);
