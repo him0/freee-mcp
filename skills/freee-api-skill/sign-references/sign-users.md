@@ -138,6 +138,32 @@
   - lastname (任意): string - 姓 例: `フリー`
   - affiliation (任意): string - 部署・役職 例: `法務部`
 
+### GET /v1/users/me
+
+操作: 認証中のユーザー情報の取得
+
+説明: 現在認証しているユーザーの情報を取得する。 OAuth 2.0認証でのみ利用可能です。APIクライアント（アクセストークン認証）では利用できません。
+
+### レスポンス (200)
+
+取得成功
+
+- id (必須): object - ユーザーID
+- team_id (任意): object - チームID。本登録していないユーザーはチームに所属していない。
+- status (必須): string - ユーザーのステータス
+* receiving_only - 文書を受領した未登録ユーザー
+* active - 登録済ユーザー
+* unconfirmed - 登録途中ユーザー
+* canceled - 退会済ユーザー (選択肢: receiving_only, active, unconfirmed, canceled)
+- email (任意): string(email) - メールアドレス
+
+メールアドレスの登録がない場合は無し。
+- sms_telephone_number (任意): string - SMS用の電話番号
+
+E.164形式。登録されていない場合は無し。
+ex. +8190xxxxxxxx
+- full_name (任意): string - フルネーム。本登録していないユーザーは無い。
+
 ### DELETE /v1/users/{user_id}/activenesses
 
 操作: ユーザーの退会
