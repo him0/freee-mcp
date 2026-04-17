@@ -8,6 +8,7 @@ export type Logger = pino.Logger;
 export interface LoggerOptions {
   level?: string;
   transportMode?: 'stdio' | 'remote';
+  serviceName?: string;
 }
 
 let _logger: pino.Logger | null = null;
@@ -106,7 +107,11 @@ const LEVEL_FORMATTER: NonNullable<pino.LoggerOptions['formatters']>['level'] = 
   level: label,
 });
 
-function buildBaseOptions(level: string, transportMode: 'stdio' | 'remote'): pino.LoggerOptions {
+function buildBaseOptions(
+  level: string,
+  transportMode: 'stdio' | 'remote',
+  serviceName?: string,
+): pino.LoggerOptions {
   return {
     level,
     mixin: otelMixin,
@@ -114,7 +119,7 @@ function buildBaseOptions(level: string, transportMode: 'stdio' | 'remote'): pin
     serializers: { err: errSerializer },
     redact: REDACT_OPTIONS,
     base: {
-      service: APP_NAME,
+      service: serviceName ?? APP_NAME,
       version: PACKAGE_VERSION,
       transport_mode: transportMode,
     },
@@ -126,17 +131,14 @@ export function initLogger(levelOrOptions?: string | LoggerOptions): pino.Logger
   const level = options.level || process.env.LOG_LEVEL || 'info';
   const transportMode = options.transportMode ?? 'stdio';
 
-  _logger = pino(buildBaseOptions(level, transportMode), getStderrDest());
+  _logger = pino(buildBaseOptions(level, transportMode, options.serviceName), getStderrDest());
 
   return _logger;
 }
 
 export function getLogger(): pino.Logger {
   if (!_logger) {
-    _logger = pino(
-      buildBaseOptions(process.env.LOG_LEVEL || 'info', 'stdio'),
-      getStderrDest(),
-    );
+    _logger = pino(buildBaseOptions(process.env.LOG_LEVEL || 'info', 'stdio'), getStderrDest());
   }
   return _logger;
 }
