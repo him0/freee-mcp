@@ -106,9 +106,7 @@ describe('sign/client', () => {
       const { getValidSignAccessToken } = await import('./tokens.js');
       vi.mocked(getValidSignAccessToken).mockResolvedValue(null);
 
-      await expect(makeSignApiRequest('GET', '/v1/documents')).rejects.toThrow(
-        'sign_authenticate',
-      );
+      await expect(makeSignApiRequest('GET', '/v1/documents')).rejects.toThrow('sign_authenticate');
     });
 
     it('401 → 再認証誘導', async () => {
@@ -121,9 +119,7 @@ describe('sign/client', () => {
         json: () => Promise.resolve({ error: 'unauthorized' }),
       });
 
-      await expect(makeSignApiRequest('GET', '/v1/documents')).rejects.toThrow(
-        'sign_authenticate',
-      );
+      await expect(makeSignApiRequest('GET', '/v1/documents')).rejects.toThrow('sign_authenticate');
     });
 
     it('400 → エラー詳細が含まれる', async () => {
@@ -196,11 +192,73 @@ describe('sign/client', () => {
     });
   });
 
+  describe('tokenContext', () => {
+    it('tokenContext 未指定時は getValidSignAccessToken が呼ばれる', async () => {
+      const { getValidSignAccessToken } = await import('./tokens.js');
+      vi.mocked(getValidSignAccessToken).mockResolvedValue('file-token');
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: () => Promise.resolve(JSON.stringify({ ok: true })),
+      });
+
+      await makeSignApiRequest('GET', '/v1/documents');
+
+      expect(getValidSignAccessToken).toHaveBeenCalled();
+      expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe('Bearer file-token');
+    });
+
+    it('tokenContext 指定時は tokenStore.getValidAccessToken が呼ばれる', async () => {
+      const { getValidSignAccessToken } = await import('./tokens.js');
+      vi.mocked(getValidSignAccessToken).mockResolvedValue(null);
+
+      const mockTokenStore = {
+        getValidAccessToken: vi.fn().mockResolvedValue('redis-token'),
+        loadTokens: vi.fn(),
+        saveTokens: vi.fn(),
+        clearTokens: vi.fn(),
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: () => Promise.resolve(JSON.stringify({ ok: true })),
+      });
+
+      await makeSignApiRequest('GET', '/v1/documents', undefined, undefined, {
+        userId: 'user-1',
+        tokenStore: mockTokenStore,
+      });
+
+      expect(getValidSignAccessToken).not.toHaveBeenCalled();
+      expect(mockTokenStore.getValidAccessToken).toHaveBeenCalledWith('user-1');
+      expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe('Bearer redis-token');
+    });
+
+    it('tokenContext 指定時で tokenStore が null を返す → 認証エラー', async () => {
+      const mockTokenStore = {
+        getValidAccessToken: vi.fn().mockResolvedValue(null),
+        loadTokens: vi.fn(),
+        saveTokens: vi.fn(),
+        clearTokens: vi.fn(),
+      };
+
+      await expect(
+        makeSignApiRequest('GET', '/v1/documents', undefined, undefined, {
+          userId: 'user-1',
+          tokenStore: mockTokenStore,
+        }),
+      ).rejects.toThrow('認証が必要です');
+    });
+  });
+
   describe('canonical log の query_keys 連携', () => {
     it('クエリキー名のみが api.calls[].query_keys に記録され、値は流出しない', async () => {
-      // Sign client のプライバシーガード:
       // makeSignApiRequest 経由でも api.calls[].query_keys にキー名のみが
-      // 入り、値は絶対にペイロードへ漏れないことを保証する。
+      // 入り、値はペイロードに漏れないことを保証する
       const { getValidSignAccessToken } = await import('./tokens.js');
       vi.mocked(getValidSignAccessToken).mockResolvedValue('test-token');
 
@@ -211,9 +269,7 @@ describe('sign/client', () => {
         text: () => Promise.resolve('[]'),
       });
 
-      const { RequestRecorder, withRequestRecorder } = await import(
-        '../server/request-context.js'
-      );
+      const { RequestRecorder, withRequestRecorder } = await import('../server/request-context.js');
       const recorder = new RequestRecorder({
         request_id: 'req-sign-success',
         source_ip: '127.0.0.1',
@@ -234,7 +290,6 @@ describe('sign/client', () => {
         error_type: null,
         query_keys: ['page', 'per'],
       });
-      // Query values must never leak into the payload.
       const serialized = JSON.stringify(apiCalls[0]);
       expect(serialized).not.toContain('page=1');
       expect(serialized).not.toContain('per=10');
@@ -242,7 +297,7 @@ describe('sign/client', () => {
       expect(serialized).not.toMatch(/"10"/);
     });
 
-    it('params が {} のときは query_keys を記録しない (空配列を index しない)', async () => {
+    it('params が {} のときは query_keys を記録しない', async () => {
       const { getValidSignAccessToken } = await import('./tokens.js');
       vi.mocked(getValidSignAccessToken).mockResolvedValue('test-token');
 
@@ -253,9 +308,7 @@ describe('sign/client', () => {
         text: () => Promise.resolve('{}'),
       });
 
-      const { RequestRecorder, withRequestRecorder } = await import(
-        '../server/request-context.js'
-      );
+      const { RequestRecorder, withRequestRecorder } = await import('../server/request-context.js');
       const recorder = new RequestRecorder({
         request_id: 'req-sign-empty-params',
         source_ip: '127.0.0.1',
@@ -263,9 +316,7 @@ describe('sign/client', () => {
         path: '/mcp',
       });
 
-      await withRequestRecorder(recorder, () =>
-        makeSignApiRequest('GET', '/v1/documents', {}),
-      );
+      await withRequestRecorder(recorder, () => makeSignApiRequest('GET', '/v1/documents', {}));
 
       const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
       const apiCalls = payload.api.calls as Array<Record<string, unknown>>;

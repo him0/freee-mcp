@@ -7,25 +7,32 @@ import { deriveQueryKeys, getCurrentRecorder } from '../server/request-context.j
 import { getUserAgent } from '../server/user-agent.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
 import { SIGN_API_URL } from './config.js';
+import type { SignTokenStore } from './server/sign-redis-token-store.js';
 import { getValidSignAccessToken } from './tokens.js';
+
+export interface SignTokenContext {
+  userId: string;
+  tokenStore: SignTokenStore;
+}
 
 export async function makeSignApiRequest(
   method: string,
   apiPath: string,
   params?: Record<string, unknown>,
   body?: Record<string, unknown>,
+  tokenContext?: SignTokenContext,
 ): Promise<unknown> {
   const recorder = getCurrentRecorder();
   const startTime = Date.now();
   const safePath = sanitizePath(apiPath);
   const queryKeys = deriveQueryKeys(recorder, params);
 
-  const accessToken = await getValidSignAccessToken();
+  const accessToken = tokenContext
+    ? await tokenContext.tokenStore.getValidAccessToken(tokenContext.userId)
+    : await getValidSignAccessToken();
 
   if (!accessToken) {
-    throw new Error(
-      '認証が必要です。sign_authenticate ツールを使用して認証を行ってください。',
-    );
+    throw new Error('認証が必要です。sign_authenticate ツールを使用して認証を行ってください。');
   }
 
   const normalizedBase = SIGN_API_URL.endsWith('/') ? SIGN_API_URL : `${SIGN_API_URL}/`;
@@ -54,7 +61,9 @@ export async function makeSignApiRequest(
     });
   } catch (fetchError) {
     const errorType: ApiCallErrorType =
-      fetchError instanceof Error && fetchError.name === 'TimeoutError' ? 'timeout' : 'network_error';
+      fetchError instanceof Error && fetchError.name === 'TimeoutError'
+        ? 'timeout'
+        : 'network_error';
     recorder?.recordApiCall({
       method,
       path_pattern: safePath,
@@ -102,8 +111,11 @@ export async function makeSignApiRequest(
   }
 
   if (response.status === 429) {
-    const retryAfter = response.headers.get('RateLimit-Reset') || response.headers.get('Retry-After');
-    const retryMsg = retryAfter ? `${retryAfter}秒後に再試行してください。` : '数分待ってから再試行してください。';
+    const retryAfter =
+      response.headers.get('RateLimit-Reset') || response.headers.get('Retry-After');
+    const retryMsg = retryAfter
+      ? `${retryAfter}秒後に再試行してください。`
+      : '数分待ってから再試行してください。';
     recordFailure(429, 'http_error', new Error(`レートリミットに達しました (429)。${retryMsg}`));
   }
 
