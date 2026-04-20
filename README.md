@@ -116,6 +116,14 @@ npx skills add freee/freee-mcp
 
 グローバルインストール(`-g`)や特定スキルのみのインストール(`-s`)も可能です。
 
+GitHub CLI（v2.90.0 以降）の [`gh skill`](https://cli.github.com/manual/gh_skill) コマンドからもインストールできます。
+
+```bash
+gh skill install freee/freee-mcp freee-api-skill
+```
+
+`--agent`（例: `claude-code`, `copilot`, `cursor`, `codex`, `gemini-cli`）や `--scope user`／`--scope project` の指定、`--pin` による特定タグ/コミットへの固定にも対応しています。
+
 [Agent Package Manager (APM)](https://github.com/microsoft/apm) を利用している場合は、以下のコマンドでもインストールできます。GitHub Copilot / Claude Code / Cursor / OpenCode / Codex など、プロジェクトに存在する対象ディレクトリに自動でデプロイされます。
 
 ```bash

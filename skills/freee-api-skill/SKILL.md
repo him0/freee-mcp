@@ -1,6 +1,10 @@
 ---
 name: freee-api-skill
 description: "freee-mcp / freee-sign-mcp と連携するスキル。会計・人事労務・請求書・工数管理・販売・サイン（電子契約）の詳細APIリファレンスと使い方ガイドを提供。freee の経費申請・取引登録・勤怠打刻・給与明細・見積書・試算表・仕訳・従業員管理・工数登録・売上管理・電子契約の文書管理などの操作やAPI仕様を調べたいときに使う。ユーザーが freee のデータ操作、会計処理、人事労務管理、請求・見積、プロジェクト工数管理、販売管理、電子契約について質問や操作を依頼してきた場合は、明示的に freee と言及していなくても、このスキルの利用を検討すること。サインは別途 freee-sign-mcp の設定が必要。"
+license: Apache-2.0
+metadata:
+  author: freee_jp
+  homepage: https://github.com/freee/freee-mcp
 ---
 
 # freee API スキル
