@@ -174,10 +174,14 @@ export function addSignApiTools(server: McpServer, options?: { remote?: boolean 
       method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
     const baseSchema = {
       // 絶対 URL や protocol-relative URL を受け付けると new URL(path, base) が
-      // base を無視して外部ホストに Bearer トークンを送出してしまうため /v1/ 始まりに制限
+      // base を無視して外部ホストに Bearer トークンを送出してしまうため /v1/ 始まりに制限。
+      // `..` / `%2e%2e` は new URL の normalize で /v1/ 外に逸脱するため Zod で事前拒否
       path: z
         .string()
         .regex(/^\/v1\//, 'path は /v1/ から始まる相対パスを指定してください')
+        .refine((p) => !/(\.\.|%2e%2e)/i.test(p), {
+          message: 'path に path traversal (.. / %2e%2e) を含めることはできません',
+        })
         .describe('APIパス (例: /v1/documents)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ'),
     };

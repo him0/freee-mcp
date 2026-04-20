@@ -47,6 +47,12 @@ export async function makeSignApiRequest(
   const normalizedPath = apiPath.slice(1);
   const url = new URL(normalizedPath, normalizedBase);
 
+  // Zod schema で弾かれる想定だが、`..` / `%2e%2e` が URL normalize 後に /v1/ 外へ逸脱していないか
+  // 最終 pathname で再検証する (ninja-sign.com 内の管理エンドポイント到達を阻止する二重防御)
+  if (!url.pathname.startsWith('/v1/')) {
+    throw new Error('Invalid Sign API path: /v1/ namespace 外への遷移は許可されていません');
+  }
+
   if (params) {
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined) {

@@ -154,6 +154,21 @@ describe('sign/client', () => {
       );
     });
 
+    it('path traversal (`..` / `%2e%2e`) は /v1/ 外への遷移を許すため拒否される', async () => {
+      const { getValidSignAccessToken } = await import('./tokens.js');
+      vi.mocked(getValidSignAccessToken).mockResolvedValue('test-token');
+
+      await expect(
+        makeSignApiRequest('GET', '/v1/../../../admin/secret'),
+      ).rejects.toThrow('/v1/ namespace 外への遷移は許可されていません');
+      await expect(makeSignApiRequest('GET', '/v1/documents/../../admin')).rejects.toThrow(
+        '/v1/ namespace 外への遷移は許可されていません',
+      );
+      await expect(makeSignApiRequest('GET', '/v1/%2e%2e/admin')).rejects.toThrow(
+        '/v1/ namespace 外への遷移は許可されていません',
+      );
+    });
+
     it('空配列レスポンスが正常に処理される', async () => {
       const { getValidSignAccessToken } = await import('./tokens.js');
       vi.mocked(getValidSignAccessToken).mockResolvedValue('test-token');
