@@ -116,6 +116,14 @@ npx skills add freee/freee-mcp
 
 グローバルインストール(`-g`)や特定スキルのみのインストール(`-s`)も可能です。
 
+GitHub CLI（v2.90.0 以降）の [`gh skill`](https://cli.github.com/manual/gh_skill) コマンドからもインストールできます。
+
+```bash
+gh skill install freee/freee-mcp freee-api-skill
+```
+
+`--agent`（例: `claude-code`, `copilot`, `cursor`, `codex`, `gemini-cli`）や `--scope user`／`--scope project` の指定、`--pin` による特定タグ/コミットへの固定にも対応しています。
+
 ## Claude Code Plugin として使う
 
 Claude Code でプラグインとしてインストールすると、MCP サーバーと Agent Skills（API リファレンス・操作レシピ）がまとめて利用できます。
