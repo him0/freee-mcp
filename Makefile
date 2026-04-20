@@ -1,7 +1,6 @@
-# image_assembly_line が target: . で呼び出すためデフォルトターゲット名を維持
-.PHONY: . build\:sign
+.PHONY: build\:main build\:sign
 
-.:
+build\:main:
 	docker build -t $(IMAGE_NAME):$(VERSION_TAG) -f Dockerfile .
 
 build\:sign:
