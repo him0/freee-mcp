@@ -126,6 +126,48 @@ describe('RedisClientStore', () => {
       expect(fetcher.fetch).not.toHaveBeenCalled();
       expect(result).toBeUndefined();
     });
+
+    describe('allowInsecureLocalhost opt-in', () => {
+      it('treats http://localhost client_id as CIMD when flag is on', async () => {
+        const fetcher = createMockFetcher(cimdMetadata);
+        const store = new RedisClientStore({
+          redis: redis as never,
+          cimdFetcher: fetcher,
+          allowInsecureLocalhost: true,
+        });
+
+        const result = await store.getClient('http://localhost:3000/.well-known/oauth-client-metadata');
+        expect(fetcher.fetch).toHaveBeenCalledWith(
+          'http://localhost:3000/.well-known/oauth-client-metadata',
+        );
+        expect(result?.client_id).toBe('http://localhost:3000/.well-known/oauth-client-metadata');
+      });
+
+      it('treats http://127.0.0.1 client_id as CIMD when flag is on', async () => {
+        const fetcher = createMockFetcher(cimdMetadata);
+        const store = new RedisClientStore({
+          redis: redis as never,
+          cimdFetcher: fetcher,
+          allowInsecureLocalhost: true,
+        });
+
+        await store.getClient('http://127.0.0.1:3000/.well-known/oauth-client-metadata');
+        expect(fetcher.fetch).toHaveBeenCalledTimes(1);
+      });
+
+      it('does NOT treat http://example.com client_id as CIMD even when flag is on', async () => {
+        const fetcher = createMockFetcher(cimdMetadata);
+        const store = new RedisClientStore({
+          redis: redis as never,
+          cimdFetcher: fetcher,
+          allowInsecureLocalhost: true,
+        });
+
+        const result = await store.getClient('http://example.com/metadata');
+        expect(fetcher.fetch).not.toHaveBeenCalled();
+        expect(result).toBeUndefined();
+      });
+    });
   });
 
   describe('Redis error handling', () => {

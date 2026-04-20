@@ -10,8 +10,30 @@ export interface CIMDFetcher {
   fetch(url: string): Promise<OAuthClientMetadata>;
 }
 
+export interface HttpCIMDFetcherOptions {
+  // When true, http:// URLs whose host is localhost / 127.0.0.1 / [::1] bypass
+  // the HTTPS requirement and the SSRF hostname filter. Intended for local
+  // development only; callers must gate this on a non-production environment.
+  allowInsecureLocalhost?: boolean;
+}
+
 export function hashCimdUrl(url: string): string {
   return createHash('sha256').update(url).digest('hex');
+}
+
+// Exported so RedisClientStore can apply the same "localhost" definition when
+// deciding whether an http:// client_id should be treated as CIMD.
+export function isLocalhostUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' ||
+      parsed.hostname === '[::1]'
+    );
+  } catch {
+    return false;
+  }
 }
 
 function isPrivateHostname(hostname: string): boolean {
@@ -58,9 +80,19 @@ function isPrivateHostname(hostname: string): boolean {
   return false;
 }
 
-function isSafeUrl(url: string): boolean {
+function isSafeUrl(url: string, allowInsecureLocalhost: boolean): boolean {
   try {
     const parsed = new URL(url);
+    // Dev-only escape hatch: accept http://localhost (and loopback variants)
+    // without the production SSRF filter. The loopback host is only reachable
+    // from the process itself, so widening here does not expose new targets.
+    if (
+      allowInsecureLocalhost &&
+      (parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+      isLocalhostUrl(url)
+    ) {
+      return true;
+    }
     if (parsed.protocol !== 'https:') return false;
     if (isPrivateHostname(parsed.hostname)) return false;
     return true;
@@ -70,8 +102,14 @@ function isSafeUrl(url: string): boolean {
 }
 
 export class HttpCIMDFetcher implements CIMDFetcher {
+  private readonly allowInsecureLocalhost: boolean;
+
+  constructor(options: HttpCIMDFetcherOptions = {}) {
+    this.allowInsecureLocalhost = options.allowInsecureLocalhost ?? false;
+  }
+
   async fetch(url: string): Promise<OAuthClientMetadata> {
-    if (!isSafeUrl(url)) {
+    if (!isSafeUrl(url, this.allowInsecureLocalhost)) {
       throw new Error(`Unsafe CIMD URL: ${url}`);
     }
 

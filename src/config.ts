@@ -180,6 +180,8 @@ export interface RemoteServerConfig {
   corsAllowedOrigins?: string;
   rateLimitEnabled: boolean;
   logLevel: string;
+  // Dev-only: accept http://localhost CIMD URLs. Refused when NODE_ENV=production.
+  allowInsecureLocalhostCimd: boolean;
 }
 
 export function loadRemoteServerConfig(): RemoteServerConfig {
@@ -207,6 +209,13 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     );
   }
 
+  const allowInsecureLocalhostCimd = process.env.FREEE_MCP_ALLOW_INSECURE_LOCALHOST_CIMD === 'true';
+  if (allowInsecureLocalhostCimd && process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'FREEE_MCP_ALLOW_INSECURE_LOCALHOST_CIMD=true is not permitted when NODE_ENV=production.',
+    );
+  }
+
   return {
     port: parsePort(process.env.PORT, 3000),
     issuerUrl,
@@ -222,6 +231,7 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     corsAllowedOrigins: process.env.CORS_ALLOWED_ORIGINS,
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED === 'true',
     logLevel: process.env.LOG_LEVEL || 'info',
+    allowInsecureLocalhostCimd,
   };
 }
 

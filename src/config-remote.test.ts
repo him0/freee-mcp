@@ -34,7 +34,24 @@ describe('loadRemoteServerConfig', () => {
       corsAllowedOrigins: undefined,
       rateLimitEnabled: false,
       logLevel: 'info',
+      allowInsecureLocalhostCimd: false,
     });
+  });
+
+  it('should opt in to allowInsecureLocalhostCimd when env var is "true"', async () => {
+    process.env.FREEE_MCP_ALLOW_INSECURE_LOCALHOST_CIMD = 'true';
+    const { loadRemoteServerConfig } = await import('./config.js');
+    const config = loadRemoteServerConfig();
+
+    expect(config.allowInsecureLocalhostCimd).toBe(true);
+  });
+
+  it('should refuse allowInsecureLocalhostCimd when NODE_ENV=production', async () => {
+    process.env.FREEE_MCP_ALLOW_INSECURE_LOCALHOST_CIMD = 'true';
+    process.env.NODE_ENV = 'production';
+    const { loadRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadRemoteServerConfig()).toThrow('NODE_ENV=production');
   });
 
   it('should throw when ISSUER_URL is missing', async () => {
