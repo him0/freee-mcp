@@ -150,7 +150,7 @@ describe('loadSignRemoteServerConfig', () => {
       signAuthorizationEndpoint: 'https://ninja-sign.com/oauth/authorize',
       signTokenEndpoint: 'https://ninja-sign.com/oauth/token',
       signScope: 'all',
-      redisUrl: 'redis://localhost:6379',
+      redisUrl: 'redis://localhost:6379/1',
       corsAllowedOrigins: undefined,
       rateLimitEnabled: false,
       logLevel: 'info',

@@ -29,6 +29,8 @@ services:
       - "3002:3002"
     env_file: .env
     environment:
+      # 共有 Redis を freee 本体 (DB 0) と論理分離するため DB 1 を明示
+      SIGN_REDIS_URL: redis://redis:6379/1
       OTEL_ENABLED: "true"
       OTEL_SERVICE_NAME: freee-sign-mcp
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318

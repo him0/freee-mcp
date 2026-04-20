@@ -188,7 +188,8 @@ export function loadSignRemoteServerConfig(): SignRemoteServerConfig {
       process.env.SIGN_AUTHORIZATION_ENDPOINT || SIGN_AUTHORIZATION_ENDPOINT,
     signTokenEndpoint: process.env.SIGN_TOKEN_ENDPOINT || SIGN_TOKEN_ENDPOINT,
     signScope: process.env.SIGN_SCOPE || SIGN_OAUTH_SCOPE,
-    redisUrl: process.env.SIGN_REDIS_URL || 'redis://localhost:6379',
+    // freee 本体 (DB 0) と allkeys-lru で evict しあうのを防ぐため Sign は DB 1 を既定にする
+    redisUrl: process.env.SIGN_REDIS_URL || 'redis://localhost:6379/1',
     corsAllowedOrigins: process.env.SIGN_CORS_ALLOWED_ORIGINS,
     rateLimitEnabled: process.env.SIGN_RATE_LIMIT_ENABLED === 'true',
     logLevel: process.env.SIGN_LOG_LEVEL || 'info',
