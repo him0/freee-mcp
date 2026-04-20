@@ -24,6 +24,21 @@ function extractSignTokenContext(extra?: SignAuthExtra): SignTokenContext | unde
   return undefined;
 }
 
+// Remote 時に tokenContext が取れない場合、local filesystem トークンへ fallback させると
+// 他ユーザーの資格情報を共有する impersonation になるため、明示的に失敗させる
+function resolveTokenContext(
+  extra: SignAuthExtra | undefined,
+  isRemote: boolean,
+): SignTokenContext | undefined {
+  const ctx = extractSignTokenContext(extra);
+  if (isRemote && !ctx) {
+    throw new Error(
+      'Remote モードで認証コンテキストが取得できませんでした。MCP クライアントを再接続してください。',
+    );
+  }
+  return ctx;
+}
+
 function addSignAuthTools(server: McpServer, options?: { remote?: boolean }): void {
   // sign_authenticate は CLI mode のみ（remote は MCP OAuth で認証する）
   if (!options?.remote) {
@@ -85,7 +100,7 @@ function addSignAuthTools(server: McpServer, options?: { remote?: boolean }): vo
     },
     async (extra?: SignAuthExtra) => {
       try {
-        const tokenContext = extractSignTokenContext(extra);
+        const tokenContext = resolveTokenContext(extra, options?.remote ?? false);
         if (tokenContext) {
           const tokens = await tokenContext.tokenStore.loadTokens(tokenContext.userId);
           if (!tokens) {
@@ -130,7 +145,7 @@ function addSignAuthTools(server: McpServer, options?: { remote?: boolean }): vo
     },
     async (extra?: SignAuthExtra) => {
       try {
-        const tokenContext = extractSignTokenContext(extra);
+        const tokenContext = resolveTokenContext(extra, options?.remote ?? false);
         if (tokenContext) {
           await tokenContext.tokenStore.clearTokens(tokenContext.userId);
           return createTextResponse('freee サインの認証情報をクリアしました。');
@@ -144,7 +159,7 @@ function addSignAuthTools(server: McpServer, options?: { remote?: boolean }): vo
   );
 }
 
-export function addSignApiTools(server: McpServer, _options?: { remote?: boolean }): void {
+export function addSignApiTools(server: McpServer, options?: { remote?: boolean }): void {
   const methods = [
     { name: 'sign_api_get', method: 'GET', desc: 'freee サイン API GET' },
     { name: 'sign_api_post', method: 'POST', desc: 'freee サイン API POST' },
@@ -158,7 +173,12 @@ export function addSignApiTools(server: McpServer, _options?: { remote?: boolean
     const hasBody =
       method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
     const baseSchema = {
-      path: z.string().describe('APIパス (例: /v1/documents)'),
+      // 絶対 URL や protocol-relative URL を受け付けると new URL(path, base) が
+      // base を無視して外部ホストに Bearer トークンを送出してしまうため /v1/ 始まりに制限
+      path: z
+        .string()
+        .regex(/^\/v1\//, 'path は /v1/ から始まる相対パスを指定してください')
+        .describe('APIパス (例: /v1/documents)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ'),
     };
     const inputSchema = hasBody
@@ -181,7 +201,7 @@ export function addSignApiTools(server: McpServer, _options?: { remote?: boolean
         extra?: SignAuthExtra,
       ) => {
         try {
-          const tokenContext = extractSignTokenContext(extra);
+          const tokenContext = resolveTokenContext(extra, options?.remote ?? false);
           const apiResponse = await makeSignApiRequest(
             method,
             args.path,

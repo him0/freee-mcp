@@ -139,25 +139,19 @@ describe('sign/client', () => {
   });
 
   describe('エッジケース', () => {
-    it('API path 先頭スラッシュ有無が正規化される', async () => {
+    it('絶対 URL path は Bearer トークンを外部ホストへ流出させないため拒否される', async () => {
       const { getValidSignAccessToken } = await import('./tokens.js');
       vi.mocked(getValidSignAccessToken).mockResolvedValue('test-token');
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: new Headers({ 'content-type': 'application/json' }),
-        text: () => Promise.resolve('{}'),
-      });
-
-      await makeSignApiRequest('GET', 'v1/documents');
-      const url1 = mockFetch.mock.calls[0][0] as string;
-
-      mockFetch.mockClear();
-      await makeSignApiRequest('GET', '/v1/documents');
-      const url2 = mockFetch.mock.calls[0][0] as string;
-
-      expect(url1).toBe(url2);
+      await expect(
+        makeSignApiRequest('GET', 'https://attacker.example.com/leak'),
+      ).rejects.toThrow('Invalid Sign API path');
+      await expect(makeSignApiRequest('GET', '//attacker.example.com/leak')).rejects.toThrow(
+        'Invalid Sign API path',
+      );
+      await expect(makeSignApiRequest('GET', 'v1/documents')).rejects.toThrow(
+        'Invalid Sign API path',
+      );
     });
 
     it('空配列レスポンスが正常に処理される', async () => {

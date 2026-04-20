@@ -27,16 +27,24 @@ export async function makeSignApiRequest(
   const safePath = sanitizePath(apiPath);
   const queryKeys = deriveQueryKeys(recorder, params);
 
+  // tools.ts の schema regex に加え、defense-in-depth で client 層でも絶対 URL / protocol-relative を拒否
+  if (!apiPath.startsWith('/') || apiPath.startsWith('//')) {
+    throw new Error('Invalid Sign API path: /v1/ で始まる相対パスを指定してください');
+  }
+
   const accessToken = tokenContext
     ? await tokenContext.tokenStore.getValidAccessToken(tokenContext.userId)
     : await getValidSignAccessToken();
 
   if (!accessToken) {
-    throw new Error('認証が必要です。sign_authenticate ツールを使用して認証を行ってください。');
+    const hint = tokenContext
+      ? 'MCP クライアントを再接続して認証してください。'
+      : 'sign_authenticate ツールを使用して認証を行ってください。';
+    throw new Error(`認証が必要です。${hint}`);
   }
 
   const normalizedBase = SIGN_API_URL.endsWith('/') ? SIGN_API_URL : `${SIGN_API_URL}/`;
-  const normalizedPath = apiPath.startsWith('/') ? apiPath.slice(1) : apiPath;
+  const normalizedPath = apiPath.slice(1);
   const url = new URL(normalizedPath, normalizedBase);
 
   if (params) {
@@ -100,13 +108,13 @@ export async function makeSignApiRequest(
 
   if (response.status === 401) {
     const errorInfo = await formatResponseErrorInfo(response);
+    const hint = tokenContext
+      ? 'MCP クライアントを再接続して認証してください。'
+      : 'sign_authenticate ツールを使用して再認証を行ってください。';
     recordFailure(
       401,
       'auth_error',
-      new Error(
-        '認証エラーが発生しました。sign_authenticate ツールを使用して再認証を行ってください。\n' +
-          `エラー詳細: ${response.status} ${errorInfo}`,
-      ),
+      new Error(`認証エラーが発生しました。${hint}\nエラー詳細: ${response.status} ${errorInfo}`),
     );
   }
 
