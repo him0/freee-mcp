@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import { createTokenData } from '../../auth/token-utils.js';
 import { OAuthTokenResponseSchema } from '../../auth/tokens.js';
 import { FETCH_TIMEOUT_TOKEN_MS, FETCH_TIMEOUT_USERINFO_MS } from '../../constants.js';
@@ -9,6 +10,10 @@ import type { OAuthStateStore } from '../../server/oauth-store.js';
 import { getUserAgent } from '../../server/user-agent.js';
 import { SIGN_CALLBACK_PATH } from '../config.js';
 import type { SignTokenStore } from './sign-redis-token-store.js';
+
+const SignUserResponseSchema = z.object({
+  id: z.number().int().nonnegative(),
+});
 
 export interface SignCallbackDeps {
   oauthStore: OAuthStateStore;
@@ -76,12 +81,12 @@ async function fetchSignUserId(accessToken: string, apiUrl: string): Promise<str
     throw new Error(`Sign /v1/users/me failed: ${response.status}`);
   }
 
-  const data = (await response.json()) as { id?: number };
-  const userId = data.id;
-  if (userId == null) {
-    throw new Error('Sign /v1/users/me did not return id');
+  const json: unknown = await response.json();
+  const parsed = SignUserResponseSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new Error(`Sign /v1/users/me returned unexpected shape: ${parsed.error.message}`);
   }
-  return String(userId);
+  return String(parsed.data.id);
 }
 
 function buildRedirectUrl(baseUri: string, state: string, params: Record<string, string>): string {
