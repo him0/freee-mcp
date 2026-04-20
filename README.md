@@ -116,6 +116,12 @@ npx skills add freee/freee-mcp
 
 グローバルインストール(`-g`)や特定スキルのみのインストール(`-s`)も可能です。
 
+[Agent Package Manager (APM)](https://github.com/microsoft/apm) を利用している場合は、以下のコマンドでもインストールできます。GitHub Copilot / Claude Code / Cursor / OpenCode / Codex など、プロジェクトに存在する対象ディレクトリに自動でデプロイされます。
+
+```bash
+apm install freee/freee-mcp/skills/freee-api-skill
+```
+
 ## Claude Code Plugin として使う
 
 Claude Code でプラグインとしてインストールすると、MCP サーバーと Agent Skills（API リファレンス・操作レシピ）がまとめて利用できます。
