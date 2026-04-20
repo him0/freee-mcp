@@ -1,12 +1,17 @@
-import { InvalidGrantError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import {
+  InvalidGrantError,
+  InvalidTokenError,
+} from '@modelcontextprotocol/sdk/server/auth/errors.js';
 import type { AuthorizationParams } from '@modelcontextprotocol/sdk/server/auth/provider.js';
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
+import { SignJWT } from 'jose';
 import { describe, expect, it, vi } from 'vitest';
 import type { TokenStore } from '../storage/token-store.js';
 import type { RedisClientStore } from './client-store.js';
 import type { FreeeOAuthProviderDeps } from './oauth-provider.js';
 import { FreeeOAuthProvider } from './oauth-provider.js';
 import type { AuthCodeData, OAuthStateStore, RefreshTokenData } from './oauth-store.js';
+import { RequestRecorder, withRequestRecorder } from './request-context.js';
 
 const TEST_SECRET = 'test-jwt-secret-long-enough-for-hmac-signing';
 const TEST_ISSUER = 'https://mcp.example.com';
@@ -287,10 +292,91 @@ describe('FreeeOAuthProvider', () => {
       expect(authInfo.extra?.tokenStore).toBe(tokenStore);
     });
 
-    it('rejects invalid JWT', async () => {
+    it('rejects a malformed (non-JWT) token as InvalidTokenError', async () => {
       const { provider } = createProvider();
 
-      await expect(provider.verifyAccessToken('invalid-jwt')).rejects.toThrow();
+      await expect(provider.verifyAccessToken('invalid-jwt')).rejects.toThrow(InvalidTokenError);
+    });
+
+    it('maps jose JWTExpired to InvalidTokenError("Token has expired")', async () => {
+      const { provider } = createProvider();
+      const pastTime = Math.floor(Date.now() / 1000) - 7200;
+      const expiredToken = await new SignJWT({ scope: 'mcp:read', client_id: 'test-client-id' })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setSubject('user-1')
+        .setIssuer(TEST_ISSUER)
+        .setIssuedAt(pastTime)
+        .setExpirationTime(pastTime + 3600)
+        .sign(new TextEncoder().encode(TEST_SECRET));
+
+      await expect(provider.verifyAccessToken(expiredToken)).rejects.toThrow(
+        new InvalidTokenError('Token has expired'),
+      );
+    });
+
+    it('maps jose JWSSignatureVerificationFailed to InvalidTokenError', async () => {
+      const { provider } = createProvider();
+      const foreignToken = await new SignJWT({ scope: 'mcp:read', client_id: 'test-client-id' })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setSubject('user-1')
+        .setIssuer(TEST_ISSUER)
+        .setIssuedAt()
+        .setExpirationTime('1h')
+        .sign(new TextEncoder().encode('different-jwt-secret-long-enough-for-hmac-signing'));
+
+      await expect(provider.verifyAccessToken(foreignToken)).rejects.toThrow(
+        new InvalidTokenError('Invalid token signature'),
+      );
+    });
+
+    it('maps jose JWTClaimValidationFailed (wrong issuer) to InvalidTokenError', async () => {
+      const { provider } = createProvider();
+      const wrongIssuerToken = await new SignJWT({ scope: 'mcp:read', client_id: 'test-client-id' })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setSubject('user-1')
+        .setIssuer('https://wrong.example.com')
+        .setIssuedAt()
+        .setExpirationTime('1h')
+        .sign(new TextEncoder().encode(TEST_SECRET));
+
+      await expect(provider.verifyAccessToken(wrongIssuerToken)).rejects.toThrowError(
+        InvalidTokenError,
+      );
+    });
+
+    it('records auth error to the current RequestRecorder on expired token', async () => {
+      const { provider } = createProvider();
+      const pastTime = Math.floor(Date.now() / 1000) - 7200;
+      const expiredToken = await new SignJWT({ scope: 'mcp:read', client_id: 'test-client-id' })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setSubject('user-1')
+        .setIssuer(TEST_ISSUER)
+        .setIssuedAt(pastTime)
+        .setExpirationTime(pastTime + 3600)
+        .sign(new TextEncoder().encode(TEST_SECRET));
+
+      const recorder = new RequestRecorder({
+        request_id: 'req-1',
+        source_ip: '127.0.0.1',
+        method: 'POST',
+        path: '/mcp',
+      });
+
+      await withRequestRecorder(recorder, async () => {
+        await expect(provider.verifyAccessToken(expiredToken)).rejects.toThrow(InvalidTokenError);
+      });
+
+      const payload = recorder.buildPayload({ status: 401, duration_ms: 1 });
+      expect(payload.errors).toHaveLength(1);
+      expect(payload.errors[0]).toMatchObject({
+        source: 'auth',
+        status_code: 401,
+        error_type: 'invalid_token',
+      });
+      expect(payload.errors[0]?.chain[0]).toMatchObject({
+        name: 'JWTExpired',
+        message: 'Token has expired',
+      });
     });
   });
 

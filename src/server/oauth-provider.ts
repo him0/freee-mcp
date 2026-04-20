@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
-import { InvalidGrantError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import {
+  InvalidGrantError,
+  InvalidTokenError,
+} from '@modelcontextprotocol/sdk/server/auth/errors.js';
 import type {
   AuthorizationParams,
   OAuthServerProvider,
@@ -16,8 +19,10 @@ import { generatePKCE } from '../auth/oauth.js';
 import { FREEE_CALLBACK_PATH } from '../constants.js';
 import type { TokenStore } from '../storage/token-store.js';
 import type { RedisClientStore } from './client-store.js';
-import { signAccessToken, verifyAccessToken as verifyJwt } from './jwt.js';
+import { makeErrorChain } from './error-serializer.js';
+import { joseErrors, signAccessToken, verifyAccessToken as verifyJwt } from './jwt.js';
 import type { OAuthStateStore } from './oauth-store.js';
+import { getCurrentRecorder } from './request-context.js';
 
 export interface FreeeOAuthProviderDeps {
   clientStore: RedisClientStore;
@@ -138,7 +143,27 @@ export class FreeeOAuthProvider implements OAuthServerProvider {
   }
 
   async verifyAccessToken(token: string): Promise<AuthInfo> {
-    const payload = await verifyJwt(token, this.deps.jwtSecret, this.deps.issuerUrl);
+    let payload: Awaited<ReturnType<typeof verifyJwt>>;
+    try {
+      payload = await verifyJwt(token, this.deps.jwtSecret, this.deps.issuerUrl);
+    } catch (err) {
+      const mapped = mapJoseErrorToInvalidToken(err);
+      if (mapped) {
+        // Explicitly record so the canonical log surfaces the real jose cause
+        // instead of the PR #392 `UnrecordedError` safety net fallback.
+        getCurrentRecorder()?.recordError({
+          source: 'auth',
+          status_code: 401,
+          error_type: 'invalid_token',
+          chain: makeErrorChain(
+            err instanceof Error ? err.name : 'UnknownJoseError',
+            mapped.message,
+          ),
+        });
+        throw mapped;
+      }
+      throw err;
+    }
     return {
       token,
       clientId: payload.client_id,
@@ -185,4 +210,24 @@ export class FreeeOAuthProvider implements OAuthServerProvider {
       refresh_token: refreshToken,
     };
   }
+}
+
+// jose throws its own error classes that the MCP SDK bearerAuth middleware
+// does not recognize, so we translate the common token-validity failures into
+// `InvalidTokenError` to produce a spec-compliant 401 + WWW-Authenticate
+// response. See issue #394.
+function mapJoseErrorToInvalidToken(err: unknown): InvalidTokenError | null {
+  if (err instanceof joseErrors.JWTExpired) {
+    return new InvalidTokenError('Token has expired');
+  }
+  if (err instanceof joseErrors.JWSSignatureVerificationFailed) {
+    return new InvalidTokenError('Invalid token signature');
+  }
+  if (err instanceof joseErrors.JWTInvalid || err instanceof joseErrors.JWSInvalid) {
+    return new InvalidTokenError('Malformed token');
+  }
+  if (err instanceof joseErrors.JWTClaimValidationFailed) {
+    return new InvalidTokenError(`Invalid token claim: ${err.message}`);
+  }
+  return null;
 }
