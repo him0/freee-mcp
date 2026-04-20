@@ -4,7 +4,7 @@ import { PACKAGE_VERSION } from '../constants.js';
 import { SIGN_SERVER_INSTRUCTIONS } from './config.js';
 import { addSignApiTools, addSignAuthenticationTools } from './tools.js';
 
-export function createSignMcpServer(): McpServer {
+export function createSignMcpServer(options?: { remote?: boolean }): McpServer {
   const server = new McpServer(
     {
       name: 'freee-sign',
@@ -15,8 +15,8 @@ export function createSignMcpServer(): McpServer {
     },
   );
 
-  addSignAuthenticationTools(server);
-  addSignApiTools(server);
+  addSignAuthenticationTools(server, options);
+  addSignApiTools(server, options);
 
   return server;
 }
