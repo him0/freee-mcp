@@ -5,6 +5,7 @@ node_modules
 dist
 bin/freee-mcp.js
 bin/freee-remote-mcp.js
+bin/freee-sign-remote-mcp.js
 coverage
 obs
 *.md

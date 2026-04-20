@@ -3799,6 +3799,48 @@
         }
       }
     },
+    "/v1/users/me": {
+      "get": {
+        "summary": "認証中のユーザー情報の取得",
+        "description": "現在認証しているユーザーの情報を取得する。\n\nOAuth 2.0認証でのみ利用可能です。APIクライアント（アクセストークン認証）では利用できません。",
+        "operationId": "get-v1-users-me",
+        "tags": [
+          "ユーザー"
+        ],
+        "responses": {
+          "200": {
+            "description": "取得成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "認証エラー",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "なんらかのエラーが発生した場合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/users/{user_id}/activenesses": {
       "parameters": [
         {

@@ -13,6 +13,7 @@ const CLIENT_TTL_SECONDS = 365 * 24 * 60 * 60; // 1 year
 export interface ClientStoreOptions {
   redis: Redis;
   cimdFetcher?: CIMDFetcher;
+  prefix?: string;
 }
 
 function isCimdUrl(clientId: string): boolean {
@@ -22,10 +23,12 @@ function isCimdUrl(clientId: string): boolean {
 export class RedisClientStore implements OAuthRegisteredClientsStore {
   private readonly redis: Redis;
   private readonly cimdFetcher: CIMDFetcher;
+  private readonly prefix: string;
 
   constructor(options: ClientStoreOptions) {
     this.redis = options.redis;
     this.cimdFetcher = options.cimdFetcher ?? new HttpCIMDFetcher();
+    this.prefix = options.prefix ?? OAUTH_KEY_PREFIX;
   }
 
   async getClient(clientId: string): Promise<OAuthClientInformationFull | undefined> {
@@ -38,7 +41,7 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
   async registerClient(client: OAuthClientInformationFull): Promise<OAuthClientInformationFull> {
     await withRedis('registerClient', () =>
       this.redis.set(
-        `${OAUTH_KEY_PREFIX}:client:${client.client_id}`,
+        `${this.prefix}:client:${client.client_id}`,
         JSON.stringify(client),
         'EX',
         CLIENT_TTL_SECONDS,
@@ -51,7 +54,7 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
     clientIdUrl: string,
   ): Promise<OAuthClientInformationFull | undefined> {
     const hash = hashCimdUrl(clientIdUrl);
-    const cacheKey = `${OAUTH_KEY_PREFIX}:cimd:${hash}`;
+    const cacheKey = `${this.prefix}:cimd:${hash}`;
 
     const cached = await withRedis('getCimdClient:cache-read', () => this.redis.get(cacheKey));
 
@@ -80,7 +83,7 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
   }
 
   private async getDcrClient(clientId: string): Promise<OAuthClientInformationFull | undefined> {
-    const key = `${OAUTH_KEY_PREFIX}:client:${clientId}`;
+    const key = `${this.prefix}:client:${clientId}`;
     const raw = await withRedis('getDcrClient:read', () => this.redis.get(key));
     if (!raw) return undefined;
 

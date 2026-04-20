@@ -124,6 +124,12 @@ gh skill install freee/freee-mcp freee-api-skill
 
 `--agent`（例: `claude-code`, `copilot`, `cursor`, `codex`, `gemini-cli`）や `--scope user`／`--scope project` の指定、`--pin` による特定タグ/コミットへの固定にも対応しています。
 
+[Agent Package Manager (APM)](https://github.com/microsoft/apm) を利用している場合は、以下のコマンドでもインストールできます。GitHub Copilot / Claude Code / Cursor / OpenCode / Codex など、プロジェクトに存在する対象ディレクトリに自動でデプロイされます。
+
+```bash
+apm install freee/freee-mcp/skills/freee-api-skill
+```
+
 ## Claude Code Plugin として使う
 
 Claude Code でプラグインとしてインストールすると、MCP サーバーと Agent Skills（API リファレンス・操作レシピ）がまとめて利用できます。

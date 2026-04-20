@@ -2,10 +2,10 @@ import fs from 'node:fs/promises';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestTempDir } from '../test-utils/temp-dir.js';
 import {
-  type SignConfig,
   getSignCredentials,
   loadSignConfig,
   resetSignConfigCache,
+  type SignConfig,
 } from './config.js';
 
 const { setup: setupTempDir, cleanup: cleanupTempDir } = setupTestTempDir('sign-config-test-');
@@ -93,9 +93,7 @@ describe('sign/config', () => {
     });
 
     it('client_id 未設定 → configure 誘導エラー', async () => {
-      mockFs.readFile.mockResolvedValue(
-        JSON.stringify({}),
-      );
+      mockFs.readFile.mockResolvedValue(JSON.stringify({}));
 
       await expect(getSignCredentials()).rejects.toThrow('freee-sign-mcp configure');
     });
@@ -121,5 +119,70 @@ describe('sign/config', () => {
       // mockFs.readFile が呼ばれていない = loadFullConfig (freee) に依存していない
       expect(mockFs.readFile).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('loadSignRemoteServerConfig', () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.SIGN_ISSUER_URL = 'https://sign-mcp.example.com';
+    process.env.SIGN_JWT_SECRET = 'a-sign-test-secret-that-is-at-least-32-characters-long';
+    process.env.FREEE_SIGN_CLIENT_ID = 'sign-client-id';
+    process.env.FREEE_SIGN_CLIENT_SECRET = 'sign-client-secret';
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it('全環境変数が設定されている場合は正常に Config が返る', async () => {
+    const { loadSignRemoteServerConfig } = await import('./config.js');
+    const config = loadSignRemoteServerConfig();
+
+    expect(config).toEqual({
+      port: 3002,
+      issuerUrl: 'https://sign-mcp.example.com',
+      jwtSecret: 'a-sign-test-secret-that-is-at-least-32-characters-long',
+      signClientId: 'sign-client-id',
+      signClientSecret: 'sign-client-secret',
+      signAuthorizationEndpoint: 'https://ninja-sign.com/oauth/authorize',
+      signTokenEndpoint: 'https://ninja-sign.com/oauth/token',
+      signScope: 'all',
+      redisUrl: 'redis://localhost:6379/1',
+      corsAllowedOrigins: undefined,
+      rateLimitEnabled: false,
+      logLevel: 'info',
+    });
+  });
+
+  it('SIGN_ISSUER_URL 未設定 → エラー', async () => {
+    delete process.env.SIGN_ISSUER_URL;
+    const { loadSignRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadSignRemoteServerConfig()).toThrow('SIGN_ISSUER_URL');
+  });
+
+  it('SIGN_JWT_SECRET 未設定 → エラー', async () => {
+    delete process.env.SIGN_JWT_SECRET;
+    const { loadSignRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadSignRemoteServerConfig()).toThrow('SIGN_JWT_SECRET');
+  });
+
+  it('SIGN_JWT_SECRET が 32 文字未満 → エラー', async () => {
+    process.env.SIGN_JWT_SECRET = 'short';
+    const { loadSignRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadSignRemoteServerConfig()).toThrow('at least 32 characters');
+  });
+
+  it('FREEE_SIGN_CLIENT_ID / SECRET 未設定 → エラー', async () => {
+    delete process.env.FREEE_SIGN_CLIENT_ID;
+    delete process.env.FREEE_SIGN_CLIENT_SECRET;
+    const { loadSignRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadSignRemoteServerConfig()).toThrow('FREEE_SIGN_CLIENT_ID');
   });
 });

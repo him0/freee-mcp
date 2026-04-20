@@ -7,30 +7,51 @@ import { deriveQueryKeys, getCurrentRecorder } from '../server/request-context.j
 import { getUserAgent } from '../server/user-agent.js';
 import { formatResponseErrorInfo } from '../utils/error.js';
 import { SIGN_API_URL } from './config.js';
+import type { SignTokenStore } from './server/sign-redis-token-store.js';
 import { getValidSignAccessToken } from './tokens.js';
+
+export interface SignTokenContext {
+  userId: string;
+  tokenStore: SignTokenStore;
+}
 
 export async function makeSignApiRequest(
   method: string,
   apiPath: string,
   params?: Record<string, unknown>,
   body?: Record<string, unknown>,
+  tokenContext?: SignTokenContext,
 ): Promise<unknown> {
   const recorder = getCurrentRecorder();
   const startTime = Date.now();
   const safePath = sanitizePath(apiPath);
   const queryKeys = deriveQueryKeys(recorder, params);
 
-  const accessToken = await getValidSignAccessToken();
+  // tools.ts の schema regex に加え、defense-in-depth で client 層でも絶対 URL / protocol-relative を拒否
+  if (!apiPath.startsWith('/') || apiPath.startsWith('//')) {
+    throw new Error('Invalid Sign API path: /v1/ で始まる相対パスを指定してください');
+  }
+
+  const accessToken = tokenContext
+    ? await tokenContext.tokenStore.getValidAccessToken(tokenContext.userId)
+    : await getValidSignAccessToken();
 
   if (!accessToken) {
-    throw new Error(
-      '認証が必要です。sign_authenticate ツールを使用して認証を行ってください。',
-    );
+    const hint = tokenContext
+      ? 'MCP クライアントを再接続して認証してください。'
+      : 'sign_authenticate ツールを使用して認証を行ってください。';
+    throw new Error(`認証が必要です。${hint}`);
   }
 
   const normalizedBase = SIGN_API_URL.endsWith('/') ? SIGN_API_URL : `${SIGN_API_URL}/`;
-  const normalizedPath = apiPath.startsWith('/') ? apiPath.slice(1) : apiPath;
+  const normalizedPath = apiPath.slice(1);
   const url = new URL(normalizedPath, normalizedBase);
+
+  // Zod schema で弾かれる想定だが、`..` / `%2e%2e` が URL normalize 後に /v1/ 外へ逸脱していないか
+  // 最終 pathname で再検証する (ninja-sign.com 内の管理エンドポイント到達を阻止する二重防御)
+  if (!url.pathname.startsWith('/v1/')) {
+    throw new Error('Invalid Sign API path: /v1/ namespace 外への遷移は許可されていません');
+  }
 
   if (params) {
     for (const [key, value] of Object.entries(params)) {
@@ -54,7 +75,9 @@ export async function makeSignApiRequest(
     });
   } catch (fetchError) {
     const errorType: ApiCallErrorType =
-      fetchError instanceof Error && fetchError.name === 'TimeoutError' ? 'timeout' : 'network_error';
+      fetchError instanceof Error && fetchError.name === 'TimeoutError'
+        ? 'timeout'
+        : 'network_error';
     recorder?.recordApiCall({
       method,
       path_pattern: safePath,
@@ -91,19 +114,22 @@ export async function makeSignApiRequest(
 
   if (response.status === 401) {
     const errorInfo = await formatResponseErrorInfo(response);
+    const hint = tokenContext
+      ? 'MCP クライアントを再接続して認証してください。'
+      : 'sign_authenticate ツールを使用して再認証を行ってください。';
     recordFailure(
       401,
       'auth_error',
-      new Error(
-        '認証エラーが発生しました。sign_authenticate ツールを使用して再認証を行ってください。\n' +
-          `エラー詳細: ${response.status} ${errorInfo}`,
-      ),
+      new Error(`認証エラーが発生しました。${hint}\nエラー詳細: ${response.status} ${errorInfo}`),
     );
   }
 
   if (response.status === 429) {
-    const retryAfter = response.headers.get('RateLimit-Reset') || response.headers.get('Retry-After');
-    const retryMsg = retryAfter ? `${retryAfter}秒後に再試行してください。` : '数分待ってから再試行してください。';
+    const retryAfter =
+      response.headers.get('RateLimit-Reset') || response.headers.get('Retry-After');
+    const retryMsg = retryAfter
+      ? `${retryAfter}秒後に再試行してください。`
+      : '数分待ってから再試行してください。';
     recordFailure(429, 'http_error', new Error(`レートリミットに達しました (429)。${retryMsg}`));
   }
 

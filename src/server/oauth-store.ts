@@ -41,14 +41,17 @@ function tryParseJson<T>(raw: string, label: string): T | null {
 }
 
 export class OAuthStateStore {
-  constructor(private readonly redis: Redis) {}
+  constructor(
+    private readonly redis: Redis,
+    private readonly prefix: string = OAUTH_KEY_PREFIX,
+  ) {}
 
   // --- Sessions ---
 
   async saveSession(id: string, data: OAuthSessionData): Promise<void> {
     await withRedis('saveSession', () =>
       this.redis.set(
-        `${OAUTH_KEY_PREFIX}:session:${id}`,
+        `${this.prefix}:session:${id}`,
         JSON.stringify(data),
         'EX',
         SESSION_TTL_SECONDS,
@@ -58,7 +61,7 @@ export class OAuthStateStore {
 
   async consumeSession(id: string): Promise<OAuthSessionData | null> {
     const raw = await withRedis('consumeSession', () =>
-      this.redis.getdel(`${OAUTH_KEY_PREFIX}:session:${id}`),
+      this.redis.getdel(`${this.prefix}:session:${id}`),
     );
     if (!raw) return null;
     return tryParseJson<OAuthSessionData>(raw, 'session');
@@ -69,7 +72,7 @@ export class OAuthStateStore {
   async saveAuthCode(code: string, data: AuthCodeData): Promise<void> {
     await withRedis('saveAuthCode', () =>
       this.redis.set(
-        `${OAUTH_KEY_PREFIX}:code:${code}`,
+        `${this.prefix}:code:${code}`,
         JSON.stringify(data),
         'EX',
         AUTH_CODE_TTL_SECONDS,
@@ -78,16 +81,14 @@ export class OAuthStateStore {
   }
 
   async getAuthCode(code: string): Promise<AuthCodeData | null> {
-    const raw = await withRedis('getAuthCode', () =>
-      this.redis.get(`${OAUTH_KEY_PREFIX}:code:${code}`),
-    );
+    const raw = await withRedis('getAuthCode', () => this.redis.get(`${this.prefix}:code:${code}`));
     if (!raw) return null;
     return tryParseJson<AuthCodeData>(raw, 'authCode');
   }
 
   async consumeAuthCode(code: string): Promise<AuthCodeData | null> {
     const raw = await withRedis('consumeAuthCode', () =>
-      this.redis.getdel(`${OAUTH_KEY_PREFIX}:code:${code}`),
+      this.redis.getdel(`${this.prefix}:code:${code}`),
     );
     if (!raw) return null;
     return tryParseJson<AuthCodeData>(raw, 'authCode');
@@ -98,7 +99,7 @@ export class OAuthStateStore {
   async saveRefreshToken(token: string, data: RefreshTokenData): Promise<void> {
     await withRedis('saveRefreshToken', () =>
       this.redis.set(
-        `${OAUTH_KEY_PREFIX}:refresh:${token}`,
+        `${this.prefix}:refresh:${token}`,
         JSON.stringify(data),
         'EX',
         REFRESH_TOKEN_TTL_SECONDS,
@@ -108,7 +109,7 @@ export class OAuthStateStore {
 
   async getRefreshToken(token: string): Promise<RefreshTokenData | null> {
     const raw = await withRedis('getRefreshToken', () =>
-      this.redis.get(`${OAUTH_KEY_PREFIX}:refresh:${token}`),
+      this.redis.get(`${this.prefix}:refresh:${token}`),
     );
     if (!raw) return null;
     return tryParseJson<RefreshTokenData>(raw, 'refreshToken');
@@ -116,15 +117,13 @@ export class OAuthStateStore {
 
   async consumeRefreshToken(token: string): Promise<RefreshTokenData | null> {
     const raw = await withRedis('consumeRefreshToken', () =>
-      this.redis.getdel(`${OAUTH_KEY_PREFIX}:refresh:${token}`),
+      this.redis.getdel(`${this.prefix}:refresh:${token}`),
     );
     if (!raw) return null;
     return tryParseJson<RefreshTokenData>(raw, 'refreshToken');
   }
 
   async revokeRefreshToken(token: string): Promise<void> {
-    await withRedis('revokeRefreshToken', () =>
-      this.redis.del(`${OAUTH_KEY_PREFIX}:refresh:${token}`),
-    );
+    await withRedis('revokeRefreshToken', () => this.redis.del(`${this.prefix}:refresh:${token}`));
   }
 }

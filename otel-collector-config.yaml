@@ -4,11 +4,26 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
 
+processors:
+  # Sign (freee-sign-mcp) と freee 本体 (freee-mcp) が同一 collector を共有するため、
+  # 片方のバーストで他方の span/metric がサイレント drop しないよう memory_limiter と
+  # batch を挟む。check_interval=5s / limit=200MiB は collector 自体のメモリ 256MiB 想定
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 200
+    spike_limit_mib: 50
+  batch:
+    send_batch_size: 512
+    timeout: 5s
+
 exporters:
   otlp/jaeger:
     endpoint: jaeger:4317
     tls:
       insecure: true
+    sending_queue:
+      enabled: true
+      queue_size: 1000
   prometheus:
     endpoint: 0.0.0.0:8889
 
@@ -16,7 +31,9 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
+      processors: [memory_limiter, batch]
       exporters: [otlp/jaeger]
     metrics:
       receivers: [otlp]
+      processors: [memory_limiter, batch]
       exporters: [prometheus]
