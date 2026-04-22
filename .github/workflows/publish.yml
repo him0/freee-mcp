@@ -188,13 +188,14 @@ jobs:
         env:
           NPM_CONFIG_PROVENANCE: true
 
-      - name: Sync plugin.json version
+      - name: Sync plugin.json and apm.yml version
         if: steps.check-npm.outputs.skip != 'true'
         run: |
           VERSION=${{ steps.version.outputs.version }}
           jq --arg v "$VERSION" '.version = $v' .claude-plugin/plugin.json > tmp.json && mv tmp.json .claude-plugin/plugin.json
           jq --arg v "$VERSION" '.plugins[0].version = $v' .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
-          git add .claude-plugin/
-          git commit -m "chore: sync plugin version to $VERSION" || echo "No changes to commit"
+          sed -i "s/^version: .*/version: $VERSION/" skills/freee-api-skill/apm.yml
+          git add .claude-plugin/ skills/freee-api-skill/apm.yml
+          git commit -m "chore: sync plugin and skill version to $VERSION" || echo "No changes to commit"
           git push
-          echo "✅ Synced plugin.json version"
+          echo "✅ Synced plugin.json and apm.yml versions"
