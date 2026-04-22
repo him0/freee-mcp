@@ -9,7 +9,8 @@ import { extractTokenContext } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
 
 export function addFileUploadTool(server: McpServer): void {
-  registerTracedTool(server,
+  registerTracedTool(
+    server,
     'freee_file_upload',
     {
       title: 'ファイルアップロード',
@@ -17,6 +18,7 @@ export function addFileUploadTool(server: McpServer): void {
         'ファイルボックスにファイルをアップロード (POST /api/1/receipts、詳細ガイドはfreee-api-skill skillを参照)',
       inputSchema: {
         file_path: z.string().describe('アップロードするファイルのローカルパス'),
+        company_id: z.union([z.string(), z.number()]).describe('事業所ID'),
         description: z.string().max(255).optional().describe('メモ (最大255文字)'),
         receipt_metadatum_partner_name: z
           .string()
@@ -36,6 +38,7 @@ export function addFileUploadTool(server: McpServer): void {
     async (
       args: {
         file_path: string;
+        company_id: string | number;
         description?: string;
         receipt_metadatum_partner_name?: string;
         receipt_metadatum_issue_date?: string;
@@ -48,9 +51,9 @@ export function addFileUploadTool(server: McpServer): void {
       const recorder = getCurrentRecorder();
       const toolStart = Date.now();
       try {
-        const { file_path, ...options } = args;
+        const { file_path, company_id, ...options } = args;
         const tokenContext = extractTokenContext(extra);
-        const result = await uploadReceipt(file_path, options, tokenContext);
+        const result = await uploadReceipt(file_path, company_id, options, tokenContext);
 
         const receipt = result as Record<string, unknown>;
         const receiptData = (receipt.receipt || receipt) as Record<string, unknown>;
