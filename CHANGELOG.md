@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.25.1
+
+### Patch Changes
+
+- [`d6bc31c`](https://github.com/freee/freee-mcp/commit/d6bc31ceabd595a91ccae22dbdcf83017757d27a): freee API のベース URL（本番: `https://api.freee.co.jp`）を環境変数 `FREEE_API_BASE_URL` で上書きできるように対応。環境変数が未設定の場合は従来どおりハードコーディングされた値にフォールバックする。OAuth のコールバック内で利用される API URL もこの環境変数を参照するため、ローカル環境に向けて Remote MCP サーバーを立ち上げる際の動作確認が容易になる。 ([#407](https://github.com/freee/freee-mcp/pull/407))
+
 ## 0.25.0
 
 ### Minor Changes
