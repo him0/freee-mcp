@@ -81,6 +81,7 @@ export async function startHttpServer(options?: {
     freeeClientSecret: remoteConfig.freeeClientSecret,
     freeeTokenEndpoint: remoteConfig.freeeTokenEndpoint,
     freeeScope: remoteConfig.freeeScope,
+    freeeApiUrl: remoteConfig.freeeApiUrl,
     callbackBaseUrl: remoteConfig.issuerUrl,
   });
 

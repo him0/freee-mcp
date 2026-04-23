@@ -74,6 +74,7 @@ Sign development mode: Use `"command": "bun", "args": ["run", "src/sign/index.ts
 
 環境変数 `FREEE_API_BASE_URL_{SERVICE}` でAPIの向き先を変更できる（`src/openapi/schema-loader.ts` の `resolveBaseUrl` で処理）。
 
+- `FREEE_API_BASE_URL` - freee public APIのベースURL
 - `FREEE_API_BASE_URL_ACCOUNTING` - 会計API
 - `FREEE_API_BASE_URL_HR` - 人事労務API
 - `FREEE_API_BASE_URL_INVOICE` - 請求書API

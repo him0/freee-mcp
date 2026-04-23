@@ -10,6 +10,7 @@ const mockRemoteConfig = {
   freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
   tokenEndpoint: 'https://test.freee.co.jp/token',
   scope: 'read write',
+  freeeApiUrl: 'https://api.freee.co.jp',
   redisUrl: 'redis://localhost:6379',
 };
 
