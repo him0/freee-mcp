@@ -1,5 +1,65 @@
 # freee-mcp
 
+## 0.25.0
+
+### Minor Changes
+
+- [`4aa21b1`](https://github.com/freee/freee-mcp/commit/4aa21b15f0041dd8bb00676a58e63fb2e5d3ab76): `freee_file_upload` ツールに `company_id` 必須引数を追加 ([#401](https://github.com/freee/freee-mcp/pull/401))
+
+  通常の `freee_api_*` ツール (`src/api/client.ts` の `makeApiRequest`) と同様に、呼び出し側が渡した `company_id` とコンテキストで解決された事業所 ID を文字列比較で検証し、不一致時はエラーを返すようにした。誤った事業所へのファイルアップロードを防ぐガードレール。
+
+  - MCP ツール `freee_file_upload` の inputSchema に `company_id` を必須で追加 (`string | number`)
+  - `uploadReceipt()` の 2 番目の引数として `requestedCompanyId` を追加
+  - 認証チェック直後にバリデーションを実施し、通常ツールと同一の文言でエラーを throw
+
+- [`f7f0553`](https://github.com/freee/freee-mcp/commit/f7f05538664cf886ce9f5aa9ef6df338dca5eaee): Sign Remote MCP サーバーを追加 ([#395](https://github.com/freee/freee-mcp/pull/395))
+
+  freee サイン用の Remote MCP サーバー（`freee-sign-remote-mcp`）を追加。freee 本体と同一構成で OAuth 2.1 Authorization Server + Streamable HTTP transport + Redis トークンストア + canonical log line + OTel tracing をサポート。
+
+  - 新規エントリポイント `bin/freee-sign-remote-mcp.js`（ポート 3002）
+  - ninja-sign.com との OAuth 2.0 code exchange + MCP クライアント向け OAuth 2.1 AS の二層認証
+  - Docker Compose に `freee-sign-mcp` サービス追加、`Dockerfile.sign` でビルド分離
+
+  ## 共有 Valkey での分離
+
+  本番で Sign と freee 本体が共有する Valkey インスタンスの名前空間を以下で分離:
+
+  - Redis の DB (freee 本体 DB 0 / Sign DB 1) とキー prefix (`freee-sign-mcp:*`) で名前空間分離
+  - rate-limit キーに `rl:sign:*` prefix を付与し freee 本体とカウンタ合算を防止
+
+  本番 Valkey は parameter group で `maxmemory-policy` 未設定のため Valkey デフォルト (`noeviction`) で稼働しており、cross-DB eviction は発生しない想定。
+
+  ## ローカル開発環境の調整
+
+  `compose.yaml` / `otel-collector-config.yaml` を本番挙動と整合させる:
+
+  - Redis の `maxmemory-policy` を `noeviction` に変更し、本番 Valkey と同じ挙動でローカル検証できるようにする
+  - OTel Collector に `memory_limiter` / `batch` processor を追加し、compose で Sign + freee が単一 collector を共有する開発環境の trace 欠落を防止（本番は Datadog Agent が Node 単位で OTLP を受ける構成のため該当しない）
+
+  ## セキュリティ
+
+  - `sign_api_*` ツールの path を `/v1/` 始まりに制限し、絶対 URL 経由で Bearer トークンが外部ホストへ流出する SSRF 経路を遮断
+  - path traversal (`..` / `%2e%2e`) を Zod と URL 組み立て後の pathname 再検証で拒否し、ninja-sign.com 内の `/v1/` 外エンドポイントへの到達を防止
+  - Remote モードで認証コンテキストが取れない場合に local filesystem のトークンへ fallback する経路を禁止し、impersonation を防止
+  - ninja-sign.com との通信エラー本文を先頭 200 文字に truncate して PII 漏洩を防止
+  - `/v1/users/me` レスポンスを Zod schema で検証し、id の型不正による Redis キー衝突を防止
+
+### Patch Changes
+
+- [`b7ffe3c`](https://github.com/freee/freee-mcp/commit/b7ffe3cf8bce5dd945b9a2e6c7dc59e00d4648fb): GitHub CLI の `gh skill` コマンド（v2.90.0 以降）経由でのスキルインストールをサポート。`skills/freee-api-skill/SKILL.md` のフロントマターに `license` と `metadata` を追加し、README に `gh skill install freee/freee-mcp freee-api-skill` のインストール手順を記載。 ([#397](https://github.com/freee/freee-mcp/pull/397))
+- [`25acba0`](https://github.com/freee/freee-mcp/commit/25acba0adae6d6c612ab6f1609e079ed06c28877): Microsoft の [Agent Package Manager (APM)](https://github.com/microsoft/apm) による配布に対応。`skills/freee-api-skill/` に `apm.yml` を追加し、`apm install freee/freee-mcp/skills/freee-api-skill` コマンドでスキルをインストール可能にした。APM は対象プロジェクトに存在する `.github/`、`.claude/`、`.cursor/`、`.opencode/`、`.codex/` の各ディレクトリへスキルを自動デプロイする。 ([#396](https://github.com/freee/freee-mcp/pull/396))
+- [`20a6ec9`](https://github.com/freee/freee-mcp/commit/20a6ec9f555b1b86d64550c5084b2bbc3ea17673): Sign Remote MCP の Redis 既定 DB 番号指定を撤廃 ([#403](https://github.com/freee/freee-mcp/pull/403))
+
+  freee-mcp 本体と Sign Remote MCP で共有する Valkey (ElastiCache) の分離方式を「DB 番号による論理分離」から「`freee-sign-mcp:*` prefix + Valkey RBAC (IAM Role ACL)」に変更した。DB 分離は将来の cluster mode 移行を阻害するため採用しない。
+
+  本 PR は当該方針に合わせて、アプリ側のデフォルト値から DB 番号を外す対応:
+
+  - `compose.yaml`: `SIGN_REDIS_URL: redis://redis:6379/1` → `redis://redis:6379`
+  - `src/sign/config.ts`: `SIGN_REDIS_URL` 未設定時の既定値を `redis://localhost:6379/1` → `redis://localhost:6379`
+  - `src/sign/config.test.ts`: 既定値 assertion を追従
+
+- [`ca1a324`](https://github.com/freee/freee-mcp/commit/ca1a3246b27c3d2bcdc6692bbf6a75ec4aef874a): リリース時に `skills/freee-api-skill/apm.yml` の `version` フィールドを `package.json` に自動追従させるよう publish ワークフローを拡張。既存の `.claude-plugin/plugin.json` / `marketplace.json` の同期ステップと同じコミットでまとめて push される。 ([#402](https://github.com/freee/freee-mcp/pull/402))
+
 ## 0.24.0
 
 ### Minor Changes

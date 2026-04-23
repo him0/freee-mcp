@@ -50,10 +50,11 @@ describe('file-upload-tool', () => {
       addFileUploadTool(mockServer);
       const handler = mockTool.mock.calls[0][2];
 
-      const result = await handler({ file_path: '/path/to/test.pdf' });
+      const result = await handler({ file_path: '/path/to/test.pdf', company_id: 12345 });
 
       expect(uploadReceipt).toHaveBeenCalledWith(
         '/path/to/test.pdf',
+        12345,
         {},
         expect.objectContaining({ tokenStore: expect.any(Object), userId: 'local' }),
       );
@@ -70,6 +71,7 @@ describe('file-upload-tool', () => {
 
       await handler({
         file_path: '/path/to/test.pdf',
+        company_id: 12345,
         description: 'テスト',
         receipt_metadatum_partner_name: '取引先A',
         receipt_metadatum_issue_date: '2026-01-15',
@@ -80,6 +82,7 @@ describe('file-upload-tool', () => {
 
       expect(uploadReceipt).toHaveBeenCalledWith(
         '/path/to/test.pdf',
+        12345,
         {
           description: 'テスト',
           receipt_metadatum_partner_name: '取引先A',
@@ -100,7 +103,7 @@ describe('file-upload-tool', () => {
       addFileUploadTool(mockServer);
       const handler = mockTool.mock.calls[0][2];
 
-      const result = await handler({ file_path: '/missing.pdf' });
+      const result = await handler({ file_path: '/missing.pdf', company_id: 12345 });
 
       expect(result.content[0].text).toContain('ファイルアップロードに失敗');
       expect(result.content[0].text).toContain('ファイルが見つかりません');

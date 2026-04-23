@@ -188,9 +188,7 @@ export function loadSignRemoteServerConfig(): SignRemoteServerConfig {
       process.env.SIGN_AUTHORIZATION_ENDPOINT || SIGN_AUTHORIZATION_ENDPOINT,
     signTokenEndpoint: process.env.SIGN_TOKEN_ENDPOINT || SIGN_TOKEN_ENDPOINT,
     signScope: process.env.SIGN_SCOPE || SIGN_OAUTH_SCOPE,
-    // 名前空間管理のため Sign は DB 1 を既定にする (キー衝突と運用時の目視分離が目的)。
-    // DB 分離は maxmemory の eviction を防がない点に注意（server 側設定で対処）
-    redisUrl: process.env.SIGN_REDIS_URL || 'redis://localhost:6379/1',
+    redisUrl: process.env.SIGN_REDIS_URL || 'redis://localhost:6379',
     corsAllowedOrigins: process.env.SIGN_CORS_ALLOWED_ORIGINS,
     rateLimitEnabled: process.env.SIGN_RATE_LIMIT_ENABLED === 'true',
     logLevel: process.env.SIGN_LOG_LEVEL || 'info',
