@@ -19,21 +19,45 @@ const serviceSchema = z
   .enum(['accounting', 'hr', 'invoice', 'pm', 'sm'])
   .describe('対象のfreeeサービス');
 
+const UTF8_BOM = String.fromCharCode(0xfeff);
+
 /**
- * Some MCP clients send object parameters as JSON strings.
- * This wrapper accepts both a plain object and a JSON string, coercing the latter.
+ * Some MCP clients send object parameters as JSON strings. This wrapper
+ * accepts both a plain object and a JSON string, coercing the latter.
+ *
+ * A leading UTF-8 BOM (U+FEFF) is rejected with a dedicated error rather than
+ * silently stripped: silent normalization would make the same payload behave
+ * differently across operating systems and hide upstream encoding bugs. The
+ * generic parse-failure message intentionally carries only the string length —
+ * never any portion of the raw string — so customer payload data cannot leak
+ * into error responses or downstream logs.
  */
-function coercibleRecord(description: string) {
+export function coercibleRecord(description: string) {
   return z.preprocess(
-    (val) => {
-      if (typeof val === 'string') {
-        try {
-          return JSON.parse(val);
-        } catch {
-          return val;
-        }
+    (val, ctx) => {
+      if (typeof val !== 'string') return val;
+      if (val.startsWith(UTF8_BOM)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            `string starts with a UTF-8 BOM (U+FEFF), which is not valid JSON. ` +
+            `The MCP client likely transcoded the payload through a transport ` +
+            `that prepended a BOM (commonly seen on Windows). ` +
+            `Send the JSON without a BOM.`,
+        });
+        return z.NEVER;
       }
-      return val;
+      try {
+        return JSON.parse(val);
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            `expected object or JSON-encoded object string; received string ` +
+            `of length ${val.length} that could not be parsed as JSON`,
+        });
+        return z.NEVER;
+      }
     },
     z.record(z.string(), z.unknown()),
   ).describe(description);
