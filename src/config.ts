@@ -180,8 +180,17 @@ export interface RemoteServerConfig {
   corsAllowedOrigins?: string;
   rateLimitEnabled: boolean;
   logLevel: string;
-  // Dev-only: accept http://localhost CIMD URLs. Refused when NODE_ENV=production.
+  // Dev-only: accept http://localhost CIMD URLs. Determined by environment, not by an env var.
   allowInsecureLocalhostCimd: boolean;
+}
+
+// kubelet auto-injects KUBERNETES_SERVICE_HOST into every pod, so its presence is
+// a trustworthy "this is a cluster workload" signal that no operator can forget to set.
+// NODE_ENV is checked as a strict allowlist so unset / typoed / arbitrary values all
+// fail safely toward "production-like".
+function isDevelopmentEnvironment(): boolean {
+  if (process.env.KUBERNETES_SERVICE_HOST) return false;
+  return process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
 }
 
 export function loadRemoteServerConfig(): RemoteServerConfig {
@@ -209,12 +218,7 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     );
   }
 
-  const allowInsecureLocalhostCimd = process.env.FREEE_MCP_ALLOW_INSECURE_LOCALHOST_CIMD === 'true';
-  if (allowInsecureLocalhostCimd && process.env.NODE_ENV === 'production') {
-    throw new Error(
-      'FREEE_MCP_ALLOW_INSECURE_LOCALHOST_CIMD=true is not permitted when NODE_ENV=production.',
-    );
-  }
+  const allowInsecureLocalhostCimd = isDevelopmentEnvironment();
 
   return {
     port: parsePort(process.env.PORT, 3000),
