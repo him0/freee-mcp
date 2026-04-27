@@ -1,5 +1,12 @@
 # freee-mcp
 
+## 0.25.3
+
+### Patch Changes
+
+- [`76b03c0`](https://github.com/freee/freee-mcp/commit/76b03c0711d5233ee3e1315822afaf1456a77908): `freee_api_*` の query/body が JSON 文字列で届いた場合に、先頭の UTF-8 BOM が含まれていれば BOM 検出専用のエラーメッセージを返すようにした（OS によって挙動が分かれないよう自動除去はしない）。それ以外のパース不能ケースのエラーメッセージはペイロード本体を含めず文字列長のみを含む形にし、業務データが応答やログに漏れないようにした。 ([#414](https://github.com/freee/freee-mcp/pull/414))
+- [`0df88e0`](https://github.com/freee/freee-mcp/commit/0df88e0458eadaea134268f24adec39e3c334873): OpenAPI スキーマを最新版に同期 ( 2 files changed, 20 insertions(+), 12 deletions(-)) ([#411](https://github.com/freee/freee-mcp/pull/411))
+
 ## 0.25.2
 
 ### Patch Changes
