@@ -114,7 +114,8 @@
   - street_name1 (任意): string - 市区町村・番地（255文字以内） 例: `ＸＸ区ＹＹ１−１−１`
   - street_name2 (任意): string - 建物名・部屋番号など（255文字以内） 例: `ビル１Ｆ`
 - partner_doc_setting_attributes (任意): object
-  - sending_method (任意): string - 請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、null:設定しない) (選択肢: email, posting, email_and_posting) 例: `posting`
+  - sending_method (任意): string - 請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、pdf_delivery:メール（PDFファイル添付）、pdf_delivery_and_posting:メール（PDFファイル添付）と郵送、null:設定しない)
+ただし、pdf_delivery および pdf_delivery_and_posting は2026年5月末頃に利用可能となる予定です。 (選択肢: email, posting, email_and_posting, pdf_delivery, pdf_delivery_and_posting) 例: `posting`
 - partner_bank_account_attributes (任意): object
   - bank_name (任意): string - 銀行名 例: `freee銀行`
   - bank_name_kana (任意): string - 銀行名（カナ） 例: `フリーギンコウ`
@@ -284,7 +285,8 @@
   - street_name1 (任意): string - 市区町村・番地（255文字以内） 例: `ＸＸ区ＹＹ１−１−１`
   - street_name2 (任意): string - 建物名・部屋番号など（255文字以内） 例: `ビル１Ｆ`
 - partner_doc_setting_attributes (任意): object
-  - sending_method (任意): string - 請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、null:設定しない) (選択肢: email, posting, email_and_posting) 例: `posting`
+  - sending_method (任意): string - 請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、pdf_delivery:メール（PDFファイル添付）、pdf_delivery_and_posting:メール（PDFファイル添付）と郵送、null:設定しない)
+ただし、pdf_delivery および pdf_delivery_and_posting は2026年5月末頃に利用可能となる予定です。 (選択肢: email, posting, email_and_posting, pdf_delivery, pdf_delivery_and_posting) 例: `posting`
 - partner_bank_account_attributes (任意): object
   - bank_name (任意): string - 銀行名 例: `freee銀行`
   - bank_name_kana (任意): string - 銀行名（カナ） 例: `フリーギンコウ`
@@ -410,7 +412,8 @@
   - street_name1 (任意): string - 市区町村・番地（255文字以内） 例: `ＸＸ区ＹＹ１−１−１`
   - street_name2 (任意): string - 建物名・部屋番号など（255文字以内） 例: `ビル１Ｆ`
 - partner_doc_setting_attributes (任意): object
-  - sending_method (任意): string - 請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、null:設定しない) (選択肢: email, posting, email_and_posting) 例: `posting`
+  - sending_method (任意): string - 請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、pdf_delivery:メール（PDFファイル添付）、pdf_delivery_and_posting:メール（PDFファイル添付）と郵送、null:設定しない)
+ただし、pdf_delivery および pdf_delivery_and_posting は2026年5月末頃に利用可能となる予定です。 (選択肢: email, posting, email_and_posting, pdf_delivery, pdf_delivery_and_posting) 例: `posting`
 - partner_bank_account_attributes (任意): object
   - bank_name (任意): string - 銀行名 例: `freee銀行`
   - bank_name_kana (任意): string - 銀行名（カナ） 例: `フリーギンコウ`
