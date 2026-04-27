@@ -908,12 +908,14 @@
                         "properties": {
                           "sending_method": {
                             "type": "string",
-                            "description": "請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、null:設定しない)",
+                            "description": "請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、pdf_delivery:メール（PDFファイル添付）、pdf_delivery_and_posting:メール（PDFファイル添付）と郵送、null:設定しない)\nただし、pdf_delivery および pdf_delivery_and_posting は2026年5月末頃に利用可能となる予定です。",
                             "example": "posting",
                             "enum": [
                               "email",
                               "posting",
-                              "email_and_posting"
+                              "email_and_posting",
+                              "pdf_delivery",
+                              "pdf_delivery_and_posting"
                             ],
                             "nullable": true
                           }
@@ -3766,7 +3768,7 @@
           "Deals"
         ],
         "summary": "取引（収入・支出）の作成",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の取引（収入・支出）を作成する</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>issue_date : 発生日</p>\n</li>\n<li>\n<p>due_date : 支払期日</p>\n</li>\n<li>\n<p>amount : 金額</p>\n</li>\n<li>\n<p>due_amount : 支払残額</p>\n</li>\n<li>\n<p>type</p>\n<ul>\n<li>income : 収入</li>\n<li>expense : 支出</li>\n</ul>\n</li>\n<li>\n<p>ref_number : 管理番号</p>\n</li>\n<li>\n<p>details : 取引の明細行(最大40行)</p>\n</li>\n<li>\n<p>payments : 取引の支払行</p>\n</li>\n<li>\n<p>receipt_ids : ファイルボックス（証憑ファイル）ID</p>\n</li>\n<li>\n<p>from_walletable_type</p>\n<ul>\n<li>bank_account : 銀行口座</li>\n<li>credit_card : クレジットカード</li>\n<li>wallet : 現金</li>\n<li>private_account_item : プライベート資金（法人の場合は役員借入金もしくは役員借入金、個人の場合は事業主貸もしくは事業主借）</li>\n</ul>\n</li>\n</ul>\n<h2 id=\"_3\">注意点</h2>\n<ul>\n    <li><p>本APIでは+更新行(renews)の操作ができません。取引（収入・支出）の+更新の作成APIをご利用ください。</p></li>\n    <li><p>セグメントタグ情報は法人アドバンスプラン（および旧法人プロフェッショナルプラン）以上で利用可能です。利用可能なセグメントの数は、法人アドバンスプラン（および旧法人プロフェッショナルプラン）の場合は1つ、法人エンタープライズプランの場合は3つです。</p></li>\n    <li>\n        <p>partner_codeを利用するには、事業所の設定から取引先コードの利用を有効にする必要があります。またpartner_codeとpartner_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>account_item_codeを利用するには、事業所の設定から勘定科目コードの利用を有効にする必要があります。またaccount_item_codeとaccount_item_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>item_codeを利用するには、事業所の設定から品目コードの利用を有効にする必要があります。またitem_codeとitem_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>section_codeを利用するには、事業所の設定から部門コードの利用を有効にする必要があります。またsection_codeとsection_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>segment_1_tag_codeを利用するには、事業所の設定からセグメントタグコードの利用を有効にする必要があります。またsegment_1_tag_codeとsegment_1_tag_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>segment_2_tag_codeを利用するには、事業所の設定からセグメントタグコードの利用を有効にする必要があります。またsegment_2_tag_codeとsegment_2_tag_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>segment_3_tag_codeを利用するには、事業所の設定からセグメントタグコードの利用を有効にする必要があります。またsegment_3_tag_codeとsegment_3_tag_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>本APIでは取引の明細行(details)は、最大40行までになります。</p>\n    </li>\n</ul>\n",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の取引（収入・支出）を作成する</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>issue_date : 発生日</p>\n</li>\n<li>\n<p>due_date : 支払期日</p>\n</li>\n<li>\n<p>amount : 金額</p>\n</li>\n<li>\n<p>due_amount : 支払残額</p>\n</li>\n<li>\n<p>type</p>\n<ul>\n<li>income : 収入</li>\n<li>expense : 支出</li>\n</ul>\n</li>\n<li>\n<p>ref_number : 管理番号</p>\n</li>\n<li>\n<p>details : 取引の明細行(最大100行)</p>\n</li>\n<li>\n<p>payments : 取引の支払行</p>\n</li>\n<li>\n<p>receipt_ids : ファイルボックス（証憑ファイル）ID</p>\n</li>\n<li>\n<p>from_walletable_type</p>\n<ul>\n<li>bank_account : 銀行口座</li>\n<li>credit_card : クレジットカード</li>\n<li>wallet : 現金</li>\n<li>private_account_item : プライベート資金（法人の場合は役員借入金もしくは役員借入金、個人の場合は事業主貸もしくは事業主借）</li>\n</ul>\n</li>\n</ul>\n<h2 id=\"_3\">注意点</h2>\n<ul>\n    <li><p>本APIでは+更新行(renews)の操作ができません。取引（収入・支出）の+更新の作成APIをご利用ください。</p></li>\n    <li><p>セグメントタグ情報は法人アドバンスプラン（および旧法人プロフェッショナルプラン）以上で利用可能です。利用可能なセグメントの数は、法人アドバンスプラン（および旧法人プロフェッショナルプラン）の場合は1つ、法人エンタープライズプランの場合は3つです。</p></li>\n    <li>\n        <p>partner_codeを利用するには、事業所の設定から取引先コードの利用を有効にする必要があります。またpartner_codeとpartner_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>account_item_codeを利用するには、事業所の設定から勘定科目コードの利用を有効にする必要があります。またaccount_item_codeとaccount_item_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>item_codeを利用するには、事業所の設定から品目コードの利用を有効にする必要があります。またitem_codeとitem_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>section_codeを利用するには、事業所の設定から部門コードの利用を有効にする必要があります。またsection_codeとsection_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>segment_1_tag_codeを利用するには、事業所の設定からセグメントタグコードの利用を有効にする必要があります。またsegment_1_tag_codeとsegment_1_tag_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>segment_2_tag_codeを利用するには、事業所の設定からセグメントタグコードの利用を有効にする必要があります。またsegment_2_tag_codeとsegment_2_tag_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>segment_3_tag_codeを利用するには、事業所の設定からセグメントタグコードの利用を有効にする必要があります。またsegment_3_tag_codeとsegment_3_tag_idは同時に指定することはできません。</p></li>\n    <li>\n        <p>本APIでは取引の明細行(details)は、最大100行までになります。</p>\n    </li>\n</ul>\n",
         "operationId": "create_deal",
         "requestBody": {
           "content": {
@@ -3958,7 +3960,7 @@
           "Deals"
         ],
         "summary": "取引（収入・支出）の更新",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の取引（収入・支出）を更新する</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>issue_date : 発生日</p>\n</li>\n<li>\n<p>due_date : 支払期日</p>\n</li>\n<li>\n<p>amount : 金額</p>\n</li>\n<li>\n<p>due_amount : 支払残額</p>\n</li>\n<li>\n<p>type</p>\n<ul>\n<li>income : 収入</li>\n<li>expense : 支出</li>\n</ul>\n</li>\n<li>\n<p>details : 取引の明細行(最大40行)</p>\n</li>\n<li>\n<p>renews : 取引の+更新行</p>\n</li>\n<li>\n<p>payments : 取引の支払行</p>\n</li>\n<li>\n<p>from_walletable_type</p>\n<ul>\n<li>bank_account : 銀行口座</li>\n<li>credit_card : クレジットカード</li>\n<li>wallet : 現金</li>\n<li>private_account_item : プライベート資金（法人の場合は役員借入金もしくは役員借入金、個人の場合は事業主貸もしくは事業主借）</li>\n</ul>\n</li>\n<li>\n<p>receipt_ids : ファイルボックス（証憑ファイル）ID</p>\n</li>\n</ul>\n<h2 id=\"_3\">注意点</h2>\n<ul>\n    <li><p>本APIでは支払行(payments)の操作ができません。取引（収入・支出）の支払行の作成・更新・削除APIをご利用ください。</p></li>\n    <li><p>本APIでは+更新行(renews)の操作ができません。取引（収入・支出）の+更新の作成・更新・削除APIをご利用ください。</p></li>\n    <li><p>本APIでは収入／支出の切替えができません。既存の取引を削除後、再度作成してください。</p></li>\n    <li><p>本APIで取引を更新すると、消費税の計算方法は必ず内税方式が選択されます。</p></li>\n    <li><p>セグメントタグ情報は法人アドバンスプラン（および旧法人プロフェッショナルプラン）以上で利用可能です。利用可能なセグメントの数は、法人アドバンスプラン（および旧法人プロフェッショナルプラン）の場合は1つ、法人エンタープライズプランの場合は3つです。</p></li>\n    <li><p>partner_codeを利用するには、事業所の設定から取引先コードの利用を有効にする必要があります。またpartner_codeとpartner_idは同時に指定することはできません。</p></li>\n    <li><p>freee請求書から登録された取引は品目・部門・メモタグ・セグメント1、2、3のみ更新可能です。</p></li>\n    <li>\n        <p>本APIでは取引の明細行(details)は、最大40行までになります。</p>\n    </li>\n</ul>",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の取引（収入・支出）を更新する</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>issue_date : 発生日</p>\n</li>\n<li>\n<p>due_date : 支払期日</p>\n</li>\n<li>\n<p>amount : 金額</p>\n</li>\n<li>\n<p>due_amount : 支払残額</p>\n</li>\n<li>\n<p>type</p>\n<ul>\n<li>income : 収入</li>\n<li>expense : 支出</li>\n</ul>\n</li>\n<li>\n<p>details : 取引の明細行(最大100行)</p>\n</li>\n<li>\n<p>renews : 取引の+更新行</p>\n</li>\n<li>\n<p>payments : 取引の支払行</p>\n</li>\n<li>\n<p>from_walletable_type</p>\n<ul>\n<li>bank_account : 銀行口座</li>\n<li>credit_card : クレジットカード</li>\n<li>wallet : 現金</li>\n<li>private_account_item : プライベート資金（法人の場合は役員借入金もしくは役員借入金、個人の場合は事業主貸もしくは事業主借）</li>\n</ul>\n</li>\n<li>\n<p>receipt_ids : ファイルボックス（証憑ファイル）ID</p>\n</li>\n</ul>\n<h2 id=\"_3\">注意点</h2>\n<ul>\n    <li><p>本APIでは支払行(payments)の操作ができません。取引（収入・支出）の支払行の作成・更新・削除APIをご利用ください。</p></li>\n    <li><p>本APIでは+更新行(renews)の操作ができません。取引（収入・支出）の+更新の作成・更新・削除APIをご利用ください。</p></li>\n    <li><p>本APIでは収入／支出の切替えができません。既存の取引を削除後、再度作成してください。</p></li>\n    <li><p>本APIで取引を更新すると、消費税の計算方法は必ず内税方式が選択されます。</p></li>\n    <li><p>セグメントタグ情報は法人アドバンスプラン（および旧法人プロフェッショナルプラン）以上で利用可能です。利用可能なセグメントの数は、法人アドバンスプラン（および旧法人プロフェッショナルプラン）の場合は1つ、法人エンタープライズプランの場合は3つです。</p></li>\n    <li><p>partner_codeを利用するには、事業所の設定から取引先コードの利用を有効にする必要があります。またpartner_codeとpartner_idは同時に指定することはできません。</p></li>\n    <li><p>freee請求書から登録された取引は品目・部門・メモタグ・セグメント1、2、3のみ更新可能です。</p></li>\n    <li>\n        <p>本APIでは取引の明細行(details)は、最大100行までになります。</p>\n    </li>\n</ul>",
         "operationId": "update_deal",
         "parameters": [
           {
@@ -22037,12 +22039,14 @@
             "properties": {
               "sending_method": {
                 "type": "string",
-                "description": "請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、null:設定しない)",
+                "description": "請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、pdf_delivery:メール（PDFファイル添付）、pdf_delivery_and_posting:メール（PDFファイル添付）と郵送、null:設定しない)\nただし、pdf_delivery および pdf_delivery_and_posting は2026年5月末頃に利用可能となる予定です。",
                 "example": "posting",
                 "enum": [
                   "email",
                   "posting",
-                  "email_and_posting"
+                  "email_and_posting",
+                  "pdf_delivery",
+                  "pdf_delivery_and_posting"
                 ],
                 "nullable": true
               }
@@ -22320,12 +22324,14 @@
             "properties": {
               "sending_method": {
                 "type": "string",
-                "description": "請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、null:設定しない)",
+                "description": "請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、pdf_delivery:メール（PDFファイル添付）、pdf_delivery_and_posting:メール（PDFファイル添付）と郵送、null:設定しない)\nただし、pdf_delivery および pdf_delivery_and_posting は2026年5月末頃に利用可能となる予定です。",
                 "example": "posting",
                 "enum": [
                   "email",
                   "posting",
-                  "email_and_posting"
+                  "email_and_posting",
+                  "pdf_delivery",
+                  "pdf_delivery_and_posting"
                 ],
                 "nullable": true
               }
@@ -34410,12 +34416,14 @@
                 "properties": {
                   "sending_method": {
                     "type": "string",
-                    "description": "請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、null:設定しない)",
+                    "description": "請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、pdf_delivery:メール（PDFファイル添付）、pdf_delivery_and_posting:メール（PDFファイル添付）と郵送、null:設定しない)\nただし、pdf_delivery および pdf_delivery_and_posting は2026年5月末頃に利用可能となる予定です。",
                     "example": "posting",
                     "enum": [
                       "email",
                       "posting",
-                      "email_and_posting"
+                      "email_and_posting",
+                      "pdf_delivery",
+                      "pdf_delivery_and_posting"
                     ],
                     "nullable": true
                   }
