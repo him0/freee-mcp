@@ -1,11 +1,6 @@
 import http from 'node:http';
 import { context, propagation, trace } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
-import {
-  CompositePropagator,
-  W3CBaggagePropagator,
-  W3CTraceContextPropagator,
-} from '@opentelemetry/core';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import {
   BasicTracerProvider,
@@ -14,6 +9,7 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 import express from 'express';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import { createDefaultPropagator } from './init.js';
 
 function makeRequest(
   port: number,
@@ -48,11 +44,7 @@ function setupInMemoryOtel(): { exporter: InMemorySpanExporter; provider: BasicT
 
   const contextManager = new AsyncLocalStorageContextManager();
   context.setGlobalContextManager(contextManager);
-  propagation.setGlobalPropagator(
-    new CompositePropagator({
-      propagators: [new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
-    }),
-  );
+  propagation.setGlobalPropagator(createDefaultPropagator());
   trace.setGlobalTracerProvider(provider);
 
   return { exporter, provider };

@@ -25,6 +25,17 @@ export function isOtelEnabled(): boolean {
   return _enabled;
 }
 
+/**
+ * Build the propagator stack the server uses for both incoming extract and
+ * outgoing inject. Exported so test setup can register the exact same
+ * propagator chain — keeping prod and test invariants in sync.
+ */
+export function createDefaultPropagator(): CompositePropagator {
+  return new CompositePropagator({
+    propagators: [new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
+  });
+}
+
 const SENSITIVE_PARAMS = new Set([
   'code',
   'code_verifier',
@@ -153,11 +164,7 @@ export function initTelemetry(serviceVersion: string): OtelHandle | null {
   // changing call sites.
   const contextManager = new AsyncLocalStorageContextManager();
   context.setGlobalContextManager(contextManager);
-  propagation.setGlobalPropagator(
-    new CompositePropagator({
-      propagators: [new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
-    }),
-  );
+  propagation.setGlobalPropagator(createDefaultPropagator());
   trace.setGlobalTracerProvider(provider);
 
   // Initialize MeterProvider for metrics export
