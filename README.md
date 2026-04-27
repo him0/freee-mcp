@@ -116,6 +116,20 @@ npx skills add freee/freee-mcp
 
 グローバルインストール(`-g`)や特定スキルのみのインストール(`-s`)も可能です。
 
+GitHub CLI（v2.90.0 以降）の [`gh skill`](https://cli.github.com/manual/gh_skill) コマンドからもインストールできます。
+
+```bash
+gh skill install freee/freee-mcp freee-api-skill
+```
+
+`--agent`（例: `claude-code`, `copilot`, `cursor`, `codex`, `gemini-cli`）や `--scope user`／`--scope project` の指定、`--pin` による特定タグ/コミットへの固定にも対応しています。
+
+[Agent Package Manager (APM)](https://github.com/microsoft/apm) を利用している場合は、以下のコマンドでもインストールできます。GitHub Copilot / Claude Code / Cursor / OpenCode / Codex など、プロジェクトに存在する対象ディレクトリに自動でデプロイされます。
+
+```bash
+apm install freee/freee-mcp/skills/freee-api-skill
+```
+
 ## Claude Code Plugin として使う
 
 Claude Code でプラグインとしてインストールすると、MCP サーバーと Agent Skills（API リファレンス・操作レシピ）がまとめて利用できます。
@@ -270,6 +284,8 @@ npx --package=freee-mcp -- freee-sign-mcp configure
 <a href="https://github.com/toyamagu-2021"><img src="https://github.com/toyamagu-2021.png" width="40" height="40" alt="@toyamagu-2021"></a>
 <a href="https://github.com/YasuakiOmokawa"><img src="https://github.com/YasuakiOmokawa.png" width="40" height="40" alt="@YasuakiOmokawa"></a>
 <a href="https://github.com/Ryosuke-Watanabe9"><img src="https://github.com/Ryosuke-Watanabe9.png" width="40" height="40" alt="@Ryosuke-Watanabe9"></a>
+<a href="https://github.com/Kitamura777"><img src="https://github.com/Kitamura777.png" width="40" height="40" alt="@Kitamura777"></a>
+<a href="https://github.com/yuyohi"><img src="https://github.com/yuyohi.png" width="40" height="40" alt="@yuyohi"></a>
 <!-- CONTRIBUTORS-END -->
 
 ## 開発者向け
