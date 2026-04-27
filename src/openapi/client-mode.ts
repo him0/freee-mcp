@@ -19,21 +19,34 @@ const serviceSchema = z
   .enum(['accounting', 'hr', 'invoice', 'pm', 'sm'])
   .describe('対象のfreeeサービス');
 
+const UTF8_BOM = String.fromCharCode(0xfeff);
+
 /**
- * Some MCP clients send object parameters as JSON strings.
- * This wrapper accepts both a plain object and a JSON string, coercing the latter.
+ * Some MCP clients send object parameters as JSON strings. This wrapper
+ * accepts both a plain object and a JSON string, coercing the latter.
+ *
+ * Auto-recovers from common Windows/stdio edge cases: leading UTF-8 BOM and
+ * surrounding whitespace are stripped before `JSON.parse`. On unrecoverable
+ * parse failure the issue message intentionally carries only the string
+ * length — never any portion of the raw string — so customer payload data
+ * cannot leak into error responses or downstream logs.
  */
-function coercibleRecord(description: string) {
+export function coercibleRecord(description: string) {
   return z.preprocess(
-    (val) => {
-      if (typeof val === 'string') {
-        try {
-          return JSON.parse(val);
-        } catch {
-          return val;
-        }
+    (val, ctx) => {
+      if (typeof val !== 'string') return val;
+      const cleaned = (val.startsWith(UTF8_BOM) ? val.slice(1) : val).trim();
+      try {
+        return JSON.parse(cleaned);
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            `expected object or JSON-encoded object string; received string ` +
+            `of length ${val.length} that could not be parsed as JSON`,
+        });
+        return z.NEVER;
       }
-      return val;
     },
     z.record(z.string(), z.unknown()),
   ).describe(description);
