@@ -6,6 +6,7 @@ const METER_NAME = 'freee-mcp';
 // HTTP server metrics
 let _httpRequestDuration: Histogram | null = null;
 let _httpRequestErrorCount: Counter | null = null;
+let _mcpSseConnectionDuration: Histogram | null = null;
 
 // MCP tool metrics
 let _toolInvocationDuration: Histogram | null = null;
@@ -13,7 +14,7 @@ let _toolErrorCount: Counter | null = null;
 
 /**
  * HTTP request duration histogram (seconds).
- * Labels: method, path, status
+ * Labels: method, path, status, transport, close_reason
  */
 export function getHttpRequestDuration(): Histogram {
   if (!_httpRequestDuration) {
@@ -23,6 +24,28 @@ export function getHttpRequestDuration(): Histogram {
     });
   }
   return _httpRequestDuration;
+}
+
+/**
+ * SSE (Streamable-HTTP) connection lifetime histogram (seconds).
+ *
+ * Recorded only for `transport=sse` requests at connection close. The expected
+ * distribution clusters near the route's `streamIdleTimeout` (e.g. ~600s on
+ * Istio's default HTTPRoute), so the p99 reveals whether SSE clients are
+ * disconnecting early or running until the platform max — useful when
+ * triaging `envoy.cluster.upstream_rq_timeout` alerts which alone cannot
+ * distinguish "long but normal SSE" from "slow JSON-RPC".
+ *
+ * Labels: path, status, close_reason
+ */
+export function getMcpSseConnectionDuration(): Histogram {
+  if (!_mcpSseConnectionDuration) {
+    _mcpSseConnectionDuration = metrics.getMeter(METER_NAME).createHistogram('mcp.sse.connection.duration', {
+      description: 'SSE (Streamable-HTTP) connection lifetime',
+      unit: 's',
+    });
+  }
+  return _mcpSseConnectionDuration;
 }
 
 /**
