@@ -134,14 +134,15 @@ export function createTracingMiddleware(): (
     });
 
     const startTime = performance.now();
-    // GET /mcp under MCP Streamable-HTTP is a long-lived SSE stream; POST /mcp
-    // is a short JSON-RPC exchange. OAuth/token endpoints are also one-shot.
-    // Classify here so duration interpretation, metric labels, and span
-    // attributes are consistent — duration of an SSE connection ≠ duration
-    // of a JSON-RPC handler.
+    // GET /mcp under MCP Streamable-HTTP is a long-lived SSE stream; everything
+    // else (POST /mcp, OAuth, /token) is a one-shot exchange. The transport
+    // label is path-aware so OAuth GET endpoints don't pollute the SSE bucket.
     const transport: CanonicalRequestTransport =
       req.method === 'GET' && req.path === '/mcp' ? 'sse' : 'jsonrpc';
-    let closeReason: CanonicalCloseReason | undefined;
+    // Default to 'completed'; only overwritten when `close` fires before
+    // `finish` (client aborted the stream). flushOnce() guards the payload
+    // so a late post-flush mutation is harmless.
+    let closeReason: CanonicalCloseReason = 'completed';
     let otelSpan: Span | undefined;
 
     if (isOtelEnabled()) {
@@ -170,9 +171,6 @@ export function createTracingMiddleware(): (
 
       const durationMs = Math.round(performance.now() - startTime);
       const status = res.statusCode;
-      // One of finish/close always fires; default `completed` is a defensive
-      // fallback for hypothetical synthetic invocations.
-      const finalCloseReason: CanonicalCloseReason = closeReason ?? 'completed';
 
       // Safety net for the canonical-log "1 line = full debug context"
       // promise. See RequestRecorder.synthesizeFallbackErrorIfMissing.
@@ -184,7 +182,7 @@ export function createTracingMiddleware(): (
         status,
         duration_ms: durationMs,
         transport,
-        close_reason: finalCloseReason,
+        close_reason: closeReason,
       });
       const message = messageFor(status);
       const level = levelFor(status);
@@ -209,13 +207,13 @@ export function createTracingMiddleware(): (
           transport,
         };
         otelSpan.setAttribute('http.response.status_code', status);
-        otelSpan.setAttribute('http.response.close_reason', finalCloseReason);
+        otelSpan.setAttribute('http.response.close_reason', closeReason);
         getHttpRequestDuration().record(durationMs / 1000, httpAttrs);
         if (transport === 'sse') {
           getMcpSseConnectionDuration().record(durationMs / 1000, {
             path: req.path,
             status: String(status),
-            close_reason: finalCloseReason,
+            close_reason: closeReason,
           });
         }
         if (level === 'error') {
@@ -226,16 +224,14 @@ export function createTracingMiddleware(): (
       }
     };
 
-    // Attach flush to both events. flushOnce() inside ensures it runs at most
-    // once regardless of which fires first. Capturing which listener won the
-    // race lets us distinguish a server-completed response (`finish`) from a
-    // client-aborted SSE stream (`close` without prior `finish`).
-    res.on('finish', () => {
-      closeReason ??= 'completed';
-      flush();
-    });
+    // flushOnce() inside flush ensures it runs at most once regardless of
+    // which event fires first. The `close` listener overwrites closeReason
+    // unconditionally — when `close` arrives after `finish`, the payload was
+    // already built; when `close` arrives without prior `finish`, the
+    // overwrite reflects a client-aborted SSE stream.
+    res.on('finish', flush);
     res.on('close', () => {
-      closeReason ??= 'client_disconnect';
+      closeReason = 'client_disconnect';
       flush();
     });
 
