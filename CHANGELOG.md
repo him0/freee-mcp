@@ -1,5 +1,14 @@
 # freee-mcp
 
+## 0.25.2
+
+### Patch Changes
+
+- [`cce0c0d`](https://github.com/freee/freee-mcp/commit/cce0c0da9d0831bd4d55477fa8a55ca1f52b5e52): Remote モードで期限切れアクセストークンが 500 ではなく 401 を返すように修正 ([#398](https://github.com/freee/freee-mcp/pull/398))
+
+  - jose のトークン検証例外を `InvalidTokenError` に変換し、`WWW-Authenticate: Bearer error="invalid_token"` 付き HTTP 401 を返す
+  - これにより RFC 6750 準拠クライアント（Anthropic Managed Agents Vault など）の `refresh_token` 自動再発行が動作するようになる
+
 ## 0.25.1
 
 ### Patch Changes
