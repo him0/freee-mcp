@@ -103,6 +103,31 @@ vi.mock('./freee-callback.js', () => ({
 
 vi.mock('@modelcontextprotocol/sdk/server/auth/router.js', () => ({
   mcpAuthRouter: vi.fn(() => (_req: unknown, _res: unknown, next: () => void) => next()),
+  // createOAuthMetadata is imported by oauth-metadata-override.ts; provide a
+  // minimal stub so that module loads successfully under this mock.
+  createOAuthMetadata: vi.fn(() => ({
+    issuer: 'https://test/',
+    authorization_endpoint: 'https://test/authorize',
+    token_endpoint: 'https://test/token',
+    response_types_supported: ['code'],
+    code_challenge_methods_supported: ['S256'],
+    token_endpoint_auth_methods_supported: ['client_secret_post', 'none'],
+    grant_types_supported: ['authorization_code', 'refresh_token'],
+  })),
+  getOAuthProtectedResourceMetadataUrl: vi.fn(
+    () => 'https://test/.well-known/oauth-protected-resource',
+  ),
+}));
+
+vi.mock('./oauth-metadata-override.js', () => ({
+  createOverrideMetadataHandler: vi.fn(
+    () => (_req: unknown, res: { status: (n: number) => { json: (v: unknown) => void } }) =>
+      res.status(200).json({}),
+  ),
+}));
+
+vi.mock('./client-auth-basic.js', () => ({
+  decodeBasicAuth: vi.fn(() => (_req: unknown, _res: unknown, next: () => void) => next()),
 }));
 
 vi.mock('@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js', () => ({

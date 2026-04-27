@@ -171,6 +171,24 @@ export async function startHttpServer(options?: {
   const { mcpAuthRouter } = await import('@modelcontextprotocol/sdk/server/auth/router.js');
   const issuerUrl = new URL(remoteConfig.issuerUrl);
   const mcpResourceUrl = new URL('/mcp', issuerUrl);
+  // Override the SDK's authorization-server metadata to advertise
+  // client_secret_basic (RFC 6749 §2.3.1). Mounted before mcpAuthRouter so
+  // Express first-match-wins routes /.well-known here instead of into the SDK.
+  const { createOverrideMetadataHandler } = await import('./oauth-metadata-override.js');
+  app.get(
+    '/.well-known/oauth-authorization-server',
+    createOverrideMetadataHandler({
+      provider,
+      issuerUrl,
+      scopesSupported: ['mcp:read', 'mcp:write'],
+    }),
+  );
+  // Adapter middleware that extends the SDK's body-only client auth to also
+  // accept Authorization: Basic. RFC 6749 §2.3.1 requires Basic to be
+  // supported when client passwords are issued.
+  const { decodeBasicAuth } = await import('./client-auth-basic.js');
+  app.use('/token', decodeBasicAuth({ clientStore, realm: 'freee MCP' }));
+  app.use('/revoke', decodeBasicAuth({ clientStore, realm: 'freee MCP' }));
   app.use(
     mcpAuthRouter({
       provider,
