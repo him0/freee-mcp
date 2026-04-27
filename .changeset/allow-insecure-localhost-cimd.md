@@ -8,6 +8,8 @@
 
 それ以外の環境（`NODE_ENV` 未設定 / `production` / 任意の値 / Kubernetes Pod 内）は自動的に拒否される。`KUBERNETES_SERVICE_HOST` は kubelet が全てのコンテナに自動注入するため、運用者の設定漏れに依存しない信頼できる本番識別シグナルとして利用している。
 
+dev 限定で loopback（`localhost` / `127.0.0.1` / `[::1]`）に対しては `http://` だけでなく `https://` の self-signed cert も受け入れる点に注意（mkcert 等を使うローカル検証フロー向け）。loopback 以外の `http://` / プライベート IP / `*.local` 等は引き続き拒否する。
+
 **運用ガイド**: Kubernetes 以外の環境（docker-compose, 単純 Docker, ECS など）で本番運用を行う場合は、`NODE_ENV=production` を必ず明示的に設定してください。`NODE_ENV` を未設定のまま `NODE_ENV=development` を誤設定して起動した場合は、起動時に `NODE_ENV is unset outside Kubernetes` 警告ログが出力されます。
 
 プライベート IP 範囲（10.x / 172.16–31.x / 192.168.x / *.local など）や公開 HTTP ホストは引き続き SSRF 保護のため拒否する。
