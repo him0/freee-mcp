@@ -25,19 +25,30 @@ const UTF8_BOM = String.fromCharCode(0xfeff);
  * Some MCP clients send object parameters as JSON strings. This wrapper
  * accepts both a plain object and a JSON string, coercing the latter.
  *
- * Auto-recovers from common Windows/stdio edge cases: leading UTF-8 BOM and
- * surrounding whitespace are stripped before `JSON.parse`. On unrecoverable
- * parse failure the issue message intentionally carries only the string
- * length — never any portion of the raw string — so customer payload data
- * cannot leak into error responses or downstream logs.
+ * A leading UTF-8 BOM (U+FEFF) is rejected with a dedicated error rather than
+ * silently stripped: silent normalization would make the same payload behave
+ * differently across operating systems and hide upstream encoding bugs. The
+ * generic parse-failure message intentionally carries only the string length —
+ * never any portion of the raw string — so customer payload data cannot leak
+ * into error responses or downstream logs.
  */
 export function coercibleRecord(description: string) {
   return z.preprocess(
     (val, ctx) => {
       if (typeof val !== 'string') return val;
-      const cleaned = (val.startsWith(UTF8_BOM) ? val.slice(1) : val).trim();
+      if (val.startsWith(UTF8_BOM)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            `string starts with a UTF-8 BOM (U+FEFF), which is not valid JSON. ` +
+            `The MCP client likely transcoded the payload through a transport ` +
+            `that prepended a BOM (commonly seen on Windows). ` +
+            `Send the JSON without a BOM.`,
+        });
+        return z.NEVER;
+      }
       try {
-        return JSON.parse(cleaned);
+        return JSON.parse(val);
       } catch {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

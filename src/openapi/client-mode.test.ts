@@ -188,11 +188,21 @@ describe('coercibleRecord', () => {
     }
   });
 
-  it('auto-recovers from leading UTF-8 BOM and surrounding whitespace', async () => {
+  it('rejects a leading UTF-8 BOM with a dedicated error (deterministic across OSes)', async () => {
     const { coercibleRecord } = await import('./client-mode.js');
     const schema = coercibleRecord('body');
     const bom = String.fromCharCode(0xfeff);
-    const result = schema.safeParse(`${bom}  \r\n{"a":1}\r\n  `);
+    const result = schema.safeParse(`${bom}{"a":1}`);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toMatch(/UTF-8 BOM/);
+    }
+  });
+
+  it('passes JSON strings with surrounding whitespace through (JSON.parse handles it)', async () => {
+    const { coercibleRecord } = await import('./client-mode.js');
+    const schema = coercibleRecord('body');
+    const result = schema.safeParse('  \r\n{"a":1}\r\n  ');
     expect(result.success).toBe(true);
     if (result.success) expect(result.data).toEqual({ a: 1 });
   });
