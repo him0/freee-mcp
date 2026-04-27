@@ -48,7 +48,7 @@ describe('uploadReceipt', () => {
     };
     vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response);
 
-    const result = await uploadReceipt('/path/to/test.pdf');
+    const result = await uploadReceipt('/path/to/test.pdf', '12345');
 
     expect(result).toEqual({ receipt: { id: '1', status: 'uploaded' } });
     expect(fetch).toHaveBeenCalledWith(
@@ -79,7 +79,7 @@ describe('uploadReceipt', () => {
     };
     vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response);
 
-    await uploadReceipt('/path/to/invoice.pdf', {
+    await uploadReceipt('/path/to/invoice.pdf', '12345', {
       description: 'テスト領収書',
       receipt_metadatum_partner_name: 'テスト取引先',
       receipt_metadatum_issue_date: '2026-01-15',
@@ -103,7 +103,7 @@ describe('uploadReceipt', () => {
     error.code = 'ENOENT';
     vi.mocked(mockFs.default.readFile).mockRejectedValue(error);
 
-    await expect(uploadReceipt('/nonexistent/file.pdf')).rejects.toThrow(
+    await expect(uploadReceipt('/nonexistent/file.pdf', '12345')).rejects.toThrow(
       'ファイルが見つかりません',
     );
   });
@@ -113,7 +113,7 @@ describe('uploadReceipt', () => {
     error.code = 'EACCES';
     vi.mocked(mockFs.default.readFile).mockRejectedValue(error);
 
-    await expect(uploadReceipt('/protected/file.pdf')).rejects.toThrow(
+    await expect(uploadReceipt('/protected/file.pdf', '12345')).rejects.toThrow(
       'ファイルの読み取り権限がありません',
     );
   });
@@ -122,7 +122,7 @@ describe('uploadReceipt', () => {
     const largeBuffer = Buffer.alloc(65 * 1024 * 1024); // 65MB
     vi.mocked(mockFs.default.readFile).mockResolvedValue(largeBuffer);
 
-    await expect(uploadReceipt('/path/to/large.pdf')).rejects.toThrow(
+    await expect(uploadReceipt('/path/to/large.pdf', '12345')).rejects.toThrow(
       'ファイルサイズが上限(64MB)を超えています',
     );
   });
@@ -132,7 +132,30 @@ describe('uploadReceipt', () => {
     vi.mocked(mockFs.default.readFile).mockResolvedValue(fileBuffer);
     vi.mocked(getValidAccessToken).mockResolvedValue(null as unknown as string);
 
-    await expect(uploadReceipt('/path/to/test.pdf')).rejects.toThrow('認証が必要です');
+    await expect(uploadReceipt('/path/to/test.pdf', '12345')).rejects.toThrow('認証が必要です');
+  });
+
+  it('should throw error when company_id mismatches current company', async () => {
+    const fileBuffer = Buffer.from('test');
+    vi.mocked(mockFs.default.readFile).mockResolvedValue(fileBuffer);
+
+    await expect(uploadReceipt('/path/to/test.pdf', '99999')).rejects.toThrow(
+      'company_id の不整合',
+    );
+  });
+
+  it('should accept numeric company_id that matches current company', async () => {
+    const fileBuffer = Buffer.from('test');
+    vi.mocked(mockFs.default.readFile).mockResolvedValue(fileBuffer);
+
+    const mockResponse = {
+      ok: true,
+      status: 201,
+      text: vi.fn().mockResolvedValue(JSON.stringify({ receipt: { id: '1' } })),
+    };
+    vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response);
+
+    await expect(uploadReceipt('/path/to/test.pdf', 12345)).resolves.toBeDefined();
   });
 
   it('should throw error on 401 response', async () => {
@@ -146,7 +169,9 @@ describe('uploadReceipt', () => {
     };
     vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response);
 
-    await expect(uploadReceipt('/path/to/test.pdf')).rejects.toThrow('認証エラーが発生しました');
+    await expect(uploadReceipt('/path/to/test.pdf', '12345')).rejects.toThrow(
+      '認証エラーが発生しました',
+    );
   });
 
   it('should throw error on 403 response', async () => {
@@ -160,7 +185,7 @@ describe('uploadReceipt', () => {
     };
     vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response);
 
-    await expect(uploadReceipt('/path/to/test.pdf')).rejects.toThrow('アクセス拒否');
+    await expect(uploadReceipt('/path/to/test.pdf', '12345')).rejects.toThrow('アクセス拒否');
   });
 
   it('should throw error on other API errors', async () => {
@@ -176,7 +201,9 @@ describe('uploadReceipt', () => {
     };
     vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response);
 
-    await expect(uploadReceipt('/path/to/test.pdf')).rejects.toThrow('API request failed: 400');
+    await expect(uploadReceipt('/path/to/test.pdf', '12345')).rejects.toThrow(
+      'API request failed: 400',
+    );
   });
 
   it('should detect MIME type from file extension', async () => {
@@ -190,7 +217,7 @@ describe('uploadReceipt', () => {
     };
     vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response);
 
-    await uploadReceipt('/path/to/photo.png');
+    await uploadReceipt('/path/to/photo.png', '12345');
 
     const callArgs = vi.mocked(fetch).mock.calls[0];
     const formData = callArgs[1]?.body as FormData;

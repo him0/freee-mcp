@@ -39,6 +39,7 @@ function getMimeType(filePath: string): string {
 
 export async function uploadReceipt(
   filePath: string,
+  requestedCompanyId: string | number,
   options?: UploadReceiptOptions,
   tokenContext?: TokenContext,
 ): Promise<unknown> {
@@ -80,6 +81,13 @@ export async function uploadReceipt(
     throw new Error(
       `認証が必要です。freee_authenticate ツールを使用して認証を行ってください。\n` +
         `現在の事業所ID: ${companyId}`,
+    );
+  }
+
+  if (String(requestedCompanyId) !== String(companyId)) {
+    throw new Error(
+      `company_id の不整合: リクエストの company_id (${requestedCompanyId}) と現在の事業所 (${companyId}) が異なります。\n` +
+        `freee_set_current_company で事業所を切り替えるか、リクエストの company_id を修正してください。`,
     );
   }
 
@@ -150,7 +158,9 @@ export async function uploadReceipt(
     });
   } catch (fetchError) {
     const errorType: ApiCallErrorType =
-      fetchError instanceof Error && fetchError.name === 'TimeoutError' ? 'timeout' : 'network_error';
+      fetchError instanceof Error && fetchError.name === 'TimeoutError'
+        ? 'timeout'
+        : 'network_error';
     recorder?.recordApiCall({
       method: 'POST',
       path_pattern: safePath,

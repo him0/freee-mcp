@@ -29,8 +29,9 @@ services:
       - "3002:3002"
     env_file: .env
     environment:
-      # 共有 Redis を freee 本体 (DB 0) と論理分離するため DB 1 を明示
-      SIGN_REDIS_URL: redis://redis:6379/1
+      # 共有 Redis は freee-mcp 本体と `freee-sign-mcp:*` prefix + Valkey RBAC で分離する方針のため
+      # DB 番号での論理分離は行わない（将来の cluster mode 移行を阻害しないため）
+      SIGN_REDIS_URL: redis://redis:6379
       OTEL_ENABLED: "true"
       OTEL_SERVICE_NAME: freee-sign-mcp
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
@@ -50,9 +51,8 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    # allkeys-lru は全 DB 合算で evict するため、Sign (DB 1) のバーストが freee 本体 (DB 0) の
-    # refresh token / DCR client を巻き添え eviction する。本番障害を避けるため noeviction で
-    # OOM を書き込みエラーとして顕在化し、fail-fast で検知する運用にする
+    # allkeys-lru 下では freee-mcp 本体と Sign の key が相互に巻き添え eviction され得るため、
+    # 本番障害の顕在化を避けて noeviction で OOM を書き込みエラーとして fail-fast させる運用にする
     command: redis-server --maxmemory 256mb --maxmemory-policy noeviction
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
