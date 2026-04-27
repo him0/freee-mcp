@@ -79,6 +79,30 @@ describe('loadRemoteServerConfig', () => {
       const { loadRemoteServerConfig } = await import('./config.js');
       expect(loadRemoteServerConfig().allowInsecureLocalhostCimd).toBe(false);
     });
+
+    it('warns at startup when NODE_ENV is unset outside Kubernetes', async () => {
+      delete process.env.NODE_ENV;
+      const stderr = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { loadRemoteServerConfig } = await import('./config.js');
+      loadRemoteServerConfig();
+
+      expect(stderr).toHaveBeenCalledWith(
+        expect.stringContaining('NODE_ENV is unset outside Kubernetes'),
+      );
+      stderr.mockRestore();
+    });
+
+    it('warns at startup when the localhost bypass is active', async () => {
+      process.env.NODE_ENV = 'development';
+      const stderr = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { loadRemoteServerConfig } = await import('./config.js');
+      loadRemoteServerConfig();
+
+      expect(stderr).toHaveBeenCalledWith(
+        expect.stringContaining('http://localhost CIMD URLs are accepted'),
+      );
+      stderr.mockRestore();
+    });
   });
 
   it('should throw when ISSUER_URL is missing', async () => {

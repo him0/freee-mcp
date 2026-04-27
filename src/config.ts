@@ -220,6 +220,21 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
 
   const allowInsecureLocalhostCimd = isDevelopmentEnvironment();
 
+  // Audit / safety signals at startup. The CIMD localhost bypass cannot be
+  // perfectly distinguished from a self-hosted docker-compose production where
+  // the operator forgot to set NODE_ENV, so we surface both states loudly.
+  if (allowInsecureLocalhostCimd) {
+    console.error(
+      'Warning: http://localhost CIMD URLs are accepted (development environment detected). ' +
+        'If this process is serving production traffic, set NODE_ENV=production to disable.',
+    );
+  } else if (!process.env.KUBERNETES_SERVICE_HOST && !process.env.NODE_ENV) {
+    console.error(
+      'Warning: NODE_ENV is unset outside Kubernetes. ' +
+        'Set NODE_ENV=production for production deployments or NODE_ENV=development for local work.',
+    );
+  }
+
   return {
     port: parsePort(process.env.PORT, 3000),
     issuerUrl,
