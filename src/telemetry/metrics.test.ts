@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   getHttpRequestDuration,
   getHttpRequestErrorCount,
+  getMcpSseConnectionDuration,
   getToolErrorCount,
   getToolInvocationDuration,
 } from './metrics.js';
@@ -54,6 +55,29 @@ describe('HTTP metrics', () => {
       (m) => m.descriptor.name === 'http.server.error.count',
     );
     expect(metric).toBeDefined();
+
+    await provider.shutdown();
+  });
+
+  it('records mcp.sse.connection.duration with seconds unit', async () => {
+    // The new SSE-only histogram is the signal that distinguishes a normal
+    // long-lived stream (ends at the platform stream timeout) from an
+    // anomalous one (ends much earlier or later). Locking the unit to "s"
+    // keeps the Datadog/Grafana axis legible.
+    const { reader, provider } = setupTestMetrics();
+
+    getMcpSseConnectionDuration().record(599.9, {
+      path: '/mcp',
+      status: '200',
+      close_reason: 'completed',
+    });
+
+    const result = await reader.collect();
+    const metric = result.resourceMetrics.scopeMetrics[0]?.metrics.find(
+      (m) => m.descriptor.name === 'mcp.sse.connection.duration',
+    );
+    expect(metric).toBeDefined();
+    expect(metric?.descriptor.unit).toBe('s');
 
     await provider.shutdown();
   });

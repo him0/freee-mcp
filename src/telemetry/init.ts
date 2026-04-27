@@ -1,6 +1,10 @@
 import { SpanKind, SpanStatusCode, context, metrics, propagation, trace } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
-import { W3CTraceContextPropagator } from '@opentelemetry/core';
+import {
+  CompositePropagator,
+  W3CBaggagePropagator,
+  W3CTraceContextPropagator,
+} from '@opentelemetry/core';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { resourceFromAttributes } from '@opentelemetry/resources';
@@ -114,9 +118,13 @@ export function initTelemetry(serviceVersion: string): OtelHandle | null {
   const serviceName = process.env.OTEL_SERVICE_NAME || 'freee-mcp';
   const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318';
 
+  const deploymentEnv =
+    process.env.OTEL_DEPLOYMENT_ENVIRONMENT ?? process.env.NODE_ENV ?? 'unknown';
+
   const resource = resourceFromAttributes({
     'service.name': serviceName,
     'service.version': serviceVersion,
+    'deployment.environment': deploymentEnv,
   });
 
   const exporter = new OTLPTraceExporter({
@@ -139,10 +147,17 @@ export function initTelemetry(serviceVersion: string): OtelHandle | null {
     spanProcessors: [new BatchSpanProcessor(exporter)],
   });
 
-  // Register global context manager, propagator, and tracer provider
+  // Register global context manager, propagator, and tracer provider.
+  // CompositePropagator wraps W3C Trace Context (parent linkage) + W3C Baggage
+  // (cross-cutting attributes) so future propagators can be added without
+  // changing call sites.
   const contextManager = new AsyncLocalStorageContextManager();
   context.setGlobalContextManager(contextManager);
-  propagation.setGlobalPropagator(new W3CTraceContextPropagator());
+  propagation.setGlobalPropagator(
+    new CompositePropagator({
+      propagators: [new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
+    }),
+  );
   trace.setGlobalTracerProvider(provider);
 
   // Initialize MeterProvider for metrics export

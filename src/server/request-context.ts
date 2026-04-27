@@ -87,6 +87,31 @@ export interface RequestRecorderContext {
 }
 
 /**
+ * Inbound transport classification for a single MCP request.
+ *
+ * - `sse`: a long-lived SSE GET (Streamable-HTTP transport). Duration tracks
+ *   the connection lifetime, not the time to produce a JSON-RPC response.
+ * - `jsonrpc`: a short POST that yields a single JSON-RPC response.
+ *
+ * This distinction matters operationally because a 9-minute SSE connection
+ * looks identical to a 9-minute slow JSON-RPC call when filtering on
+ * duration alone.
+ */
+export type CanonicalRequestTransport = 'sse' | 'jsonrpc';
+
+/**
+ * How the response stream actually ended.
+ *
+ * - `completed`: server emitted the full response and `res.on('finish')` fired.
+ * - `client_disconnect`: client closed the socket before completion;
+ *   `res.on('close')` fired without prior `finish`.
+ *
+ * Distinguishes legitimate SSE max-stream timeouts (`completed` at the route's
+ * stream limit) from client-side aborts.
+ */
+export type CanonicalCloseReason = 'completed' | 'client_disconnect';
+
+/**
  * Canonical log line: the complete payload emitted as one JSON log entry
  * per HTTP request at `res.on('finish')`. Consumers (pino, Datadog) see
  * exactly this shape.
@@ -114,6 +139,8 @@ export interface CanonicalLogPayload {
     path: string;
     status: number;
     duration_ms: number;
+    transport: CanonicalRequestTransport;
+    close_reason: CanonicalCloseReason;
   };
   mcp: {
     tool_calls: ToolCallInfo[];
@@ -185,7 +212,12 @@ export class RequestRecorder {
   }
 
   /** Builds the canonical log payload; caller passes it to pino. */
-  buildPayload(http: { status: number; duration_ms: number }): CanonicalLogPayload {
+  buildPayload(http: {
+    status: number;
+    duration_ms: number;
+    transport: CanonicalRequestTransport;
+    close_reason: CanonicalCloseReason;
+  }): CanonicalLogPayload {
     return {
       request_id: this.context.request_id,
       source_ip: this.context.source_ip,
@@ -197,6 +229,8 @@ export class RequestRecorder {
         path: this.context.path,
         status: http.status,
         duration_ms: http.duration_ms,
+        transport: http.transport,
+        close_reason: http.close_reason,
       },
       mcp: {
         tool_calls: this.toolCalls,

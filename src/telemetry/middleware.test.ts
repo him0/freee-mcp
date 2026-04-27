@@ -1,7 +1,11 @@
 import http from 'node:http';
 import { context, propagation, trace } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
-import { W3CTraceContextPropagator } from '@opentelemetry/core';
+import {
+  CompositePropagator,
+  W3CBaggagePropagator,
+  W3CTraceContextPropagator,
+} from '@opentelemetry/core';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import {
   BasicTracerProvider,
@@ -44,7 +48,11 @@ function setupInMemoryOtel(): { exporter: InMemorySpanExporter; provider: BasicT
 
   const contextManager = new AsyncLocalStorageContextManager();
   context.setGlobalContextManager(contextManager);
-  propagation.setGlobalPropagator(new W3CTraceContextPropagator());
+  propagation.setGlobalPropagator(
+    new CompositePropagator({
+      propagators: [new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
+    }),
+  );
   trace.setGlobalTracerProvider(provider);
 
   return { exporter, provider };
@@ -112,7 +120,14 @@ describe('createTracingMiddleware', () => {
 
     const spans = exporter.getFinishedSpans();
     expect(spans.length).toBe(1);
-    expect(spans[0].name).toBe('HTTP GET /test');
+    // Span name follows the OTel/Datadog `http.server.request` convention
+    // so existing Datadog facets continue to match. Method and path are
+    // kept as attributes (`http.request.method`, `url.path`) instead of
+    // being baked into the span name.
+    expect(spans[0].name).toBe('http.server.request');
+    expect(spans[0].attributes['http.request.method']).toBe('GET');
+    expect(spans[0].attributes['url.path']).toBe('/test');
+    expect(spans[0].attributes['http.transport']).toBe('jsonrpc');
 
     await provider.shutdown();
     await new Promise<void>((resolve) => {
@@ -217,6 +232,171 @@ describe('createTracingMiddleware', () => {
       server.close(() => resolve());
     });
   });
+
+  it('extracts incoming W3C traceparent so the span links to the upstream gateway trace', async () => {
+    process.env.OTEL_ENABLED = 'true';
+    const { exporter, provider } = setupInMemoryOtel();
+
+    vi.doMock('./init.js', () => ({ isOtelEnabled: () => true }));
+    const { createTracingMiddleware } = await import('./middleware.js');
+    const app = express();
+    app.use(createTracingMiddleware());
+    app.post('/mcp', (_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+
+    server = app.listen(0);
+    const addr = server.address();
+    port = typeof addr === 'object' && addr ? addr.port : 0;
+
+    // traceparent: version-traceid-parentspanid-flags
+    const upstreamTraceId = '0af7651916cd43dd8448eb211c80319c';
+    const upstreamSpanId = 'b7ad6b7169203331';
+    await makeRequest(port, '/mcp', 'POST', {
+      traceparent: `00-${upstreamTraceId}-${upstreamSpanId}-01`,
+    });
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans.length).toBe(1);
+    // The server span MUST inherit the upstream trace_id and treat the
+    // upstream span as its parent. Without `propagation.extract` the span
+    // would start a fresh trace and Datadog APM would render two
+    // disconnected services.
+    expect(spans[0].spanContext().traceId).toBe(upstreamTraceId);
+    expect(spans[0].parentSpanContext?.spanId).toBe(upstreamSpanId);
+
+    await provider.shutdown();
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
+  });
+
+  it('starts a fresh root trace when no incoming traceparent header is present', async () => {
+    // Regression guard: when nothing upstream sets a traceparent (e.g. local
+    // CLI mode or an internal cron), the server span must be a brand-new
+    // root, not silently reuse a stale parent.
+    process.env.OTEL_ENABLED = 'true';
+    const { exporter, provider } = setupInMemoryOtel();
+
+    vi.doMock('./init.js', () => ({ isOtelEnabled: () => true }));
+    const { createTracingMiddleware } = await import('./middleware.js');
+    const app = express();
+    app.use(createTracingMiddleware());
+    app.post('/mcp', (_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+
+    server = app.listen(0);
+    const addr = server.address();
+    port = typeof addr === 'object' && addr ? addr.port : 0;
+
+    await makeRequest(port, '/mcp', 'POST');
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans.length).toBe(1);
+    // No upstream parent → parentSpanContext is undefined (root span).
+    expect(spans[0].parentSpanContext).toBeUndefined();
+    // The synthesized traceId should still be a valid 32-hex (sanity check
+    // that the span itself is well-formed).
+    expect(spans[0].spanContext().traceId).toMatch(/^[0-9a-f]{32}$/);
+
+    await provider.shutdown();
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
+  });
+
+  it('classifies GET /mcp as the SSE transport and POST /mcp as JSON-RPC', async () => {
+    process.env.OTEL_ENABLED = 'true';
+    const { exporter, provider } = setupInMemoryOtel();
+
+    vi.doMock('./init.js', () => ({ isOtelEnabled: () => true }));
+    const { createTracingMiddleware } = await import('./middleware.js');
+    const app = express();
+    app.use(createTracingMiddleware());
+    app.all('/mcp', (_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+
+    server = app.listen(0);
+    const addr = server.address();
+    port = typeof addr === 'object' && addr ? addr.port : 0;
+
+    await makeRequest(port, '/mcp', 'GET');
+    await makeRequest(port, '/mcp', 'POST');
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans.length).toBe(2);
+    const byMethod = Object.fromEntries(
+      spans.map((s) => [s.attributes['http.request.method'] as string, s]),
+    );
+    expect(byMethod.GET.attributes['http.transport']).toBe('sse');
+    expect(byMethod.POST.attributes['http.transport']).toBe('jsonrpc');
+
+    await provider.shutdown();
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
+  });
+
+  it('classifies non-/mcp GET requests as JSON-RPC, not SSE', async () => {
+    // OAuth callbacks and other GET endpoints are one-shot, not streaming.
+    // The transport label exists to separate SSE long-lived connections
+    // from one-shot handlers, so it must be path-aware.
+    process.env.OTEL_ENABLED = 'true';
+    const { exporter, provider } = setupInMemoryOtel();
+
+    vi.doMock('./init.js', () => ({ isOtelEnabled: () => true }));
+    const { createTracingMiddleware } = await import('./middleware.js');
+    const app = express();
+    app.use(createTracingMiddleware());
+    app.get('/oauth/authorize', (_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+
+    server = app.listen(0);
+    const addr = server.address();
+    port = typeof addr === 'object' && addr ? addr.port : 0;
+
+    await makeRequest(port, '/oauth/authorize', 'GET');
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans.length).toBe(1);
+    expect(spans[0].attributes['http.transport']).toBe('jsonrpc');
+
+    await provider.shutdown();
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
+  });
+
+  it('records http.response.close_reason=completed when the server finishes the response', async () => {
+    process.env.OTEL_ENABLED = 'true';
+    const { exporter, provider } = setupInMemoryOtel();
+
+    vi.doMock('./init.js', () => ({ isOtelEnabled: () => true }));
+    const { createTracingMiddleware } = await import('./middleware.js');
+    const app = express();
+    app.use(createTracingMiddleware());
+    app.post('/mcp', (_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+
+    server = app.listen(0);
+    const addr = server.address();
+    port = typeof addr === 'object' && addr ? addr.port : 0;
+
+    await makeRequest(port, '/mcp', 'POST');
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans.length).toBe(1);
+    expect(spans[0].attributes['http.response.close_reason']).toBe('completed');
+
+    await provider.shutdown();
+    await new Promise<void>((resolve) => {
+      server.close(() => resolve());
+    });
+  });
 });
 
 describe('createTracingMiddleware - canonical log line', () => {
@@ -301,6 +481,11 @@ describe('createTracingMiddleware - canonical log line', () => {
         path: '/mcp',
         status: 200,
         duration_ms: expect.any(Number),
+        // Triage facets surfaced into the canonical log line so Datadog
+        // queries can split SSE long-lived connections from JSON-RPC
+        // one-shot calls without joining the trace span attributes.
+        transport: 'sse',
+        close_reason: 'completed',
       },
       mcp: { tool_calls: [], tool_call_count: 0 },
       api: { calls: [], call_count: 0 },

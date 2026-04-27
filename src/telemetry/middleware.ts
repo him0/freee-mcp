@@ -1,12 +1,28 @@
 import { randomUUID } from 'node:crypto';
-import { SpanKind, SpanStatusCode, context, trace, type Span } from '@opentelemetry/api';
+import {
+  SpanKind,
+  SpanStatusCode,
+  context,
+  propagation,
+  trace,
+  type Span,
+} from '@opentelemetry/api';
 import type { NextFunction, Request, Response } from 'express';
 import { scrubErrorMessage } from '../server/error-serializer.js';
 import { getClientIp } from '../server/http-utils.js';
 import { getLogger } from '../server/logger.js';
-import { RequestRecorder, withRequestRecorder } from '../server/request-context.js';
+import {
+  type CanonicalCloseReason,
+  type CanonicalRequestTransport,
+  RequestRecorder,
+  withRequestRecorder,
+} from '../server/request-context.js';
 import { isOtelEnabled } from './init.js';
-import { getHttpRequestDuration, getHttpRequestErrorCount } from './metrics.js';
+import {
+  getHttpRequestDuration,
+  getHttpRequestErrorCount,
+  getMcpSseConnectionDuration,
+} from './metrics.js';
 
 /**
  * Hard cap on the inbound User-Agent string length before it is logged.
@@ -118,17 +134,35 @@ export function createTracingMiddleware(): (
     });
 
     const startTime = performance.now();
+    // GET /mcp under MCP Streamable-HTTP is a long-lived SSE stream; POST /mcp
+    // is a short JSON-RPC exchange. OAuth/token endpoints are also one-shot.
+    // Classify here so duration interpretation, metric labels, and span
+    // attributes are consistent — duration of an SSE connection ≠ duration
+    // of a JSON-RPC handler.
+    const transport: CanonicalRequestTransport =
+      req.method === 'GET' && req.path === '/mcp' ? 'sse' : 'jsonrpc';
+    let closeReason: CanonicalCloseReason | undefined;
     let otelSpan: Span | undefined;
 
     if (isOtelEnabled()) {
       const tracer = trace.getTracer('freee-mcp');
-      otelSpan = tracer.startSpan(`HTTP ${req.method} ${req.path}`, {
-        kind: SpanKind.SERVER,
-        attributes: {
-          'http.request.method': req.method,
-          'url.path': req.path,
+      // Extract upstream W3C trace context (`traceparent` / `tracestate` /
+      // `baggage`) from inbound headers so the server span becomes a child
+      // of the gateway/Envoy span — without this the trace would always
+      // start fresh and Datadog APM would show two disconnected traces.
+      const parentCtx = propagation.extract(context.active(), req.headers);
+      otelSpan = tracer.startSpan(
+        'http.server.request',
+        {
+          kind: SpanKind.SERVER,
+          attributes: {
+            'http.request.method': req.method,
+            'url.path': req.path,
+            'http.transport': transport,
+          },
         },
-      });
+        parentCtx,
+      );
     }
 
     const flush = (): void => {
@@ -136,6 +170,9 @@ export function createTracingMiddleware(): (
 
       const durationMs = Math.round(performance.now() - startTime);
       const status = res.statusCode;
+      // One of finish/close always fires; default `completed` is a defensive
+      // fallback for hypothetical synthetic invocations.
+      const finalCloseReason: CanonicalCloseReason = closeReason ?? 'completed';
 
       // Safety net for the canonical-log "1 line = full debug context"
       // promise. See RequestRecorder.synthesizeFallbackErrorIfMissing.
@@ -143,7 +180,12 @@ export function createTracingMiddleware(): (
         recorder.synthesizeFallbackErrorIfMissing(status);
       }
 
-      const payload = recorder.buildPayload({ status, duration_ms: durationMs });
+      const payload = recorder.buildPayload({
+        status,
+        duration_ms: durationMs,
+        transport,
+        close_reason: finalCloseReason,
+      });
       const message = messageFor(status);
       const level = levelFor(status);
       const logger = getLogger();
@@ -160,22 +202,42 @@ export function createTracingMiddleware(): (
       }
 
       if (otelSpan) {
-        const attrs = { method: req.method, path: req.path, status: String(status) };
+        const httpAttrs = {
+          method: req.method,
+          path: req.path,
+          status: String(status),
+          transport,
+        };
         otelSpan.setAttribute('http.response.status_code', status);
-        getHttpRequestDuration().record(durationMs / 1000, attrs);
+        otelSpan.setAttribute('http.response.close_reason', finalCloseReason);
+        getHttpRequestDuration().record(durationMs / 1000, httpAttrs);
+        if (transport === 'sse') {
+          getMcpSseConnectionDuration().record(durationMs / 1000, {
+            path: req.path,
+            status: String(status),
+            close_reason: finalCloseReason,
+          });
+        }
         if (level === 'error') {
           otelSpan.setStatus({ code: SpanStatusCode.ERROR, message: `HTTP ${status}` });
-          getHttpRequestErrorCount().add(1, attrs);
+          getHttpRequestErrorCount().add(1, httpAttrs);
         }
         otelSpan.end();
       }
     };
 
     // Attach flush to both events. flushOnce() inside ensures it runs at most
-    // once regardless of which fires first (normal completion vs. client
-    // disconnect during SSE streaming).
-    res.on('finish', flush);
-    res.on('close', flush);
+    // once regardless of which fires first. Capturing which listener won the
+    // race lets us distinguish a server-completed response (`finish`) from a
+    // client-aborted SSE stream (`close` without prior `finish`).
+    res.on('finish', () => {
+      closeReason ??= 'completed';
+      flush();
+    });
+    res.on('close', () => {
+      closeReason ??= 'client_disconnect';
+      flush();
+    });
 
     const runDownstream = (): void => {
       withRequestRecorder(recorder, () => {
