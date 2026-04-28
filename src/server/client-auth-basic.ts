@@ -31,31 +31,25 @@ function reject401(
   res: express.Response,
   realm: string,
   description: string,
-  errorTypeForLog: string,
-  errorName: string,
+  errorName: string = 'InvalidClientError',
 ): void {
   const wwwAuthenticate = buildWwwAuthenticate(realm, 'invalid_client', description);
   getCurrentRecorder()?.recordError({
     source: 'auth',
     status_code: 401,
-    error_type: errorTypeForLog,
+    error_type: 'invalid_client',
     chain: makeErrorChain(errorName, description),
   });
   res.setHeader('WWW-Authenticate', wwwAuthenticate);
   res.status(401).json({ error: 'invalid_client', error_description: description });
 }
 
-function reject400(
-  res: express.Response,
-  description: string,
-  errorTypeForLog: string,
-  errorName: string,
-): void {
+function reject400(res: express.Response, description: string): void {
   getCurrentRecorder()?.recordError({
     source: 'auth',
     status_code: 400,
-    error_type: errorTypeForLog,
-    chain: makeErrorChain(errorName, description),
+    error_type: 'invalid_request',
+    chain: makeErrorChain('InvalidRequestError', description),
   });
   res.status(400).json({ error: 'invalid_request', error_description: description });
 }
@@ -138,7 +132,7 @@ export function decodeBasicAuth(options: DecodeBasicAuthOptions): RequestHandler
     // Body-parser is a no-op when req._body is already true.
     bodyParser(req, res, (parseErr) => {
       if (parseErr) {
-        reject400(res, 'Invalid request body', 'invalid_request', 'InvalidRequestError');
+        reject400(res, 'Invalid request body');
         return;
       }
 
@@ -147,15 +141,13 @@ export function decodeBasicAuth(options: DecodeBasicAuthOptions): RequestHandler
         reject400(
           res,
           'Client credentials must not be sent both via Authorization header and request body',
-          'invalid_request',
-          'InvalidRequestError',
         );
         return;
       }
 
       const parsed = parseBasicHeader(authHeader);
       if (!parsed.ok) {
-        reject401(res, realm, parsed.reason, 'invalid_client', 'InvalidClientError');
+        reject401(res, realm, parsed.reason);
         return;
       }
 
@@ -163,50 +155,38 @@ export function decodeBasicAuth(options: DecodeBasicAuthOptions): RequestHandler
         try {
           const client = await clientStore.getClient(parsed.clientId);
           if (!client) {
-            reject401(res, realm, 'Invalid client_id', 'invalid_client', 'InvalidClientError');
+            reject401(res, realm, 'Invalid client_id');
             return;
           }
           if (!client.client_secret) {
             // Public client: per RFC 6749 §2.3.1, Basic is only for clients with a password.
-            reject401(
-              res,
-              realm,
-              'Basic authentication is not permitted for public clients',
-              'invalid_client',
-              'InvalidClientError',
-            );
+            reject401(res, realm, 'Basic authentication is not permitted for public clients');
             return;
           }
           if (!safeStringEquals(client.client_secret, parsed.clientSecret)) {
-            reject401(res, realm, 'Invalid client_secret', 'invalid_client', 'InvalidClientError');
+            reject401(res, realm, 'Invalid client_secret');
             return;
           }
           if (
             client.client_secret_expires_at &&
             client.client_secret_expires_at < Math.floor(Date.now() / 1000)
           ) {
-            reject401(
-              res,
-              realm,
-              'Client secret has expired',
-              'invalid_client',
-              'InvalidClientError',
-            );
+            reject401(res, realm, 'Client secret has expired');
             return;
           }
 
           // Merge into body so the SDK's authenticateClient sees the same credentials
           // and produces the same `req.client` populated state downstream.
-          (req.body as Record<string, unknown>).client_id = parsed.clientId;
-          (req.body as Record<string, unknown>).client_secret = parsed.clientSecret;
+          const reqBody = req.body as Record<string, unknown>;
+          reqBody.client_id = parsed.clientId;
+          reqBody.client_secret = parsed.clientSecret;
           next();
         } catch (err) {
           reject401(
             res,
             realm,
             'Unable to validate Basic credentials',
-            'invalid_client',
-            err instanceof Error ? err.name : 'InvalidClientError',
+            err instanceof Error ? err.name : undefined,
           );
         }
       })();
