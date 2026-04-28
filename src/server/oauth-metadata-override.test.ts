@@ -116,7 +116,7 @@ describe('createOverrideMetadataHandler', () => {
       setHeader: vi.fn(),
     } as unknown as import('express').Response;
 
-    handler({} as import('express').Request, res, vi.fn());
+    handler({} as import('express').Request, res);
 
     expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'public, max-age=3600');
     expect(res.status).toHaveBeenCalledWith(200);
