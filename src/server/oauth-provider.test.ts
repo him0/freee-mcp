@@ -5,7 +5,8 @@ import {
 import type { AuthorizationParams } from '@modelcontextprotocol/sdk/server/auth/provider.js';
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { SignJWT } from 'jose';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { initRemoteConfig } from '../config.js';
 import type { TokenStore } from '../storage/token-store.js';
 import type { RedisClientStore } from './client-store.js';
 import type { FreeeOAuthProviderDeps } from './oauth-provider.js';
@@ -82,6 +83,26 @@ function createProvider(overrides?: Partial<FreeeOAuthProviderDeps>): {
 }
 
 describe('FreeeOAuthProvider', () => {
+  // verifyAccessToken / issueTokens read getConfig().mcp for audience handling.
+  beforeAll(() => {
+    initRemoteConfig({
+      port: 3000,
+      issuerUrl: TEST_ISSUER,
+      jwtSecret: TEST_SECRET,
+      jwtAudience: undefined,
+      jwtAudienceEnforce: false,
+      freeeClientId: 'freee-app-id',
+      freeeClientSecret: 'freee-app-secret',
+      freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
+      freeeTokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
+      freeeScope: 'read write',
+      freeeApiUrl: 'https://api.freee.co.jp',
+      redisUrl: 'redis://localhost:6379',
+      rateLimitEnabled: false,
+      logLevel: 'info',
+    });
+  });
+
   describe('clientsStore', () => {
     it('returns the client store', () => {
       const { provider, clientStore } = createProvider();

@@ -7,6 +7,7 @@ export interface JwtPayload {
   iss: string;
   iat: number;
   exp: number;
+  aud?: string;
 }
 
 const ACCESS_TOKEN_TTL = '1h';
@@ -23,12 +24,14 @@ export async function signAccessToken(
   payload: { sub: string; scope: string; clientId: string },
   secret: string,
   issuer: string,
+  audience: string,
 ): Promise<string> {
   const key = deriveKey(secret);
   return new SignJWT({ scope: payload.scope, client_id: payload.clientId })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(payload.sub)
     .setIssuer(issuer)
+    .setAudience(audience)
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_TTL)
     .sign(key);
@@ -38,9 +41,13 @@ export async function verifyAccessToken(
   token: string,
   secret: string,
   issuer: string,
+  audience: string | undefined,
 ): Promise<JwtPayload> {
   const key = deriveKey(secret);
-  const { payload } = await jwtVerify(token, key, { issuer });
+  // When `audience` is undefined we are in grace-period mode (RFC 8707 #93):
+  // accept legacy tokens that lack `aud` and any current `aud` value.
+  const verifyOptions = audience !== undefined ? { issuer, audience } : { issuer };
+  const { payload } = await jwtVerify(token, key, verifyOptions);
 
   const sub = payload.sub;
   const scope = payload.scope as string | undefined;
@@ -50,6 +57,8 @@ export async function verifyAccessToken(
     throw new Error('JWT missing required claims: sub, scope, client_id');
   }
 
+  const aud = typeof payload.aud === 'string' ? payload.aud : undefined;
+
   return {
     sub,
     scope,
@@ -57,6 +66,7 @@ export async function verifyAccessToken(
     iss: issuer,
     iat: payload.iat as number,
     exp: payload.exp as number,
+    aud,
   };
 }
 
