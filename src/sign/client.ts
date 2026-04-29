@@ -130,7 +130,7 @@ export async function makeSignApiRequest(
     const retryMsg = retryAfter
       ? `${retryAfter}秒後に再試行してください。`
       : '数分待ってから再試行してください。';
-    recordFailure(429, 'http_error', new Error(`レートリミットに達しました (429)。${retryMsg}`));
+    recordFailure(429, 'rate_limit', new Error(`レートリミットに達しました (429)。${retryMsg}`));
   }
 
   if (!response.ok) {

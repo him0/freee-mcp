@@ -39,6 +39,28 @@ function isBinaryContentType(contentType: string): boolean {
   return binaryTypes.some((type) => contentType.includes(type));
 }
 
+/**
+ * Build a Japanese retry guidance message from a Retry-After header value.
+ * RFC 7231 §7.1.3 allows delta-seconds (integer) or HTTP-date forms; both are
+ * normalized to a "N秒後に再試行してください。" message. Falls back to a
+ * generic "wait a few minutes" message when the header is absent or
+ * unparseable, so a malformed value never bleeds into the user-facing string.
+ */
+export function formatRetryAfterMessage(retryAfter: string | null): string {
+  const fallback = '数分待ってから再試行してください。';
+  if (!retryAfter) return fallback;
+  const trimmed = retryAfter.trim();
+  if (/^\d+$/.test(trimmed)) {
+    return `${trimmed}秒後に再試行してください。`;
+  }
+  const parsed = Date.parse(trimmed);
+  if (Number.isFinite(parsed)) {
+    const seconds = Math.max(0, Math.ceil((parsed - Date.now()) / 1000));
+    return `${seconds}秒後に再試行してください。`;
+  }
+  return fallback;
+}
+
 export async function makeApiRequest(
   method: string,
   apiPath: string,
@@ -191,9 +213,7 @@ export async function makeApiRequest(
   if (response.status === 429) {
     const retryAfter = response.headers.get('Retry-After');
     const errorInfo = await formatResponseErrorInfo(response);
-    const retryMsg = retryAfter
-      ? `${retryAfter}秒後に再試行してください。`
-      : '数分待ってから再試行してください。';
+    const retryMsg = formatRetryAfterMessage(retryAfter);
     const rateLimitError = new Error(
       `レートリミットに達しました (429): ${errorInfo}\n` +
         `事業所ID: ${companyId}\n` +

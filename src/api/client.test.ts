@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getUserAgent } from '../server/user-agent.js';
-import { type BinaryFileResponse, isBinaryFileResponse, makeApiRequest } from './client.js';
+import {
+  type BinaryFileResponse,
+  formatRetryAfterMessage,
+  isBinaryFileResponse,
+  makeApiRequest,
+} from './client.js';
 
 // Test constants (defined after mocks due to hoisting)
 const TEST_API_URL = 'https://api.freee.co.jp';
@@ -104,6 +109,38 @@ async function setupAccessToken(token: string | null): Promise<void> {
   const mockGetValidAccessToken = await import('../auth/tokens.js');
   vi.mocked(mockGetValidAccessToken.getValidAccessToken).mockResolvedValue(token);
 }
+
+describe('formatRetryAfterMessage', () => {
+  it('returns fallback message when header is null', () => {
+    expect(formatRetryAfterMessage(null)).toBe('数分待ってから再試行してください。');
+  });
+
+  it('formats integer delta-seconds', () => {
+    expect(formatRetryAfterMessage('60')).toBe('60秒後に再試行してください。');
+  });
+
+  it('trims whitespace before parsing delta-seconds', () => {
+    expect(formatRetryAfterMessage('  120  ')).toBe('120秒後に再試行してください。');
+  });
+
+  it('converts HTTP-date form to remaining seconds (RFC 7231)', () => {
+    const future = new Date(Date.now() + 90_000).toUTCString();
+    const result = formatRetryAfterMessage(future);
+    expect(result).toMatch(/^\d+秒後に再試行してください。$/);
+    const seconds = Number(result.match(/^(\d+)秒/)?.[1]);
+    expect(seconds).toBeGreaterThan(85);
+    expect(seconds).toBeLessThanOrEqual(90);
+  });
+
+  it('clamps past HTTP-date to zero seconds (no negative)', () => {
+    const past = new Date(Date.now() - 60_000).toUTCString();
+    expect(formatRetryAfterMessage(past)).toBe('0秒後に再試行してください。');
+  });
+
+  it('falls back when header is unparseable', () => {
+    expect(formatRetryAfterMessage('not-a-date-or-number')).toBe('数分待ってから再試行してください。');
+  });
+});
 
 describe('client', () => {
   beforeEach(() => {
