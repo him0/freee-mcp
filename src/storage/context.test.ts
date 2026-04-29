@@ -1,4 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { InvalidTokenError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { initUserAgentTransportMode } from '../server/user-agent.js';
 import { extractTokenContext, resolveCompanyId } from './context.js';
 import { FileTokenStore } from './file-token-store.js';
 
@@ -18,37 +20,84 @@ vi.mock('../config/companies.js', () => ({
 describe('extractTokenContext', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    // The user-agent module holds a single mutable transport mode global,
+    // so reset it after each test to avoid leaking remote mode into later
+    // cases that expect the stdio default.
+    initUserAgentTransportMode('stdio');
   });
 
-  it('returns FileTokenStore with userId="local" when extra is undefined', () => {
-    const ctx = extractTokenContext(undefined);
+  describe('stdio mode (single-tenant local CLI)', () => {
+    it('returns FileTokenStore with userId="local" when extra is undefined', () => {
+      const ctx = extractTokenContext(undefined);
 
-    expect(ctx.tokenStore).toBeInstanceOf(FileTokenStore);
-    expect(ctx.userId).toBe('local');
+      expect(ctx.tokenStore).toBeInstanceOf(FileTokenStore);
+      expect(ctx.userId).toBe('local');
+    });
+
+    it('returns FileTokenStore when extra has no authInfo', () => {
+      const ctx = extractTokenContext({});
+
+      expect(ctx.tokenStore).toBeInstanceOf(FileTokenStore);
+      expect(ctx.userId).toBe('local');
+    });
+
+    it('returns FileTokenStore when authInfo.extra is missing', () => {
+      const ctx = extractTokenContext({ authInfo: {} });
+
+      expect(ctx.tokenStore).toBeInstanceOf(FileTokenStore);
+      expect(ctx.userId).toBe('local');
+    });
+
+    it('returns FileTokenStore when authInfo.extra has no tokenStore', () => {
+      const ctx = extractTokenContext({ authInfo: { extra: { userId: 'user1' } } });
+
+      expect(ctx.tokenStore).toBeInstanceOf(FileTokenStore);
+      expect(ctx.userId).toBe('local');
+    });
+
+    it('returns the same singleton FileTokenStore across calls', () => {
+      const ctx1 = extractTokenContext(undefined);
+      const ctx2 = extractTokenContext(undefined);
+
+      expect(ctx1.tokenStore).toBe(ctx2.tokenStore);
+    });
   });
 
-  it('returns FileTokenStore when extra has no authInfo', () => {
-    const ctx = extractTokenContext({});
+  describe('remote mode (multi-tenant HTTP server)', () => {
+    beforeEach(() => {
+      initUserAgentTransportMode('remote');
+    });
 
-    expect(ctx.tokenStore).toBeInstanceOf(FileTokenStore);
-    expect(ctx.userId).toBe('local');
+    it('throws InvalidTokenError when extra is undefined', () => {
+      expect(() => extractTokenContext(undefined)).toThrow(InvalidTokenError);
+    });
+
+    it('throws InvalidTokenError when extra has no authInfo', () => {
+      expect(() => extractTokenContext({})).toThrow(InvalidTokenError);
+    });
+
+    it('throws InvalidTokenError when authInfo.extra is missing', () => {
+      expect(() => extractTokenContext({ authInfo: {} })).toThrow(InvalidTokenError);
+    });
+
+    it('throws InvalidTokenError when authInfo.extra has userId but no tokenStore', () => {
+      expect(() =>
+        extractTokenContext({ authInfo: { extra: { userId: 'user1' } } }),
+      ).toThrow(InvalidTokenError);
+    });
+
+    it('throws InvalidTokenError even when authInfo.extra is a partial object (regression guard)', () => {
+      // Partial AuthExtra (has `extra` key but no tokenStore/userId) must
+      // never silently fall back to the single-tenant local file store.
+      expect(() =>
+        extractTokenContext({ authInfo: { extra: {} } }),
+      ).toThrow(InvalidTokenError);
+    });
   });
 
-  it('returns FileTokenStore when authInfo.extra is missing', () => {
-    const ctx = extractTokenContext({ authInfo: {} });
+  it('returns custom tokenStore and userId from authInfo.extra (remote injection succeeds)', () => {
+    initUserAgentTransportMode('remote');
 
-    expect(ctx.tokenStore).toBeInstanceOf(FileTokenStore);
-    expect(ctx.userId).toBe('local');
-  });
-
-  it('returns FileTokenStore when authInfo.extra has no tokenStore', () => {
-    const ctx = extractTokenContext({ authInfo: { extra: { userId: 'user1' } } });
-
-    expect(ctx.tokenStore).toBeInstanceOf(FileTokenStore);
-    expect(ctx.userId).toBe('local');
-  });
-
-  it('returns custom tokenStore and userId from authInfo.extra', () => {
     const mockStore = {
       loadTokens: vi.fn(),
       saveTokens: vi.fn(),
@@ -67,13 +116,6 @@ describe('extractTokenContext', () => {
 
     expect(ctx.tokenStore).toBe(mockStore);
     expect(ctx.userId).toBe('remote-user-42');
-  });
-
-  it('returns the same singleton FileTokenStore across calls', () => {
-    const ctx1 = extractTokenContext(undefined);
-    const ctx2 = extractTokenContext(undefined);
-
-    expect(ctx1.tokenStore).toBe(ctx2.tokenStore);
   });
 });
 
