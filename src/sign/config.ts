@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
-import { parsePort } from '../config.js';
+import { parseBooleanEnv, parsePort } from '../config.js';
 import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 
 /** サイン専用のデフォルトコールバックポート（freee 本体の 54321 と競合しないようにする） */
@@ -153,44 +153,127 @@ export interface SignRemoteServerConfig {
   logLevel: string;
 }
 
-export function loadSignRemoteServerConfig(): SignRemoteServerConfig {
-  const issuerUrl = process.env.SIGN_ISSUER_URL;
-  if (!issuerUrl) {
-    throw new Error('SIGN_ISSUER_URL environment variable is required for serve mode.');
-  }
+const SIGN_VALID_LOG_LEVELS = [
+  'fatal',
+  'error',
+  'warn',
+  'info',
+  'debug',
+  'trace',
+  'silent',
+] as const;
 
-  const jwtSecret = process.env.SIGN_JWT_SECRET;
-  if (!jwtSecret) {
-    throw new Error('SIGN_JWT_SECRET environment variable is required for serve mode.');
-  }
-  if (jwtSecret.length < 32) {
-    throw new Error(
+const SignRemoteServerEnvSchema = z.object({
+  SIGN_ISSUER_URL: z
+    .string({ required_error: 'SIGN_ISSUER_URL is required for serve mode.' })
+    .min(1, 'SIGN_ISSUER_URL is required for serve mode.')
+    .url('SIGN_ISSUER_URL must be a valid URL.'),
+  SIGN_JWT_SECRET: z
+    .string({ required_error: 'SIGN_JWT_SECRET is required for serve mode.' })
+    .min(
+      32,
       'SIGN_JWT_SECRET must be at least 32 characters. Use a cryptographically random value: openssl rand -hex 32',
-    );
-  }
+    ),
+  FREEE_SIGN_CLIENT_ID: z
+    .string({ required_error: 'FREEE_SIGN_CLIENT_ID is required for serve mode.' })
+    .min(1, 'FREEE_SIGN_CLIENT_ID is required for serve mode.'),
+  FREEE_SIGN_CLIENT_SECRET: z
+    .string({ required_error: 'FREEE_SIGN_CLIENT_SECRET is required for serve mode.' })
+    .min(1, 'FREEE_SIGN_CLIENT_SECRET is required for serve mode.'),
+  SIGN_PORT: z.string().optional(),
+  SIGN_AUTHORIZATION_ENDPOINT: z
+    .string()
+    .url('SIGN_AUTHORIZATION_ENDPOINT must be a valid URL.')
+    .optional(),
+  SIGN_TOKEN_ENDPOINT: z.string().url('SIGN_TOKEN_ENDPOINT must be a valid URL.').optional(),
+  SIGN_SCOPE: z.string().optional(),
+  SIGN_REDIS_URL: z.string().min(1).optional(),
+  SIGN_CORS_ALLOWED_ORIGINS: z.string().optional(),
+  SIGN_RATE_LIMIT_ENABLED: z.string().optional(),
+  SIGN_LOG_LEVEL: z.enum(SIGN_VALID_LOG_LEVELS).optional(),
+});
 
-  const signClientId = process.env.FREEE_SIGN_CLIENT_ID;
-  const signClientSecret = process.env.FREEE_SIGN_CLIENT_SECRET;
+function formatSignZodIssues(error: z.ZodError): string {
+  return error.issues
+    .map((issue) => {
+      const name = issue.path.join('.');
+      return name ? `${name}: ${issue.message}` : issue.message;
+    })
+    .join('; ');
+}
 
-  if (!signClientId || !signClientSecret) {
-    throw new Error(
-      'FREEE_SIGN_CLIENT_ID and FREEE_SIGN_CLIENT_SECRET environment variables are required for serve mode.',
-    );
+export function loadSignRemoteServerConfig(): SignRemoteServerConfig {
+  const rawEnv = {
+    SIGN_ISSUER_URL: process.env.SIGN_ISSUER_URL,
+    SIGN_JWT_SECRET: process.env.SIGN_JWT_SECRET,
+    FREEE_SIGN_CLIENT_ID: process.env.FREEE_SIGN_CLIENT_ID,
+    FREEE_SIGN_CLIENT_SECRET: process.env.FREEE_SIGN_CLIENT_SECRET,
+    SIGN_PORT: process.env.SIGN_PORT,
+    SIGN_AUTHORIZATION_ENDPOINT: process.env.SIGN_AUTHORIZATION_ENDPOINT,
+    SIGN_TOKEN_ENDPOINT: process.env.SIGN_TOKEN_ENDPOINT,
+    SIGN_SCOPE: process.env.SIGN_SCOPE,
+    SIGN_REDIS_URL: process.env.SIGN_REDIS_URL,
+    SIGN_CORS_ALLOWED_ORIGINS: process.env.SIGN_CORS_ALLOWED_ORIGINS,
+    SIGN_RATE_LIMIT_ENABLED: process.env.SIGN_RATE_LIMIT_ENABLED,
+    SIGN_LOG_LEVEL: process.env.SIGN_LOG_LEVEL,
+  };
+
+  const parsed = SignRemoteServerEnvSchema.safeParse(rawEnv);
+  if (!parsed.success) {
+    throw new Error(`Invalid environment configuration: ${formatSignZodIssues(parsed.error)}`);
   }
+  const env = parsed.data;
+
+  // SIGN_RATE_LIMIT_ENABLED defaults to true (secure-by-default).
+  // Operators must set SIGN_RATE_LIMIT_ENABLED=false explicitly to disable.
+  const rateLimitEnabled = parseBooleanEnv(
+    'SIGN_RATE_LIMIT_ENABLED',
+    env.SIGN_RATE_LIMIT_ENABLED,
+    true,
+  );
 
   return {
-    port: parsePort(process.env.SIGN_PORT, 3002),
-    issuerUrl,
-    jwtSecret,
-    signClientId,
-    signClientSecret,
-    signAuthorizationEndpoint:
-      process.env.SIGN_AUTHORIZATION_ENDPOINT || SIGN_AUTHORIZATION_ENDPOINT,
-    signTokenEndpoint: process.env.SIGN_TOKEN_ENDPOINT || SIGN_TOKEN_ENDPOINT,
-    signScope: process.env.SIGN_SCOPE || SIGN_OAUTH_SCOPE,
-    redisUrl: process.env.SIGN_REDIS_URL || 'redis://localhost:6379',
-    corsAllowedOrigins: process.env.SIGN_CORS_ALLOWED_ORIGINS,
-    rateLimitEnabled: process.env.SIGN_RATE_LIMIT_ENABLED === 'true',
-    logLevel: process.env.SIGN_LOG_LEVEL || 'info',
+    port: parsePort(env.SIGN_PORT, 3002),
+    issuerUrl: env.SIGN_ISSUER_URL,
+    jwtSecret: env.SIGN_JWT_SECRET,
+    signClientId: env.FREEE_SIGN_CLIENT_ID,
+    signClientSecret: env.FREEE_SIGN_CLIENT_SECRET,
+    signAuthorizationEndpoint: env.SIGN_AUTHORIZATION_ENDPOINT || SIGN_AUTHORIZATION_ENDPOINT,
+    signTokenEndpoint: env.SIGN_TOKEN_ENDPOINT || SIGN_TOKEN_ENDPOINT,
+    signScope: env.SIGN_SCOPE || SIGN_OAUTH_SCOPE,
+    redisUrl: env.SIGN_REDIS_URL || 'redis://localhost:6379',
+    corsAllowedOrigins: env.SIGN_CORS_ALLOWED_ORIGINS,
+    rateLimitEnabled,
+    logLevel: env.SIGN_LOG_LEVEL || 'info',
+  };
+}
+
+function maskSignSecret(value: string | undefined): string {
+  if (!value) {
+    return '<unset>';
+  }
+  return '<redacted>';
+}
+
+/**
+ * Build a log-safe summary of the resolved sign remote server config.
+ * Secrets (jwtSecret, signClientSecret) are masked.
+ */
+export function summarizeSignRemoteServerConfig(
+  config: SignRemoteServerConfig,
+): Record<string, string | number | boolean | undefined> {
+  return {
+    port: config.port,
+    issuerUrl: config.issuerUrl,
+    jwtSecret: maskSignSecret(config.jwtSecret),
+    signClientId: config.signClientId,
+    signClientSecret: maskSignSecret(config.signClientSecret),
+    signAuthorizationEndpoint: config.signAuthorizationEndpoint,
+    signTokenEndpoint: config.signTokenEndpoint,
+    signScope: config.signScope,
+    redisUrl: config.redisUrl,
+    corsAllowedOrigins: config.corsAllowedOrigins,
+    rateLimitEnabled: config.rateLimitEnabled,
+    logLevel: config.logLevel,
   };
 }
