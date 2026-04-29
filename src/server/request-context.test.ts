@@ -4,12 +4,14 @@ import {
   UNRECORDED_ERROR_NAME,
   UNRECORDED_ERROR_TYPE,
   getCurrentRecorder,
+  resolveCid,
   withRequestRecorder,
 } from './request-context.js';
 
 function makeRecorder(overrides: Partial<ConstructorParameters<typeof RequestRecorder>[0]> = {}) {
   return new RequestRecorder({
     request_id: 'req-test',
+    cid: 'cid-test',
     source_ip: '127.0.0.1',
     method: 'POST',
     path: '/mcp',
@@ -102,6 +104,7 @@ describe('RequestRecorder', () => {
 
       expect(payload).toEqual({
         request_id: 'req-canonical',
+        cid: 'cid-test',
         source_ip: '10.0.0.1',
         user_agent: null,
         user_id: 'user-42',
@@ -307,5 +310,125 @@ describe('AsyncLocalStorage integration', () => {
     expect((payloadB.mcp as { tool_calls: Array<{ tool: string }> }).tool_calls).toEqual([
       expect.objectContaining({ tool: 'tool_b' }),
     ]);
+  });
+});
+
+/**
+ * Direct unit tests for `resolveCid`.
+ *
+ * Pure-function tests covering header precedence, validation, fall-through to
+ * UUID, and the explicit "do NOT partial-sanitize" contract that protects the
+ * canonical log line from injection.
+ */
+describe('resolveCid', () => {
+  // RFC 4122 version-agnostic UUID matcher — `crypto.randomUUID` returns v4
+  // today, but locking the regex to `[1-5]` would needlessly couple the test
+  // to the Node implementation. Charset and dash positions are what matter.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  describe('precedence', () => {
+    it('prefers X-Correlation-ID over X-Request-ID when both are valid', () => {
+      expect(resolveCid('correlation-1', 'request-1')).toBe('correlation-1');
+    });
+
+    it('falls back to X-Request-ID when X-Correlation-ID is absent', () => {
+      expect(resolveCid(undefined, 'request-1')).toBe('request-1');
+    });
+
+    it('generates a UUID when both headers are absent', () => {
+      const cid = resolveCid(undefined, undefined);
+      expect(cid).toMatch(UUID_RE);
+    });
+
+    it('generates a fresh UUID on every call (no memoization)', () => {
+      // Sanity: each request gets its own ID — we are NOT caching the fallback.
+      const a = resolveCid(undefined, undefined);
+      const b = resolveCid(undefined, undefined);
+      expect(a).not.toBe(b);
+    });
+  });
+
+  describe('fall-through on invalid values (no partial sanitization)', () => {
+    it('falls through to X-Request-ID when X-Correlation-ID is invalid', () => {
+      // Whitespace is rejected outright; we never strip-and-accept.
+      expect(resolveCid('has space', 'request-1')).toBe('request-1');
+    });
+
+    it('falls through to UUID when both headers are invalid', () => {
+      expect(resolveCid('bad header!', 'also bad@')).toMatch(UUID_RE);
+    });
+
+    it('rejects an empty-string X-Correlation-ID and falls through', () => {
+      expect(resolveCid('', 'request-1')).toBe('request-1');
+    });
+
+    it('rejects an empty-string X-Request-ID and falls through to UUID', () => {
+      expect(resolveCid(undefined, '')).toMatch(UUID_RE);
+    });
+  });
+
+  describe('input type guards', () => {
+    it('rejects an array-valued X-Correlation-ID and falls through', () => {
+      // Node types `req.headers['x-correlation-id']` as `string | string[]`.
+      // Accepting `arr.join(',')` would let an attacker smuggle commas, so a
+      // `string[]` (multiple header lines coalesced) is rejected outright.
+      expect(resolveCid(['a', 'b'], 'request-1')).toBe('request-1');
+    });
+
+    it('rejects an array-valued X-Request-ID and falls through to UUID', () => {
+      expect(resolveCid(undefined, ['a', 'b'])).toMatch(UUID_RE);
+    });
+
+    it('rejects non-string types (number, object, null) and falls through', () => {
+      expect(resolveCid(42, undefined)).toMatch(UUID_RE);
+      expect(resolveCid({ value: 'x' }, undefined)).toMatch(UUID_RE);
+      expect(resolveCid(null, undefined)).toMatch(UUID_RE);
+    });
+  });
+
+  describe('length cap (200 chars)', () => {
+    it('accepts a value exactly at the 200-char boundary', () => {
+      const exactly200 = 'a'.repeat(200);
+      expect(resolveCid(exactly200, undefined)).toBe(exactly200);
+    });
+
+    it('rejects a 201-char value and falls through', () => {
+      const tooLong = 'a'.repeat(201);
+      expect(resolveCid(tooLong, 'request-1')).toBe('request-1');
+    });
+  });
+
+  describe('charset', () => {
+    it('accepts a UUIDv4 verbatim', () => {
+      const uuid = '0af76519-16cd-43dd-8448-eb211c80319c';
+      expect(resolveCid(uuid, undefined)).toBe(uuid);
+    });
+
+    it('accepts a Crockford-base32 ULID verbatim', () => {
+      // ULID = 26 alphanumerics. The spec excludes I/L/O/U; we don't enforce
+      // that — we only require the cid charset, which trivially admits ULIDs.
+      const ulid = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
+      expect(resolveCid(ulid, undefined)).toBe(ulid);
+    });
+
+    it('accepts dotted-colon composite IDs (e.g. service:uuid)', () => {
+      // Common upstream pattern: a gateway prefixes its own service name to a
+      // generated UUID. Both `:` and `.` must pass through unchanged.
+      const composite = 'gw.edge:0af76519-16cd-43dd-8448-eb211c80319c';
+      expect(resolveCid(composite, undefined)).toBe(composite);
+    });
+
+    it('rejects whitespace, quotes, braces, and newlines (log-injection guards)', () => {
+      // These are the characters most likely to corrupt a downstream log
+      // parser if smuggled into a JSON-rendered canonical log line.
+      for (const bad of ['has space', 'has"quote', 'has{brace}', 'has\nnewline']) {
+        expect(resolveCid(bad, undefined)).toMatch(UUID_RE);
+      }
+    });
+
+    it('rejects non-ASCII Unicode and falls through', () => {
+      expect(resolveCid('한글', undefined)).toMatch(UUID_RE);
+      expect(resolveCid('日本語', undefined)).toMatch(UUID_RE);
+    });
   });
 });

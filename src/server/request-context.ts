@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { randomUUID } from 'node:crypto';
 import { makeErrorChain, type ErrorChainEntry } from './error-serializer.js';
 
 /**
@@ -77,6 +78,14 @@ export interface ErrorInfo {
 
 export interface RequestRecorderContext {
   request_id: string;
+  /**
+   * Client-supplied correlation ID, propagated through the canonical log line
+   * so log entries for one request can be grep'd together when the OTel trace
+   * backend is unavailable. Sourced from `X-Correlation-ID` / `X-Request-ID`
+   * headers via {@link resolveCid}, or a freshly generated UUID when neither
+   * header is supplied.
+   */
+  cid: string;
   source_ip: string;
   /** Inbound HTTP User-Agent header from the MCP client, normalized and truncated. */
   user_agent?: string;
@@ -84,6 +93,56 @@ export interface RequestRecorderContext {
   session_id?: string;
   method: string;
   path: string;
+}
+
+/** Charset accepted in client-supplied correlation IDs. Matches the Stripe /
+ * W3C convention: alphanumerics plus `.`, `_`, `:`, `-`. Anything else
+ * (whitespace, control chars, quotes, brackets) is rejected to prevent log
+ * injection — a client could otherwise smuggle JSON syntax or ANSI escapes
+ * into the canonical log line and confuse log parsers / terminal viewers. */
+const CID_PATTERN = /^[A-Za-z0-9._:-]+$/;
+
+/** Hard cap on the length of a client-supplied correlation ID. Long enough to
+ * fit a UUIDv4 (36), ULID (26), or `<service>:<uuid>` composite, but short
+ * enough that a malicious client can't blow up Datadog facet cardinality or
+ * the per-line log size. */
+const CID_MAX_LENGTH = 200;
+
+/** Returns true iff `value` is a single non-empty string within {@link CID_MAX_LENGTH}
+ * and matching {@link CID_PATTERN}. Rejects array-valued headers (Node types
+ * `req.headers['x-correlation-id']` as `string | string[] | undefined`) and
+ * non-string inputs as a defense-in-depth guard. */
+function isValidCid(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= CID_MAX_LENGTH &&
+    CID_PATTERN.test(value)
+  );
+}
+
+/**
+ * Pure helper that picks a correlation ID for one request.
+ *
+ * Precedence (first valid value wins):
+ *   1. `X-Correlation-ID` header (preferred — explicitly correlation-flavored).
+ *   2. `X-Request-ID` header (fallback — common upstream proxy convention).
+ *   3. Freshly generated UUIDv4 via `crypto.randomUUID()`.
+ *
+ * Invalid values (wrong type, empty string, oversize, disallowed characters,
+ * array-valued header) FALL THROUGH to the next source rather than being
+ * sanitized. Partial sanitization would let a hostile client inject crafted
+ * substrings; falling through guarantees the cid is either a verbatim
+ * client-supplied value that passes validation, or an internally generated
+ * UUID that the client never touched.
+ *
+ * The function is total — it always returns a non-empty string — so callers
+ * can assign the result directly to `RequestRecorderContext.cid`.
+ */
+export function resolveCid(correlationIdHeader: unknown, requestIdHeader: unknown): string {
+  if (isValidCid(correlationIdHeader)) return correlationIdHeader;
+  if (isValidCid(requestIdHeader)) return requestIdHeader;
+  return randomUUID();
 }
 
 /**
@@ -130,6 +189,12 @@ export type CanonicalCloseReason = 'completed' | 'client_disconnect';
  */
 export interface CanonicalLogPayload {
   request_id: string;
+  /**
+   * Client correlation ID. Independent from `request_id` (server-assigned).
+   * Always present — sourced from inbound headers when valid, otherwise a
+   * freshly generated UUID. See {@link resolveCid}.
+   */
+  cid: string;
   source_ip: string;
   user_agent: string | null;
   user_id: string | null;
@@ -220,6 +285,7 @@ export class RequestRecorder {
   }): CanonicalLogPayload {
     return {
       request_id: this.context.request_id,
+      cid: this.context.cid,
       source_ip: this.context.source_ip,
       user_agent: this.context.user_agent ?? null,
       user_id: this.context.user_id ?? null,

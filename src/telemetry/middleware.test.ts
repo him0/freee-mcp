@@ -794,6 +794,105 @@ describe('createTracingMiddleware - canonical log line', () => {
     expect(ua).toContain('[REDAC');
     expect(ua.startsWith(base)).toBe(true);
   });
+
+  // -- cid (correlation ID) header propagation -----------------------------
+  //
+  // End-to-end coverage that the middleware wires the inbound correlation
+  // headers into the canonical log line via `resolveCid`. Per-source unit
+  // coverage of `resolveCid` itself lives in request-context.test.ts.
+  it('propagates X-Correlation-ID into the cid field of the canonical log', async () => {
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp', 'GET', { 'x-correlation-id': 'cid-from-correlation' });
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logInfo.mock.calls[0] as [Record<string, unknown>];
+    expect(payload.cid).toBe('cid-from-correlation');
+  });
+
+  it('falls back to X-Request-ID when X-Correlation-ID is absent', async () => {
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp', 'GET', { 'x-request-id': 'rid-from-request' });
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logInfo.mock.calls[0] as [Record<string, unknown>];
+    expect(payload.cid).toBe('rid-from-request');
+  });
+
+  it('prefers X-Correlation-ID when both correlation headers are present', async () => {
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp', 'GET', {
+      'x-correlation-id': 'cid-wins',
+      'x-request-id': 'rid-loses',
+    });
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logInfo.mock.calls[0] as [Record<string, unknown>];
+    expect(payload.cid).toBe('cid-wins');
+  });
+
+  it('generates a UUID cid when no correlation headers are sent', async () => {
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp');
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logInfo.mock.calls[0] as [Record<string, unknown>];
+    expect(payload.cid).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
+  });
+
+  it('rejects an invalid X-Correlation-ID and falls through to X-Request-ID', async () => {
+    // Locks the no-partial-sanitize contract end-to-end: even though the
+    // correlation header is present, its whitespace makes it invalid, so
+    // the middleware should NOT pass through the dirty value, and should
+    // NOT strip-and-keep it — it should fall through to the next source.
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp', 'GET', {
+      'x-correlation-id': 'has space',
+      'x-request-id': 'rid-clean',
+    });
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logInfo.mock.calls[0] as [Record<string, unknown>];
+    expect(payload.cid).toBe('rid-clean');
+  });
+
+  it('keeps cid independent from request_id (server-assigned)', async () => {
+    // Locks the contract: cid carries the upstream-supplied correlation ID,
+    // request_id is always the server-assigned UUID. They MUST NOT collapse.
+    const { logInfo, app } = await setupAppWithLoggerSpy((_req, res) => {
+      res.status(200).json({ ok: true });
+    });
+    ({ srv: server, port } = await listen(app));
+
+    await makeRequest(port, '/mcp', 'GET', { 'x-correlation-id': 'gateway-trace-1' });
+    await new Promise((r) => setTimeout(r, 10));
+
+    const [payload] = logInfo.mock.calls[0] as [Record<string, unknown>];
+    expect(payload.cid).toBe('gateway-trace-1');
+    expect(payload.request_id).not.toBe(payload.cid);
+    expect(typeof payload.request_id).toBe('string');
+  });
 });
 
 /**

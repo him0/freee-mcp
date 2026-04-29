@@ -15,6 +15,7 @@ import {
   type CanonicalCloseReason,
   type CanonicalRequestTransport,
   RequestRecorder,
+  resolveCid,
   withRequestRecorder,
 } from '../server/request-context.js';
 import { isOtelEnabled } from './init.js';
@@ -127,6 +128,11 @@ export function createTracingMiddleware(): (
 
     const recorder = new RequestRecorder({
       request_id: req.requestId,
+      // Client-supplied correlation ID. Independent from request_id (always
+      // server-assigned) so a single inbound request can be grep'd across
+      // our logs even when the OTel trace backend is unavailable. Header
+      // precedence and validation live in resolveCid().
+      cid: resolveCid(req.headers['x-correlation-id'], req.headers['x-request-id']),
       source_ip: getClientIp(req),
       user_agent: normalizeUserAgent(req.headers['user-agent']),
       method: req.method,
