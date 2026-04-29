@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { RedisClientStore } from '../../server/client-store.js';
 import { makeErrorChain, serializeErrorChain } from '../../server/error-serializer.js';
 import { RedisUnavailableError } from '../../server/errors.js';
+import { createLivenessHandler, createReadinessHandler } from '../../server/health-endpoints.js';
 import { initLogger } from '../../server/logger.js';
 import { OAuthStateStore } from '../../server/oauth-store.js';
 import { getCurrentRecorder } from '../../server/request-context.js';
@@ -146,21 +147,18 @@ export async function startSignHttpServer(options?: {
     await setupRateLimiting(app, redis, logger);
   }
 
-  // Health check endpoint (no auth required)
-  app.get('/health', async (_req: Request, res: Response) => {
-    try {
-      await redis.ping();
-      res.json({
-        status: 'ok',
-        redis: 'connected',
-      });
-    } catch {
-      res.status(503).json({
-        status: 'degraded',
-        redis: 'disconnected',
-      });
-    }
-  });
+  // Liveness probe (no auth required, no external dependencies).
+  app.get('/livez', createLivenessHandler());
+
+  // Readiness probe (no auth required).
+  // Returns 503 when Redis is unreachable so the orchestrator stops sending
+  // traffic to this instance.
+  const readinessHandler = createReadinessHandler(redis);
+  app.get('/readyz', readinessHandler);
+
+  // Backward-compatible alias for /readyz. Existing deployments may still
+  // probe /health; new deployments should migrate to /livez and /readyz.
+  app.get('/health', readinessHandler);
 
   // Sign OAuth callback (browser redirect, no MCP auth required)
   app.get(SIGN_CALLBACK_PATH, signCallbackHandler);
@@ -172,9 +170,7 @@ export async function startSignHttpServer(options?: {
   // Override the SDK's authorization-server metadata to advertise
   // client_secret_basic (RFC 6749 §2.3.1). Mounted before mcpAuthRouter so
   // Express first-match-wins routes /.well-known here instead of into the SDK.
-  const { createOverrideMetadataHandler } = await import(
-    '../../server/oauth-metadata-override.js'
-  );
+  const { createOverrideMetadataHandler } = await import('../../server/oauth-metadata-override.js');
   app.get(
     '/.well-known/oauth-authorization-server',
     createOverrideMetadataHandler({
