@@ -242,10 +242,9 @@ async function handleCallback(
   }
 
   // Validate redirect_uri against registered client (defense-in-depth).
-  // Fail-closed on validation errors: any exception during lookup (e.g. Redis failure)
-  // results in a 400 response so a malformed/unverifiable redirect_uri can never bypass
-  // the check. Trade-off: the session is already consumed above, so the user must restart
-  // the OAuth flow — accepted security cost vs. a potential validation bypass.
+  // Fail-closed: any exception during lookup (e.g. Redis failure) returns 400 so
+  // an unverifiable redirect_uri cannot bypass the check. The session is already
+  // consumed above, so the user must restart the OAuth flow on failure.
   if (deps.clientStore) {
     try {
       const client = await deps.clientStore.getClient(session.clientId);
