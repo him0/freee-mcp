@@ -145,8 +145,8 @@ export class FreeeOAuthProvider implements OAuthServerProvider {
 
   async verifyAccessToken(token: string): Promise<AuthInfo> {
     let payload: Awaited<ReturnType<typeof verifyJwt>>;
-    // RFC 8707 (#93): only enforce `aud` when explicitly configured to do so.
-    // Default is grace-period mode that accepts legacy tokens without `aud`.
+    // RFC 8707: only enforce `aud` when explicitly configured. Default is
+    // grace-period mode that accepts legacy tokens without `aud`.
     const mcpCfg = getConfig().mcp;
     const verifyAudience = mcpCfg.jwtAudienceEnforce ? mcpCfg.jwtAudience : undefined;
     try {
@@ -199,8 +199,8 @@ export class FreeeOAuthProvider implements OAuthServerProvider {
     scopes: string[],
   ): Promise<OAuthTokens> {
     const scope = scopes.join(' ');
-    // RFC 8707 (#93): always embed an `aud` claim. Fall back to the issuer
-    // URL when MCP_JWT_AUDIENCE is unset so tokens are still bound to a
+    // RFC 8707: always embed an `aud` claim. Fall back to the issuer URL
+    // when MCP_JWT_AUDIENCE is unset so tokens are still bound to a
     // resource (defense in depth) even before operators configure audience.
     const audience = getConfig().mcp.jwtAudience ?? this.deps.issuerUrl;
     const jwt = await signAccessToken(

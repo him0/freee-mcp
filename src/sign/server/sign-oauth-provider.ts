@@ -134,8 +134,7 @@ export class SignOAuthProvider implements OAuthServerProvider {
   }
 
   async verifyAccessToken(token: string): Promise<AuthInfo> {
-    // #93 scope is freee-mcp; sign side keeps current behavior (no audience
-    // enforcement, accepts tokens regardless of `aud`).
+    // Sign tokens omit audience enforcement; verify accepts any `aud`.
     const payload = await verifyJwt(token, this.deps.jwtSecret, this.deps.issuerUrl, undefined);
     return {
       token,
@@ -162,8 +161,7 @@ export class SignOAuthProvider implements OAuthServerProvider {
     scopes: string[],
   ): Promise<OAuthTokens> {
     const scope = scopes.join(' ');
-    // #93 scope is freee-mcp; sign side keeps current behavior. Use the
-    // issuer URL as a self-audience to satisfy the required signature.
+    // Sign tokens use the issuer URL as a self-audience (defense in depth).
     const jwt = await signAccessToken(
       { sub: userId, scope, clientId },
       this.deps.jwtSecret,

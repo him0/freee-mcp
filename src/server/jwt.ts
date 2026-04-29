@@ -7,7 +7,7 @@ export interface JwtPayload {
   iss: string;
   iat: number;
   exp: number;
-  aud?: string;
+  aud?: string | string[];
 }
 
 const ACCESS_TOKEN_TTL = '1h';
@@ -44,7 +44,7 @@ export async function verifyAccessToken(
   audience: string | undefined,
 ): Promise<JwtPayload> {
   const key = deriveKey(secret);
-  // When `audience` is undefined we are in grace-period mode (RFC 8707 #93):
+  // When `audience` is undefined we are in grace-period mode for RFC 8707:
   // accept legacy tokens that lack `aud` and any current `aud` value.
   const verifyOptions = audience !== undefined ? { issuer, audience } : { issuer };
   const { payload } = await jwtVerify(token, key, verifyOptions);
@@ -57,7 +57,9 @@ export async function verifyAccessToken(
     throw new Error('JWT missing required claims: sub, scope, client_id');
   }
 
-  const aud = typeof payload.aud === 'string' ? payload.aud : undefined;
+  // RFC 7519: aud may be a string or array of strings; pass both shapes through.
+  const aud =
+    typeof payload.aud === 'string' || Array.isArray(payload.aud) ? payload.aud : undefined;
 
   return {
     sub,
