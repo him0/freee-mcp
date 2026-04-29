@@ -188,6 +188,36 @@ export async function makeApiRequest(
     throw forbiddenError;
   }
 
+  if (response.status === 429) {
+    const retryAfter = response.headers.get('Retry-After');
+    const errorInfo = await formatResponseErrorInfo(response);
+    const retryMsg = retryAfter
+      ? `${retryAfter}秒後に再試行してください。`
+      : '数分待ってから再試行してください。';
+    const rateLimitError = new Error(
+      `レートリミットに達しました (429): ${errorInfo}\n` +
+        `事業所ID: ${companyId}\n` +
+        retryMsg,
+    );
+    recorder?.recordApiCall({
+      method,
+      path_pattern: safePath,
+      status_code: 429,
+      duration_ms: Date.now() - startTime,
+      company_id: String(companyId ?? ''),
+      user_id: userId,
+      error_type: 'rate_limit',
+      query_keys: queryKeys,
+    });
+    recorder?.recordError({
+      source: 'api_client',
+      status_code: 429,
+      error_type: 'rate_limit',
+      chain: serializeErrorChain(rateLimitError),
+    });
+    throw rateLimitError;
+  }
+
   if (!response.ok) {
     const errorMessage = await formatApiErrorMessage(response, response.status);
     const httpError = new Error(errorMessage);

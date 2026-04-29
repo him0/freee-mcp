@@ -264,6 +264,50 @@ describe('client', () => {
       );
     });
 
+    it('should throw rate limit error for 429 response', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: { get: (_name: string) => null },
+        json: () => Promise.resolve({ error: 'rate_limit_exceeded' }),
+      });
+
+      await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
+        'レートリミットに達しました (429)',
+      );
+    });
+
+    it('should include Retry-After value in 429 error message when present', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: {
+          get: (name: string) => (name === 'Retry-After' ? '30' : null),
+        },
+        json: () => Promise.resolve({ error: 'rate_limit_exceeded' }),
+      });
+
+      await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
+        '30秒後に再試行してください。',
+      );
+    });
+
+    it('should fall back to generic retry message when Retry-After is missing on 429', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: { get: (_name: string) => null },
+        json: () => Promise.resolve({ error: 'rate_limit_exceeded' }),
+      });
+
+      await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
+        '数分待ってから再試行してください。',
+      );
+    });
+
     it('should throw generic error for other HTTP errors', async () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
       mockFetch.mockResolvedValue(createErrorResponse(500, { error: 'internal_server_error' }));
@@ -488,6 +532,53 @@ describe('client', () => {
         Record<string, unknown>
       >;
       expect(apiCalls[0]).toMatchObject({ status_code: 401, error_type: 'auth_error' });
+    });
+
+    it('records an api_call and error with error_type=rate_limit on 429 response', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: {
+          get: (name: string) => (name === 'Retry-After' ? '30' : null),
+        },
+        json: () => Promise.resolve({ error: 'rate_limit_exceeded' }),
+      });
+
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
+      const recorder = new RequestRecorder({
+        request_id: 'req-api-429',
+        source_ip: '127.0.0.1',
+        method: 'POST',
+        path: '/mcp',
+      });
+
+      await expect(
+        withRequestRecorder(recorder, () => makeApiRequest('GET', '/api/1/users/me')),
+      ).rejects.toThrow(/レートリミットに達しました \(429\)/);
+
+      const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
+      const apiCalls = payload.api.calls as Array<Record<string, unknown>>;
+      expect(apiCalls).toHaveLength(1);
+      expect(apiCalls[0]).toMatchObject({
+        method: 'GET',
+        status_code: 429,
+        error_type: 'rate_limit',
+      });
+
+      const errors = payload.errors as Array<{
+        source: string;
+        status_code?: number;
+        error_type?: string;
+      }>;
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatchObject({
+        source: 'api_client',
+        status_code: 429,
+        error_type: 'rate_limit',
+      });
     });
 
     it('does nothing (null-safe) when no recorder is installed', async () => {

@@ -25,6 +25,7 @@ export type ApiCallErrorType =
   | 'network_error'
   | 'auth_error'
   | 'forbidden'
+  | 'rate_limit'
   | 'http_error'
   | 'json_parse_error';
 
