@@ -168,7 +168,6 @@ export async function setCurrentCompany(
 ): Promise<void> {
   const config = await loadFullConfig();
 
-  // Add entry if missing; preserve fields that the caller did not supply.
   if (!config.companies[companyId]) {
     config.companies[companyId] = {
       id: companyId,

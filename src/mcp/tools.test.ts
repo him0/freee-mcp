@@ -515,6 +515,10 @@ describe('tools', () => {
           expect.anything(),
         );
         expect(tokenStore.setCurrentCompany).toHaveBeenCalledTimes(2);
+        // Second call must pass resolved name as arg 3 and display_name as arg 5.
+        const secondCall = tokenStore.setCurrentCompany.mock.calls[1];
+        expect(secondCall[2]).toBe('Resolved Name');
+        expect(secondCall[4]).toBe('Resolved DBA');
         expect(result.content[0].text).toContain('Resolved Name');
         expect(result.content[0].text).toContain('[display_name: Resolved DBA]');
       });

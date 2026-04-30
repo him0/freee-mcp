@@ -116,13 +116,14 @@ export class RedisTokenStore implements TokenStore {
     description?: string,
     display_name?: string,
   ): Promise<void> {
-    await withRedis('setCurrentCompany', () =>
-      this.redis.set(this.companyCurrentKey(userId), companyId),
-    );
-    // Merge into the per-company dict, preserving fields the caller omitted.
-    const existing = (await this.readDictEntry(userId, companyId)) ?? {};
+    const [, existingOrNull] = await Promise.all([
+      withRedis('setCurrentCompany', () =>
+        this.redis.set(this.companyCurrentKey(userId), companyId),
+      ),
+      this.readDictEntry(userId, companyId),
+    ]);
     const merged: DictEntry = {
-      ...existing,
+      ...(existingOrNull ?? {}),
       updatedAt: Date.now(),
     };
     if (name !== undefined) merged.name = name;
@@ -175,7 +176,7 @@ export class RedisTokenStore implements TokenStore {
   }
 
   private async readDictEntry(userId: string, companyId: string): Promise<DictEntry | null> {
-    const raw = await withRedis('getCompanyInfo', () =>
+    const raw = await withRedis('readDictEntry', () =>
       this.redis.hget(this.companyDictKey(userId), companyId),
     );
     if (!raw) return null;

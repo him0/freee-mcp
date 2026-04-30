@@ -303,8 +303,6 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           company_id,
         );
 
-        // Lookup-on-miss: if the cache has neither name nor display_name for
-        // this company, resolve them once from /api/1/companies and persist.
         if (!companyInfo?.name && !companyInfo?.display_name) {
           const resolved = await resolveCompanyNamesFromApi(company_id, tokenContext);
           if (resolved) {
@@ -315,10 +313,11 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
               undefined,
               resolved.display_name ?? undefined,
             );
-            companyInfo = await tokenContext.tokenStore.getCompanyInfo(
-              tokenContext.userId,
-              company_id,
-            );
+            companyInfo = {
+              ...(companyInfo ?? { id: company_id, addedAt: Date.now() }),
+              name: resolved.name ?? undefined,
+              display_name: resolved.display_name ?? undefined,
+            };
           }
         }
 
@@ -400,17 +399,6 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       const toolStart = Date.now();
       try {
         const tokenContext = extractTokenContext(extra);
-        const CompanyResponseSchema = z.object({
-          companies: z
-            .array(
-              z.object({
-                id: z.number(),
-                name: z.string().nullable(),
-                display_name: z.string().nullable().optional(),
-              }),
-            )
-            .optional(),
-        });
         const rawResponse = await makeApiRequest(
           'GET',
           '/api/1/companies',
@@ -419,7 +407,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           undefined,
           tokenContext,
         );
-        const parseResult = CompanyResponseSchema.safeParse(rawResponse);
+        const parseResult = CompaniesLookupSchema.safeParse(rawResponse);
         if (!parseResult.success) {
           recorder?.recordToolCall({
             tool: 'freee_list_companies',
@@ -454,7 +442,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
 
         const companyList = apiCompanies.companies
           .map((company) => {
-            const current = company.id === parseInt(currentCompanyId, 10) ? ' *' : '';
+            const current = company.id === Number.parseInt(currentCompanyId, 10) ? ' *' : '';
             return (
               `${formatCompanyName(company.name)} (${company.id})${current}` +
               ` [display_name: ${formatCompanyName(company.display_name)}]`
