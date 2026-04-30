@@ -1,6 +1,11 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { Request, Response } from 'express';
-import { getConfig, initRemoteConfig, loadRemoteServerConfig } from '../config.js';
+import {
+  getConfig,
+  initRemoteConfig,
+  loadRemoteServerConfig,
+  summarizeRemoteServerConfig,
+} from '../config.js';
 import { FREEE_CALLBACK_PATH } from '../constants.js';
 import { createMcpServer } from '../mcp/handlers.js';
 import type { Redis } from '../storage/redis-client.js';
@@ -37,6 +42,10 @@ export async function startHttpServer(options?: {
 
   const logger = initLogger({ level: remoteConfig.logLevel, transportMode: 'remote' });
   initUserAgentTransportMode('remote');
+
+  // Log the resolved configuration with secrets masked, so operators can verify
+  // what was loaded at startup without exposing credentials.
+  logger.info({ config: summarizeRemoteServerConfig(remoteConfig) }, 'Loaded remote server config');
 
   const redis = getRedisClient(remoteConfig.redisUrl);
 

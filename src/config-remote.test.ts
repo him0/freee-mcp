@@ -38,7 +38,7 @@ describe('loadRemoteServerConfig', () => {
       freeeApiUrl: 'https://api.freee.co.jp',
       redisUrl: 'redis://localhost:6379',
       corsAllowedOrigins: undefined,
-      rateLimitEnabled: false,
+      rateLimitEnabled: true,
       logLevel: 'info',
       allowInsecureLocalhostCimd: false,
     });
@@ -107,6 +107,58 @@ describe('loadRemoteServerConfig', () => {
     });
   });
 
+  it('should default RATE_LIMIT_ENABLED to true when unset (secure-by-default)', async () => {
+    delete process.env.RATE_LIMIT_ENABLED;
+    const { loadRemoteServerConfig } = await import('./config.js');
+    const config = loadRemoteServerConfig();
+
+    expect(config.rateLimitEnabled).toBe(true);
+  });
+
+  it('should allow opting out via RATE_LIMIT_ENABLED=false', async () => {
+    process.env.RATE_LIMIT_ENABLED = 'false';
+    const { loadRemoteServerConfig } = await import('./config.js');
+    const config = loadRemoteServerConfig();
+
+    expect(config.rateLimitEnabled).toBe(false);
+  });
+
+  it('should accept boolean aliases for RATE_LIMIT_ENABLED (NO/0/off)', async () => {
+    process.env.RATE_LIMIT_ENABLED = 'NO';
+    const { loadRemoteServerConfig } = await import('./config.js');
+    const config = loadRemoteServerConfig();
+
+    expect(config.rateLimitEnabled).toBe(false);
+  });
+
+  it('should throw when RATE_LIMIT_ENABLED has an invalid value', async () => {
+    process.env.RATE_LIMIT_ENABLED = 'maybe';
+    const { loadRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadRemoteServerConfig()).toThrow('RATE_LIMIT_ENABLED');
+  });
+
+  it('should throw when ISSUER_URL is not a valid URL', async () => {
+    process.env.ISSUER_URL = 'not-a-url';
+    const { loadRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadRemoteServerConfig()).toThrow('ISSUER_URL');
+  });
+
+  it('should throw when FREEE_API_BASE_URL is not a valid URL', async () => {
+    process.env.FREEE_API_BASE_URL = 'not-a-url';
+    const { loadRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadRemoteServerConfig()).toThrow('FREEE_API_BASE_URL');
+  });
+
+  it('should throw when LOG_LEVEL is not a recognised pino level', async () => {
+    process.env.LOG_LEVEL = 'verbose';
+    const { loadRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadRemoteServerConfig()).toThrow('LOG_LEVEL');
+  });
+
   it('should throw when ISSUER_URL is missing', async () => {
     delete process.env.ISSUER_URL;
     const { loadRemoteServerConfig } = await import('./config.js');
@@ -166,6 +218,65 @@ describe('loadRemoteServerConfig', () => {
     const config = loadRemoteServerConfig();
 
     expect(config.freeeApiUrl).toBe('https://staging.example.com');
+  });
+});
+
+describe('summarizeRemoteServerConfig', () => {
+  it('should mask jwtSecret and freeeClientSecret in the summary', async () => {
+    const { summarizeRemoteServerConfig } = await import('./config.js');
+    const summary = summarizeRemoteServerConfig({
+      port: 3000,
+      issuerUrl: 'https://mcp.example.com',
+      jwtSecret: 'a-test-secret-that-is-at-least-32-characters-long',
+      freeeClientId: 'cid',
+      freeeClientSecret: 'csec',
+      freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
+      freeeTokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
+      freeeScope: 'read write',
+      freeeApiUrl: 'https://api.freee.co.jp',
+      redisUrl: 'redis://localhost:6379',
+      rateLimitEnabled: true,
+      logLevel: 'info',
+    });
+
+    expect(summary.jwtSecret).toBe('<redacted>');
+    expect(summary.freeeClientSecret).toBe('<redacted>');
+    expect(summary.freeeClientId).toBe('cid');
+    expect(summary.rateLimitEnabled).toBe(true);
+  });
+});
+
+describe('parseBooleanEnv', () => {
+  it.each([
+    ['true', true],
+    ['TRUE', true],
+    ['1', true],
+    ['yes', true],
+    ['on', true],
+    ['false', false],
+    ['FALSE', false],
+    ['0', false],
+    ['no', false],
+    ['off', false],
+  ])('parses %s as %s', async (input, expected) => {
+    const { parseBooleanEnv } = await import('./config.js');
+    expect(parseBooleanEnv('FOO', input, !expected)).toBe(expected);
+  });
+
+  it('returns the default when value is undefined', async () => {
+    const { parseBooleanEnv } = await import('./config.js');
+    expect(parseBooleanEnv('FOO', undefined, true)).toBe(true);
+    expect(parseBooleanEnv('FOO', undefined, false)).toBe(false);
+  });
+
+  it('returns the default when value is empty', async () => {
+    const { parseBooleanEnv } = await import('./config.js');
+    expect(parseBooleanEnv('FOO', '', true)).toBe(true);
+  });
+
+  it('throws on unrecognised values', async () => {
+    const { parseBooleanEnv } = await import('./config.js');
+    expect(() => parseBooleanEnv('FOO', 'maybe', false)).toThrow('FOO');
   });
 });
 

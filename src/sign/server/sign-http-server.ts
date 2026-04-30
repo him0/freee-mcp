@@ -11,7 +11,12 @@ import { initUserAgentTransportMode } from '../../server/user-agent.js';
 import type { Redis } from '../../storage/redis-client.js';
 import { closeRedisClient, getRedisClient } from '../../storage/redis-client.js';
 import { createTracingMiddleware } from '../../telemetry/middleware.js';
-import { loadSignRemoteServerConfig, SIGN_API_URL, SIGN_CALLBACK_PATH } from '../config.js';
+import {
+  loadSignRemoteServerConfig,
+  SIGN_API_URL,
+  SIGN_CALLBACK_PATH,
+  summarizeSignRemoteServerConfig,
+} from '../config.js';
 import { createSignMcpServer } from '../handlers.js';
 import { createSignCallbackHandler } from './sign-callback.js';
 import { SignOAuthProvider } from './sign-oauth-provider.js';
@@ -38,6 +43,13 @@ export async function startSignHttpServer(options?: {
     serviceName: 'freee-sign-mcp',
   });
   initUserAgentTransportMode('remote');
+
+  // Log the resolved configuration with secrets masked, so operators can verify
+  // what was loaded at startup without exposing credentials.
+  logger.info(
+    { config: summarizeSignRemoteServerConfig(signRemoteConfig) },
+    'Loaded sign remote server config',
+  );
 
   const redis = getRedisClient(signRemoteConfig.redisUrl);
 

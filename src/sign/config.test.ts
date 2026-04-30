@@ -152,9 +152,46 @@ describe('loadSignRemoteServerConfig', () => {
       signScope: 'all',
       redisUrl: 'redis://localhost:6379',
       corsAllowedOrigins: undefined,
-      rateLimitEnabled: false,
+      rateLimitEnabled: true,
       logLevel: 'info',
     });
+  });
+
+  it('SIGN_RATE_LIMIT_ENABLED 未設定 → デフォルト true（secure-by-default）', async () => {
+    delete process.env.SIGN_RATE_LIMIT_ENABLED;
+    const { loadSignRemoteServerConfig } = await import('./config.js');
+    const config = loadSignRemoteServerConfig();
+
+    expect(config.rateLimitEnabled).toBe(true);
+  });
+
+  it('SIGN_RATE_LIMIT_ENABLED=false で明示的に無効化できる', async () => {
+    process.env.SIGN_RATE_LIMIT_ENABLED = 'false';
+    const { loadSignRemoteServerConfig } = await import('./config.js');
+    const config = loadSignRemoteServerConfig();
+
+    expect(config.rateLimitEnabled).toBe(false);
+  });
+
+  it('SIGN_RATE_LIMIT_ENABLED が不正値 → エラー', async () => {
+    process.env.SIGN_RATE_LIMIT_ENABLED = 'maybe';
+    const { loadSignRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadSignRemoteServerConfig()).toThrow('SIGN_RATE_LIMIT_ENABLED');
+  });
+
+  it('SIGN_LOG_LEVEL が pino で許容されない値 → エラー', async () => {
+    process.env.SIGN_LOG_LEVEL = 'verbose';
+    const { loadSignRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadSignRemoteServerConfig()).toThrow('SIGN_LOG_LEVEL');
+  });
+
+  it('SIGN_ISSUER_URL が URL 形式でない → エラー', async () => {
+    process.env.SIGN_ISSUER_URL = 'not-a-url';
+    const { loadSignRemoteServerConfig } = await import('./config.js');
+
+    expect(() => loadSignRemoteServerConfig()).toThrow('SIGN_ISSUER_URL');
   });
 
   it('SIGN_ISSUER_URL 未設定 → エラー', async () => {
@@ -184,5 +221,29 @@ describe('loadSignRemoteServerConfig', () => {
     const { loadSignRemoteServerConfig } = await import('./config.js');
 
     expect(() => loadSignRemoteServerConfig()).toThrow('FREEE_SIGN_CLIENT_ID');
+  });
+});
+
+describe('summarizeSignRemoteServerConfig', () => {
+  it('jwtSecret と signClientSecret はマスクされる', async () => {
+    const { summarizeSignRemoteServerConfig } = await import('./config.js');
+    const summary = summarizeSignRemoteServerConfig({
+      port: 3002,
+      issuerUrl: 'https://sign-mcp.example.com',
+      jwtSecret: 'a-sign-test-secret-that-is-at-least-32-characters-long',
+      signClientId: 'cid',
+      signClientSecret: 'csec',
+      signAuthorizationEndpoint: 'https://ninja-sign.com/oauth/authorize',
+      signTokenEndpoint: 'https://ninja-sign.com/oauth/token',
+      signScope: 'all',
+      redisUrl: 'redis://localhost:6379',
+      rateLimitEnabled: true,
+      logLevel: 'info',
+    });
+
+    expect(summary.jwtSecret).toBe('<redacted>');
+    expect(summary.signClientSecret).toBe('<redacted>');
+    expect(summary.signClientId).toBe('cid');
+    expect(summary.rateLimitEnabled).toBe(true);
   });
 });
