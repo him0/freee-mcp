@@ -125,7 +125,6 @@ describe('createTracingMiddleware', () => {
   });
 
   it.each([
-    ['/health'],
     ['/livez'],
     ['/readyz'],
   ])('skips %s endpoint (no OTel span emitted)', async (probePath) => {
@@ -638,7 +637,6 @@ describe('createTracingMiddleware - canonical log line', () => {
   });
 
   it.each([
-    ['/health'],
     ['/livez'],
     ['/readyz'],
   ])('skips %s entirely — no canonical log emitted', async (probePath) => {

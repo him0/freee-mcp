@@ -170,10 +170,6 @@ export async function startHttpServer(options?: {
   const readinessHandler = createReadinessHandler(redis);
   app.get('/readyz', readinessHandler);
 
-  // Backward-compatible alias for /readyz. Existing deployments may still
-  // probe /health; new deployments should migrate to /livez and /readyz.
-  app.get('/health', readinessHandler);
-
   // freee OAuth callback (browser redirect, no MCP auth required)
   app.get(FREEE_CALLBACK_PATH, freeeCallbackHandler);
 
