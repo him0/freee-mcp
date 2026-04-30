@@ -2,14 +2,9 @@
 "freee-mcp": patch
 ---
 
-ローカル開発用途の CIMD 受け入れオプションを追加。
+ローカル開発用途で loopback の CIMD URL を受け入れるオプションを追加。
 
-`NODE_ENV=development` または `NODE_ENV=test` のとき、かつ Kubernetes Pod 内で動作していない場合に限り、`http://localhost` / `http://127.0.0.1` / `http://[::1]` の `client_id`（CIMD URL）を受け入れる。判定は環境から自動的に行うため、運用者が管理する環境変数は存在せず、設定誤りによる本番環境での誤有効化が原理的に発生しない。
-
-それ以外の環境（`NODE_ENV` 未設定 / `production` / 任意の値 / Kubernetes Pod 内）は自動的に拒否される。`KUBERNETES_SERVICE_HOST` は kubelet が全てのコンテナに自動注入するため、運用者の設定漏れに依存しない信頼できる本番識別シグナルとして利用している。
-
-dev 限定で loopback（`localhost` / `127.0.0.1` / `[::1]`）に対しては `http://` だけでなく `https://` の self-signed cert も受け入れる点に注意（mkcert 等を使うローカル検証フロー向け）。loopback 以外の `http://` / プライベート IP / `*.local` 等は引き続き拒否する。
-
-**運用ガイド**: Kubernetes 以外の環境（docker-compose, 単純 Docker, ECS など）で本番運用を行う場合は、`NODE_ENV=production` を必ず明示的に設定してください。`NODE_ENV` を未設定のまま `NODE_ENV=development` を誤設定して起動した場合は、起動時に `NODE_ENV is unset outside Kubernetes` 警告ログが出力されます。
-
-プライベート IP 範囲（10.x / 172.16–31.x / 192.168.x / *.local など）や公開 HTTP ホストは引き続き SSRF 保護のため拒否する。
+- dev/test 環境かつ Kubernetes Pod 外でのみ、`http://localhost` / `127.0.0.1` / `[::1]` の `client_id` を許可
+- 同条件で loopback の `https://` self-signed cert も受け入れ（mkcert 等のローカル検証向け）
+- それ以外（production / NODE_ENV 未設定 / Kubernetes Pod 内 / プライベート IP / 公開 HTTP）は引き続き拒否
+- 運用注意: Kubernetes 以外で本番運用する場合は `NODE_ENV=production` を必ず明示すること
