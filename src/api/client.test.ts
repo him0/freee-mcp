@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getUserAgent } from '../server/user-agent.js';
-import { type BinaryFileResponse, isBinaryFileResponse, makeApiRequest } from './client.js';
+import {
+  type BinaryFileResponse,
+  formatRetryAfterMessage,
+  isBinaryFileResponse,
+  makeApiRequest,
+} from './client.js';
 
 // Test constants (defined after mocks due to hoisting)
 const TEST_API_URL = 'https://api.freee.co.jp';
@@ -104,6 +109,38 @@ async function setupAccessToken(token: string | null): Promise<void> {
   const mockGetValidAccessToken = await import('../auth/tokens.js');
   vi.mocked(mockGetValidAccessToken.getValidAccessToken).mockResolvedValue(token);
 }
+
+describe('formatRetryAfterMessage', () => {
+  it('returns fallback message when header is null', () => {
+    expect(formatRetryAfterMessage(null)).toBe('数分待ってから再試行してください。');
+  });
+
+  it('formats integer delta-seconds', () => {
+    expect(formatRetryAfterMessage('60')).toBe('60秒後に再試行してください。');
+  });
+
+  it('trims whitespace before parsing delta-seconds', () => {
+    expect(formatRetryAfterMessage('  120  ')).toBe('120秒後に再試行してください。');
+  });
+
+  it('converts HTTP-date form to remaining seconds (RFC 7231)', () => {
+    const future = new Date(Date.now() + 90_000).toUTCString();
+    const result = formatRetryAfterMessage(future);
+    expect(result).toMatch(/^\d+秒後に再試行してください。$/);
+    const seconds = Number(result.match(/^(\d+)秒/)?.[1]);
+    expect(seconds).toBeGreaterThan(85);
+    expect(seconds).toBeLessThanOrEqual(90);
+  });
+
+  it('clamps past HTTP-date to zero seconds (no negative)', () => {
+    const past = new Date(Date.now() - 60_000).toUTCString();
+    expect(formatRetryAfterMessage(past)).toBe('0秒後に再試行してください。');
+  });
+
+  it('falls back when header is unparseable', () => {
+    expect(formatRetryAfterMessage('not-a-date-or-number')).toBe('数分待ってから再試行してください。');
+  });
+});
 
 describe('client', () => {
   beforeEach(() => {
@@ -261,6 +298,50 @@ describe('client', () => {
 
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
         'レートリミットの可能性があります',
+      );
+    });
+
+    it('should throw rate limit error for 429 response', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: { get: (_name: string) => null },
+        json: () => Promise.resolve({ error: 'rate_limit_exceeded' }),
+      });
+
+      await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
+        'レートリミットに達しました (429)',
+      );
+    });
+
+    it('should include Retry-After value in 429 error message when present', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: {
+          get: (name: string) => (name === 'Retry-After' ? '30' : null),
+        },
+        json: () => Promise.resolve({ error: 'rate_limit_exceeded' }),
+      });
+
+      await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
+        '30秒後に再試行してください。',
+      );
+    });
+
+    it('should fall back to generic retry message when Retry-After is missing on 429', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: { get: (_name: string) => null },
+        json: () => Promise.resolve({ error: 'rate_limit_exceeded' }),
+      });
+
+      await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
+        '数分待ってから再試行してください。',
       );
     });
 
@@ -488,6 +569,53 @@ describe('client', () => {
         Record<string, unknown>
       >;
       expect(apiCalls[0]).toMatchObject({ status_code: 401, error_type: 'auth_error' });
+    });
+
+    it('records an api_call and error with error_type=rate_limit on 429 response', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        headers: {
+          get: (name: string) => (name === 'Retry-After' ? '30' : null),
+        },
+        json: () => Promise.resolve({ error: 'rate_limit_exceeded' }),
+      });
+
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
+      const recorder = new RequestRecorder({
+        request_id: 'req-api-429',
+        source_ip: '127.0.0.1',
+        method: 'POST',
+        path: '/mcp',
+      });
+
+      await expect(
+        withRequestRecorder(recorder, () => makeApiRequest('GET', '/api/1/users/me')),
+      ).rejects.toThrow(/レートリミットに達しました \(429\)/);
+
+      const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
+      const apiCalls = payload.api.calls as Array<Record<string, unknown>>;
+      expect(apiCalls).toHaveLength(1);
+      expect(apiCalls[0]).toMatchObject({
+        method: 'GET',
+        status_code: 429,
+        error_type: 'rate_limit',
+      });
+
+      const errors = payload.errors as Array<{
+        source: string;
+        status_code?: number;
+        error_type?: string;
+      }>;
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toMatchObject({
+        source: 'api_client',
+        status_code: 429,
+        error_type: 'rate_limit',
+      });
     });
 
     it('does nothing (null-safe) when no recorder is installed', async () => {
