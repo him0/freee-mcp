@@ -3,7 +3,7 @@ import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/share
 import { OAuthClientInformationFullSchema } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { OAUTH_KEY_PREFIX } from '../constants.js';
 import type { Redis } from '../storage/redis-client.js';
-import { type CIMDFetcher, HttpCIMDFetcher, hashCimdUrl } from './cimd-fetcher.js';
+import { type CIMDFetcher, HttpCIMDFetcher, hashCimdUrl, isLocalhostUrl } from './cimd-fetcher.js';
 import { RedisUnavailableError, withRedis } from './errors.js';
 import { getLogger } from './logger.js';
 
@@ -14,25 +14,37 @@ export interface ClientStoreOptions {
   redis: Redis;
   cimdFetcher?: CIMDFetcher;
   prefix?: string;
+  // Paired with HttpCIMDFetcher's allowInsecureLocalhost; widens isCimdUrl
+  // so http://localhost client_ids take the CIMD branch instead of falling
+  // through to DCR lookup. Local-development only.
+  allowInsecureLocalhost?: boolean;
 }
 
-function isCimdUrl(clientId: string): boolean {
-  return clientId.startsWith('https://');
+function isCimdUrl(clientId: string, allowInsecureLocalhost: boolean): boolean {
+  if (clientId.startsWith('https://')) return true;
+  if (allowInsecureLocalhost && clientId.startsWith('http://') && isLocalhostUrl(clientId)) {
+    return true;
+  }
+  return false;
 }
 
 export class RedisClientStore implements OAuthRegisteredClientsStore {
   private readonly redis: Redis;
   private readonly cimdFetcher: CIMDFetcher;
   private readonly prefix: string;
+  private readonly allowInsecureLocalhost: boolean;
 
   constructor(options: ClientStoreOptions) {
     this.redis = options.redis;
-    this.cimdFetcher = options.cimdFetcher ?? new HttpCIMDFetcher();
+    this.allowInsecureLocalhost = options.allowInsecureLocalhost ?? false;
+    this.cimdFetcher =
+      options.cimdFetcher ??
+      new HttpCIMDFetcher({ allowInsecureLocalhost: this.allowInsecureLocalhost });
     this.prefix = options.prefix ?? OAUTH_KEY_PREFIX;
   }
 
   async getClient(clientId: string): Promise<OAuthClientInformationFull | undefined> {
-    if (isCimdUrl(clientId)) {
+    if (isCimdUrl(clientId, this.allowInsecureLocalhost)) {
       return this.getCimdClient(clientId);
     }
     return this.getDcrClient(clientId);

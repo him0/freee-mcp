@@ -10,6 +10,10 @@ describe('loadRemoteServerConfig', () => {
     process.env.JWT_SECRET = 'a-test-secret-that-is-at-least-32-characters-long';
     process.env.FREEE_CLIENT_ID = 'test-client-id';
     process.env.FREEE_CLIENT_SECRET = 'test-client-secret';
+    // Pin a deterministic baseline for env-detection tests. vitest defaults
+    // NODE_ENV to "test", but we want each test to opt in explicitly.
+    process.env.NODE_ENV = 'production';
+    delete process.env.KUBERNETES_SERVICE_HOST;
   });
 
   afterEach(() => {
@@ -34,6 +38,70 @@ describe('loadRemoteServerConfig', () => {
       corsAllowedOrigins: undefined,
       rateLimitEnabled: false,
       logLevel: 'info',
+      allowInsecureLocalhostCimd: false,
+    });
+  });
+
+  describe('allowInsecureLocalhostCimd environment detection', () => {
+    it('enables when NODE_ENV=development and not in Kubernetes', async () => {
+      process.env.NODE_ENV = 'development';
+      const { loadRemoteServerConfig } = await import('./config.js');
+      expect(loadRemoteServerConfig().allowInsecureLocalhostCimd).toBe(true);
+    });
+
+    it('enables when NODE_ENV=test and not in Kubernetes', async () => {
+      process.env.NODE_ENV = 'test';
+      const { loadRemoteServerConfig } = await import('./config.js');
+      expect(loadRemoteServerConfig().allowInsecureLocalhostCimd).toBe(true);
+    });
+
+    it('disables when NODE_ENV is unset (fail-safe)', async () => {
+      delete process.env.NODE_ENV;
+      const { loadRemoteServerConfig } = await import('./config.js');
+      expect(loadRemoteServerConfig().allowInsecureLocalhostCimd).toBe(false);
+    });
+
+    it('disables when NODE_ENV=production', async () => {
+      process.env.NODE_ENV = 'production';
+      const { loadRemoteServerConfig } = await import('./config.js');
+      expect(loadRemoteServerConfig().allowInsecureLocalhostCimd).toBe(false);
+    });
+
+    it('disables when running inside Kubernetes even if NODE_ENV=development', async () => {
+      process.env.NODE_ENV = 'development';
+      process.env.KUBERNETES_SERVICE_HOST = '10.0.0.1';
+      const { loadRemoteServerConfig } = await import('./config.js');
+      expect(loadRemoteServerConfig().allowInsecureLocalhostCimd).toBe(false);
+    });
+
+    it('disables when NODE_ENV is misspelled (whitelist semantics)', async () => {
+      process.env.NODE_ENV = 'Development';
+      const { loadRemoteServerConfig } = await import('./config.js');
+      expect(loadRemoteServerConfig().allowInsecureLocalhostCimd).toBe(false);
+    });
+
+    it('warns at startup when NODE_ENV is unset outside Kubernetes', async () => {
+      delete process.env.NODE_ENV;
+      const stderr = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { loadRemoteServerConfig } = await import('./config.js');
+      loadRemoteServerConfig();
+
+      expect(stderr).toHaveBeenCalledWith(
+        expect.stringContaining('NODE_ENV is unset outside Kubernetes'),
+      );
+      stderr.mockRestore();
+    });
+
+    it('warns at startup when the localhost bypass is active', async () => {
+      process.env.NODE_ENV = 'development';
+      const stderr = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { loadRemoteServerConfig } = await import('./config.js');
+      loadRemoteServerConfig();
+
+      expect(stderr).toHaveBeenCalledWith(
+        expect.stringContaining('http://localhost CIMD URLs are accepted'),
+      );
+      stderr.mockRestore();
     });
   });
 

@@ -60,7 +60,10 @@ export async function startHttpServer(options?: {
 
   // OAuth 2.1 AS dependencies
   const oauthStore = new OAuthStateStore(redis);
-  const clientStore = new RedisClientStore({ redis });
+  const clientStore = new RedisClientStore({
+    redis,
+    allowInsecureLocalhost: remoteConfig.allowInsecureLocalhostCimd,
+  });
   const provider = new FreeeOAuthProvider({
     clientStore,
     oauthStore,

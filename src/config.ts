@@ -180,6 +180,17 @@ export interface RemoteServerConfig {
   corsAllowedOrigins?: string;
   rateLimitEnabled: boolean;
   logLevel: string;
+  // Dev-only: accept http://localhost CIMD URLs. Determined by environment, not by an env var.
+  allowInsecureLocalhostCimd: boolean;
+}
+
+// kubelet auto-injects KUBERNETES_SERVICE_HOST into every pod, so its presence is
+// a trustworthy "this is a cluster workload" signal that no operator can forget to set.
+// NODE_ENV is checked as a strict allowlist so unset / typoed / arbitrary values all
+// fail safely toward "production-like".
+function isDevelopmentEnvironment(): boolean {
+  if (process.env.KUBERNETES_SERVICE_HOST) return false;
+  return process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
 }
 
 export function loadRemoteServerConfig(): RemoteServerConfig {
@@ -207,6 +218,23 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     );
   }
 
+  const allowInsecureLocalhostCimd = isDevelopmentEnvironment();
+
+  // Audit / safety signals at startup. The CIMD localhost bypass cannot be
+  // perfectly distinguished from a self-hosted docker-compose production where
+  // the operator forgot to set NODE_ENV, so we surface both states loudly.
+  if (allowInsecureLocalhostCimd) {
+    console.error(
+      'Warning: http://localhost CIMD URLs are accepted (development environment detected). ' +
+        'If this process is serving production traffic, set NODE_ENV=production to disable.',
+    );
+  } else if (!process.env.KUBERNETES_SERVICE_HOST && !process.env.NODE_ENV) {
+    console.error(
+      'Warning: NODE_ENV is unset outside Kubernetes. ' +
+        'Set NODE_ENV=production for production deployments or NODE_ENV=development for local work.',
+    );
+  }
+
   return {
     port: parsePort(process.env.PORT, 3000),
     issuerUrl,
@@ -222,6 +250,7 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     corsAllowedOrigins: process.env.CORS_ALLOWED_ORIGINS,
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED === 'true',
     logLevel: process.env.LOG_LEVEL || 'info',
+    allowInsecureLocalhostCimd,
   };
 }
 
