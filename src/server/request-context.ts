@@ -82,6 +82,7 @@ export interface RequestRecorderContext {
   /** Inbound HTTP User-Agent header from the MCP client, normalized and truncated. */
   user_agent?: string;
   user_id?: string;
+  company_id?: string;
   session_id?: string;
   method: string;
   path: string;
@@ -134,6 +135,7 @@ export interface CanonicalLogPayload {
   source_ip: string;
   user_agent: string | null;
   user_id: string | null;
+  company_id: string | null;
   session_id: string | null;
   http: {
     method: string;
@@ -170,8 +172,10 @@ export class RequestRecorder {
     this.context = initial;
   }
 
-  /** Patch fields available only after bearer auth runs (user_id, session_id). */
-  updateContext(patch: Partial<Pick<RequestRecorderContext, 'user_id' | 'session_id'>>): void {
+  /** Patch fields available only after bearer auth runs (user_id, company_id, session_id). */
+  updateContext(
+    patch: Partial<Pick<RequestRecorderContext, 'user_id' | 'company_id' | 'session_id'>>,
+  ): void {
     this.context = { ...this.context, ...patch };
   }
 
@@ -224,6 +228,7 @@ export class RequestRecorder {
       source_ip: this.context.source_ip,
       user_agent: this.context.user_agent ?? null,
       user_id: this.context.user_id ?? null,
+      company_id: this.context.company_id ?? null,
       session_id: this.context.session_id ?? null,
       http: {
         method: this.context.method,

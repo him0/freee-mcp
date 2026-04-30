@@ -105,6 +105,7 @@ describe('RequestRecorder', () => {
         source_ip: '10.0.0.1',
         user_agent: null,
         user_id: 'user-42',
+        company_id: null,
         session_id: 'sess-xyz',
         http: {
           method: 'POST',
@@ -124,10 +125,11 @@ describe('RequestRecorder', () => {
       });
     });
 
-    it('defaults user_id and session_id to null when unset', () => {
+    it('defaults user_id, company_id, and session_id to null when unset', () => {
       const recorder = makeRecorder();
       const payload = recorder.buildPayload({ status: 200, duration_ms: 10 });
       expect(payload.user_id).toBeNull();
+      expect(payload.company_id).toBeNull();
       expect(payload.session_id).toBeNull();
     });
 
@@ -234,16 +236,29 @@ describe('RequestRecorder', () => {
       recorder.updateContext({ user_id: 'u-1' });
       const p1 = recorder.buildPayload({ status: 200, duration_ms: 1 });
       expect(p1.user_id).toBe('u-1');
+      expect(p1.company_id).toBeNull();
       expect(p1.session_id).toBeNull();
 
-      recorder.updateContext({ session_id: 's-1' });
+      recorder.updateContext({ company_id: 'c-1', session_id: 's-1' });
       const p2 = recorder.buildPayload({ status: 200, duration_ms: 1 });
       expect(p2.user_id).toBe('u-1');
+      expect(p2.company_id).toBe('c-1');
       expect(p2.session_id).toBe('s-1');
 
       // Request metadata from the constructor is preserved.
       expect(p2.request_id).toBe('req-1');
       expect((p2.http as { method: string }).method).toBe('GET');
+    });
+
+    it('lifts company_id to a top-level scalar even when api.calls[] is empty', () => {
+      // Requests with no outgoing API call (e.g. tools/list) must still
+      // expose company context as a top-level Datadog facet, not buried
+      // inside api.calls[].company_id where it would be unreachable.
+      const recorder = makeRecorder();
+      recorder.updateContext({ user_id: 'u-1', company_id: '12345' });
+      const payload = recorder.buildPayload({ status: 200, duration_ms: 1 });
+      expect(payload.company_id).toBe('12345');
+      expect(payload.api.calls).toHaveLength(0);
     });
   });
 });

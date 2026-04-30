@@ -218,14 +218,22 @@ export async function startHttpServer(options?: {
   async function handleMcpRequest(req: Request, res: Response): Promise<void> {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
-    // Patch the request recorder with user_id / session_id now that bearer
-    // auth has run. These are not known at middleware creation time.
+    // Patch the request recorder with identity fields now that bearer auth
+    // has run. company_id lookup is fail-soft: it is a diagnostic facet, not
+    // load-bearing for the request, so a Redis hiccup must not break /mcp.
     const authExtra = (req as unknown as Record<string, unknown>).auth as
       | { extra?: Record<string, unknown> }
       | undefined;
     const userId =
       typeof authExtra?.extra?.userId === 'string' ? authExtra.extra.userId : undefined;
-    getCurrentRecorder()?.updateContext({ user_id: userId, session_id: sessionId });
+    const companyId = userId
+      ? await tokenStore.getCurrentCompanyId(userId).catch(() => undefined)
+      : undefined;
+    getCurrentRecorder()?.updateContext({
+      user_id: userId,
+      company_id: companyId,
+      session_id: sessionId,
+    });
 
     // Unknown session ID: return 404 per MCP spec (stateless mode never issues session IDs)
     if (sessionId) {
