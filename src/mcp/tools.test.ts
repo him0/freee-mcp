@@ -361,8 +361,8 @@ describe('tools', () => {
         const mockMakeApiRequest = await import('../api/client.js');
         const validResponse = {
           companies: [
-            { id: 123, name: 'Company A' },
-            { id: 456, name: 'Company B' },
+            { id: 123, name: 'Company A', display_name: 'Co A' },
+            { id: 456, name: 'Company B', display_name: 'Co B' },
           ],
         };
         vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue(validResponse);
@@ -374,7 +374,24 @@ describe('tools', () => {
 
         expect(result.content[0].text).toContain('事業所一覧:');
         expect(result.content[0].text).toContain('Company A');
+        expect(result.content[0].text).toContain('[display_name: Co A]');
         expect(result.content[0].text).toContain('Company B');
+        expect(result.content[0].text).toContain('[display_name: Co B]');
+      });
+
+      it('should label display_name as (未設定) when missing while keeping name visible', async () => {
+        const mockMakeApiRequest = await import('../api/client.js');
+        vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue({
+          companies: [{ id: 789, name: null, display_name: 'Display Only' }],
+        });
+
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find((call) => call[0] === 'freee_list_companies')?.[2];
+
+        const result = await handler();
+
+        expect(result.content[0].text).toContain('(未設定) (789)');
+        expect(result.content[0].text).toContain('[display_name: Display Only]');
       });
 
       it('should return error message for invalid API response structure', async () => {
@@ -440,6 +457,83 @@ describe('tools', () => {
 
         expect(result.content[0].text).toContain('事業所一覧の取得に失敗');
         expect(result.content[0].text).toContain('API Error');
+      });
+    });
+
+    describe('freee_set_current_company lookup-on-miss', () => {
+      function createTokenStore(
+        initialEntry: {
+          name?: string;
+          display_name?: string;
+        } | null,
+      ) {
+        let entry = initialEntry;
+        return {
+          loadTokens: vi.fn().mockResolvedValue({
+            access_token: 'token',
+            refresh_token: 'refresh',
+            expires_at: Date.now() + 3600000,
+            scope: 'read write',
+            token_type: 'Bearer',
+          }),
+          saveTokens: vi.fn(),
+          clearTokens: vi.fn(),
+          getValidAccessToken: vi.fn().mockResolvedValue('token'),
+          getCurrentCompanyId: vi.fn().mockResolvedValue('12345'),
+          setCurrentCompany: vi.fn(async (_u, _id, name, _desc, display_name) => {
+            entry = {
+              ...(entry ?? {}),
+              ...(name !== undefined ? { name } : {}),
+              ...(display_name !== undefined ? { display_name } : {}),
+            };
+          }),
+          getCompanyInfo: vi.fn(async () => (entry ? { id: '12345', ...entry } : null)),
+        };
+      }
+
+      it('fetches /api/1/companies when neither name nor display_name is cached', async () => {
+        const tokenStore = createTokenStore(null);
+        const mockMakeApiRequest = await import('../api/client.js');
+        vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue({
+          companies: [{ id: 12345, name: 'Resolved Name', display_name: 'Resolved DBA' }],
+        });
+
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find(
+          (call) => call[0] === 'freee_set_current_company',
+        )?.[2];
+        const extra = { authInfo: { extra: { tokenStore, userId: 'u1' } } };
+
+        const result = await handler({ company_id: '12345' }, extra);
+
+        expect(mockMakeApiRequest.makeApiRequest).toHaveBeenCalledWith(
+          'GET',
+          '/api/1/companies',
+          undefined,
+          undefined,
+          undefined,
+          expect.anything(),
+        );
+        expect(tokenStore.setCurrentCompany).toHaveBeenCalledTimes(2);
+        expect(result.content[0].text).toContain('Resolved Name');
+        expect(result.content[0].text).toContain('[display_name: Resolved DBA]');
+      });
+
+      it('skips lookup when the cache already has a name', async () => {
+        const tokenStore = createTokenStore({ name: 'Cached' });
+        const mockMakeApiRequest = await import('../api/client.js');
+        vi.mocked(mockMakeApiRequest.makeApiRequest).mockResolvedValue({ companies: [] });
+
+        addAuthenticationTools(mockServer);
+        const handler = mockTool.mock.calls.find(
+          (call) => call[0] === 'freee_set_current_company',
+        )?.[2];
+        const extra = { authInfo: { extra: { tokenStore, userId: 'u1' } } };
+
+        await handler({ company_id: '12345' }, extra);
+
+        expect(mockMakeApiRequest.makeApiRequest).not.toHaveBeenCalled();
+        expect(tokenStore.setCurrentCompany).toHaveBeenCalledTimes(1);
       });
     });
   });
