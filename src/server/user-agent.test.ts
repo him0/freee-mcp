@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { getUserAgent, initUserAgentTransportMode } from './user-agent.js';
+import { getTransportMode, getUserAgent, initUserAgentTransportMode } from './user-agent.js';
 
 /**
  * The module uses a single mutable global, so each test case restores the
@@ -49,5 +49,19 @@ describe('getUserAgent', () => {
     expect(getUserAgent()).toMatch(/^freee-mcp\//);
     initUserAgentTransportMode('remote');
     expect(getUserAgent()).toMatch(/^freee-mcp\//);
+  });
+});
+
+describe('getTransportMode', () => {
+  it('defaults to stdio before any explicit init call', () => {
+    expect(getTransportMode()).toBe('stdio');
+  });
+
+  it('reflects the value last passed to initUserAgentTransportMode', () => {
+    initUserAgentTransportMode('remote');
+    expect(getTransportMode()).toBe('remote');
+
+    initUserAgentTransportMode('stdio');
+    expect(getTransportMode()).toBe('stdio');
   });
 });

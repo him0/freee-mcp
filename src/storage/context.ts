@@ -1,3 +1,5 @@
+import { InvalidTokenError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import { getTransportMode } from '../server/user-agent.js';
 import { FileTokenStore } from './file-token-store.js';
 import type { TokenStore } from './token-store.js';
 
@@ -32,10 +34,25 @@ export async function resolveCompanyId(ctx: TokenContext): Promise<string> {
   return companyId;
 }
 
-// SECURITY: This fallback is only safe for stdio (single-user, local process) mode.
-// In multi-tenant / remote (HTTP) mode, callers MUST inject a proper TokenStore
-// via extra.authInfo.extra to ensure tenant isolation. The HTTP transport layer
-// (added in PR 2) is responsible for populating AuthExtra on every request.
+/**
+ * Resolve the active TokenContext for an MCP tool invocation.
+ *
+ * SECURITY: in remote (HTTP) mode this MUST be fail-closed. The HTTP
+ * transport layer is responsible for populating `extra.authInfo.extra`
+ * with the per-request `tokenStore` and `userId` derived from the bearer
+ * token. If that injection is missing for any reason, falling back to the
+ * process-global single-tenant `FileTokenStore` would let one tenant's
+ * tool call read another tenant's locally cached tokens — a cross-tenant
+ * leak. We therefore branch on transport mode:
+ *
+ * - remote: missing / malformed `AuthExtra` → throw `InvalidTokenError`,
+ *   which the MCP SDK auth middleware translates into a spec-compliant
+ *   401 + WWW-Authenticate response.
+ * - stdio: keep the historical fallback to the local `FileTokenStore`,
+ *   because stdio is single-user by definition (one OS process, one
+ *   user's `~/.config/freee-mcp/`) so there is no cross-tenant boundary
+ *   to protect.
+ */
 export function extractTokenContext(extra?: AuthExtra): TokenContext {
   const authExtra = extra?.authInfo?.extra;
   if (authExtra?.tokenStore && typeof authExtra.userId === 'string') {
@@ -45,7 +62,13 @@ export function extractTokenContext(extra?: AuthExtra): TokenContext {
     };
   }
 
-  // Fallback: stdio mode — single user, local file storage only.
+  if (getTransportMode() === 'remote') {
+    // Fail closed: never silently fall back to the single-tenant local
+    // store on the multi-tenant HTTP path.
+    throw new InvalidTokenError('Missing or invalid request authentication context');
+  }
+
+  // stdio mode: single user, single local file storage.
   return {
     tokenStore: getDefaultFileTokenStore(),
     userId: 'local',

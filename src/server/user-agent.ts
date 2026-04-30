@@ -39,6 +39,18 @@ export function initUserAgentTransportMode(mode: TransportMode): void {
 }
 
 /**
+ * Read the current transport mode without going through the User-Agent
+ * formatter. Other modules that need to vary behaviour by transport (e.g.
+ * fail-closed token-context resolution in remote / multi-tenant mode) can
+ * read this directly instead of re-deriving the mode from environment
+ * variables, which would risk drifting from the entry point's actual
+ * `initUserAgentTransportMode(...)` decision.
+ */
+export function getTransportMode(): TransportMode {
+  return currentMode;
+}
+
+/**
  * Build the User-Agent header string used for every outbound freee API call.
  *
  * Format follows RFC 7231 §5.5.3 (product with comment):
