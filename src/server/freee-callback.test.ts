@@ -452,6 +452,40 @@ describe('createFreeeCallbackHandler', () => {
     expect(res.send).toHaveBeenCalledWith('redirect_uri mismatch');
   });
 
+  it('returns 400 (fail-closed) when redirect_uri validation throws', async () => {
+    const oauthStore = createMockOAuthStore();
+    const mockClientStore = {
+      getClient: vi.fn(async () => {
+        throw new Error('redis unavailable');
+      }),
+    };
+
+    globalThis.fetch = vi.fn() as unknown as typeof fetch;
+
+    const handler = createFreeeCallbackHandler({
+      oauthStore,
+      tokenStore: createMockTokenStore(),
+      clientStore: mockClientStore as never,
+      freeeClientId: 'id',
+      freeeClientSecret: 'secret',
+      freeeTokenEndpoint: 'https://token.example.com',
+      freeeScope: 'read write',
+      callbackBaseUrl: 'https://mcp.example.com',
+    });
+
+    const { req, res } = createMockReqRes({ code: 'auth-code', state: 'session-id' });
+    handler(req, res);
+
+    await vi.waitFor(() => {
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    expect(res.send).toHaveBeenCalledWith('redirect_uri validation failed');
+    // Downstream token exchange and redirect must NOT happen.
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(res.redirect).not.toHaveBeenCalled();
+  });
+
   it('allows matching redirect_uri from registered client', async () => {
     const oauthStore = createMockOAuthStore();
     const mockClientStore = {
