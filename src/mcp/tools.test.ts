@@ -425,7 +425,7 @@ describe('tools', () => {
 
         expect(result.content[0].text).toContain('事業所一覧:');
         expect(result.content[0].text).toContain('Company A');
-        expect(result.content[0].text).toContain('(名称未設定) (456)');
+        expect(result.content[0].text).toContain('(未設定) (456)');
         expect(result.content[0].text).toContain('Company C');
       });
 

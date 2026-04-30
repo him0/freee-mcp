@@ -16,6 +16,7 @@ import type { AuthExtra } from '../storage/context.js';
 import { registerTracedTool } from '../telemetry/tool-tracer.js';
 import { extractTokenContext, resolveCompanyId } from '../storage/context.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
+import { formatCompanyName } from '../utils/format-company.js';
 
 export function addAuthenticationTools(server: McpServer, options?: { remote?: boolean }): void {
   registerTracedTool(server,
@@ -56,7 +57,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         return createTextResponse(
           `現在のユーザー情報:\n` +
             `会社ID: ${companyId}\n` +
-            `会社名: ${companyInfo?.name || 'Unknown'}\n` +
+            `会社名: ${formatCompanyName(companyInfo?.name)}\n` +
             `ユーザー詳細:\n${JSON.stringify(userInfo, null, 2)}`,
         );
       } catch (error) {
@@ -251,7 +252,9 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           status: 'success',
           duration_ms: Date.now() - toolStart,
         });
-        return createTextResponse(`事業所を設定: ${companyInfo?.name || company_id}`);
+        return createTextResponse(
+          `事業所を設定: ${formatCompanyName(companyInfo?.name)} (ID: ${company_id})`,
+        );
       } catch (error) {
         recorder?.recordToolCall({
           tool: 'freee_set_current_company',
@@ -288,7 +291,9 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
           return createTextResponse(`事業所ID: ${companyId} (詳細情報なし)`);
         }
 
-        return createTextResponse(`事業所: ${companyInfo.name} (ID: ${companyInfo.id})`);
+        return createTextResponse(
+          `事業所: ${formatCompanyName(companyInfo.name)} (ID: ${companyInfo.id})`,
+        );
       } catch (error) {
         recorder?.recordToolCall({
           tool: 'freee_get_current_company',
@@ -367,7 +372,7 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
         const companyList = apiCompanies.companies
           .map((company) => {
             const current = company.id === parseInt(currentCompanyId, 10) ? ' *' : '';
-            return `${company.name ?? '(名称未設定)'} (${company.id})${current}`;
+            return `${formatCompanyName(company.name)} (${company.id})${current}`;
           })
           .join('\n');
 
