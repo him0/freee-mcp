@@ -92,9 +92,15 @@ export class RedisTokenStore implements TokenStore {
     const fields: Record<string, string> = {
       currentCompanyId: companyId,
       updatedAt: String(Date.now()),
-      name: name ?? '',
-      description: description ?? '',
     };
+    // Only overwrite name/description when an explicit value is provided.
+    // Omitted args preserve any existing cached value (HSET merges fields).
+    if (name !== undefined) {
+      fields.name = name;
+    }
+    if (description !== undefined) {
+      fields.description = description;
+    }
     await withRedis('setCurrentCompany', () => this.redis.hset(this.companyKey(userId), fields));
   }
 

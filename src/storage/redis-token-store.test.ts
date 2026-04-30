@@ -209,15 +209,30 @@ describe('RedisTokenStore', () => {
       });
     });
 
-    it('should set company with only required fields', async () => {
+    it('should set company with only required fields, omitting name/description', async () => {
       await tokenStore.setCurrentCompany('user-1', '12345');
 
       expect(mockRedis.hset).toHaveBeenCalledWith('freee-mcp:company:user-1', {
         currentCompanyId: '12345',
         updatedAt: expect.any(String),
-        name: '',
-        description: '',
       });
+    });
+
+    it('should preserve existing name when subsequent call omits the name arg', async () => {
+      await tokenStore.setCurrentCompany('user-1', '12345', 'My Company', 'A description');
+      await tokenStore.setCurrentCompany('user-1', '12345');
+
+      const stored = mockRedis._hashStore.get('freee-mcp:company:user-1');
+      expect(stored?.name).toBe('My Company');
+      expect(stored?.description).toBe('A description');
+    });
+
+    it('should overwrite name only when an explicit value is provided', async () => {
+      await tokenStore.setCurrentCompany('user-1', '12345', 'Old Name');
+      await tokenStore.setCurrentCompany('user-1', '12345', 'New Name');
+
+      const stored = mockRedis._hashStore.get('freee-mcp:company:user-1');
+      expect(stored?.name).toBe('New Name');
     });
   });
 
