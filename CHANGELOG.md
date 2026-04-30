@@ -1,5 +1,28 @@
 # freee-mcp
 
+## 0.26.0
+
+### Minor Changes
+
+- [`cf85553`](https://github.com/freee/freee-mcp/commit/cf85553d62444deac41245e51e3058732f5fae46): serve モードの環境変数バリデーションを zod ベースで強化し、`RATE_LIMIT_ENABLED` をデフォルト `true`（secure-by-default）に変更 ([#426](https://github.com/freee/freee-mcp/pull/426))
+
+  - BREAKING: 明示的に `RATE_LIMIT_ENABLED=false` / `SIGN_RATE_LIMIT_ENABLED=false` を設定しない限り rate limit が有効化される
+  - 必須環境変数 (ISSUER_URL / JWT_SECRET / FREEE_CLIENT_ID / FREEE_CLIENT_SECRET 等) が未設定・URL 形式不正・LOG_LEVEL 不正値の場合に起動時失敗
+  - 起動時に解決済み設定をログ出力（jwtSecret / clientSecret はマスク）
+
+- [`06c4f32`](https://github.com/freee/freee-mcp/commit/06c4f32c3a1cdd93090bdc51d4c6e70bde46b99c): ヘルスチェックエンドポイントを `/livez` (liveness) と `/readyz` (readiness) に分離 ([#427](https://github.com/freee/freee-mcp/pull/427))
+
+  - `/livez`: プロセス生存のみを確認。外部依存 (Redis 等) をチェックしないため、Redis の一時的な不調で Pod が再起動されない
+  - `/readyz`: Redis 到達性を確認し、未到達時は 503 を返してトラフィックを切り離す
+  - `/health`: 後方互換のため残し、`/readyz` と同じ挙動
+
+### Patch Changes
+
+- [`e21c2bd`](https://github.com/freee/freee-mcp/commit/e21c2bd53f5897c57919448089358657e0107a1a): リモート (HTTP) モードでリクエスト認証コンテキストが欠落している場合に、ローカル単一ユーザー用の `FileTokenStore` へフォールバックせず `InvalidTokenError` を投げて失敗するよう修正（fail-closed）。 ([#428](https://github.com/freee/freee-mcp/pull/428))
+
+  - マルチテナント環境で他テナントのトークンが流用される潜在的なリスクを排除
+  - stdio モードではこれまで通りローカルファイルストアへのフォールバックを維持
+
 ## 0.25.5
 
 ### Patch Changes
