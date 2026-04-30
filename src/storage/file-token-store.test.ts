@@ -94,9 +94,9 @@ describe('FileTokenStore', () => {
   it('setCurrentCompany delegates with all args except userId', async () => {
     vi.mocked(setCurrentCompany).mockResolvedValue(undefined);
 
-    await store.setCurrentCompany('ignored', '999', 'My Co', 'desc');
+    await store.setCurrentCompany('ignored', '999', 'My Co', 'desc', 'My Co DBA');
 
-    expect(setCurrentCompany).toHaveBeenCalledWith('999', 'My Co', 'desc');
+    expect(setCurrentCompany).toHaveBeenCalledWith('999', 'My Co', 'desc', 'My Co DBA');
   });
 
   it('getCompanyInfo delegates to file-based getCompanyInfo', async () => {

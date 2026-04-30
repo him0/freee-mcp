@@ -7,6 +7,7 @@ import { CONFIG_FILE_PERMISSION, getConfigDir } from '../constants.js';
 export const CompanyConfigSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
+  display_name: z.string().optional(),
   description: z.string().optional(),
   addedAt: z.number(),
   lastUsed: z.number().optional(),
@@ -15,6 +16,7 @@ export const CompanyConfigSchema = z.object({
 export interface CompanyConfig {
   id: string;
   name?: string;
+  display_name?: string;
   description?: string;
   addedAt: number;
   lastUsed?: number;
@@ -162,21 +164,23 @@ export async function setCurrentCompany(
   companyId: string,
   name?: string,
   description?: string,
+  display_name?: string,
 ): Promise<void> {
   const config = await loadFullConfig();
 
-  // Add or update company info
+  // Add entry if missing; preserve fields that the caller did not supply.
   if (!config.companies[companyId]) {
     config.companies[companyId] = {
       id: companyId,
-      name: name || `Company ${companyId}`,
-      description: description || undefined,
+      name,
+      display_name,
+      description,
       addedAt: Date.now(),
     };
-  } else if (name || description) {
-    // Update existing company info if provided
-    if (name) config.companies[companyId].name = name;
-    if (description) config.companies[companyId].description = description;
+  } else {
+    if (name !== undefined) config.companies[companyId].name = name;
+    if (display_name !== undefined) config.companies[companyId].display_name = display_name;
+    if (description !== undefined) config.companies[companyId].description = description;
   }
 
   // Update last used timestamp

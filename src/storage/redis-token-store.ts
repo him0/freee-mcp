@@ -13,7 +13,19 @@ import type { Redis } from './redis-client.js';
 import type { TokenStore } from './token-store.js';
 
 const TOKEN_KEY_PREFIX = 'freee-mcp:tokens:';
+// Legacy single-slot hash. Read-only fallback; new writes go to the keys below.
 const COMPANY_KEY_PREFIX = 'freee-mcp:company:';
+// Current company id, one value per user.
+const COMPANY_CURRENT_KEY_PREFIX = 'freee-mcp:company:current:';
+// Per-company dictionary: hash field=companyId, value=JSON({ name?, display_name?, description?, updatedAt }).
+const COMPANY_DICT_KEY_PREFIX = 'freee-mcp:company:dict:';
+
+interface DictEntry {
+  name?: string;
+  display_name?: string;
+  description?: string;
+  updatedAt?: number;
+}
 
 export class RedisTokenStore implements TokenStore {
   private redis: Redis;
@@ -56,7 +68,14 @@ export class RedisTokenStore implements TokenStore {
   }
 
   async clearTokens(userId: string): Promise<void> {
-    await withRedis('clearTokens', () => this.redis.del(this.tokenKey(userId)));
+    await withRedis('clearTokens', async () => {
+      await Promise.all([
+        this.redis.del(this.tokenKey(userId)),
+        this.redis.del(this.companyKey(userId)),
+        this.redis.del(this.companyCurrentKey(userId)),
+        this.redis.del(this.companyDictKey(userId)),
+      ]);
+    });
   }
 
   async getValidAccessToken(userId: string): Promise<string | null> {
@@ -77,10 +96,17 @@ export class RedisTokenStore implements TokenStore {
   }
 
   async getCurrentCompanyId(userId: string): Promise<string> {
-    const companyId = await withRedis('getCurrentCompanyId', () =>
+    // Prefer the new dedicated key; fall back to the legacy single-slot hash.
+    const fromNew = await withRedis('getCurrentCompanyId', () =>
+      this.redis.get(this.companyCurrentKey(userId)),
+    );
+    if (fromNew) {
+      return fromNew;
+    }
+    const fromLegacy = await withRedis('getCurrentCompanyId', () =>
       this.redis.hget(this.companyKey(userId), 'currentCompanyId'),
     );
-    return companyId || '0';
+    return fromLegacy || '0';
   }
 
   async setCurrentCompany(
@@ -88,36 +114,76 @@ export class RedisTokenStore implements TokenStore {
     companyId: string,
     name?: string,
     description?: string,
+    display_name?: string,
   ): Promise<void> {
-    const fields: Record<string, string> = {
-      currentCompanyId: companyId,
-      updatedAt: String(Date.now()),
+    await withRedis('setCurrentCompany', () =>
+      this.redis.set(this.companyCurrentKey(userId), companyId),
+    );
+    // Merge into the per-company dict, preserving fields the caller omitted.
+    const existing = (await this.readDictEntry(userId, companyId)) ?? {};
+    const merged: DictEntry = {
+      ...existing,
+      updatedAt: Date.now(),
     };
-    // Only overwrite name/description when an explicit value is provided.
-    // Omitted args preserve any existing cached value (HSET merges fields).
-    if (name !== undefined) {
-      fields.name = name;
-    }
-    if (description !== undefined) {
-      fields.description = description;
-    }
-    await withRedis('setCurrentCompany', () => this.redis.hset(this.companyKey(userId), fields));
+    if (name !== undefined) merged.name = name;
+    if (display_name !== undefined) merged.display_name = display_name;
+    if (description !== undefined) merged.description = description;
+    await withRedis('setCurrentCompany', () =>
+      this.redis.hset(this.companyDictKey(userId), {
+        [companyId]: JSON.stringify(merged),
+      }),
+    );
   }
 
   async getCompanyInfo(userId: string, companyId: string): Promise<CompanyConfig | null> {
-    const data = await withRedis('getCompanyInfo', () =>
+    const fromDict = await this.readDictEntry(userId, companyId);
+    if (fromDict) {
+      return {
+        id: companyId,
+        name: fromDict.name,
+        display_name: fromDict.display_name,
+        description: fromDict.description,
+        addedAt: fromDict.updatedAt ?? Date.now(),
+      };
+    }
+    // Legacy single-slot fallback. Returns null when the legacy entry is for
+    // a different company or absent.
+    const legacy = await withRedis('getCompanyInfo', () =>
       this.redis.hgetall(this.companyKey(userId)),
     );
-    if (!data || data.currentCompanyId !== companyId) {
+    if (!legacy || legacy.currentCompanyId !== companyId) {
       return null;
     }
-
-    return {
+    const result: CompanyConfig = {
       id: companyId,
-      name: data.name,
-      description: data.description,
-      addedAt: data.updatedAt ? Number(data.updatedAt) : Date.now(),
+      name: legacy.name || undefined,
+      description: legacy.description || undefined,
+      addedAt: legacy.updatedAt ? Number(legacy.updatedAt) : Date.now(),
     };
+    // Best-effort lazy backfill into the new dict.
+    try {
+      const entry: DictEntry = { updatedAt: result.addedAt };
+      if (result.name) entry.name = result.name;
+      if (result.description) entry.description = result.description;
+      await this.redis.hset(this.companyDictKey(userId), {
+        [companyId]: JSON.stringify(entry),
+      });
+    } catch (err) {
+      getLogger().warn({ err, userId, companyId }, 'company dict backfill failed (non-fatal)');
+    }
+    return result;
+  }
+
+  private async readDictEntry(userId: string, companyId: string): Promise<DictEntry | null> {
+    const raw = await withRedis('getCompanyInfo', () =>
+      this.redis.hget(this.companyDictKey(userId), companyId),
+    );
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as DictEntry;
+    } catch {
+      return null;
+    }
   }
 
   private tokenKey(userId: string): string {
@@ -126,5 +192,13 @@ export class RedisTokenStore implements TokenStore {
 
   private companyKey(userId: string): string {
     return `${COMPANY_KEY_PREFIX}${userId}`;
+  }
+
+  private companyCurrentKey(userId: string): string {
+    return `${COMPANY_CURRENT_KEY_PREFIX}${userId}`;
+  }
+
+  private companyDictKey(userId: string): string {
+    return `${COMPANY_DICT_KEY_PREFIX}${userId}`;
   }
 }

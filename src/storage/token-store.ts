@@ -12,6 +12,7 @@ export interface TokenStore {
     companyId: string,
     name?: string,
     description?: string,
+    display_name?: string,
   ): Promise<void>;
   getCompanyInfo(userId: string, companyId: string): Promise<CompanyConfig | null>;
 }

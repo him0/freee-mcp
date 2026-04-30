@@ -125,10 +125,13 @@ describe('RedisTokenStore', () => {
   });
 
   describe('clearTokens', () => {
-    it('should delete tokens from Redis', async () => {
+    it('should delete tokens, current company, dict, and legacy keys', async () => {
       await tokenStore.clearTokens('user-1');
 
       expect(mockRedis.del).toHaveBeenCalledWith('freee-mcp:tokens:user-1');
+      expect(mockRedis.del).toHaveBeenCalledWith('freee-mcp:company:user-1');
+      expect(mockRedis.del).toHaveBeenCalledWith('freee-mcp:company:current:user-1');
+      expect(mockRedis.del).toHaveBeenCalledWith('freee-mcp:company:dict:user-1');
     });
   });
 
@@ -179,18 +182,25 @@ describe('RedisTokenStore', () => {
   });
 
   describe('getCurrentCompanyId', () => {
-    it('should return company ID from Redis', async () => {
-      mockRedis.hget.mockResolvedValue('12345');
+    it('should return company ID from the new dedicated key', async () => {
+      mockRedis._store.set('freee-mcp:company:current:user-1', '12345');
 
       const result = await tokenStore.getCurrentCompanyId('user-1');
 
       expect(result).toBe('12345');
+      expect(mockRedis.get).toHaveBeenCalledWith('freee-mcp:company:current:user-1');
+    });
+
+    it('should fall back to the legacy hash when the new key is missing', async () => {
+      mockRedis._hashStore.set('freee-mcp:company:user-1', { currentCompanyId: '67890' });
+
+      const result = await tokenStore.getCurrentCompanyId('user-1');
+
+      expect(result).toBe('67890');
       expect(mockRedis.hget).toHaveBeenCalledWith('freee-mcp:company:user-1', 'currentCompanyId');
     });
 
-    it('should return default "0" when not set', async () => {
-      mockRedis.hget.mockResolvedValue(null);
-
+    it('should return default "0" when neither new nor legacy keys exist', async () => {
       const result = await tokenStore.getCurrentCompanyId('user-1');
 
       expect(result).toBe('0');
@@ -198,23 +208,31 @@ describe('RedisTokenStore', () => {
   });
 
   describe('setCurrentCompany', () => {
-    it('should set company with all fields', async () => {
-      await tokenStore.setCurrentCompany('user-1', '12345', 'My Company', 'A description');
+    function getDictEntry(
+      userId: string,
+      companyId: string,
+    ): { name?: string; display_name?: string; description?: string; updatedAt?: number } | null {
+      const hash = mockRedis._hashStore.get(`freee-mcp:company:dict:${userId}`);
+      const raw = hash?.[companyId];
+      return raw ? JSON.parse(raw) : null;
+    }
 
-      expect(mockRedis.hset).toHaveBeenCalledWith('freee-mcp:company:user-1', {
-        currentCompanyId: '12345',
-        updatedAt: expect.any(String),
+    it('should write current company id and a dict entry with all fields', async () => {
+      await tokenStore.setCurrentCompany(
+        'user-1',
+        '12345',
+        'My Company',
+        'A description',
+        'My Company DBA',
+      );
+
+      expect(mockRedis._store.get('freee-mcp:company:current:user-1')).toBe('12345');
+      const entry = getDictEntry('user-1', '12345');
+      expect(entry).toEqual({
         name: 'My Company',
+        display_name: 'My Company DBA',
         description: 'A description',
-      });
-    });
-
-    it('should set company with only required fields, omitting name/description', async () => {
-      await tokenStore.setCurrentCompany('user-1', '12345');
-
-      expect(mockRedis.hset).toHaveBeenCalledWith('freee-mcp:company:user-1', {
-        currentCompanyId: '12345',
-        updatedAt: expect.any(String),
+        updatedAt: expect.any(Number),
       });
     });
 
@@ -222,27 +240,38 @@ describe('RedisTokenStore', () => {
       await tokenStore.setCurrentCompany('user-1', '12345', 'My Company', 'A description');
       await tokenStore.setCurrentCompany('user-1', '12345');
 
-      const stored = mockRedis._hashStore.get('freee-mcp:company:user-1');
-      expect(stored?.name).toBe('My Company');
-      expect(stored?.description).toBe('A description');
+      const entry = getDictEntry('user-1', '12345');
+      expect(entry?.name).toBe('My Company');
+      expect(entry?.description).toBe('A description');
     });
 
     it('should overwrite name only when an explicit value is provided', async () => {
       await tokenStore.setCurrentCompany('user-1', '12345', 'Old Name');
       await tokenStore.setCurrentCompany('user-1', '12345', 'New Name');
 
-      const stored = mockRedis._hashStore.get('freee-mcp:company:user-1');
-      expect(stored?.name).toBe('New Name');
+      expect(getDictEntry('user-1', '12345')?.name).toBe('New Name');
+    });
+
+    it('should keep per-company entries separate when switching companies', async () => {
+      await tokenStore.setCurrentCompany('user-1', 'A', 'Alpha');
+      await tokenStore.setCurrentCompany('user-1', 'B', 'Beta');
+      await tokenStore.setCurrentCompany('user-1', 'A');
+
+      expect(mockRedis._store.get('freee-mcp:company:current:user-1')).toBe('A');
+      expect(getDictEntry('user-1', 'A')?.name).toBe('Alpha');
+      expect(getDictEntry('user-1', 'B')?.name).toBe('Beta');
     });
   });
 
   describe('getCompanyInfo', () => {
-    it('should return company info when matching', async () => {
-      mockRedis.hgetall.mockResolvedValue({
-        currentCompanyId: '12345',
-        name: 'My Company',
-        description: 'desc',
-        updatedAt: '1700000000000',
+    it('should return the dict entry for a matching company id', async () => {
+      mockRedis._hashStore.set('freee-mcp:company:dict:user-1', {
+        '12345': JSON.stringify({
+          name: 'My Company',
+          display_name: 'My Co',
+          description: 'desc',
+          updatedAt: 1700000000000,
+        }),
       });
 
       const result = await tokenStore.getCompanyInfo('user-1', '12345');
@@ -250,13 +279,40 @@ describe('RedisTokenStore', () => {
       expect(result).toEqual({
         id: '12345',
         name: 'My Company',
+        display_name: 'My Co',
         description: 'desc',
         addedAt: 1700000000000,
       });
     });
 
-    it('should return null when company ID does not match', async () => {
-      mockRedis.hgetall.mockResolvedValue({
+    it('should fall back to legacy hash and lazily backfill the new dict', async () => {
+      mockRedis._hashStore.set('freee-mcp:company:user-1', {
+        currentCompanyId: '12345',
+        name: 'Legacy Co',
+        description: 'old desc',
+        updatedAt: '1699000000000',
+      });
+
+      const result = await tokenStore.getCompanyInfo('user-1', '12345');
+
+      expect(result).toEqual({
+        id: '12345',
+        name: 'Legacy Co',
+        description: 'old desc',
+        addedAt: 1699000000000,
+      });
+
+      const dict = mockRedis._hashStore.get('freee-mcp:company:dict:user-1');
+      expect(dict?.['12345']).toBeDefined();
+      const entry = JSON.parse(dict?.['12345'] ?? '{}');
+      expect(entry).toMatchObject({
+        name: 'Legacy Co',
+        description: 'old desc',
+      });
+    });
+
+    it('should return null when legacy entry exists for a different company', async () => {
+      mockRedis._hashStore.set('freee-mcp:company:user-1', {
         currentCompanyId: '99999',
         name: 'Other',
       });
@@ -266,9 +322,7 @@ describe('RedisTokenStore', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null when no data exists', async () => {
-      mockRedis.hgetall.mockResolvedValue({});
-
+    it('should return null when no data exists in either store', async () => {
       const result = await tokenStore.getCompanyInfo('user-1', '12345');
 
       expect(result).toBeNull();
