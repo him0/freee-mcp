@@ -1,5 +1,48 @@
 # freee-mcp
 
+## 0.25.5
+
+### Patch Changes
+
+- [`70a7dae`](https://github.com/freee/freee-mcp/commit/70a7dae2f8cef8bad9afd617e200562dc678d722): ローカル開発用途で loopback の CIMD URL を受け入れるオプションを追加。 ([#429](https://github.com/freee/freee-mcp/pull/429))
+
+  - dev/test 環境かつ Kubernetes Pod 外でのみ、`http://localhost` / `127.0.0.1` / `[::1]` の `client_id` を許可
+  - 同条件で loopback の `https://` self-signed cert も受け入れ（mkcert 等のローカル検証向け）
+  - それ以外（production / NODE_ENV 未設定 / Kubernetes Pod 内 / プライベート IP / 公開 HTTP）は引き続き拒否
+  - 運用注意: Kubernetes 以外で本番運用する場合は `NODE_ENV=production` を必ず明示すること
+
+- [`2680500`](https://github.com/freee/freee-mcp/commit/26805007ca93d73cc63fdfaef9eb8094b42e919a): OAuth トークン/取消エンドポイントが HTTP Basic 認証を受理するよう修正 (RFC 6749 §2.3.1 準拠) ([#418](https://github.com/freee/freee-mcp/pull/418))
+
+  - `/.well-known/oauth-authorization-server` の `token_endpoint_auth_methods_supported` / `revocation_endpoint_auth_methods_supported` に `client_secret_basic` を追加
+  - `Authorization: Basic` ヘッダー付きトークン要求を受理。失敗時は 401 + `WWW-Authenticate: Basic ...`
+  - ヘッダーとリクエストボディの両方に資格情報がある場合は 400 invalid_request で拒否（RFC 6749 §2.3）
+
+- [`3571649`](https://github.com/freee/freee-mcp/commit/3571649aa3ac7586aafc1d7ce9b21b33d33675b8): canonical log line の top-level に `company_id` を追加。`tools/list` のように外向き API call を発火しないリクエストでも company コンテキストが残るようになり、Datadog の `@company_id:<id>` facet で 1 ログ行から検索可能になる。 ([#425](https://github.com/freee/freee-mcp/pull/425))
+- [`db90b31`](https://github.com/freee/freee-mcp/commit/db90b317a222bc1dfd3a7e246ae7b3b925307c82): JWT access token に `aud` claim を追加 (RFC 8707 Resource Indicators 準拠) ([#421](https://github.com/freee/freee-mcp/pull/421))
+
+  - `signAccessToken` / `verifyAccessToken` に audience 引数を追加
+  - `MCP_JWT_AUDIENCE` / `MCP_JWT_AUDIENCE_ENFORCE` env で grace period 制御 (default は enforce=false)
+
+- [`213185c`](https://github.com/freee/freee-mcp/commit/213185c08e1fd2266abdbb8e73bb464cfc80144f): freee API の 429 (rate limit) レスポンスを明示ハンドリング ([#423](https://github.com/freee/freee-mcp/pull/423))
+
+  - makeApiRequest に 429 専用分岐を追加し canonical log line に `error_type: 'rate_limit'` を記録
+  - Retry-After をエラーメッセージに含める
+  - 自動 retry/backoff は別 PR で検討
+
+- [`e3abfa6`](https://github.com/freee/freee-mcp/commit/e3abfa6cf385e4fa186df56b076fd82434ec9814): OAuth callback の redirect_uri 検証を fail-closed に変更 (深層防御) ([#422](https://github.com/freee/freee-mcp/pull/422))
+
+  - clientStore.getClient 等の例外発生時に 400 を返すよう変更
+  - これまでは catch 節で warn ログのみで処理継続 (fail-open) だった
+
+- [`b8c1b3f`](https://github.com/freee/freee-mcp/commit/b8c1b3fb4347d8d74a87d8c083f238bdd6be8acf): `src/server/client-auth-basic.ts` の `reject401` / `reject400` ヘルパーシグネチャを整理 (PR #418 のフォローアップ整理、外部動作変更なし) ([#420](https://github.com/freee/freee-mcp/pull/420))
+
+  - `errorTypeForLog` 引数を削除: ヘルパー本体でハードコードする `error` フィールド (`invalid_client` / `invalid_request`) と常に同値だったため、構造的に重複していた
+  - `reject401` の `errorName` をデフォルト値 `'InvalidClientError'` に変更 (動的値が必要な catch ブロックのみ明示指定)
+  - `reject400` の `errorName` (`'InvalidRequestError'`) は固定でハードコード化
+  - `req.body` への重複キャストを named local `reqBody` に集約
+
+  レスポンスコード / `WWW-Authenticate` ヘッダー / JSON 本文 / canonical log の shape はすべて PR #418 マージ直後と同一。テストファイルの修正なし、669 件すべて green。
+
 ## 0.25.4
 
 ### Patch Changes
