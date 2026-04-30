@@ -134,7 +134,8 @@ export class SignOAuthProvider implements OAuthServerProvider {
   }
 
   async verifyAccessToken(token: string): Promise<AuthInfo> {
-    const payload = await verifyJwt(token, this.deps.jwtSecret, this.deps.issuerUrl);
+    // Sign tokens omit audience enforcement; verify accepts any `aud`.
+    const payload = await verifyJwt(token, this.deps.jwtSecret, this.deps.issuerUrl, undefined);
     return {
       token,
       clientId: payload.client_id,
@@ -160,9 +161,11 @@ export class SignOAuthProvider implements OAuthServerProvider {
     scopes: string[],
   ): Promise<OAuthTokens> {
     const scope = scopes.join(' ');
+    // Sign tokens use the issuer URL as a self-audience (defense in depth).
     const jwt = await signAccessToken(
       { sub: userId, scope, clientId },
       this.deps.jwtSecret,
+      this.deps.issuerUrl,
       this.deps.issuerUrl,
     );
 

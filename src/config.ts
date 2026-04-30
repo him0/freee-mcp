@@ -56,6 +56,14 @@ export interface Config {
   auth: {
     timeoutMs: number;
   };
+  mcp: {
+    // RFC 8707 audience for issued/verified JWTs. `undefined` means callers
+    // should fall back to the issuer URL when signing (deep defense default).
+    jwtAudience: string | undefined;
+    // When false, verifyAccessToken runs in grace-period mode and accepts
+    // tokens regardless of their `aud` claim (legacy tokens included).
+    jwtAudienceEnforce: boolean;
+  };
 }
 
 // Cached config
@@ -87,6 +95,22 @@ function hasEnvCredentials(): boolean {
   }
 
   return hasClientId && hasClientSecret;
+}
+
+/**
+ * Resolve the JWT `aud` value for issued tokens (RFC 8707).
+ * Priority: MCP_JWT_AUDIENCE > MCP_PUBLIC_BASE_URL > undefined.
+ */
+function resolveMcpJwtAudience(): string | undefined {
+  return process.env.MCP_JWT_AUDIENCE || process.env.MCP_PUBLIC_BASE_URL || undefined;
+}
+
+/**
+ * Resolve whether verifyAccessToken should enforce `aud`.
+ * Defaults to false (grace-period: accept tokens missing or with any `aud`).
+ */
+function resolveMcpJwtAudienceEnforce(): boolean {
+  return process.env.MCP_JWT_AUDIENCE_ENFORCE === 'true';
 }
 
 /**
@@ -150,6 +174,10 @@ export async function loadConfig(): Promise<Config> {
     auth: {
       timeoutMs: AUTH_TIMEOUT_MS,
     },
+    mcp: {
+      jwtAudience: resolveMcpJwtAudience(),
+      jwtAudienceEnforce: resolveMcpJwtAudienceEnforce(),
+    },
   };
 
   return cachedConfig;
@@ -170,6 +198,8 @@ export interface RemoteServerConfig {
   port: number;
   issuerUrl: string;
   jwtSecret: string;
+  jwtAudience: string | undefined;
+  jwtAudienceEnforce: boolean;
   freeeClientId: string;
   freeeClientSecret: string;
   freeeAuthorizationEndpoint: string;
@@ -239,6 +269,8 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     port: parsePort(process.env.PORT, 3000),
     issuerUrl,
     jwtSecret,
+    jwtAudience: resolveMcpJwtAudience(),
+    jwtAudienceEnforce: resolveMcpJwtAudienceEnforce(),
     freeeClientId,
     freeeClientSecret,
     freeeAuthorizationEndpoint:
@@ -277,6 +309,10 @@ export function initRemoteConfig(remoteConfig: RemoteServerConfig): void {
     },
     auth: {
       timeoutMs: AUTH_TIMEOUT_MS,
+    },
+    mcp: {
+      jwtAudience: remoteConfig.jwtAudience,
+      jwtAudienceEnforce: remoteConfig.jwtAudienceEnforce,
     },
   };
 }

@@ -16,6 +16,7 @@ import type {
 } from '@modelcontextprotocol/sdk/shared/auth.js';
 import type { Response } from 'express';
 import { generatePKCE } from '../auth/oauth.js';
+import { getConfig } from '../config.js';
 import { FREEE_CALLBACK_PATH } from '../constants.js';
 import type { TokenStore } from '../storage/token-store.js';
 import type { RedisClientStore } from './client-store.js';
@@ -144,8 +145,17 @@ export class FreeeOAuthProvider implements OAuthServerProvider {
 
   async verifyAccessToken(token: string): Promise<AuthInfo> {
     let payload: Awaited<ReturnType<typeof verifyJwt>>;
+    // RFC 8707: only enforce `aud` when explicitly configured. Default is
+    // grace-period mode that accepts legacy tokens without `aud`.
+    const mcpCfg = getConfig().mcp;
+    const verifyAudience = mcpCfg.jwtAudienceEnforce ? mcpCfg.jwtAudience : undefined;
     try {
-      payload = await verifyJwt(token, this.deps.jwtSecret, this.deps.issuerUrl);
+      payload = await verifyJwt(
+        token,
+        this.deps.jwtSecret,
+        this.deps.issuerUrl,
+        verifyAudience,
+      );
     } catch (err) {
       const mapped = mapJoseErrorToInvalidToken(err);
       if (mapped) {
@@ -189,10 +199,15 @@ export class FreeeOAuthProvider implements OAuthServerProvider {
     scopes: string[],
   ): Promise<OAuthTokens> {
     const scope = scopes.join(' ');
+    // RFC 8707: always embed an `aud` claim. Fall back to the issuer URL
+    // when MCP_JWT_AUDIENCE is unset so tokens are still bound to a
+    // resource (defense in depth) even before operators configure audience.
+    const audience = getConfig().mcp.jwtAudience ?? this.deps.issuerUrl;
     const jwt = await signAccessToken(
       { sub: userId, scope, clientId },
       this.deps.jwtSecret,
       this.deps.issuerUrl,
+      audience,
     );
 
     const refreshToken = randomUUID();

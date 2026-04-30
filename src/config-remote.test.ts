@@ -28,6 +28,8 @@ describe('loadRemoteServerConfig', () => {
       port: 3000,
       issuerUrl: 'https://mcp.example.com',
       jwtSecret: 'a-test-secret-that-is-at-least-32-characters-long',
+      jwtAudience: undefined,
+      jwtAudienceEnforce: false,
       freeeClientId: 'test-client-id',
       freeeClientSecret: 'test-client-secret',
       freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
@@ -183,6 +185,8 @@ describe('initRemoteConfig', () => {
       port: 3000,
       issuerUrl: 'https://mcp.example.com',
       jwtSecret: 'a-test-secret-that-is-at-least-32-characters-long',
+      jwtAudience: undefined,
+      jwtAudienceEnforce: false,
       freeeClientId: 'cid',
       freeeClientSecret: 'csec',
       freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
@@ -190,6 +194,8 @@ describe('initRemoteConfig', () => {
       freeeScope: 'read write',
       freeeApiUrl: 'https://api.freee.co.jp',
       redisUrl: 'redis://localhost:6379',
+      rateLimitEnabled: false,
+      logLevel: 'info',
     });
 
     const config = getConfig();
@@ -210,6 +216,8 @@ describe('initRemoteConfig', () => {
       port: 3000,
       issuerUrl: 'https://mcp.example.com',
       jwtSecret: 'a-test-secret-that-is-at-least-32-characters-long',
+      jwtAudience: undefined,
+      jwtAudienceEnforce: false,
       freeeClientId: 'cid',
       freeeClientSecret: 'csec',
       freeeAuthorizationEndpoint: 'https://accounts.secure.freee.co.jp/public_api/authorize',
@@ -217,6 +225,8 @@ describe('initRemoteConfig', () => {
       freeeScope: 'read write',
       freeeApiUrl: 'https://staging.example.com',
       redisUrl: 'redis://localhost:6379',
+      rateLimitEnabled: false,
+      logLevel: 'info',
     });
 
     const config = getConfig();
