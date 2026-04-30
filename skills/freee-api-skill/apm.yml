@@ -1,3 +1,3 @@
 name: freee-api-skill
-version: 0.25.0
+version: 0.25.4
 description: freee の会計・人事労務・請求書・工数管理・販売・サイン（電子契約）API と連携するスキル。API リファレンスと操作レシピを提供し、freee-mcp / freee-sign-mcp 経由で正確な API 利用をガイドする。

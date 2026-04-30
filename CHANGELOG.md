@@ -1,135 +1,75 @@
 # freee-mcp
 
+## 0.25.4
+
+### Patch Changes
+
+- [`8fde431`](https://github.com/freee/freee-mcp/commit/8fde431942f104b12018068a890cc2adaa33e845): Remote モードで W3C `traceparent` を抽出して上流ゲートウェイの trace に server span を接続するようにし、SSE と JSON-RPC を区別できる観測ラベルを追加。 ([#416](https://github.com/freee/freee-mcp/pull/416))
+
+  - middleware で `propagation.extract` を呼び、サーバー span を上流（Envoy/Istio）の child として紐付け
+  - span 名を `http.server.request` に変更（Datadog operation 命名に整合）
+  - `http.transport` (`sse` | `jsonrpc`)、`http.response.close_reason` (`completed` | `client_disconnect`) を span attribute と canonical log に追加
+  - 新ヒストグラム `mcp.sse.connection.duration` を追加 — SSE 接続寿命を専用バケットで観測
+  - propagator を `CompositePropagator([W3CTraceContext, W3CBaggage])` に拡張、resource に `deployment.environment` を付与
+
+## 0.25.3
+
+### Patch Changes
+
+- [`76b03c0`](https://github.com/freee/freee-mcp/commit/76b03c0711d5233ee3e1315822afaf1456a77908): `freee_api_*` の query/body が JSON 文字列で届いた場合に、先頭の UTF-8 BOM が含まれていれば BOM 検出専用のエラーメッセージを返すようにした（OS によって挙動が分かれないよう自動除去はしない）。それ以外のパース不能ケースのエラーメッセージはペイロード本体を含めず文字列長のみを含む形にし、業務データが応答やログに漏れないようにした。 ([#414](https://github.com/freee/freee-mcp/pull/414))
+- [`0df88e0`](https://github.com/freee/freee-mcp/commit/0df88e0458eadaea134268f24adec39e3c334873): OpenAPI スキーマを最新版に同期 ( 2 files changed, 20 insertions(+), 12 deletions(-)) ([#411](https://github.com/freee/freee-mcp/pull/411))
+
+## 0.25.2
+
+### Patch Changes
+
+- [`cce0c0d`](https://github.com/freee/freee-mcp/commit/cce0c0da9d0831bd4d55477fa8a55ca1f52b5e52): Remote モードで期限切れアクセストークンが 500 ではなく 401 を返すように修正 ([#398](https://github.com/freee/freee-mcp/pull/398))
+
+  - jose のトークン検証例外を `InvalidTokenError` に変換し、`WWW-Authenticate: Bearer error="invalid_token"` 付き HTTP 401 を返す
+  - これにより RFC 6750 準拠クライアント（Anthropic Managed Agents Vault など）の `refresh_token` 自動再発行が動作するようになる
+
 ## 0.25.1
 
 ### Patch Changes
 
-- [`d6bc31c`](https://github.com/freee/freee-mcp/commit/d6bc31ceabd595a91ccae22dbdcf83017757d27a): freee API のベース URL（本番: `https://api.freee.co.jp`）を環境変数 `FREEE_API_BASE_URL` で上書きできるように対応。環境変数が未設定の場合は従来どおりハードコーディングされた値にフォールバックする。OAuth のコールバック内で利用される API URL もこの環境変数を参照するため、ローカル環境に向けて Remote MCP サーバーを立ち上げる際の動作確認が容易になる。 ([#407](https://github.com/freee/freee-mcp/pull/407))
+- [`d6bc31c`](https://github.com/freee/freee-mcp/commit/d6bc31ceabd595a91ccae22dbdcf83017757d27a): freee API のベース URL を環境変数 `FREEE_API_BASE_URL` で上書きできるように対応。OAuth コールバック内で利用される API URL もこの環境変数を参照する。 ([#407](https://github.com/freee/freee-mcp/pull/407))
 
 ## 0.25.0
 
 ### Minor Changes
 
-- [`4aa21b1`](https://github.com/freee/freee-mcp/commit/4aa21b15f0041dd8bb00676a58e63fb2e5d3ab76): `freee_file_upload` ツールに `company_id` 必須引数を追加 ([#401](https://github.com/freee/freee-mcp/pull/401))
-
-  通常の `freee_api_*` ツール (`src/api/client.ts` の `makeApiRequest`) と同様に、呼び出し側が渡した `company_id` とコンテキストで解決された事業所 ID を文字列比較で検証し、不一致時はエラーを返すようにした。誤った事業所へのファイルアップロードを防ぐガードレール。
-
-  - MCP ツール `freee_file_upload` の inputSchema に `company_id` を必須で追加 (`string | number`)
-  - `uploadReceipt()` の 2 番目の引数として `requestedCompanyId` を追加
-  - 認証チェック直後にバリデーションを実施し、通常ツールと同一の文言でエラーを throw
-
-- [`f7f0553`](https://github.com/freee/freee-mcp/commit/f7f05538664cf886ce9f5aa9ef6df338dca5eaee): Sign Remote MCP サーバーを追加 ([#395](https://github.com/freee/freee-mcp/pull/395))
-
-  freee サイン用の Remote MCP サーバー（`freee-sign-remote-mcp`）を追加。freee 本体と同一構成で OAuth 2.1 Authorization Server + Streamable HTTP transport + Redis トークンストア + canonical log line + OTel tracing をサポート。
-
-  - 新規エントリポイント `bin/freee-sign-remote-mcp.js`（ポート 3002）
-  - ninja-sign.com との OAuth 2.0 code exchange + MCP クライアント向け OAuth 2.1 AS の二層認証
-  - Docker Compose に `freee-sign-mcp` サービス追加、`Dockerfile.sign` でビルド分離
-
-  ## 共有 Valkey での分離
-
-  本番で Sign と freee 本体が共有する Valkey インスタンスの名前空間を以下で分離:
-
-  - Redis の DB (freee 本体 DB 0 / Sign DB 1) とキー prefix (`freee-sign-mcp:*`) で名前空間分離
-  - rate-limit キーに `rl:sign:*` prefix を付与し freee 本体とカウンタ合算を防止
-
-  本番 Valkey は parameter group で `maxmemory-policy` 未設定のため Valkey デフォルト (`noeviction`) で稼働しており、cross-DB eviction は発生しない想定。
-
-  ## ローカル開発環境の調整
-
-  `compose.yaml` / `otel-collector-config.yaml` を本番挙動と整合させる:
-
-  - Redis の `maxmemory-policy` を `noeviction` に変更し、本番 Valkey と同じ挙動でローカル検証できるようにする
-  - OTel Collector に `memory_limiter` / `batch` processor を追加し、compose で Sign + freee が単一 collector を共有する開発環境の trace 欠落を防止（本番は Datadog Agent が Node 単位で OTLP を受ける構成のため該当しない）
-
-  ## セキュリティ
-
-  - `sign_api_*` ツールの path を `/v1/` 始まりに制限し、絶対 URL 経由で Bearer トークンが外部ホストへ流出する SSRF 経路を遮断
-  - path traversal (`..` / `%2e%2e`) を Zod と URL 組み立て後の pathname 再検証で拒否し、ninja-sign.com 内の `/v1/` 外エンドポイントへの到達を防止
-  - Remote モードで認証コンテキストが取れない場合に local filesystem のトークンへ fallback する経路を禁止し、impersonation を防止
-  - ninja-sign.com との通信エラー本文を先頭 200 文字に truncate して PII 漏洩を防止
-  - `/v1/users/me` レスポンスを Zod schema で検証し、id の型不正による Redis キー衝突を防止
+- [`4aa21b1`](https://github.com/freee/freee-mcp/commit/4aa21b15f0041dd8bb00676a58e63fb2e5d3ab76): `freee_file_upload` ツールに `company_id` 必須引数を追加。通常の `freee_api_*` ツールと同様にコンテキストで解決された事業所 ID と一致しない場合はエラーを返し、誤った事業所へのファイルアップロードを防止。 ([#401](https://github.com/freee/freee-mcp/pull/401))
+- [`f7f0553`](https://github.com/freee/freee-mcp/commit/f7f05538664cf886ce9f5aa9ef6df338dca5eaee): Sign Remote MCP サーバー（`freee-sign-remote-mcp`）を追加。freee 本体と同一構成で OAuth 2.1 AS + Streamable HTTP transport + Redis トークンストア + canonical log line + OTel tracing をサポート。`sign_api_*` ツールの path を `/v1/` 始まりに制限し SSRF / path traversal を防止。 ([#395](https://github.com/freee/freee-mcp/pull/395))
 
 ### Patch Changes
 
-- [`b7ffe3c`](https://github.com/freee/freee-mcp/commit/b7ffe3cf8bce5dd945b9a2e6c7dc59e00d4648fb): GitHub CLI の `gh skill` コマンド（v2.90.0 以降）経由でのスキルインストールをサポート。`skills/freee-api-skill/SKILL.md` のフロントマターに `license` と `metadata` を追加し、README に `gh skill install freee/freee-mcp freee-api-skill` のインストール手順を記載。 ([#397](https://github.com/freee/freee-mcp/pull/397))
-- [`25acba0`](https://github.com/freee/freee-mcp/commit/25acba0adae6d6c612ab6f1609e079ed06c28877): Microsoft の [Agent Package Manager (APM)](https://github.com/microsoft/apm) による配布に対応。`skills/freee-api-skill/` に `apm.yml` を追加し、`apm install freee/freee-mcp/skills/freee-api-skill` コマンドでスキルをインストール可能にした。APM は対象プロジェクトに存在する `.github/`、`.claude/`、`.cursor/`、`.opencode/`、`.codex/` の各ディレクトリへスキルを自動デプロイする。 ([#396](https://github.com/freee/freee-mcp/pull/396))
-- [`20a6ec9`](https://github.com/freee/freee-mcp/commit/20a6ec9f555b1b86d64550c5084b2bbc3ea17673): Sign Remote MCP の Redis 既定 DB 番号指定を撤廃 ([#403](https://github.com/freee/freee-mcp/pull/403))
-
-  freee-mcp 本体と Sign Remote MCP で共有する Valkey (ElastiCache) の分離方式を「DB 番号による論理分離」から「`freee-sign-mcp:*` prefix + Valkey RBAC (IAM Role ACL)」に変更した。DB 分離は将来の cluster mode 移行を阻害するため採用しない。
-
-  本 PR は当該方針に合わせて、アプリ側のデフォルト値から DB 番号を外す対応:
-
-  - `compose.yaml`: `SIGN_REDIS_URL: redis://redis:6379/1` → `redis://redis:6379`
-  - `src/sign/config.ts`: `SIGN_REDIS_URL` 未設定時の既定値を `redis://localhost:6379/1` → `redis://localhost:6379`
-  - `src/sign/config.test.ts`: 既定値 assertion を追従
-
-- [`ca1a324`](https://github.com/freee/freee-mcp/commit/ca1a3246b27c3d2bcdc6692bbf6a75ec4aef874a): リリース時に `skills/freee-api-skill/apm.yml` の `version` フィールドを `package.json` に自動追従させるよう publish ワークフローを拡張。既存の `.claude-plugin/plugin.json` / `marketplace.json` の同期ステップと同じコミットでまとめて push される。 ([#402](https://github.com/freee/freee-mcp/pull/402))
+- [`b7ffe3c`](https://github.com/freee/freee-mcp/commit/b7ffe3cf8bce5dd945b9a2e6c7dc59e00d4648fb): GitHub CLI の `gh skill` コマンド（v2.90.0 以降）経由でのスキルインストールをサポート ([#397](https://github.com/freee/freee-mcp/pull/397))
+- [`25acba0`](https://github.com/freee/freee-mcp/commit/25acba0adae6d6c612ab6f1609e079ed06c28877): Microsoft の [Agent Package Manager (APM)](https://github.com/microsoft/apm) による配布に対応。`apm install freee/freee-mcp/skills/freee-api-skill` でインストール可能 ([#396](https://github.com/freee/freee-mcp/pull/396))
+- [`20a6ec9`](https://github.com/freee/freee-mcp/commit/20a6ec9f555b1b86d64550c5084b2bbc3ea17673): Sign Remote MCP の Redis 既定 DB 番号指定を撤廃。Valkey 分離方式を「DB 番号」から「key prefix + RBAC」に変更（cluster mode 互換性のため） ([#403](https://github.com/freee/freee-mcp/pull/403))
+- [`ca1a324`](https://github.com/freee/freee-mcp/commit/ca1a3246b27c3d2bcdc6692bbf6a75ec4aef874a): リリース時に `skills/freee-api-skill/apm.yml` の `version` フィールドを `package.json` に自動追従させるよう publish ワークフローを拡張 ([#402](https://github.com/freee/freee-mcp/pull/402))
 
 ## 0.24.0
 
 ### Minor Changes
 
-- [`186ffec`](https://github.com/freee/freee-mcp/commit/186ffecf7b0a740d9d2fbf46f9e6088d57a31dff): Remote モードの canonical log line を Datadog の status マッピングと整合するよう改善。 ([#390](https://github.com/freee/freee-mcp/pull/390))
+- [`186ffec`](https://github.com/freee/freee-mcp/commit/186ffecf7b0a740d9d2fbf46f9e6088d57a31dff): Remote モードの canonical log line を Datadog の status マッピングと整合するよう改善。HTTP status に応じて pino log level を `info`/`warn`/`error` に分岐し、Datadog Status Remapper が追加設定なしで認識できるよう変更。synthetic error にも stack trace を付与。 ([#390](https://github.com/freee/freee-mcp/pull/390))
+- [`06c5d06`](https://github.com/freee/freee-mcp/commit/06c5d060b81155fadc14668d58b004424d95cb9d): Remote モードの canonical log payload を `http` / `mcp` / `api` の 3 セクション構成に整理。tool / HTTP method / inbound HTTP route 別の比率を指定できる head-based custom sampler `RuleBasedSampler` を追加。 ([#391](https://github.com/freee/freee-mcp/pull/391))
 
-  - HTTP status に応じて pino の log level を `info` / `warn` / `error` に分岐 (5xx → error, 4xx → warn, それ以外 → info)。401/403/404/422 もすべて warn に集約。
-  - `formatters.level` で level を文字列ラベル (`"info"` / `"warn"` / `"error"`) として出力するよう変更。Datadog の Status Remapper が追加 pipeline 設定なしで `service:freee-mcp* status:error` クエリを解釈できるようになる。
-  - canonical log の `msg` フィールドを HTTP status に応じた動的文字列 (`mcp request ok` / `mcp request client_error` / `mcp request server_error`) に変更。Datadog UI 上での目視判別が容易になる。
-  - `makeErrorChain` を `new Error` + `Error.captureStackTrace` ベースに再実装。validation / routing 由来の synthetic error にも stack trace が付与され、Datadog から呼び出し位置を直接追跡可能。プライバシー scrub は従来通り適用。
-  - pino otelMixin に `trace_sampled` フィールドを追加。アクティブな span がない場合も `trace_sampled: false` として明示的に出力するため、Datadog 上で「sampler が sampled と判定したログのみ」を facet で抽出できる(エクスポーター段階の drop は含まない)。
-
-- [`06c5d06`](https://github.com/freee/freee-mcp/commit/06c5d060b81155fadc14668d58b004424d95cb9d): Remote モードの canonical log payload を整理し、tool/method 別の OTel sampler を導入。 ([#391](https://github.com/freee/freee-mcp/pull/391))
-
-  - `CanonicalLogPayload` を `http` / `mcp` / `api` の 3 セクション構成に整理。`api_calls` / `api_call_count` を `api.calls` / `api.call_count` に移動し、tool 層と api 層で重複していた `api_method` / `api_path_pattern` / `query_keys` を `api.calls[]` 側に集約。
-  - `query_keys` (privacy: 値ではなくキー名のみ) を `makeApiRequest` / `makeSignApiRequest` 内部で `params` から導出し、5xx / 4xx / json_parse_error / 成功すべてのパスに付与。tool 層からは消えたので、ToolCallInfo は意図として「どの MCP ツールが呼ばれたか」だけを保持する純粋メタデータとなる。
-  - 新しい head-based custom sampler `RuleBasedSampler` を追加。環境変数 `OTEL_TRACES_SAMPLER_RULES` で `tool=freee_api_get:0.1,method=POST:1.0,http=GET /mcp:0.2,default=0.5` のような DSL を定義し、tool / HTTP method / inbound HTTP route 別に異なる ratio をかけられる。`OTEL_TRACES_SAMPLER_RULES` 未設定時は従来通り `OTEL_TRACES_SAMPLER_ARG` (単一 ratio) にフォールバック。DSL の構文エラーは throw せず warn ログ + skip で degrade するため、起動失敗の懸念なし。
-
-  BREAKING (Datadog ログ検索のみ): `@api_calls.*` / `@api_call_count` / `@mcp.tool_calls.api_method` / `@mcp.tool_calls.api_path_pattern` / `@mcp.tool_calls.query_keys` を facet している既存ダッシュボードは移行が必要。新しいパスは `@api.calls.*` / `@api.call_count` / `@api.calls.method` / `@api.calls.path_pattern` / `@api.calls.query_keys`。
+  BREAKING (Datadog ログ検索のみ): `@api_calls.*` / `@api_call_count` / `@mcp.tool_calls.api_method` 等を facet している既存ダッシュボードは `@api.calls.*` / `@api.call_count` / `@api.calls.method` への移行が必要。
 
 ### Patch Changes
 
-- [`40dd52c`](https://github.com/freee/freee-mcp/commit/40dd52c9a54a81da62cd5888f9ccdd3f73a2b8ea): Canonical log の `errors[]` が 4xx/5xx 応答で常に空になる hole を修正。 ([#392](https://github.com/freee/freee-mcp/pull/392))
-  `res.status().json()` で応答を直接送出して Express エラーハンドラを bypass
-  する third-party middleware のケースで `errors[]` が空のまま emit されて
-  いた問題を、`flush()` の universal fallback で補完。`source: "response"`,
-  `error_type: "unrecorded"` の placeholder ErrorInfo を合成し、Datadog
-  operator が `status:error` で filter した後でも最低限のドリルダウン情報を
-  得られるようにした。
-
-  Fallback の `chain[0].message` には `HTTP <status> <method> <path>` を
-  埋め込み、Datadog の scrubbing を通過する状態で route の特定が可能に
-  なるようにした。
-
-  body-size limit middleware (`http-server.ts`) は我々のコードなので
-  fallback 経由ではなく explicit `recordError({source: "middleware",
-error_type: "payload_too_large"})` を直接呼ぶように更新。
-
-  明示的な `recordError` が呼ばれているケースでは fallback は no-op となる
-  ため、既存の挙動には影響しない。
+- [`40dd52c`](https://github.com/freee/freee-mcp/commit/40dd52c9a54a81da62cd5888f9ccdd3f73a2b8ea): Canonical log の `errors[]` が 4xx/5xx 応答で空になる問題を修正。`flush()` の universal fallback で `source: "response"` の placeholder ErrorInfo を合成し、Datadog でドリルダウン情報を確保。 ([#392](https://github.com/freee/freee-mcp/pull/392))
 
 ## 0.23.0
 
 ### Minor Changes
 
-- [`a38d2be`](https://github.com/freee/freee-mcp/commit/a38d2be7717d624d30824a3f0e45ba0fb29a80f9): Remote モードのロギングを canonical log line パターンに再構成 ([#385](https://github.com/freee/freee-mcp/pull/385))
-
-  1 HTTP リクエスト = 1 ログ行 = 1 trace の形式で、リクエスト単位のメタデータ
-  (method, status, duration, tool_calls, api_calls, errors) を 1 本の JSON ログに集約して出力します。
-  既存の個別イベントログ (API request completed, Tool call completed 等) は削除。
-
-  - 新規ログフィールド: request_id, source_ip, user_id, session_id, http.\*, mcp.tool_calls[], api_calls[], errors[]
-  - エラー発生時は `Error.cause` チェーンと stack trace を `errors[].chain` に含める (serialize-error 経由)
-  - プライバシー保護: query 値や request body などユーザー入力はログに一切含まれない (型システムで強制)
-  - 400/500 エラーも canonical log で自動捕捉 (従来ログに残らなかった 400 系をカバー)
-  - pino.redact による defense-in-depth で stray log 経路からの漏洩も防止
+- [`a38d2be`](https://github.com/freee/freee-mcp/commit/a38d2be7717d624d30824a3f0e45ba0fb29a80f9): Remote モードのロギングを canonical log line パターンに再構成。1 HTTP リクエスト = 1 ログ行 = 1 trace の形式で request_id / http / mcp.tool_calls / api_calls / errors を 1 本の JSON に集約。query 値や request body などユーザー入力はログに含めない（型システムと pino.redact で強制）。 ([#385](https://github.com/freee/freee-mcp/pull/385))
 
 ### Patch Changes
 
-- [`a38d2be`](https://github.com/freee/freee-mcp/commit/a38d2be7717d624d30824a3f0e45ba0fb29a80f9): Remote モードの canonical log line に inbound `user_agent` フィールドを追加、外部 freee API 向けの outbound User-Agent に transport mode (`stdio` / `remote`) を含めた ([#385](https://github.com/freee/freee-mcp/pull/385))
-
-  - Remote: MCP クライアントから届いた `User-Agent` ヘッダを 256 文字に切り詰め、`scrubErrorMessage` で数値 ID とメールをマスクした上で canonical log line に記録。Datadog で `@user_agent:ClaudeDesktop*` のように MCP クライアント別の分析が可能になる
-  - Outbound: freee API への fetch で送る User-Agent を `freee-mcp/<version> (MCP Server; stdio; +url)` / `freee-mcp/<version> (MCP Server; remote; +url)` の 2 形式に分離。freee 側ログでどの transport からの呼び出しかを区別できる
-  - 新モジュール `src/server/user-agent.ts` (`getUserAgent()` / `setUserAgentTransportMode()`) が `src/constants.ts` の旧 `USER_AGENT` 定数を置き換える。初期化はエントリポイント (`src/index.ts`, `src/sign/index.ts`, `src/server/http-server.ts`) で 1 度だけ実行
+- [`a38d2be`](https://github.com/freee/freee-mcp/commit/a38d2be7717d624d30824a3f0e45ba0fb29a80f9): canonical log line に inbound `user_agent` フィールドを追加し、外部 freee API への outbound User-Agent に transport mode (`stdio` / `remote`) を含めた。Datadog で MCP クライアント別の分析が可能に。 ([#385](https://github.com/freee/freee-mcp/pull/385))
 
 ## 0.22.1
 

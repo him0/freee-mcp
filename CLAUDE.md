@@ -114,6 +114,12 @@ Changeset requirement (必須):
 - フォーマット: frontmatter に `"freee-mcp": patch|minor|major`、本文に変更内容の説明（日本語）
 - bump type: `patch`（バグ修正）、`minor`（新機能）、`major`（破壊的変更）
 
+Changeset の書き方:
+
+- 1 行サマリ＋必要に応じて短い箇条書き（2〜5 項目）に留める。実装詳細・内部モジュール名・facet 名等は PR 説明に書き、CHANGELOG には残さない
+- BREAKING や運用影響（ダッシュボード移行など）の警告だけは要約として明示する
+- サブセクション（`## 〇〇`）を切る粒度の長文は避ける
+
 Contributor の追加:
 
 - Issue を起票してくれた人を README.md の Contributors セクション（`<!-- CONTRIBUTORS-START -->` ～ `<!-- CONTRIBUTORS-END -->` の間）に追加する

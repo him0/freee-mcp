@@ -168,3 +168,57 @@ describe('generateClientModeTool - privacy', () => {
     expect(errors[0].error_type).toBe('path_validation_failed');
   });
 });
+
+describe('coercibleRecord', () => {
+  it('passes plain objects through unchanged', async () => {
+    const { coercibleRecord } = await import('./client-mode.js');
+    const schema = coercibleRecord('body');
+    const result = schema.safeParse({ a: 1, b: 'two' });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).toEqual({ a: 1, b: 'two' });
+  });
+
+  it('parses JSON-encoded object strings (some MCP clients send object params as strings)', async () => {
+    const { coercibleRecord } = await import('./client-mode.js');
+    const schema = coercibleRecord('body');
+    const result = schema.safeParse('{"company_id":1,"issue_date":"2026-04-26"}');
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({ company_id: 1, issue_date: '2026-04-26' });
+    }
+  });
+
+  it('rejects a leading UTF-8 BOM with a dedicated error (deterministic across OSes)', async () => {
+    const { coercibleRecord } = await import('./client-mode.js');
+    const schema = coercibleRecord('body');
+    const bom = String.fromCharCode(0xfeff);
+    const result = schema.safeParse(`${bom}{"a":1}`);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toMatch(/UTF-8 BOM/);
+    }
+  });
+
+  it('passes JSON strings with surrounding whitespace through (JSON.parse handles it)', async () => {
+    const { coercibleRecord } = await import('./client-mode.js');
+    const schema = coercibleRecord('body');
+    const result = schema.safeParse('  \r\n{"a":1}\r\n  ');
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).toEqual({ a: 1 });
+  });
+
+  it('emits a length-only error message on unparseable strings (no payload bytes leak)', async () => {
+    const { coercibleRecord } = await import('./client-mode.js');
+    const schema = coercibleRecord('body');
+    const SECRET = 'partner_name=Acme(SECRET)';
+    const result = schema.safeParse(SECRET);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const message = result.error.issues[0].message;
+      expect(message).toMatch(/length \d+/);
+      expect(message).not.toContain('Acme');
+      expect(message).not.toContain('SECRET');
+      expect(message).not.toContain('partner_name');
+    }
+  });
+});
