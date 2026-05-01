@@ -12,6 +12,9 @@ const mockRemoteConfig = {
   scope: 'read write',
   freeeApiUrl: 'https://api.freee.co.jp',
   redisUrl: 'redis://localhost:6379',
+  httpRequestTimeoutMs: 600_000,
+  httpHeadersTimeoutMs: 65_000,
+  httpKeepAliveTimeoutMs: 60_000,
 };
 
 vi.mock('../config.js', () => ({
@@ -293,5 +296,15 @@ describe('HTTP Server - config integration', () => {
     expect(mockRemoteConfig.issuerUrl).toBe('https://mcp.example.com');
     expect(mockRemoteConfig.jwtSecret).toBeDefined();
     expect(mockRemoteConfig.jwtSecret.length).toBeGreaterThanOrEqual(32);
+  });
+
+  it('should expose HTTP server timeouts so app.listen() can pin them', () => {
+    expect(mockRemoteConfig.httpRequestTimeoutMs).toBe(600_000);
+    expect(mockRemoteConfig.httpHeadersTimeoutMs).toBe(65_000);
+    expect(mockRemoteConfig.httpKeepAliveTimeoutMs).toBe(60_000);
+    // Node requires headersTimeout > keepAliveTimeout to avoid killing idle keep-alive sockets.
+    expect(mockRemoteConfig.httpHeadersTimeoutMs).toBeGreaterThan(
+      mockRemoteConfig.httpKeepAliveTimeoutMs,
+    );
   });
 });

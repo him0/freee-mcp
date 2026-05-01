@@ -30,8 +30,8 @@ export function getHttpRequestDuration(): Histogram {
  * SSE (Streamable-HTTP) connection lifetime histogram (seconds).
  *
  * Recorded only for `transport=sse` requests at connection close. The expected
- * distribution clusters near the route's `streamIdleTimeout` (e.g. ~600s on
- * Istio's default HTTPRoute), so the p99 reveals whether SSE clients are
+ * distribution clusters near the route's per-request timeout (e.g. ~1200s on
+ * the configured HTTPRoute), so the p99 reveals whether SSE clients are
  * disconnecting early or running until the platform max — useful when
  * triaging `envoy.cluster.upstream_rq_timeout` alerts which alone cannot
  * distinguish "long but normal SSE" from "slow JSON-RPC".

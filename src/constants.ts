@@ -74,3 +74,10 @@ export const OAUTH_KEY_PREFIX = 'freee-mcp:oauth';
 export const FETCH_TIMEOUT_TOKEN_MS = 10_000; // Token exchange / refresh
 export const FETCH_TIMEOUT_USERINFO_MS = 10_000; // User info fetch
 export const FETCH_TIMEOUT_API_MS = 30_000; // freee API calls (MCP tools)
+
+// HTTP server timeouts for serve mode (Streamable-HTTP / SSE long-lived connections).
+// Defaults; per-environment override via HTTP_REQUEST_TIMEOUT_MS / HTTP_HEADERS_TIMEOUT_MS / HTTP_KEEP_ALIVE_TIMEOUT_MS.
+// Node requires headersTimeout > keepAliveTimeout, otherwise idle keep-alive sockets get killed by the headers timer.
+export const HTTP_REQUEST_TIMEOUT_MS = 10 * 60 * 1000; // 10m
+export const HTTP_HEADERS_TIMEOUT_MS = 65 * 1000; // 65s
+export const HTTP_KEEP_ALIVE_TIMEOUT_MS = 60 * 1000; // 60s

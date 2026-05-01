@@ -324,6 +324,13 @@ export async function startHttpServer(options?: {
     logger.info({ port: remoteConfig.port }, 'freee MCP HTTP server listening');
   });
 
+  // Pin Node-side HTTP server timeouts for long-lived MCP Streamable-HTTP / SSE connections.
+  // Node defaults: requestTimeout=300_000, headersTimeout=60_000, keepAliveTimeout=5_000.
+  // Node requires headersTimeout > keepAliveTimeout; values are configurable via env.
+  server.requestTimeout = remoteConfig.httpRequestTimeoutMs;
+  server.headersTimeout = remoteConfig.httpHeadersTimeoutMs;
+  server.keepAliveTimeout = remoteConfig.httpKeepAliveTimeoutMs;
+
   // Graceful shutdown
   let shuttingDown = false;
   async function shutdown(signal: string): Promise<void> {

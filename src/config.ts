@@ -8,6 +8,9 @@ import {
   FREEE_AUTHORIZATION_ENDPOINT,
   FREEE_OAUTH_SCOPE,
   FREEE_TOKEN_ENDPOINT,
+  HTTP_HEADERS_TIMEOUT_MS,
+  HTTP_KEEP_ALIVE_TIMEOUT_MS,
+  HTTP_REQUEST_TIMEOUT_MS,
   SERVER_INSTRUCTIONS,
 } from './constants.js';
 
@@ -211,6 +214,10 @@ export interface RemoteServerConfig {
   corsAllowedOrigins?: string;
   rateLimitEnabled: boolean;
   logLevel: string;
+  // HTTP server timeouts for long-lived MCP Streamable-HTTP / SSE connections.
+  httpRequestTimeoutMs: number;
+  httpHeadersTimeoutMs: number;
+  httpKeepAliveTimeoutMs: number;
   // Dev-only: accept http://localhost CIMD URLs. Determined by environment, not by an env var.
   allowInsecureLocalhostCimd: boolean;
 }
@@ -250,6 +257,16 @@ export function parseBooleanEnv(
 
 const VALID_LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
 
+/** Optional env var that, when set, must coerce to a positive integer. */
+function positiveIntEnv(name: string) {
+  const message = `${name} must be a positive integer.`;
+  return z.coerce
+    .number({ invalid_type_error: message })
+    .int(message)
+    .positive(message)
+    .optional();
+}
+
 /**
  * Schema for validating remote server environment variables at startup.
  * All required envs must be present and well-formed; invalid values fail loudly.
@@ -283,6 +300,9 @@ const RemoteServerEnvSchema = z.object({
   CORS_ALLOWED_ORIGINS: z.string().optional(),
   RATE_LIMIT_ENABLED: z.string().optional(),
   LOG_LEVEL: z.enum(VALID_LOG_LEVELS).optional(),
+  HTTP_REQUEST_TIMEOUT_MS: positiveIntEnv('HTTP_REQUEST_TIMEOUT_MS'),
+  HTTP_HEADERS_TIMEOUT_MS: positiveIntEnv('HTTP_HEADERS_TIMEOUT_MS'),
+  HTTP_KEEP_ALIVE_TIMEOUT_MS: positiveIntEnv('HTTP_KEEP_ALIVE_TIMEOUT_MS'),
 });
 
 function formatZodIssues(error: z.ZodError): string {
@@ -310,6 +330,9 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     CORS_ALLOWED_ORIGINS: process.env.CORS_ALLOWED_ORIGINS,
     RATE_LIMIT_ENABLED: process.env.RATE_LIMIT_ENABLED,
     LOG_LEVEL: process.env.LOG_LEVEL,
+    HTTP_REQUEST_TIMEOUT_MS: process.env.HTTP_REQUEST_TIMEOUT_MS,
+    HTTP_HEADERS_TIMEOUT_MS: process.env.HTTP_HEADERS_TIMEOUT_MS,
+    HTTP_KEEP_ALIVE_TIMEOUT_MS: process.env.HTTP_KEEP_ALIVE_TIMEOUT_MS,
   };
 
   const parsed = RemoteServerEnvSchema.safeParse(rawEnv);
@@ -355,6 +378,9 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     corsAllowedOrigins: env.CORS_ALLOWED_ORIGINS,
     rateLimitEnabled,
     logLevel: env.LOG_LEVEL || 'info',
+    httpRequestTimeoutMs: env.HTTP_REQUEST_TIMEOUT_MS ?? HTTP_REQUEST_TIMEOUT_MS,
+    httpHeadersTimeoutMs: env.HTTP_HEADERS_TIMEOUT_MS ?? HTTP_HEADERS_TIMEOUT_MS,
+    httpKeepAliveTimeoutMs: env.HTTP_KEEP_ALIVE_TIMEOUT_MS ?? HTTP_KEEP_ALIVE_TIMEOUT_MS,
     allowInsecureLocalhostCimd,
   };
 }
@@ -393,6 +419,9 @@ export function summarizeRemoteServerConfig(
     corsAllowedOrigins: config.corsAllowedOrigins,
     rateLimitEnabled: config.rateLimitEnabled,
     logLevel: config.logLevel,
+    httpRequestTimeoutMs: config.httpRequestTimeoutMs,
+    httpHeadersTimeoutMs: config.httpHeadersTimeoutMs,
+    httpKeepAliveTimeoutMs: config.httpKeepAliveTimeoutMs,
     allowInsecureLocalhostCimd: config.allowInsecureLocalhostCimd,
   };
 }
