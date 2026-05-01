@@ -85,6 +85,26 @@ describe('loadRemoteServerConfig', () => {
 
       expect(() => loadRemoteServerConfig()).toThrow(/HTTP_KEEP_ALIVE_TIMEOUT_MS/);
     });
+
+    it('rejects headers timeout that is not greater than keep-alive timeout', async () => {
+      // Node requires headersTimeout > keepAliveTimeout. Validate against resolved
+      // values so an operator overriding only one of the two still gets caught.
+      process.env.HTTP_HEADERS_TIMEOUT_MS = '60000';
+      process.env.HTTP_KEEP_ALIVE_TIMEOUT_MS = '60000';
+      const { loadRemoteServerConfig } = await import('./config.js');
+
+      expect(() => loadRemoteServerConfig()).toThrow(
+        /HTTP_HEADERS_TIMEOUT_MS .* must be greater than HTTP_KEEP_ALIVE_TIMEOUT_MS/,
+      );
+    });
+
+    it('catches invariant violation when only keep-alive is overridden upward', async () => {
+      // Default headersTimeout=65s; bumping only keepAlive to 70s violates the invariant.
+      process.env.HTTP_KEEP_ALIVE_TIMEOUT_MS = '70000';
+      const { loadRemoteServerConfig } = await import('./config.js');
+
+      expect(() => loadRemoteServerConfig()).toThrow(/must be greater than/);
+    });
   });
 
   describe('allowInsecureLocalhostCimd environment detection', () => {

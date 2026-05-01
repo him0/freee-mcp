@@ -362,6 +362,20 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     );
   }
 
+  // Resolve HTTP timeouts (env override -> constant fallback) and enforce the
+  // Node.js invariant headersTimeout > keepAliveTimeout. Otherwise idle keep-alive
+  // sockets get killed by the headers timer, producing flaky disconnects that are
+  // hard to attribute. Validating against resolved values catches mixed cases where
+  // only one of the two envs is overridden.
+  const httpRequestTimeoutMs = env.HTTP_REQUEST_TIMEOUT_MS ?? HTTP_REQUEST_TIMEOUT_MS;
+  const httpHeadersTimeoutMs = env.HTTP_HEADERS_TIMEOUT_MS ?? HTTP_HEADERS_TIMEOUT_MS;
+  const httpKeepAliveTimeoutMs = env.HTTP_KEEP_ALIVE_TIMEOUT_MS ?? HTTP_KEEP_ALIVE_TIMEOUT_MS;
+  if (httpHeadersTimeoutMs <= httpKeepAliveTimeoutMs) {
+    throw new Error(
+      `Invalid environment configuration: HTTP_HEADERS_TIMEOUT_MS (${httpHeadersTimeoutMs}) must be greater than HTTP_KEEP_ALIVE_TIMEOUT_MS (${httpKeepAliveTimeoutMs}).`,
+    );
+  }
+
   return {
     port: parsePort(env.PORT, 3000),
     issuerUrl: env.ISSUER_URL,
@@ -378,9 +392,9 @@ export function loadRemoteServerConfig(): RemoteServerConfig {
     corsAllowedOrigins: env.CORS_ALLOWED_ORIGINS,
     rateLimitEnabled,
     logLevel: env.LOG_LEVEL || 'info',
-    httpRequestTimeoutMs: env.HTTP_REQUEST_TIMEOUT_MS ?? HTTP_REQUEST_TIMEOUT_MS,
-    httpHeadersTimeoutMs: env.HTTP_HEADERS_TIMEOUT_MS ?? HTTP_HEADERS_TIMEOUT_MS,
-    httpKeepAliveTimeoutMs: env.HTTP_KEEP_ALIVE_TIMEOUT_MS ?? HTTP_KEEP_ALIVE_TIMEOUT_MS,
+    httpRequestTimeoutMs,
+    httpHeadersTimeoutMs,
+    httpKeepAliveTimeoutMs,
     allowInsecureLocalhostCimd,
   };
 }
