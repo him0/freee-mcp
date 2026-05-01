@@ -138,7 +138,13 @@ describe('createFreeeCallbackHandler', () => {
     );
 
     // Verify default company set to first company
-    expect(tokenStore.setCurrentCompany).toHaveBeenCalledWith('42', '12345', 'テスト事業所');
+    expect(tokenStore.setCurrentCompany).toHaveBeenCalledWith(
+      '42',
+      '12345',
+      'テスト事業所',
+      undefined,
+      undefined,
+    );
 
     // Verify MCP auth code saved
     expect(oauthStore.saveAuthCode).toHaveBeenCalledWith(
@@ -237,7 +243,60 @@ describe('createFreeeCallbackHandler', () => {
     });
 
     // Should fall back to HR API and set the HR company
-    expect(tokenStore.setCurrentCompany).toHaveBeenCalledWith('42', '11111', 'HR事業所');
+    expect(tokenStore.setCurrentCompany).toHaveBeenCalledWith(
+      '42',
+      '11111',
+      'HR事業所',
+      undefined,
+      undefined,
+    );
+  });
+
+  it('passes display_name through to setCurrentCompany when first company has only display_name', async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeTokenResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => freeeUserResponse,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          companies: [{ id: 99999, name: null, display_name: '事業所名（未設定）' }],
+        }),
+      }) as unknown as typeof fetch;
+
+    const oauthStore = createMockOAuthStore();
+    const tokenStore = createMockTokenStore();
+
+    const handler = createFreeeCallbackHandler({
+      oauthStore,
+      tokenStore,
+      freeeClientId: 'freee-client-id',
+      freeeClientSecret: 'freee-client-secret',
+      freeeTokenEndpoint: 'https://accounts.secure.freee.co.jp/public_api/token',
+      freeeScope: 'read write',
+      callbackBaseUrl: 'https://mcp.example.com',
+    });
+
+    const { req, res } = createMockReqRes({ code: 'freee-auth-code', state: 'session-id' });
+    handler(req, res);
+
+    await vi.waitFor(() => {
+      expect(res.redirect).toHaveBeenCalled();
+    });
+
+    expect(tokenStore.setCurrentCompany).toHaveBeenCalledWith(
+      '42',
+      '99999',
+      undefined,
+      undefined,
+      '事業所名（未設定）',
+    );
   });
 
   it('continues OAuth flow even when both companies APIs fail', async () => {

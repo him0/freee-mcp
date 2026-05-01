@@ -93,7 +93,7 @@ async function fetchFreeeUserId(accessToken: string, apiUrl: string): Promise<st
 async function fetchFirstCompany(
   accessToken: string,
   apiUrl: string,
-): Promise<{ id: number; name?: string | null } | null> {
+): Promise<{ id: number; name?: string | null; display_name?: string | null } | null> {
   // Try accounting API first
   try {
     const response = await fetch(`${apiUrl}/api/1/companies`, {
@@ -106,7 +106,7 @@ async function fetchFirstCompany(
 
     if (response.ok) {
       const data = (await response.json()) as {
-        companies?: Array<{ id: number; name?: string | null }>;
+        companies?: Array<{ id: number; name?: string | null; display_name?: string | null }>;
       };
       const first = data.companies?.[0];
       if (first) {
@@ -129,7 +129,7 @@ async function fetchFirstCompany(
 
     if (response.ok) {
       const data = (await response.json()) as {
-        companies?: Array<{ id: number; name?: string | null }>;
+        companies?: Array<{ id: number; name?: string | null; display_name?: string | null }>;
       };
       const first = data.companies?.[0];
       if (first) {
@@ -164,6 +164,8 @@ async function setDefaultCompanyIfNeeded(
       userId,
       String(firstCompany.id),
       firstCompany.name ?? undefined,
+      undefined,
+      firstCompany.display_name ?? undefined,
     );
     getLogger().info(
       { userId, companyId: firstCompany.id, companyName: firstCompany.name },
