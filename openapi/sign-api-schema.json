@@ -4251,6 +4251,11 @@
             "type": "boolean",
             "title": "受領者確認済みかどうか",
             "description": "配布文書の受領者が文書を確認済みかどうか。\n配布文書でない場合は常にfalse。"
+          },
+          "approve_on_signing": {
+            "type": "boolean",
+            "title": "署名と合意を同時に行う設定が有効かどうか",
+            "description": "署名と合意を同時に行う設定が有効かどうか。\n三者間以上の契約で署名完了後の復路合意ステップを省略する。"
           }
         },
         "required": [
