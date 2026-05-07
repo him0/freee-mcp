@@ -1904,10 +1904,10 @@
             "maxLength": 100
           },
           "code": {
-            "description": "案件コード",
+            "description": "案件コード（null・空文字での送信不可。POSTの自動採番ON時およびPATCHのキー省略時は省略可能）",
             "type": "string",
-            "nullable": true,
             "example": "B-0000000001",
+            "minLength": 1,
             "maxLength": 50
           },
           "business_date": {
@@ -3159,11 +3159,17 @@
             "type": "string",
             "description": "案件名",
             "example": "サンプル案件"
+          },
+          "closed": {
+            "type": "boolean",
+            "description": "ロック状態",
+            "example": false
           }
         },
         "required": [
           "id",
-          "name"
+          "name",
+          "closed"
         ],
         "additionalProperties": false
       },
@@ -3745,6 +3751,150 @@
         "nullable": true,
         "additionalProperties": false
       },
+      "MasterItemDetail": {
+        "description": "商品情報",
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "商品ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "code": {
+            "type": "string",
+            "description": "商品コード",
+            "nullable": true,
+            "example": "P-001"
+          },
+          "name": {
+            "type": "string",
+            "description": "商品名",
+            "example": "パンフレットA4"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "DealLineTypeDetail": {
+        "description": "明細取引タイプ",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "明細取引タイプID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "name": {
+            "type": "string",
+            "description": "明細取引タイプ名",
+            "example": "課税売上10%"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "TaxTypeDetail": {
+        "description": "税区分",
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "description": "税区分コード<br>※freee会計 APIで参照可能な税区分のコードです",
+            "example": 10
+          },
+          "name": {
+            "type": "string",
+            "description": "税区分名",
+            "example": "課税売上10%"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "AccountingReportingSectionDetail": {
+        "description": "会計計上部門",
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "部門ID",
+            "example": 1001
+          },
+          "name": {
+            "type": "string",
+            "description": "部門名",
+            "example": "営業部"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "ItemTagDetail": {
+        "description": "会計品目タグ",
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "会計品目タグID",
+            "example": 2001
+          },
+          "name": {
+            "type": "string",
+            "description": "会計品目タグ名",
+            "example": "印刷物"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "MemoTagDetail": {
+        "description": "メモタグ",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "メモタグID",
+            "example": 3001
+          },
+          "name": {
+            "type": "string",
+            "description": "メモタグ名",
+            "example": "重要案件"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
       "BasicLineDetail": {
         "description": "通常明細詳細",
         "type": "object",
@@ -3760,45 +3910,10 @@
             "$ref": "#/components/schemas/LineType"
           },
           "master_item": {
-            "description": "商品情報",
-            "type": "object",
-            "nullable": true,
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "商品ID",
-                "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
-              },
-              "code": {
-                "type": "string",
-                "description": "商品コード",
-                "nullable": true,
-                "example": "P-001"
-              },
-              "name": {
-                "type": "string",
-                "description": "商品名",
-                "example": "パンフレットA4"
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/components/schemas/MasterItemDetail"
           },
           "deal_line_type": {
-            "description": "明細取引タイプ",
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "明細取引タイプID",
-                "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
-              },
-              "name": {
-                "type": "string",
-                "description": "明細取引タイプ名",
-                "example": "課税売上10%"
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/components/schemas/DealLineTypeDetail"
           },
           "description": {
             "description": "摘要",
@@ -3832,86 +3947,20 @@
             "nullable": true
           },
           "tax_type": {
-            "description": "税区分",
-            "type": "object",
-            "nullable": true,
-            "properties": {
-              "code": {
-                "type": "integer",
-                "format": "int32",
-                "maximum": 2147483647,
-                "description": "税区分コード<br>※freee会計 APIで参照可能な税区分のコードです",
-                "example": 10
-              },
-              "name": {
-                "type": "string",
-                "description": "税区分名",
-                "example": "課税売上10%"
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/components/schemas/TaxTypeDetail"
           },
           "accounting_reporting_section": {
-            "description": "会計計上部門",
-            "type": "object",
-            "nullable": true,
-            "properties": {
-              "id": {
-                "type": "integer",
-                "format": "int64",
-                "maximum": 9223372036854776000,
-                "description": "部門ID",
-                "example": 1001
-              },
-              "name": {
-                "type": "string",
-                "description": "部門名",
-                "example": "営業部"
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/components/schemas/AccountingReportingSectionDetail"
           },
           "item_tag": {
-            "description": "会計品目タグ",
-            "type": "object",
-            "nullable": true,
-            "properties": {
-              "id": {
-                "type": "integer",
-                "format": "int64",
-                "maximum": 9223372036854776000,
-                "description": "会計品目タグID",
-                "example": 2001
-              },
-              "name": {
-                "type": "string",
-                "description": "会計品目タグ名",
-                "example": "印刷物"
-              }
-            },
-            "additionalProperties": false
+            "$ref": "#/components/schemas/ItemTagDetail"
           },
           "memo_tags": {
             "description": "メモタグ",
             "type": "array",
             "nullable": true,
             "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "integer",
-                  "format": "int64",
-                  "maximum": 9223372036854776000,
-                  "description": "メモタグID",
-                  "example": 3001
-                },
-                "name": {
-                  "type": "string",
-                  "description": "メモタグ名",
-                  "example": "重要案件"
-                }
-              },
-              "additionalProperties": false
+              "$ref": "#/components/schemas/MemoTagDetail"
             }
           },
           "withholding_enabled": {
@@ -5030,6 +5079,30 @@
         ],
         "example": "none"
       },
+      "AccountItem": {
+        "description": "勘定科目",
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "description": "勘定科目ID",
+            "example": 12345
+          },
+          "name": {
+            "type": "string",
+            "description": "勘定科目名",
+            "example": "仕入高"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
       "SegmentTag": {
         "description": "セグメントタグ",
         "type": "object",
@@ -5069,24 +5142,7 @@
                 "example": false
               },
               "account_item": {
-                "description": "勘定科目",
-                "type": "object",
-                "nullable": true,
-                "properties": {
-                  "id": {
-                    "type": "integer",
-                    "format": "int64",
-                    "maximum": 9223372036854776000,
-                    "description": "勘定科目ID",
-                    "example": 12345
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "勘定科目名",
-                    "example": "売上高"
-                  }
-                },
-                "additionalProperties": false
+                "$ref": "#/components/schemas/AccountItem"
               },
               "segment_tag_1": {
                 "$ref": "#/components/schemas/SegmentTag"
