@@ -58,10 +58,7 @@ freee_api_get {
 ```
 freee_api_get {
   "service": "hr",
-  "path": "/api/v1/users/me",
-  "query": {
-    "company_id": 123456
-  }
+  "path": "/api/v1/users/me"
 }
 ```
 
