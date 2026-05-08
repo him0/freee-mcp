@@ -78,6 +78,29 @@ describe('schema-loader', () => {
 
       expect(result.isValid).toBe(true);
     });
+
+    it('should reject path containing smuggled query string', () => {
+      const result = validatePathForService(
+        'GET',
+        '/api/1/deals/123?company_id=99999',
+        'accounting',
+      );
+
+      expect(result.isValid).toBe(false);
+      expect(result.message).toContain('not found');
+    });
+
+    it('should reject path containing fragment', () => {
+      const result = validatePathForService('GET', '/api/1/deals/123#frag', 'accounting');
+
+      expect(result.isValid).toBe(false);
+    });
+
+    it('should reject smuggled query string when searching across all APIs', () => {
+      const result = validatePathForService('GET', '/api/1/deals/123?company_id=99999');
+
+      expect(result.isValid).toBe(false);
+    });
   });
 
   describe('resolveBaseUrl (env var overrides)', () => {

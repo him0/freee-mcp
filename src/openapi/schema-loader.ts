@@ -105,7 +105,10 @@ const _pathRegexCache = new Map<string, RegExp>();
 function getPathRegex(schemaPath: string): RegExp {
   let regex = _pathRegexCache.get(schemaPath);
   if (!regex) {
-    const pattern = schemaPath.replace(/\{[^}]+\}/g, '[^/]+');
+    // URL メタ文字 (?, #, &, =) を placeholder にマッチさせない。
+    // `[^/]+` だと '/api/1/deals/{id}' が '/api/1/deals/123?company_id=B' を valid と扱い
+    // path argument 経由でクエリを smuggle されるため、明示的に除外する。
+    const pattern = schemaPath.replace(/\{[^}]+\}/g, '[^/?#&=]+');
     regex = new RegExp(`^${pattern}$`);
     _pathRegexCache.set(schemaPath, regex);
   }
