@@ -268,6 +268,33 @@ describe('client', () => {
       ).rejects.toThrow('company_id の不整合');
     });
 
+    it('should reject path containing query string (tenant smuggling defense)', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+
+      await expect(
+        makeApiRequest('POST', `/api/1/deals?company_id=99999`, undefined, { name: 'Test' }),
+      ).rejects.toThrow('"?" または "#"');
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should reject path containing fragment', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+
+      await expect(makeApiRequest('GET', '/api/1/deals#frag')).rejects.toThrow('"?" または "#"');
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should not produce duplicate company_id query parameters', async () => {
+      await setupAccessToken(TEST_ACCESS_TOKEN);
+      mockFetch.mockResolvedValue(createJsonResponse({}));
+
+      await makeApiRequest('GET', '/api/1/deals', { company_id: TEST_COMPANY_ID });
+
+      const calledUrl = mockFetch.mock.calls[0][0] as string;
+      const matches = calledUrl.match(/company_id=/g) ?? [];
+      expect(matches.length).toBe(1);
+    });
+
     it('should throw error when no access token available', async () => {
       await setupAccessToken(null);
 

@@ -89,17 +89,18 @@ export async function makeApiRequest(
     );
   }
 
+  // path に ? / # を許すと tenant smuggling (?company_id=B 埋め込みで consistency check と
+  // OpenAPI route validator の両方をすり抜ける) の経路になるため、ここで弾く。
+  if (apiPath.includes('?') || apiPath.includes('#')) {
+    throw new Error(
+      'API path に "?" または "#" を含めることはできません。クエリパラメータは params 引数で指定してください。',
+    );
+  }
+
   // Properly join baseUrl and path, preserving baseUrl's path component
   const normalizedBase = apiUrl.endsWith('/') ? apiUrl : `${apiUrl}/`;
   const normalizedPath = apiPath.startsWith('/') ? apiPath.slice(1) : apiPath;
   const url = new URL(normalizedPath, normalizedBase);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
 
   // Validate company_id consistency if present in params
   const paramsCompanyId = params?.company_id;
@@ -117,6 +118,29 @@ export async function makeApiRequest(
       `company_id の不整合: リクエストボディの company_id (${bodyCompanyId}) と現在の事業所 (${companyId}) が異なります。\n` +
         `freee_set_current_company で事業所を切り替えるか、リクエストの company_id を修正してください。`,
     );
+  }
+
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined) continue;
+      // company_id は重複クエリ ("last value wins" で別テナントへ流れる経路) を避けるため set
+      if (key === 'company_id') {
+        url.searchParams.set(key, String(value));
+      } else {
+        url.searchParams.append(key, String(value));
+      }
+    }
+  }
+
+  // Defense-in-depth: baseUrl 側等に紛れ込んだ company_id を最終 URL ベースで再検査する
+  const allCompanyIds = url.searchParams.getAll('company_id');
+  for (const value of allCompanyIds) {
+    if (value !== String(companyId)) {
+      throw new Error(
+        `company_id の不整合: リクエスト URL に現在の事業所 (${companyId}) と異なる company_id (${value}) が含まれています。\n` +
+          `freee_set_current_company で事業所を切り替えるか、リクエストを修正してください。`,
+      );
+    }
   }
 
   let response: Response;
