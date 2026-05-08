@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.26.4
+
+### Patch Changes
+
+- [`f0dbc73`](https://github.com/freee/freee-mcp/commit/f0dbc7376455a5121072d966ee58056fde5c7450): `freee_api_*` の body/query が JSON 文字列で届くケースで、一部の MCP クライアントによる送信前バリデーションで弾かれていた問題を修正した。 ([#450](https://github.com/freee/freee-mcp/pull/450))
+
 ## 0.26.3
 
 ### Patch Changes
