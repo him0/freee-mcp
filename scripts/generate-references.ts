@@ -22,8 +22,9 @@ const MAPPINGS_FILE = join(OPENAPI_DIR, "tag-mappings.json");
 
 // Type definitions
 interface Parameter {
-  name: string;
-  in: string;
+  $ref?: string;
+  name?: string;
+  in?: string;
   description?: string;
   required?: boolean;
   schema?: SchemaObject;
@@ -111,6 +112,9 @@ interface OpenAPISchema {
     schemas?: {
       [key: string]: SchemaObject;
     };
+    parameters?: {
+      [key: string]: Parameter;
+    };
   };
 }
 
@@ -136,6 +140,19 @@ function resolveRef(
 
   const schemaName = parts[3];
   return schema.components?.schemas?.[schemaName];
+}
+
+/**
+ * Resolve $ref to a parameter in components.parameters
+ */
+function resolveParameterRef(
+  schema: OpenAPISchema,
+  ref: string
+): Parameter | undefined {
+  const prefix = "#/components/parameters/";
+  if (!ref.startsWith(prefix)) return undefined;
+  const name = ref.slice(prefix.length);
+  return schema.components?.parameters?.[name];
 }
 
 /**
@@ -264,7 +281,10 @@ function formatSchemaProperties(
 /**
  * Format parameters as markdown
  */
-function formatParameters(parameters: Parameter[]): string {
+function formatParameters(
+  apiSchema: OpenAPISchema,
+  parameters: Parameter[]
+): string {
   if (!parameters || parameters.length === 0) {
     return "";
   }
@@ -273,7 +293,11 @@ function formatParameters(parameters: Parameter[]): string {
   result += "| 名前 | 位置 | 必須 | 型 | 説明 |\n";
   result += "|------|------|------|-----|------|\n";
 
-  for (const param of parameters) {
+  for (const rawParam of parameters) {
+    const param = rawParam.$ref
+      ? (resolveParameterRef(apiSchema, rawParam.$ref) ?? rawParam)
+      : rawParam;
+
     const name = param.name || "";
     const location = param.in || "";
     const required = param.required ? "はい" : "いいえ";
@@ -476,7 +500,7 @@ async function generateReference(
 
       // Add parameters
       if (parameters && parameters.length > 0) {
-        endpointsMd += formatParameters(parameters);
+        endpointsMd += formatParameters(schema, parameters);
       }
 
       // Add request body
