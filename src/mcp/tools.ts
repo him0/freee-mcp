@@ -275,7 +275,10 @@ export function addAuthenticationTools(server: McpServer, options?: { remote?: b
       title: '事業所設定',
       description: '事業所を設定・切り替え (詳細ガイドはfreee-api-skill skillを参照)',
       inputSchema: {
-        company_id: z.string().describe('事業所ID'),
+        company_id: z
+          .string()
+          .regex(/^[0-9]+$/, '事業所IDは数字のみ指定してください')
+          .describe('事業所ID'),
         name: z.string().optional().describe('事業所名'),
         description: z.string().optional().describe('説明'),
       },
