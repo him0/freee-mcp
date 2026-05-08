@@ -1,5 +1,14 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ZodIssue } from 'zod';
+
+function collectIssueMessages(issues: ZodIssue[]): string[] {
+  return issues.flatMap((issue) =>
+    issue.code === 'invalid_union'
+      ? issue.unionErrors.flatMap((err) => collectIssueMessages(err.issues))
+      : [issue.message],
+  );
+}
 
 // Privacy regression tests: query values and request bodies must never appear
 // in the canonical log payload emitted by RequestRecorder.
@@ -195,7 +204,8 @@ describe('coercibleRecord', () => {
     const result = schema.safeParse(`${bom}{"a":1}`);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toMatch(/UTF-8 BOM/);
+      const messages = collectIssueMessages(result.error.issues);
+      expect(messages.some((m) => m.includes('UTF-8 BOM'))).toBe(true);
     }
   });
 
@@ -214,11 +224,47 @@ describe('coercibleRecord', () => {
     const result = schema.safeParse(SECRET);
     expect(result.success).toBe(false);
     if (!result.success) {
-      const message = result.error.issues[0].message;
-      expect(message).toMatch(/length \d+/);
-      expect(message).not.toContain('Acme');
-      expect(message).not.toContain('SECRET');
-      expect(message).not.toContain('partner_name');
+      const messages = collectIssueMessages(result.error.issues);
+      expect(messages.some((m) => /length \d+/.test(m))).toBe(true);
+      for (const message of messages) {
+        expect(message).not.toContain('Acme');
+        expect(message).not.toContain('SECRET');
+        expect(message).not.toContain('partner_name');
+      }
     }
+  });
+
+  it('publishes anyOf JSON Schema so MCP clients accept both object and string bodies', async () => {
+    const { McpServer } = await import('@modelcontextprotocol/sdk/server/mcp.js');
+    const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
+    const { InMemoryTransport } = await import('@modelcontextprotocol/sdk/inMemory.js');
+    const { coercibleRecord } = await import('./client-mode.js');
+
+    const server = new McpServer({ name: 'test', version: '1.0.0' });
+    server.registerTool(
+      'with_body',
+      { inputSchema: { body: coercibleRecord('body') } },
+      async () => ({ content: [{ type: 'text' as const, text: 'ok' }] }),
+    );
+
+    const [serverT, clientT] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: 'tester', version: '1.0.0' });
+    await Promise.all([server.connect(serverT), client.connect(clientT)]);
+
+    const tools = await client.listTools();
+    const tool = tools.tools.find((t) => t.name === 'with_body');
+    if (!tool) throw new Error('tool not registered');
+
+    type ToolInputSchema = { properties: { body: { anyOf?: Array<{ type?: string }> } }; required?: string[] };
+    const inputSchema = tool.inputSchema as ToolInputSchema;
+    expect(inputSchema.properties.body.anyOf).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'object' }),
+        expect.objectContaining({ type: 'string' }),
+      ]),
+    );
+    expect(inputSchema.required).toContain('body');
+
+    await client.close();
   });
 });
