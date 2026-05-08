@@ -145,3 +145,4 @@ Common issues:
 ## Writing Style
 
 - Do not use markdown bold syntax (`**`)  in any files
+- PR の説明・コミットメッセージ・CHANGELOG・ドキュメント等の公開される文章には、freee organization 以外のリポジトリ（フォーク含む）への参照や、Jira などの社内ツールの URL を書かない
