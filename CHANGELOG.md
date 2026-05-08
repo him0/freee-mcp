@@ -1,5 +1,12 @@
 # freee-mcp
 
+## 0.26.1
+
+### Patch Changes
+
+- [`ff9aff2`](https://github.com/freee/freee-mcp/commit/ff9aff221a9957fe9d61499611c4bfb8a14ae383): リファレンス生成で `$ref` のパラメータが空欄になっていた問題を修正 ([#441](https://github.com/freee/freee-mcp/pull/441))
+- [`02e3cad`](https://github.com/freee/freee-mcp/commit/02e3cadc27bd93b9fdf59d2e8341cda989bcbe42): OpenAPI スキーマを最新版に同期 ( 2 files changed, 189 insertions(+), 128 deletions(-)) ([#436](https://github.com/freee/freee-mcp/pull/436))
+
 ## 0.26.0
 
 ### Minor Changes
