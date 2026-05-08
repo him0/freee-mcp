@@ -12,6 +12,22 @@ interface PendingAuthentication {
   timeout: NodeJS.Timeout;
 }
 
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+const HTML_RESPONSE_HEADERS = {
+  'Content-Type': 'text/html; charset=utf-8',
+  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'",
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+} as const;
+
 interface CliAuthHandler {
   resolve: (code: string) => void;
   reject: (error: Error) => void;
@@ -171,10 +187,10 @@ class CallbackServer {
         if (url.pathname === '/callback') {
           this.handleCallback(url, res);
         } else if (url.pathname === '/') {
-          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.writeHead(200, HTML_RESPONSE_HEADERS);
           res.end('<h1>freee MCP OAuth Server</h1><p>コールバックサーバーが稼働中です。</p>');
         } else {
-          res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.writeHead(404, HTML_RESPONSE_HEADERS);
           res.end('<h1>404 Not Found</h1><p>このパスは存在しません。</p>');
         }
       });
@@ -246,8 +262,8 @@ class CallbackServer {
     if (error) {
       const errorMsg = errorDescription || error;
       console.error(`OAuth error: ${error} - ${errorDescription}`);
-      res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(`<h1>認証エラー</h1><p>認証に失敗しました: ${errorMsg}</p>`);
+      res.writeHead(400, HTML_RESPONSE_HEADERS);
+      res.end(`<h1>認証エラー</h1><p>認証に失敗しました: ${escapeHtml(errorMsg)}</p>`);
 
       if (cliHandler) {
         cliHandler.reject(new Error(`OAuth error: ${error} - ${errorDescription}`));
@@ -264,7 +280,7 @@ class CallbackServer {
 
     if (!code || !state) {
       console.error(`Missing code or state`);
-      res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(400, HTML_RESPONSE_HEADERS);
       res.end('<h1>認証エラー</h1><p>認証コードまたは状態パラメータが不足しています。</p>');
       return;
     }
@@ -272,7 +288,7 @@ class CallbackServer {
     // Handle CLI authentication
     if (cliHandler) {
       console.error(`Valid CLI callback received`);
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, HTML_RESPONSE_HEADERS);
       res.end(
         '<h1>認証完了</h1><p>認証が完了しました。このページを閉じてターミナルに戻ってください。</p>',
       );
@@ -284,7 +300,7 @@ class CallbackServer {
     const pendingAuth = this.authManager.getPendingAuthentication(state);
     if (!pendingAuth) {
       console.error(`Unknown state: ${state}`);
-      res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(400, HTML_RESPONSE_HEADERS);
       res.end('<h1>認証エラー</h1><p>不明な認証状態です。認証を再開してください。</p>');
       return;
     }
@@ -302,7 +318,7 @@ class CallbackServer {
       pendingAuth.resolve(tokens);
 
       // 成功時のみ「認証完了」を表示
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, HTML_RESPONSE_HEADERS);
       res.end('<h1>認証完了</h1><p>認証が完了しました。このページを閉じてください。</p>');
     } catch (exchangeError) {
       console.error(`Token exchange failed:`, exchangeError);
@@ -311,8 +327,8 @@ class CallbackServer {
       // エラー時は「認証エラー」を表示
       const errorMessage =
         exchangeError instanceof Error ? exchangeError.message : String(exchangeError);
-      res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(`<h1>認証エラー</h1><p>トークン交換に失敗しました: ${errorMessage}</p>`);
+      res.writeHead(500, HTML_RESPONSE_HEADERS);
+      res.end(`<h1>認証エラー</h1><p>トークン交換に失敗しました: ${escapeHtml(errorMessage)}</p>`);
     } finally {
       this.authManager.removePendingAuthentication(state);
     }
@@ -332,7 +348,10 @@ export async function startCallbackServer(port?: number): Promise<void> {
   return defaultCallbackServer.start(port);
 }
 
-export async function startCallbackServerWithAutoStop(timeoutMs: number, port?: number): Promise<void> {
+export async function startCallbackServerWithAutoStop(
+  timeoutMs: number,
+  port?: number,
+): Promise<void> {
   await defaultCallbackServer.start(port);
   defaultCallbackServer.scheduleAutoStop(timeoutMs);
 }
