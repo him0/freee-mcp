@@ -1,5 +1,27 @@
 # freee-mcp
 
+## 0.26.3
+
+### Patch Changes
+
+- [`dc38067`](https://github.com/freee/freee-mcp/commit/dc380677658b044d5aead7c4d7640f36ba09c400): CLI 認証コールバックページの reflected XSS を修正 ([#448](https://github.com/freee/freee-mcp/pull/448))
+
+  - `error_description` 等の OAuth エラーパラメータを HTML エスケープしてから埋め込むように変更
+  - 127.0.0.1 上で返す HTML レスポンスに CSP / `X-Content-Type-Options` / `Referrer-Policy` を付与
+
+- [`5d6995b`](https://github.com/freee/freee-mcp/commit/5d6995ba43c53fd9f125c8add123cd2f99c2290c): freee_set_current_company の company_id にプロトタイプ汚染を引き起こす予約キーを渡せる脆弱性を修正 ([#446](https://github.com/freee/freee-mcp/pull/446))
+
+  - `__proto__` / `constructor` / `prototype` を弾くガードを追加
+  - companies レコードのルックアップを `Object.hasOwn` ベースに変更
+  - MCP ツールの入力スキーマに数字のみを受け付ける regex 検証を追加
+
+- [`b538462`](https://github.com/freee/freee-mcp/commit/b538462defd398cbcd427c0a3465295339fa5613): API path に埋め込まれたクエリ文字列で company_id 整合チェックをすり抜け、監査ログ上の事業所と実 API 呼び出し先がずれる問題を修正。 ([#447](https://github.com/freee/freee-mcp/pull/447))
+
+  権限昇格ではなく監査・整合性の問題で、freee API 側の per-company 権限はそのまま有効。影響を受けるのは複数事業所のアクセス権を正規に持つユーザー。
+
+  - API path に `?` / `#` を含むリクエストはエラーで拒否
+  - 構築後の URL に対して company_id の一致を再検証
+
 ## 0.26.2
 
 ### Patch Changes
