@@ -1,5 +1,11 @@
 # freee-mcp
 
+## 0.26.2
+
+### Patch Changes
+
+- [`a1ebc00`](https://github.com/freee/freee-mcp/commit/a1ebc00f2844fda08d4eb5279206b469ddfa90cf): skill レシピを修正: `/api/v1/users/me` 呼び出し時に `company_id` を付与すると 403 になる問題を反映し、人事労務・工数管理レシピのサンプルから `company_id` パラメータを削除 ([#444](https://github.com/freee/freee-mcp/pull/444))
+
 ## 0.26.1
 
 ### Patch Changes
