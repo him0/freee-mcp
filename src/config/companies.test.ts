@@ -191,6 +191,22 @@ describe('companies', () => {
 
       expect(mockFs.writeFile).toHaveBeenCalled();
     });
+
+    it.each(['__proto__', 'constructor', 'prototype'])(
+      'should reject reserved key %s to prevent prototype pollution',
+      async (reserved) => {
+        mockFs.readFile.mockResolvedValue(JSON.stringify(validConfig));
+        mockFs.mkdir.mockResolvedValue(undefined);
+        mockFs.writeFile.mockResolvedValue(undefined);
+
+        await expect(setCurrentCompany(reserved, 'polluted', 'polluted')).rejects.toThrow(
+          /Invalid company ID/,
+        );
+        expect(mockFs.writeFile).not.toHaveBeenCalled();
+        // biome-ignore lint/suspicious/noPrototypeBuiltins: verifying no pollution occurred
+        expect(({}).hasOwnProperty('name')).toBe(false);
+      },
+    );
   });
 
   describe('getCompanyInfo', () => {
@@ -210,5 +226,14 @@ describe('companies', () => {
 
       expect(result).toBeNull();
     });
+
+    it.each(['__proto__', 'constructor', 'prototype'])(
+      'should reject reserved key %s instead of leaking prototype values',
+      async (reserved) => {
+        mockFs.readFile.mockResolvedValue(JSON.stringify(validConfig));
+
+        await expect(getCompanyInfo(reserved)).rejects.toThrow(/Invalid company ID/);
+      },
+    );
   });
 });
