@@ -37,9 +37,9 @@ const EMAIL_PATTERN =
  * - Email addresses.
  */
 export function scrubErrorMessage(input: unknown): string {
-  if (typeof input !== 'string') return scrubErrorMessage(String(input ?? ''));
-  if (input.length === 0) return input;
-  return input
+  const str = typeof input === 'string' ? input : String(input ?? '');
+  if (str.length === 0) return str;
+  return str
     .replace(EMAIL_PATTERN, '$1[REDACTED_EMAIL]')
     .replace(NUMERIC_ID_PATTERN, '[REDACTED_ID]');
 }

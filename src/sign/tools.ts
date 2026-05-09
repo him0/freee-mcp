@@ -199,7 +199,7 @@ export function addSignApiTools(server: McpServer, options?: { remote?: boolean 
         .describe('APIパス (例: /v1/documents)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ'),
     };
-    const inputSchema: Record<string, z.ZodTypeAny> = hasBody
+    const inputSchema = hasBody
       ? {
           ...baseSchema,
           body: z.record(z.string(), z.unknown()).optional().describe('リクエストボディ'),
