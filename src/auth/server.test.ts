@@ -16,7 +16,13 @@ vi.mock('./oauth.js', () => ({
   exchangeCodeForTokens: vi.fn(),
 }));
 
-import { getDefaultAuthManager, startCallbackServer, stopCallbackServer } from './server.js';
+import {
+  AuthenticationManager,
+  getDefaultAuthManager,
+  startCallbackServer,
+  stopCallbackServer,
+} from './server.js';
+import type { TokenData } from './tokens.js';
 
 async function findFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -116,5 +122,31 @@ describe('CallbackServer HTML response safety', () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.headers['content-security-policy']).toContain("default-src 'none'");
+  });
+});
+
+describe('AuthenticationManager', () => {
+  it('stores caller-provided completion handlers for the callback server', () => {
+    const manager = new AuthenticationManager();
+    const resolve = vi.fn();
+    const reject = vi.fn();
+    const tokens: TokenData = {
+      access_token: 'access-token',
+      refresh_token: 'refresh-token',
+      expires_at: Date.now() + 60_000,
+      token_type: 'Bearer',
+      scope: 'read write',
+    };
+
+    manager.registerAuthentication('state-1', 'verifier-1', resolve, reject);
+
+    const pending = manager.getPendingAuthentication('state-1');
+    expect(pending?.codeVerifier).toBe('verifier-1');
+
+    pending?.resolve(tokens);
+    expect(resolve).toHaveBeenCalledWith(tokens);
+    expect(reject).not.toHaveBeenCalled();
+
+    manager.removePendingAuthentication('state-1');
   });
 });

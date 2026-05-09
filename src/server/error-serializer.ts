@@ -19,8 +19,13 @@ const DEFAULT_MAX_CHAIN_DEPTH = 10;
 /** Match standalone numeric identifiers (6+ digits): company_id, user_id, timestamps. */
 const NUMERIC_ID_PATTERN = /\b\d{6,}\b/g;
 
-/** Simple email regex — intentionally permissive, prefer over-masking. */
-const EMAIL_PATTERN = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
+/**
+ * Email-like token matcher for log redaction (not full RFC validation).
+ * Uses boundaries to reduce matching inside larger tokens while still
+ * preferring over-masking over under-masking.
+ */
+const EMAIL_PATTERN =
+  /(^|[^A-Za-z0-9._%+-])([A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,63})(?=$|[^A-Za-z0-9._%+-])/g;
 
 /**
  * Mask sensitive identifiers from a free-form error message.
@@ -31,9 +36,12 @@ const EMAIL_PATTERN = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
  *   are intentionally left alone so stack traces stay readable.
  * - Email addresses.
  */
-export function scrubErrorMessage(input: string): string {
-  if (typeof input !== 'string' || input.length === 0) return input;
-  return input.replace(EMAIL_PATTERN, '[REDACTED_EMAIL]').replace(NUMERIC_ID_PATTERN, '[REDACTED_ID]');
+export function scrubErrorMessage(input: unknown): string {
+  const str = typeof input === 'string' ? input : String(input ?? '');
+  if (str.length === 0) return str;
+  return str
+    .replace(EMAIL_PATTERN, '$1[REDACTED_EMAIL]')
+    .replace(NUMERIC_ID_PATTERN, '[REDACTED_ID]');
 }
 
 /**
@@ -71,8 +79,8 @@ export function serializeErrorChain(
 
   while (current !== undefined && current !== null && depth < maxDepth) {
     if (typeof current === 'object') {
-      if (seen.has(current as object)) break;
-      seen.add(current as object);
+      if (seen.has(current)) break;
+      seen.add(current);
     }
 
     // serialize-error safely handles non-Error values, toJSON methods,
@@ -92,10 +100,7 @@ export function serializeErrorChain(
     });
 
     depth += 1;
-    current =
-      typeof current === 'object'
-        ? (current as { cause?: unknown }).cause
-        : undefined;
+    current = typeof current === 'object' ? (current as { cause?: unknown }).cause : undefined;
   }
 
   return chain;

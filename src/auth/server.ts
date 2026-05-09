@@ -42,7 +42,20 @@ export class AuthenticationManager {
   private pendingAuthentications = new Map<string, PendingAuthentication>();
   private cliAuthHandlers = new Map<string, CliAuthHandler>();
 
-  registerAuthentication(state: string, codeVerifier: string): void {
+  /**
+   * Register a browser OAuth flow that will be completed by the callback server.
+   *
+   * The callback server owns code exchange and invokes these handlers once it has
+   * either exchanged the authorization code for tokens or hit an OAuth/exchange
+   * error. Keeping the handlers injectable prevents this manager from hiding a
+   * fixed no-op promise contract behind pending authentication state.
+   */
+  registerAuthentication(
+    state: string,
+    codeVerifier: string,
+    resolve: (tokens: TokenData) => void,
+    reject: (error: Error) => void,
+  ): void {
     console.error(`Registering authentication request with state: ${state.substring(0, 10)}...`);
     console.error(`Code verifier: ${codeVerifier.substring(0, 10)}...`);
 
@@ -53,12 +66,8 @@ export class AuthenticationManager {
 
     this.pendingAuthentications.set(state, {
       codeVerifier,
-      resolve: (_tokens: TokenData) => {
-        console.error('Authentication completed successfully!');
-      },
-      reject: (error: Error) => {
-        console.error('Authentication failed:', error);
-      },
+      resolve,
+      reject,
       timeout,
     });
 
@@ -150,7 +159,12 @@ class CallbackServer {
     return this.server !== null;
   }
 
-  // portOverride: サインなど freee の loadConfig() に依存しないモジュールが独自のポートを指定するため
+  /**
+   * Starts the OAuth callback server.
+   *
+   * `portOverride` allows modules (for example, sign-in flows) that do not
+   * depend on `loadConfig()` to specify a custom callback port explicitly.
+   */
   async start(portOverride?: number): Promise<void> {
     if (this.server) {
       console.error(
@@ -261,17 +275,18 @@ class CallbackServer {
 
     if (error) {
       const errorMsg = errorDescription || error;
-      console.error(`OAuth error: ${error} - ${errorDescription}`);
+      const oauthErrorMessage = `OAuth error: ${error} - ${errorDescription}`;
+      console.error(oauthErrorMessage);
       res.writeHead(400, HTML_RESPONSE_HEADERS);
       res.end(`<h1>認証エラー</h1><p>認証に失敗しました: ${escapeHtml(errorMsg)}</p>`);
 
       if (cliHandler) {
-        cliHandler.reject(new Error(`OAuth error: ${error} - ${errorDescription}`));
+        cliHandler.reject(new Error(oauthErrorMessage));
       } else if (state) {
         const pendingAuth = this.authManager.getPendingAuthentication(state);
         if (pendingAuth) {
           clearTimeout(pendingAuth.timeout);
-          pendingAuth.reject(new Error(`OAuth error: ${error} - ${errorDescription}`));
+          pendingAuth.reject(new Error(oauthErrorMessage));
           this.authManager.removePendingAuthentication(state);
         }
       }
@@ -357,7 +372,16 @@ export async function startCallbackServerWithAutoStop(
 }
 
 export function registerAuthenticationRequest(state: string, codeVerifier: string): void {
-  defaultAuthManager.registerAuthentication(state, codeVerifier);
+  defaultAuthManager.registerAuthentication(
+    state,
+    codeVerifier,
+    (_tokens: TokenData) => {
+      console.error('Authentication completed successfully!');
+    },
+    (error: Error) => {
+      console.error('Authentication failed:', error);
+    },
+  );
 }
 
 export function stopCallbackServer(): void {

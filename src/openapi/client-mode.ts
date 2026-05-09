@@ -83,7 +83,11 @@ function createMethodTool(method: string) {
 
     try {
       const { service, path, query, body } = args;
-      setToolAttributes({ 'mcp.tool.service': service, 'mcp.tool.path': safePath, 'mcp.tool.method': method });
+      setToolAttributes({
+        'mcp.tool.service': service,
+        'mcp.tool.path': safePath,
+        'mcp.tool.method': method,
+      });
 
       const validation = validatePathForService(method, path, service);
       if (!validation.isValid) {
@@ -96,7 +100,10 @@ function createMethodTool(method: string) {
         recorder?.recordError({
           source: 'validation',
           error_type: 'path_validation_failed',
-          chain: makeErrorChain('ValidationError', validation.message ?? 'unknown validation error'),
+          chain: makeErrorChain(
+            'ValidationError',
+            validation.message ?? 'unknown validation error',
+          ),
         });
         return createTextResponse(
           `パス検証エラー: ${validation.message}\n\n` +
@@ -105,7 +112,14 @@ function createMethodTool(method: string) {
       }
 
       const actualPath = validation.actualPath ?? path;
-      const result = await makeApiRequest(method, actualPath, query, body, validation.baseUrl, tokenContext);
+      const result = await makeApiRequest(
+        method,
+        actualPath,
+        query,
+        body,
+        validation.baseUrl,
+        tokenContext,
+      );
 
       recorder?.recordToolCall({
         tool: toolName,
@@ -175,7 +189,8 @@ function createMethodTool(method: string) {
  */
 export function generateClientModeTool(server: McpServer): void {
   // GET tool
-  registerTracedTool(server,
+  registerTracedTool(
+    server,
     'freee_api_get',
     {
       title: 'freee API GET リクエスト',
@@ -191,7 +206,8 @@ export function generateClientModeTool(server: McpServer): void {
   );
 
   // POST tool
-  registerTracedTool(server,
+  registerTracedTool(
+    server,
     'freee_api_post',
     {
       title: 'freee API POST リクエスト',
@@ -202,13 +218,14 @@ export function generateClientModeTool(server: McpServer): void {
         body: coercibleRecord('リクエストボディ'),
         query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
-      annotations: { destructiveHint: false },
+      annotations: { destructiveHint: true },
     },
     createMethodTool('POST'),
   );
 
   // PUT tool
-  registerTracedTool(server,
+  registerTracedTool(
+    server,
     'freee_api_put',
     {
       title: 'freee API PUT リクエスト',
@@ -219,13 +236,14 @@ export function generateClientModeTool(server: McpServer): void {
         body: coercibleRecord('リクエストボディ'),
         query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
-      annotations: { destructiveHint: false, idempotentHint: true },
+      annotations: { destructiveHint: true, idempotentHint: true },
     },
     createMethodTool('PUT'),
   );
 
   // DELETE tool
-  registerTracedTool(server,
+  registerTracedTool(
+    server,
     'freee_api_delete',
     {
       title: 'freee API DELETE リクエスト',
@@ -235,13 +253,14 @@ export function generateClientModeTool(server: McpServer): void {
         path: z.string().describe('APIパス (例: /api/1/deals/123)'),
         query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
-      annotations: { idempotentHint: true },
+      annotations: { destructiveHint: true, idempotentHint: true },
     },
     createMethodTool('DELETE'),
   );
 
   // PATCH tool
-  registerTracedTool(server,
+  registerTracedTool(
+    server,
     'freee_api_patch',
     {
       title: 'freee API PATCH リクエスト',
@@ -252,13 +271,14 @@ export function generateClientModeTool(server: McpServer): void {
         body: coercibleRecord('リクエストボディ'),
         query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
-      annotations: { destructiveHint: false },
+      annotations: { destructiveHint: true },
     },
     createMethodTool('PATCH'),
   );
 
   // Add helper tool to list available paths
-  registerTracedTool(server,
+  registerTracedTool(
+    server,
     'freee_api_list_paths',
     {
       title: 'API エンドポイント一覧',
