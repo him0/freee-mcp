@@ -1,5 +1,17 @@
 # freee-mcp
 
+## 0.26.5
+
+### Patch Changes
+
+- [`4cd986a`](https://github.com/freee/freee-mcp/commit/4cd986ac219084a81d5c211960b39b0c132f034f): freee と freee サインの MCP ツール周りのリファクタ。 ([#456](https://github.com/freee/freee-mcp/pull/456))
+
+  - HTTP メソッド →`ToolAnnotations` のマッピングを共通ユーティリティに抽出し、freee／サイン両方のツール登録で共有
+  - `CliAuthHandler` インターフェースから未使用の `codeVerifier` フィールドを除去（コールバックハンドラ内で参照されておらず Sign は PKCE 非対応）
+  - `sign_api_delete` で body を許可している理由のコメントを補足
+
+- [`3b549f9`](https://github.com/freee/freee-mcp/commit/3b549f97480c6ad26a1fdbb76eec1ee71b217cd4): エラーメッセージのプライバシースクラブ強化、POST/PUT/PATCH/DELETE ツールへの destructiveHint 付与、その他コード品質改善。 ([#454](https://github.com/freee/freee-mcp/pull/454))
+
 ## 0.26.4
 
 ### Patch Changes
