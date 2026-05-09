@@ -45,7 +45,6 @@ export async function performOAuth(): Promise<OAuthResult> {
         clearTimeout(timeout);
         reject(error);
       },
-      codeVerifier,
     });
   });
 

@@ -44,12 +44,14 @@ function resolveTokenContext(
 function getSignApiToolAnnotations(method: SignApiMethod): ToolAnnotations {
   if (method === 'GET') {
     return { readOnlyHint: true };
-  }
-
-  if (method === 'PUT' || method === 'DELETE') {
+  } else if (method === 'PUT' || method === 'DELETE') {
     return { destructiveHint: true, idempotentHint: true };
+  } else if (method === 'POST' || method === 'PATCH') {
+    // POST/PATCH は副作用ありかつ冪等保証なし
+    return { destructiveHint: true };
   }
 
+  // SignApiMethod の union では到達しないが、将来の拡張時の安全側のデフォルト
   return { destructiveHint: true };
 }
 
@@ -92,7 +94,6 @@ function addSignAuthTools(server: McpServer, options?: { remote?: boolean }): vo
               console.error('Sign authentication failed:', error);
               authManager.removeCliAuthHandler(state);
             },
-            codeVerifier: '',
           });
 
           return createTextResponse(
@@ -183,7 +184,9 @@ export function addSignApiTools(server: McpServer, options?: { remote?: boolean 
   ] as const;
 
   for (const { name, method, desc } of methods) {
-    // サイン API の DELETE は user_id 等を body で要求するエンドポイントがある
+    // freee サイン API では一部の DELETE エンドポイントが user_id などの JSON body を要求する。
+    // 該当エンドポイントは API 仕様に従うため、詳細は公式 API ドキュメントを参照すること。
+    // そのため DELETE も body 許可対象に含める。
     const hasBody =
       method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
     const baseSchema = {

@@ -93,7 +93,6 @@ vi.mock('../auth/server', () => ({
         handler: {
           resolve: (code: string) => void;
           reject: (error: Error) => void;
-          codeVerifier: string;
         },
       ) => {
         mockAuthCallback = handler.resolve;
