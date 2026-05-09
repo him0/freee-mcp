@@ -8,6 +8,7 @@ import type { AuthExtra } from '../storage/context.js';
 import { extractTokenContext } from '../storage/context.js';
 import { registerTracedTool, setToolAttributes } from '../telemetry/tool-tracer.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
+import { getHttpMethodToolAnnotations } from '../utils/http-method-annotations.js';
 import { type ApiType, listAllAvailablePaths, validatePathForService } from './schema-loader.js';
 
 const SUPPORTED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
@@ -200,7 +201,7 @@ export function generateClientModeTool(server: McpServer): void {
         path: z.string().describe('APIパス (例: /api/1/deals)'),
         query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
-      annotations: { readOnlyHint: true },
+      annotations: getHttpMethodToolAnnotations('GET'),
     },
     createMethodTool('GET'),
   );
@@ -218,7 +219,7 @@ export function generateClientModeTool(server: McpServer): void {
         body: coercibleRecord('リクエストボディ'),
         query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
-      annotations: { destructiveHint: true },
+      annotations: getHttpMethodToolAnnotations('POST'),
     },
     createMethodTool('POST'),
   );
@@ -236,7 +237,7 @@ export function generateClientModeTool(server: McpServer): void {
         body: coercibleRecord('リクエストボディ'),
         query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
-      annotations: { destructiveHint: true, idempotentHint: true },
+      annotations: getHttpMethodToolAnnotations('PUT'),
     },
     createMethodTool('PUT'),
   );
@@ -253,7 +254,7 @@ export function generateClientModeTool(server: McpServer): void {
         path: z.string().describe('APIパス (例: /api/1/deals/123)'),
         query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
-      annotations: { destructiveHint: true, idempotentHint: true },
+      annotations: getHttpMethodToolAnnotations('DELETE'),
     },
     createMethodTool('DELETE'),
   );
@@ -271,7 +272,7 @@ export function generateClientModeTool(server: McpServer): void {
         body: coercibleRecord('リクエストボディ'),
         query: coercibleRecord('クエリパラメータ (オプション)').optional(),
       },
-      annotations: { destructiveHint: true },
+      annotations: getHttpMethodToolAnnotations('PATCH'),
     },
     createMethodTool('PATCH'),
   );
