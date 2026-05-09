@@ -16,7 +16,6 @@ async function testFreeeTools() {
   console.log('=== 利用可能ツール一覧 ===');
   
   // サーバーの内部状態からツール一覧を取得
-  const toolNames = [];
   
   // 認証関連ツール
   const authTools = [
