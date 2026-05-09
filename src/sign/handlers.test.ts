@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSignMcpServer } from './handlers.js';
-import { addSignAuthenticationTools } from './tools.js';
+import { addSignApiTools, addSignAuthenticationTools } from './tools.js';
 
 vi.mock('./config.js', () => ({
   SIGN_SERVER_INSTRUCTIONS: 'freee サイン（電子契約）APIと連携するMCPサーバー。',
@@ -108,6 +108,29 @@ describe('sign/handlers', () => {
       const result = await handler();
 
       expect(result.content[0].text).toContain('transport: remote');
+    });
+
+    it('sign API mutating methods are marked destructive', () => {
+      addSignApiTools(mockServer);
+
+      const configs = new Map(
+        mockTool.mock.calls.map((call: unknown[]) => [
+          call[0] as string,
+          call[1] as { annotations?: Record<string, boolean> },
+        ]),
+      );
+
+      expect(configs.get('sign_api_get')?.annotations).toEqual({ readOnlyHint: true });
+      expect(configs.get('sign_api_post')?.annotations).toEqual({ destructiveHint: true });
+      expect(configs.get('sign_api_put')?.annotations).toEqual({
+        destructiveHint: true,
+        idempotentHint: true,
+      });
+      expect(configs.get('sign_api_patch')?.annotations).toEqual({ destructiveHint: true });
+      expect(configs.get('sign_api_delete')?.annotations).toEqual({
+        destructiveHint: true,
+        idempotentHint: true,
+      });
     });
   });
 });

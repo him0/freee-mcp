@@ -102,12 +102,28 @@ const _loadedConfigs: Partial<Record<ApiType, ApiConfig>> = {};
 // Cached compiled regex patterns for path matching (per schema path)
 const _pathRegexCache = new Map<string, RegExp>();
 
+/**
+ * Build (and cache) a strict regex for matching concrete request paths to schema paths.
+ *
+ * Security assumption:
+ * Path parameters are treated as a single URL path segment and MUST NOT contain URL
+ * metacharacters such as `?`, `#`, `&`, or `=`.
+ *
+ * Rationale:
+ * Using `[^/?#&=]+` for `{param}` placeholders prevents query/fragment smuggling
+ * through path arguments (for example, `/resource/{id}` must not match
+ * `/resource/123?company_id=...`).
+ *
+ * This is a defense-in-depth control and complements request validation in
+ * `makeApiRequest`. Do not relax this to `[^/]+` without introducing equivalent
+ * canonicalization/validation guarantees.
+ */
 function getPathRegex(schemaPath: string): RegExp {
   let regex = _pathRegexCache.get(schemaPath);
   if (!regex) {
-    // URL メタ文字 (?, #, &, =) を placeholder にマッチさせない。
-    // `[^/]+` だと '/api/1/deals/{id}' が '/api/1/deals/123?company_id=B' を valid と扱い
-    // path argument 経由でクエリを smuggle されるため、明示的に除外する。
+    // Do not allow URL metacharacters (?, #, &, =) to match placeholders.
+    // Using `[^/]+` would treat '/api/1/deals/{id}' as matching
+    // '/api/1/deals/123?company_id=B', enabling query smuggling via a path argument.
     const pattern = schemaPath.replace(/\{[^}]+\}/g, '[^/?#&=]+');
     regex = new RegExp(`^${pattern}$`);
     _pathRegexCache.set(schemaPath, regex);
@@ -288,7 +304,7 @@ export function listAllAvailablePaths(): string {
 
   const sections: string[] = [];
 
-  for (const [, config] of Object.entries(API_CONFIGS) as [ApiType, ApiConfig][]) {
+  for (const config of Object.values(API_CONFIGS) as ApiConfig[]) {
     const paths = config.schema.paths;
     const pathList: string[] = [];
 

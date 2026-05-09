@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { getDefaultAuthManager, startCallbackServerWithAutoStop } from '../auth/server.js';
 import { AUTH_TIMEOUT_MS, PACKAGE_VERSION } from '../constants.js';
@@ -12,6 +13,7 @@ import type { SignTokenStore } from './server/sign-redis-token-store.js';
 import { clearSignTokens, isSignTokenValid, loadSignTokens } from './tokens.js';
 
 type SignAuthExtra = { authInfo?: { extra?: Record<string, unknown> } };
+type SignApiMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 function extractSignTokenContext(extra?: SignAuthExtra): SignTokenContext | undefined {
   const authExtra = extra?.authInfo?.extra;
@@ -37,6 +39,18 @@ function resolveTokenContext(
     );
   }
   return ctx;
+}
+
+function getSignApiToolAnnotations(method: SignApiMethod): ToolAnnotations {
+  if (method === 'GET') {
+    return { readOnlyHint: true };
+  }
+
+  if (method === 'PUT' || method === 'DELETE') {
+    return { destructiveHint: true, idempotentHint: true };
+  }
+
+  return { destructiveHint: true };
 }
 
 function addSignAuthTools(server: McpServer, options?: { remote?: boolean }): void {
@@ -185,7 +199,7 @@ export function addSignApiTools(server: McpServer, options?: { remote?: boolean 
         .describe('APIパス (例: /v1/documents)'),
       query: z.record(z.string(), z.unknown()).optional().describe('クエリパラメータ'),
     };
-    const inputSchema = hasBody
+    const inputSchema: Record<string, z.ZodTypeAny> = hasBody
       ? {
           ...baseSchema,
           body: z.record(z.string(), z.unknown()).optional().describe('リクエストボディ'),
@@ -198,7 +212,7 @@ export function addSignApiTools(server: McpServer, options?: { remote?: boolean 
         title: desc,
         description: desc,
         inputSchema,
-        annotations: { readOnlyHint: method === 'GET' },
+        annotations: getSignApiToolAnnotations(method),
       },
       async (
         args: { path: string; query?: Record<string, unknown>; body?: Record<string, unknown> },

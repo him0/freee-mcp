@@ -68,7 +68,7 @@
 
 ### Patch Changes
 
-- [`70a7dae`](https://github.com/freee/freee-mcp/commit/70a7dae2f8cef8bad9afd617e200562dc678d722): ローカル開発用途で loopback の CIMD URL を受け入れるオプションを追加。 ([#429](https://github.com/freee/freee-mcp/pull/429))
+- [`70a7dae`](https://github.com/freee/freee-mcp/commit/70a7dae2f8cef8bad9afd617e200562dc678d722): ローカル開発用途で loopback の OIDC URL を受け入れるオプションを追加。 ([#429](https://github.com/freee/freee-mcp/pull/429))
 
   - dev/test 環境かつ Kubernetes Pod 外でのみ、`http://localhost` / `127.0.0.1` / `[::1]` の `client_id` を許可
   - 同条件で loopback の `https://` self-signed cert も受け入れ（mkcert 等のローカル検証向け）
