@@ -31,7 +31,6 @@ const HTML_RESPONSE_HEADERS = {
 interface CliAuthHandler {
   resolve: (code: string) => void;
   reject: (error: Error) => void;
-  codeVerifier: string;
 }
 
 /**

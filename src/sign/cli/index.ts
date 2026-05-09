@@ -70,7 +70,6 @@ async function performSignOAuthFlow(credentials: SignCredentials): Promise<void>
         clearTimeout(timeout);
         reject(error);
       },
-      codeVerifier: '',
     });
   });
 

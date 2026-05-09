@@ -1,10 +1,10 @@
 import crypto from 'node:crypto';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { getDefaultAuthManager, startCallbackServerWithAutoStop } from '../auth/server.js';
 import { AUTH_TIMEOUT_MS, PACKAGE_VERSION } from '../constants.js';
 import { createTextResponse, formatErrorMessage } from '../utils/error.js';
+import { getHttpMethodToolAnnotations } from '../utils/http-method-annotations.js';
 import type { SignTokenContext } from './client.js';
 import { makeSignApiRequest } from './client.js';
 import { getSignCredentials } from './config.js';
@@ -13,7 +13,6 @@ import type { SignTokenStore } from './server/sign-redis-token-store.js';
 import { clearSignTokens, isSignTokenValid, loadSignTokens } from './tokens.js';
 
 type SignAuthExtra = { authInfo?: { extra?: Record<string, unknown> } };
-type SignApiMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 function extractSignTokenContext(extra?: SignAuthExtra): SignTokenContext | undefined {
   const authExtra = extra?.authInfo?.extra;
@@ -39,18 +38,6 @@ function resolveTokenContext(
     );
   }
   return ctx;
-}
-
-function getSignApiToolAnnotations(method: SignApiMethod): ToolAnnotations {
-  if (method === 'GET') {
-    return { readOnlyHint: true };
-  }
-
-  if (method === 'PUT' || method === 'DELETE') {
-    return { destructiveHint: true, idempotentHint: true };
-  }
-
-  return { destructiveHint: true };
 }
 
 function addSignAuthTools(server: McpServer, options?: { remote?: boolean }): void {
@@ -92,7 +79,6 @@ function addSignAuthTools(server: McpServer, options?: { remote?: boolean }): vo
               console.error('Sign authentication failed:', error);
               authManager.removeCliAuthHandler(state);
             },
-            codeVerifier: '',
           });
 
           return createTextResponse(
@@ -183,7 +169,7 @@ export function addSignApiTools(server: McpServer, options?: { remote?: boolean 
   ] as const;
 
   for (const { name, method, desc } of methods) {
-    // サイン API の DELETE は user_id 等を body で要求するエンドポイントがある
+    // freee サイン API では一部の DELETE エンドポイントが user_id などの JSON body を要求するため、DELETE も body 許可対象に含める
     const hasBody =
       method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
     const baseSchema = {
@@ -212,7 +198,7 @@ export function addSignApiTools(server: McpServer, options?: { remote?: boolean 
         title: desc,
         description: desc,
         inputSchema,
-        annotations: getSignApiToolAnnotations(method),
+        annotations: getHttpMethodToolAnnotations(method),
       },
       async (
         args: { path: string; query?: Record<string, unknown>; body?: Record<string, unknown> },
