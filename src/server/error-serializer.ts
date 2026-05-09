@@ -93,7 +93,7 @@ export function serializeErrorChain(
 
     depth += 1;
     current =
-      typeof current === 'object' && current !== null
+      typeof current === 'object'
         ? (current as { cause?: unknown }).cause
         : undefined;
   }
