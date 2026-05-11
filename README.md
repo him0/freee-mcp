@@ -287,6 +287,7 @@ npx --package=freee-mcp -- freee-sign-mcp configure
 <a href="https://github.com/Kitamura777"><img src="https://github.com/Kitamura777.png" width="40" height="40" alt="@Kitamura777"></a>
 <a href="https://github.com/yuyohi"><img src="https://github.com/yuyohi.png" width="40" height="40" alt="@yuyohi"></a>
 <a href="https://github.com/bxg06523-cell"><img src="https://github.com/bxg06523-cell.png" width="40" height="40" alt="@bxg06523-cell"></a>
+<a href="https://github.com/ryoya1122"><img src="https://github.com/ryoya1122.png" width="40" height="40" alt="@ryoya1122"></a>
 <!-- CONTRIBUTORS-END -->
 
 ## 開発者向け
