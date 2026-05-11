@@ -1,5 +1,12 @@
 # freee-mcp
 
+## 0.26.6
+
+### Patch Changes
+
+- [`033d7d5`](https://github.com/freee/freee-mcp/commit/033d7d574593948a8caa76f4036200614585367f): リファレンス生成スクリプトで `allOf` でラップされた `$ref` が解決されない問題を修正 ([#459](https://github.com/freee/freee-mcp/pull/459))
+- [`5f36b18`](https://github.com/freee/freee-mcp/commit/5f36b18ab15c833449c12c3886721ebaed6b3cc8): OpenAPI スキーマを最新版に同期 ( 1 file changed, 137 insertions(+), 1 deletion(-)) ([#458](https://github.com/freee/freee-mcp/pull/458))
+
 ## 0.26.5
 
 ### Patch Changes
