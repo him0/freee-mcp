@@ -59,7 +59,7 @@
 ユーザーへ招待メール送付完了
 
 - id (必須): integer - ユーザー招待ID
-- team_id (必須): object - 招待先のチームID
+- team_id (必須): integer(int64) - 招待先のチームID 例: `1` (最小: 1)
 - inviter_id (必須): object - 招待を実行するユーザーID
 - email (必須): string(email) - 被招待者のメールアドレス
 - status (必須): string - 招待の状態
@@ -118,7 +118,7 @@
 ユーザーへの再招待メール送付完了
 
 - id (必須): integer - ユーザー招待ID
-- team_id (必須): object - 招待先のチームID
+- team_id (必須): integer(int64) - 招待先のチームID 例: `1` (最小: 1)
 - inviter_id (必須): object - 招待を実行するユーザーID
 - email (必須): string(email) - 被招待者のメールアドレス
 - status (必須): string - 招待の状態
@@ -148,8 +148,8 @@
 
 取得成功
 
-- id (必須): object - ユーザーID
-- team_id (任意): object - チームID。本登録していないユーザーはチームに所属していない。
+- id (必須): integer(int64) - ユーザーID 例: `1` (最小: 1)
+- team_id (任意): integer(int64) - チームID。本登録していないユーザーはチームに所属していない。 例: `1` (最小: 1)
 - status (必須): string - ユーザーのステータス
 * receiving_only - 文書を受領した未登録ユーザー
 * active - 登録済ユーザー
@@ -172,14 +172,14 @@ ex. +8190xxxxxxxx
 
 ### リクエストボディ
 
-- executor_id (任意): object - 退会処理を実行するユーザーのID (APIクライアントを利用する場合は必須)
+- executor_id (任意): integer(int64) - 退会処理を実行するユーザーのID (APIクライアントを利用する場合は必須) 例: `1` (最小: 1)
 
 ### レスポンス (200)
 
 退会処理が成功
 
-- id (必須): object - ユーザーID
-- team_id (任意): object - チームID。本登録していないユーザーはチームに所属していない。
+- id (必須): integer(int64) - ユーザーID 例: `1` (最小: 1)
+- team_id (任意): integer(int64) - チームID。本登録していないユーザーはチームに所属していない。 例: `1` (最小: 1)
 - status (必須): string - ユーザーのステータス
 * receiving_only - 文書を受領した未登録ユーザー
 * active - 登録済ユーザー
