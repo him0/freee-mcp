@@ -19996,6 +19996,20 @@
                   "description": "部門コード",
                   "example": "code001"
                 },
+                "partner_id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "minimum": 0,
+                  "nullable": true,
+                  "description": "取引先ID",
+                  "example": 1
+                },
+                "partner_code": {
+                  "type": "string",
+                  "description": "取引先コード",
+                  "nullable": true,
+                  "example": "code001"
+                },
                 "tag_ids": {
                   "type": "array",
                   "description": "メモタグID",
@@ -20220,6 +20234,14 @@
                   "description": "部門ID",
                   "example": 1
                 },
+                "partner_id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "minimum": 0,
+                  "nullable": true,
+                  "description": "取引先ID",
+                  "example": 1
+                },
                 "tag_ids": {
                   "type": "array",
                   "description": "メモタグID",
@@ -20307,7 +20329,6 @@
             "type": "array",
             "items": {
               "required": [
-                "account_item_id",
                 "amount",
                 "entry_side",
                 "tax_code"
@@ -20337,6 +20358,11 @@
                   "minimum": 1,
                   "description": "勘定科目ID",
                   "example": 1
+                },
+                "account_item_code": {
+                  "type": "string",
+                  "description": "勘定科目コード",
+                  "example": "code001"
                 },
                 "amount": {
                   "type": "integer",
@@ -20371,12 +20397,22 @@
                   "description": "品目ID",
                   "example": 1
                 },
+                "item_code": {
+                  "type": "string",
+                  "description": "品目コード",
+                  "example": "code001"
+                },
                 "section_id": {
                   "type": "integer",
                   "format": "int64",
                   "minimum": 1,
                   "description": "部門ID",
                   "example": 1
+                },
+                "section_code": {
+                  "type": "string",
+                  "description": "部門コード",
+                  "example": "code001"
                 },
                 "tag_ids": {
                   "type": "array",
@@ -20408,6 +20444,21 @@
                   "minimum": 1,
                   "description": "セグメント３タグID",
                   "example": 1
+                },
+                "segment_1_tag_code": {
+                  "type": "string",
+                  "description": "セグメント１タグコード",
+                  "example": "code001"
+                },
+                "segment_2_tag_code": {
+                  "type": "string",
+                  "description": "セグメント２タグコード",
+                  "example": "code001"
+                },
+                "segment_3_tag_code": {
+                  "type": "string",
+                  "description": "セグメント３タグコード",
+                  "example": "code001"
                 },
                 "description": {
                   "type": "string",
@@ -31308,6 +31359,19 @@
                       "description": "税区分コード",
                       "example": 2
                     },
+                    "partner_id": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "取引先ID",
+                      "example": 201,
+                      "nullable": true
+                    },
+                    "partner_code": {
+                      "type": "string",
+                      "description": "取引先コード",
+                      "example": "code001",
+                      "nullable": true
+                    },
                     "item_id": {
                       "type": "integer",
                       "format": "int64",
@@ -31728,6 +31792,19 @@
                   "description": "税区分コード",
                   "example": 2
                 },
+                "partner_id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "取引先ID",
+                  "example": 201,
+                  "nullable": true
+                },
+                "partner_code": {
+                  "type": "string",
+                  "description": "取引先コード",
+                  "example": "code001",
+                  "nullable": true
+                },
                 "item_id": {
                   "type": "integer",
                   "format": "int64",
@@ -31890,6 +31967,19 @@
                         "maximum": 2147483647,
                         "description": "税区分コード",
                         "example": 1
+                      },
+                      "partner_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "取引先ID",
+                        "example": 201,
+                        "nullable": true
+                      },
+                      "partner_code": {
+                        "type": "string",
+                        "description": "取引先コード",
+                        "example": "code001",
+                        "nullable": true
                       },
                       "item_id": {
                         "type": "integer",
@@ -32814,6 +32904,36 @@
                   "description": "セグメント３タグ名",
                   "example": "セグメント３",
                   "nullable": true
+                },
+                "account_item_code": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "勘定科目コード"
+                },
+                "item_code": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "品目コード"
+                },
+                "section_code": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "部門コード"
+                },
+                "segment_1_tag_code": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "セグメント１タグコード"
+                },
+                "segment_2_tag_code": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "セグメント２タグコード"
+                },
+                "segment_3_tag_code": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "セグメント３タグコード"
                 },
                 "amount": {
                   "type": "integer",
@@ -37499,6 +37619,14 @@
                   "description": "部門ID",
                   "example": 1
                 },
+                "partner_id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "minimum": 0,
+                  "nullable": true,
+                  "description": "取引先ID",
+                  "example": 1
+                },
                 "tag_ids": {
                   "type": "array",
                   "description": "メモタグID",
@@ -37618,6 +37746,14 @@
                   "format": "int64",
                   "minimum": 1,
                   "description": "部門ID",
+                  "example": 1
+                },
+                "partner_id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "minimum": 0,
+                  "nullable": true,
+                  "description": "取引先ID",
                   "example": 1
                 },
                 "tag_ids": {
