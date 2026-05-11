@@ -156,6 +156,34 @@ function resolveParameterRef(
 }
 
 /**
+ * Resolve a schema reference, handling both direct `$ref` and the
+ * `allOf: [{ $ref: ... }]` wrapping that TypeSpec / OpenAPI emit when a
+ * referenced enum/object needs an inline `description`.
+ *
+ * Returns the original schema if no ref is present or cannot be resolved.
+ * When the input was an `allOf` wrapper with a description, the wrapper's
+ * description takes precedence over the referenced schema's description.
+ */
+function resolveSchema(
+  apiSchema: OpenAPISchema,
+  schema: SchemaObject
+): SchemaObject {
+  if (schema.$ref) {
+    const resolved = resolveRef(apiSchema, schema.$ref);
+    return resolved ?? schema;
+  }
+  if (schema.allOf && schema.allOf.length === 1 && schema.allOf[0].$ref) {
+    const resolved = resolveRef(apiSchema, schema.allOf[0].$ref);
+    if (!resolved) return schema;
+    return {
+      ...resolved,
+      description: schema.description ?? resolved.description,
+    };
+  }
+  return schema;
+}
+
+/**
  * Get type description from schema
  */
 function getTypeDescription(schema: SchemaObject): string {
@@ -191,14 +219,8 @@ function formatSchemaProperties(
     const isRequired = required.includes(propName);
     const requiredMark = isRequired ? " (必須)" : " (任意)";
 
-    // Resolve $ref if present
-    let resolvedSchema = propSchema;
-    if (propSchema.$ref) {
-      const resolved = resolveRef(apiSchema, propSchema.$ref);
-      if (resolved) {
-        resolvedSchema = resolved;
-      }
-    }
+    // Resolve $ref or `allOf: [{ $ref }]` wrapper.
+    const resolvedSchema = resolveSchema(apiSchema, propSchema);
 
     const typeDesc = getTypeDescription(resolvedSchema);
     result += `${indent}- ${propName}${requiredMark}: ${typeDesc}`;
@@ -255,13 +277,7 @@ function formatSchemaProperties(
       resolvedSchema.items &&
       currentDepth < maxDepth - 1
     ) {
-      let itemSchema = resolvedSchema.items;
-      if (itemSchema.$ref) {
-        const resolved = resolveRef(apiSchema, itemSchema.$ref);
-        if (resolved) {
-          itemSchema = resolved;
-        }
-      }
+      const itemSchema = resolveSchema(apiSchema, resolvedSchema.items);
       if (itemSchema.properties) {
         result += `${indent}  配列の要素:\n`;
         result += formatSchemaProperties(
@@ -339,15 +355,8 @@ function formatRequestBody(
     return "";
   }
 
-  let schema = jsonContent.schema;
-
-  // Resolve $ref if present
-  if (schema.$ref) {
-    const resolved = resolveRef(apiSchema, schema.$ref);
-    if (resolved) {
-      schema = resolved;
-    }
-  }
+  // Resolve $ref or `allOf: [{ $ref }]` wrapper.
+  const schema = resolveSchema(apiSchema, jsonContent.schema);
 
   if (requestBody.required) {
     result += "(必須)\n\n";
@@ -399,15 +408,8 @@ function formatSuccessResponse(
     return result;
   }
 
-  let schema = jsonContent.schema;
-
-  // Resolve $ref if present
-  if (schema.$ref) {
-    const resolved = resolveRef(apiSchema, schema.$ref);
-    if (resolved) {
-      schema = resolved;
-    }
-  }
+  // Resolve $ref or `allOf: [{ $ref }]` wrapper.
+  const schema = resolveSchema(apiSchema, jsonContent.schema);
 
   result += formatSchemaProperties(apiSchema, schema);
   result += "\n";
