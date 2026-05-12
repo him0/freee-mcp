@@ -104,7 +104,10 @@ npx freee-mcp configure
 Windows Store (Microsoft Store) 版の Claude Desktop をご利用の場合、設定ファイルのパスが異なります。`freee-mcp configure` は自動的に適切なパスを検出します。
 ## Agent Skills をインストールする
 
-Claude 及び Claude Desktop では「カスタマイズ」より「スキル」を開き、[Releases](https://github.com/freee/freee-mcp/releases) ページから最新の `freee-api-skill.zip` をダウンロードしてアップロードしてください。
+Claude 及び Claude Desktop では「カスタマイズ」より「スキル」を開き、最新の `freee-api-skill.zip` をダウンロードしてアップロードしてください。
+
+- [最新版をダウンロード (freee-api-skill.zip)](https://github.com/freee/freee-mcp/releases/latest/download/freee-api-skill.zip)
+- バージョン履歴から選ぶ: [Releases ページ](https://github.com/freee/freee-mcp/releases)
 
 <img src="docs/images/claude-desktop-skill-upload.png" width="600" alt="Claude Desktop でスキルをアップロード">
 
