@@ -27,6 +27,7 @@
 | end_expiration_date | query | いいえ | string(date) | 有効期限の終了日 |
 | limit | query | いいえ | integer | 取得レコードの件数 (デフォルト: 20, 最小: 1, 最大: 100) |
 | offset | query | いいえ | integer | 取得レコードのオフセット (デフォルト: 0) |
+| sales_management_origin | query | いいえ | boolean | freee販売から作成された帳票データを含める。trueを指定する場合はfreee販売から作成された帳票へのアクセス権限が必要です。 |
 
 ### レスポンス (200)
 
@@ -58,6 +59,8 @@ The request has succeeded.
     - company_contact_name (任意): string - 自社担当者 (デフォルト: 表示ユーザー名)
     - email_url_file_downloaded_at (任意): string(string) - URL共有で送付された送付先のメールのダウンロード時刻 (パターン: ^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$)
     - email_url_file_downloaded_status (任意): string - URL共有で送付された送付先のメールのダウンロードステータス (選択肢: downloaded, undownloaded)
+    - report_url (必須): string(uri) - 帳票詳細ページのURL
+    - sales_management_origin (任意): boolean - freee販売から作成された帳票かどうか
 
 ### POST /quotations
 
@@ -202,6 +205,7 @@ The request has succeeded and a new resource has been created as a result.
   - company_description (任意): string - 自社情報
   - template (任意): object - 帳票テンプレート情報（帳票テンプレート作成の際に設定できる項目です。）
   - lines (必須): array[object] - 見積書の明細行
+  - report_url (必須): string(uri) - 帳票詳細ページのURL
 
 ### GET /quotations/templates
 
@@ -301,6 +305,8 @@ The request has succeeded.
   - lines (必須): array[object] - 見積書の明細行
   - email_url_file_downloaded_at (任意): string(string) - URL共有で送付された送付先のメールのダウンロード時刻 (パターン: ^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$)
   - email_url_file_downloaded_status (任意): string - URL共有で送付された送付先のメールのダウンロードステータス (選択肢: downloaded, undownloaded)
+  - report_url (必須): string(uri) - 帳票詳細ページのURL
+  - sales_management_origin (任意): boolean - freee販売から作成された帳票かどうか
 
 ### PUT /quotations/{id}
 
@@ -451,6 +457,7 @@ The request has succeeded.
   - company_description (任意): string - 自社情報
   - template (任意): object - 帳票テンプレート情報（帳票テンプレート作成の際に設定できる項目です。）
   - lines (必須): array[object] - 見積書の明細行
+  - report_url (必須): string(uri) - 帳票詳細ページのURL
 
 
 

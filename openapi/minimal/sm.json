@@ -38,6 +38,59 @@
         ]
       }
     },
+    "/cost_budgets": {
+      "get": {
+        "summary": "原価予算一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>原価予算の一覧を取得します。\n登録されている原価予算情報を一覧形式で取得できます。\n各種フィルタ条件を指定することで、特定の条件に合致する原価予算のみを取得することが可能です。\n</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li><p>type : 原価種別 (procurement, external_procurement, other_cost)</p></li>\n<li><p>start_amount_excluding_tax : 金額(税抜):下限</p></li>\n<li><p>end_amount_excluding_tax : 金額(税抜):上限</p></li>\n<li><p>start_date_period : 発生予定期間:開始日(yyyy-mm-dd)</p></li>\n<li><p>end_date_period : 発生予定期間:終了日(yyyy-mm-dd)</p></li>\n<li><p>master_item_ids : 商品ID(複数指定可)</p></li>\n<li><p>start_quantity : 数量:下限</p></li>\n<li><p>end_quantity : 数量:上限</p></li>\n<li><p>start_unit_price : 単価:下限</p></li>\n<li><p>end_unit_price : 単価:上限</p></li>\n<li><p>charge_employee_ids : 社内担当者の従業員ID(複数指定可)</p></li>\n<li><p>reporting_section_ids : 担当部門ID(複数指定可)</p></li>\n<li><p>supplier_ids : 仕入先の取引先ID(複数指定可)</p></li>\n<li><p>payment_partner_ids : 支払先の取引先ID(複数指定可)</p></li>\n<li><p>accounting_reporting_section_ids : 会計計上部門ID(複数指定可)</p></li>\n<li><p>item_tag_ids : 会計品目タグID(複数指定可)</p></li>\n<li><p>segment_tag_1_ids : セグメントタグ1 ID(複数指定可)</p></li>\n<li><p>segment_tag_2_ids : セグメントタグ2 ID(複数指定可)</p></li>\n<li><p>segment_tag_3_ids : セグメントタグ3 ID(複数指定可)</p></li>\n<li><p>business_ids : 案件ID(複数指定可)</p></li>\n<li><p>canceled : 取消状態(デフォルト:false)</p></li>\n</ul>\n<p>\n`limit`と`offset`パラメータを使用してページネーションが可能です。\nデフォルトでは20件ずつ取得され、最大100件まで一度に取得できます。\n</p>"
+      },
+      "post": {
+        "summary": "原価予算登録",
+        "description": "<h2 id=\"\">概要</h2>\n<p>原価予算を新規登録します。\n<code>type</code> で原価種別を指定してください。<code>procurement</code>（仕入）はリクエストスキーマが異なります。<code>external_procurement</code>（外部仕入）と <code>other_cost</code>（その他原価）は同じリクエストスキーマを使用します。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3 id=\"_3\">全type共通フィールド</h3>\n<ul>\n<li><p>type (必須) : 原価種別 (procurement: 仕入, external_procurement: 外部仕入, other_cost: その他原価)</p></li>\n<li><p>period_from_date (必須) : 期間開始日</p></li>\n<li><p>period_to_date (必須) : 期間終了日。period_from_date と両方必須。</p></li>\n<li><p>business_id : 案件ID</p></li>\n<li><p>memo : 備考</p></li>\n<li><p>charge_employee_id : 社内担当者ID</p></li>\n<li><p>reporting_section_id : 担当部門ID</p></li>\n</ul>\n<h3 id=\"_4\">type=procurement 固有フィールド</h3>\n<ul>\n<li><p>quantity (必須) : 数量</p></li>\n<li><p>unit_price (必須) : 単価</p></li>\n<li><p>deal_line_type_id (必須) : 明細取引タイプID</p></li>\n<li><p>supplier_id : 仕入先ID</p></li>\n<li><p>payment_partner_id : 支払先ID</p></li>\n<li><p>uom_name : 単位</p></li>\n<li><p>master_item_id : 商品ID</p></li>\n<li><p>accounting_reporting_section_id : 会計計上部門ID</p></li>\n<li><p>item_tag_id : 会計品目タグID</p></li>\n<li><p>memo_tag_ids : メモタグID（複数指定可）</p></li>\n<li><p>segment_tag_1_id : セグメントタグ1ID</p></li>\n<li><p>segment_tag_2_id : セグメントタグ2ID</p></li>\n<li><p>segment_tag_3_id : セグメントタグ3ID</p></li>\n</ul>\n<h3 id=\"_5\">type=external_procurement / type=other_cost 固有フィールド</h3>\n<ul>\n<li><p>amount_excluding_tax (必須) : 金額(税抜)</p></li>\n</ul>"
+      }
+    },
+    "/cost_budgets/{id}": {
+      "get": {
+        "summary": "原価予算詳細取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの原価予算の詳細情報を取得します。\n</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "原価予算ID"
+          }
+        ]
+      },
+      "patch": {
+        "summary": "原価予算更新",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの原価予算を更新します。\n原価種別に応じて使用可能なフィールドが異なります。\n送信したフィールドのみ更新されます。\nなお原価種別を変更することはできません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3 id=\"_3\">全type共通フィールド</h3>\n<ul>\n<li><p>period_from_date : 期間開始日。period_to_date と両方同時に送信する必要がある。</p></li>\n<li><p>period_to_date : 期間終了日。period_from_date と両方同時に送信する必要がある。</p></li>\n<li><p>business_id : 案件ID</p></li>\n<li><p>memo : 備考</p></li>\n<li><p>charge_employee_id : 社内担当者ID</p></li>\n<li><p>reporting_section_id : 担当部門ID</p></li>\n</ul>\n<h3 id=\"_4\">type=procurement 固有フィールド（外部仕入・その他原価では送信不可）</h3>\n<ul>\n<li><p>quantity : 数量</p></li>\n<li><p>unit_price : 単価</p></li>\n<li><p>deal_line_type_id : 明細取引タイプID</p></li>\n<li><p>supplier_id : 仕入先ID</p></li>\n<li><p>payment_partner_id : 支払先ID</p></li>\n<li><p>uom_name : 単位</p></li>\n<li><p>master_item_id : 商品ID</p></li>\n<li><p>accounting_reporting_section_id : 会計計上部門ID</p></li>\n<li><p>item_tag_id : 会計品目タグID</p></li>\n<li><p>memo_tag_ids : メモタグID（複数指定可）</p></li>\n<li><p>segment_tag_1_id : セグメントタグ1ID</p></li>\n<li><p>segment_tag_2_id : セグメントタグ2ID</p></li>\n<li><p>segment_tag_3_id : セグメントタグ3ID</p></li>\n</ul>\n<h3 id=\"_5\">type=external_procurement / type=other_cost 固有フィールド（仕入では送信不可）</h3>\n<ul>\n<li><p>amount_excluding_tax : 金額(税抜)</p></li>\n</ul>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "原価予算ID"
+          }
+        ]
+      }
+    },
+    "/cost_budgets/{id}/cancellation": {
+      "post": {
+        "summary": "原価予算取消",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの原価予算を取消します。\n</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "原価予算ID"
+          }
+        ]
+      }
+    },
     "/master/business_phases": {
       "get": {
         "summary": "案件フェーズ一覧",
@@ -218,6 +271,111 @@
             "type": "string",
             "required": true,
             "description": "売上ID"
+          }
+        ]
+      }
+    },
+    "/other_costs": {
+      "get": {
+        "summary": "その他原価一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>その他原価の一覧を取得します。\n登録されているその他原価情報を一覧形式で取得できます。\n各種フィルタ条件を指定することで、特定の条件に合致するその他原価のみを取得することが可能です。\n</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>start_amount_excluding_tax : 金額(税抜)の絞り込み下限</p>\n</li>\n<li>\n<p>end_amount_excluding_tax : 金額(税抜)の絞り込み上限</p>\n</li>\n<li>\n<p>business_ids : 案件ID(複数指定可)</p>\n</li>\n<li>\n<p>start_incurred_date : 発生日の絞り込み開始日</p>\n</li>\n<li>\n<p>end_incurred_date : 発生日の絞り込み終了日</p>\n</li>\n<li>\n<p>canceled : 取消状態(デフォルト:false)</p>\n</li>\n</ul>\n<p>\n`limit`と`offset`パラメータを使用してページネーションが可能です。\nデフォルトでは20件ずつ取得され、最大100件まで一度に取得できます。\n</p>",
+        "parameters": [
+          {
+            "name": "start_amount_excluding_tax",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "金額(税抜)で絞込：下限"
+          },
+          {
+            "name": "end_amount_excluding_tax",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "description": "金額(税抜)で絞込：上限"
+          },
+          {
+            "name": "business_ids[]",
+            "in": "query",
+            "type": "array",
+            "required": false,
+            "description": "案件ID"
+          },
+          {
+            "name": "start_incurred_date",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "発生日で絞込：開始日(yyyy-mm-dd)"
+          },
+          {
+            "name": "end_incurred_date",
+            "in": "query",
+            "type": "string",
+            "required": false,
+            "description": "発生日で絞込：終了日(yyyy-mm-dd)"
+          }
+        ]
+      },
+      "post": {
+        "summary": "その他原価登録",
+        "description": "<h2 id=\"\">概要</h2>\n<p>新しいその他原価を登録します。\n案件に紐づくその他原価、または案件に紐づかないその他原価を登録できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>必須項目</h3>\n<ul>\n<li>\n<p>company_id : 事業所ID</p>\n</li>\n<li>\n<p>amount_excluding_tax : 金額(税抜)</p>\n</li>\n<li>\n<p>incurred_date : 発生日</p>\n</li>\n</ul>\n<h3>任意項目</h3>\n<ul>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>memo : メモ</p>\n</li>\n</ul>"
+      }
+    },
+    "/other_costs/{id}": {
+      "get": {
+        "summary": "その他原価詳細取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDのその他原価の詳細情報を取得します。\n</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "その他原価ID"
+          }
+        ]
+      },
+      "patch": {
+        "summary": "その他原価更新",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDのその他原価を更新します。\n送信したフィールドのみが更新され、送信しなかったフィールドは変更されません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>更新可能項目</h3>\n<ul>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>amount_excluding_tax : 金額(税抜)</p>\n</li>\n<li>\n<p>incurred_date : 発生日</p>\n</li>\n<li>\n<p>memo : メモ</p>\n</li>\n</ul>\n<p>※全ての項目は任意です。更新したい項目のみを送信してください。</p>\n<h2 id=\"_3\">注意点</h2>\n<p>freee会計の取引明細インポートから登録されたその他原価は本APIでは更新できません。該当データを更新しようとした場合はエラーになります。</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "その他原価ID"
+          }
+        ]
+      }
+    },
+    "/other_costs/{id}/restoration": {
+      "post": {
+        "summary": "その他原価復元",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの取消済みその他原価を復元します。\n</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "その他原価ID"
+          }
+        ]
+      }
+    },
+    "/other_costs/{id}/cancellation": {
+      "post": {
+        "summary": "その他原価取消",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDのその他原価を取り消します。\n</p>",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "その他原価ID"
           }
         ]
       }
