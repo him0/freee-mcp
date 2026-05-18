@@ -88,6 +88,13 @@
             "type": "integer",
             "required": false,
             "description": "取得レコードのオフセット (デフォルト: 0)"
+          },
+          {
+            "name": "sales_management_origin",
+            "in": "query",
+            "type": "boolean",
+            "required": false,
+            "description": "freee販売から作成された帳票データを含める。trueを指定する場合はfreee販売から作成された帳票へのアクセス権限が必要です。"
           }
         ]
       },
@@ -249,6 +256,13 @@
             "type": "integer",
             "required": false,
             "description": "取得レコードのオフセット (デフォルト: 0)"
+          },
+          {
+            "name": "sales_management_origin",
+            "in": "query",
+            "type": "boolean",
+            "required": false,
+            "description": "freee販売から作成された帳票データを含める。trueを指定する場合はfreee販売から作成された帳票へのアクセス権限が必要です。"
           }
         ]
       },
@@ -396,6 +410,13 @@
             "type": "integer",
             "required": false,
             "description": "取得レコードのオフセット (デフォルト: 0)"
+          },
+          {
+            "name": "sales_management_origin",
+            "in": "query",
+            "type": "boolean",
+            "required": false,
+            "description": "freee販売から作成された帳票データを含める。trueを指定する場合はfreee販売から作成された帳票へのアクセス権限が必要です。"
           }
         ]
       },

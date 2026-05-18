@@ -176,6 +176,16 @@
               "minimum": 0,
               "maximum": 2147483647
             }
+          },
+          {
+            "name": "sales_management_origin",
+            "in": "query",
+            "required": false,
+            "description": "freee販売から作成された帳票データを含める。trueを指定する場合はfreee販売から作成された帳票へのアクセス権限が必要です。",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -764,6 +774,16 @@
               "minimum": 0,
               "maximum": 2147483647
             }
+          },
+          {
+            "name": "sales_management_origin",
+            "in": "query",
+            "required": false,
+            "description": "freee販売から作成された帳票データを含める。trueを指定する場合はfreee販売から作成された帳票へのアクセス権限が必要です。",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -1324,6 +1344,16 @@
               "type": "integer",
               "minimum": 0,
               "maximum": 2147483647
+            }
+          },
+          {
+            "name": "sales_management_origin",
+            "in": "query",
+            "required": false,
+            "description": "freee販売から作成された帳票データを含める。trueを指定する場合はfreee販売から作成された帳票へのアクセス権限が必要です。",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -2354,7 +2384,8 @@
           "amount_including_tax",
           "amount_excluding_tax",
           "amount_tax",
-          "partner_id"
+          "partner_id",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -2511,6 +2542,15 @@
             ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
+          },
+          "sales_management_origin": {
+            "type": "boolean",
+            "description": "freee販売から作成された帳票かどうか"
           }
         }
       },
@@ -2861,7 +2901,8 @@
           "amount_excluding_tax",
           "amount_tax",
           "partner_id",
-          "lines"
+          "lines",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -3233,6 +3274,11 @@
               "$ref": "#/components/schemas/DeliverySlipResponse_delivery_slip_lines"
             },
             "description": "納品書の明細行"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
           }
         }
       },
@@ -3423,7 +3469,8 @@
           "amount_excluding_tax",
           "amount_tax",
           "partner_id",
-          "lines"
+          "lines",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -3772,6 +3819,15 @@
             ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
+          },
+          "sales_management_origin": {
+            "type": "boolean",
+            "description": "freee販売から作成された帳票かどうか"
           }
         }
       },
@@ -3879,7 +3935,8 @@
           "amount_excluding_tax",
           "amount_tax",
           "amount_brought_forward",
-          "partner_id"
+          "partner_id",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -4061,6 +4118,15 @@
             ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
+          },
+          "sales_management_origin": {
+            "type": "boolean",
+            "description": "freee販売から作成された帳票かどうか"
           }
         }
       },
@@ -4454,7 +4520,8 @@
           "amount_tax",
           "amount_brought_forward",
           "partner_id",
-          "lines"
+          "lines",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -4839,6 +4906,11 @@
               "$ref": "#/components/schemas/InvoiceResponse_invoice_lines"
             },
             "description": "請求書の明細行"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
           }
         }
       },
@@ -5041,7 +5113,8 @@
           "amount_tax",
           "amount_brought_forward",
           "partner_id",
-          "lines"
+          "lines",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -5423,6 +5496,15 @@
             ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
+          },
+          "sales_management_origin": {
+            "type": "boolean",
+            "description": "freee販売から作成された帳票かどうか"
           }
         }
       },
@@ -5534,7 +5616,8 @@
           "amount_including_tax",
           "amount_excluding_tax",
           "amount_tax",
-          "partner_id"
+          "partner_id",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -5667,6 +5750,15 @@
             ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
+          },
+          "sales_management_origin": {
+            "type": "boolean",
+            "description": "freee販売から作成された帳票かどうか"
           }
         }
       },
@@ -5978,7 +6070,8 @@
           "amount_excluding_tax",
           "amount_tax",
           "partner_id",
-          "lines"
+          "lines",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -6317,6 +6410,11 @@
               "$ref": "#/components/schemas/QuotationResponse_quotation_lines"
             },
             "description": "見積書の明細行"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
           }
         }
       },
@@ -6445,7 +6543,8 @@
           "amount_excluding_tax",
           "amount_tax",
           "partner_id",
-          "lines"
+          "lines",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -6780,6 +6879,15 @@
             ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
+          },
+          "sales_management_origin": {
+            "type": "boolean",
+            "description": "freee販売から作成された帳票かどうか"
           }
         }
       },
@@ -6886,7 +6994,8 @@
           "amount_including_tax",
           "amount_excluding_tax",
           "amount_tax",
-          "partner_id"
+          "partner_id",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -7043,6 +7152,11 @@
             ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
           }
         }
       },
@@ -7371,7 +7485,8 @@
           "amount_excluding_tax",
           "amount_tax",
           "partner_id",
-          "lines"
+          "lines",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -7703,6 +7818,11 @@
               "$ref": "#/components/schemas/ReceiptResponse_receipt_lines"
             },
             "description": "領収書の明細行"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
           }
         }
       },
@@ -7893,7 +8013,8 @@
           "amount_excluding_tax",
           "amount_tax",
           "partner_id",
-          "lines"
+          "lines",
+          "report_url"
         ],
         "properties": {
           "id": {
@@ -8242,6 +8363,11 @@
             ],
             "nullable": true,
             "description": "URL共有で送付された送付先のメールのダウンロードステータス"
+          },
+          "report_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "帳票詳細ページのURL"
           }
         }
       },

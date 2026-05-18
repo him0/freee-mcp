@@ -83,7 +83,9 @@
     "master": "master",
     "sales_orders": "sales-orders",
     "deliveries": "deliveries",
-    "sales": "sales"
+    "sales": "sales",
+    "cost_budgets": "cost-budgets",
+    "other_costs": "other-costs"
   },
   "sign-api": {
     "文書": "documents",
