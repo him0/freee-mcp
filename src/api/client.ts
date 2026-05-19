@@ -10,6 +10,22 @@ import { type TokenContext, resolveCompanyId } from '../storage/context.js';
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
 /**
+ * Error thrown when the upstream freee API responds with an unsuccessful
+ * status code that is not handled by a dedicated branch (401/403/429).
+ * Carries the original HTTP status so callers can decide how to surface it
+ * to MCP clients (e.g., setting `CallToolResult.isError` for 400).
+ */
+export class ApiHttpError extends Error {
+  readonly statusCode: number;
+
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.name = 'ApiHttpError';
+    this.statusCode = statusCode;
+  }
+}
+
+/**
  * Response type for binary file downloads
  */
 export interface BinaryFileResponse {
@@ -158,7 +174,9 @@ export async function makeApiRequest(
   } catch (fetchError) {
     const durationMs = Date.now() - startTime;
     const errorType: 'timeout' | 'network_error' =
-      fetchError instanceof Error && fetchError.name === 'TimeoutError' ? 'timeout' : 'network_error';
+      fetchError instanceof Error && fetchError.name === 'TimeoutError'
+        ? 'timeout'
+        : 'network_error';
     recorder?.recordApiCall({
       method,
       path_pattern: safePath,
@@ -239,9 +257,7 @@ export async function makeApiRequest(
     const errorInfo = await formatResponseErrorInfo(response);
     const retryMsg = formatRetryAfterMessage(retryAfter);
     const rateLimitError = new Error(
-      `レートリミットに達しました (429): ${errorInfo}\n` +
-        `事業所ID: ${companyId}\n` +
-        retryMsg,
+      `レートリミットに達しました (429): ${errorInfo}\n事業所ID: ${companyId}\n${retryMsg}`,
     );
     recorder?.recordApiCall({
       method,
@@ -264,7 +280,7 @@ export async function makeApiRequest(
 
   if (!response.ok) {
     const errorMessage = await formatApiErrorMessage(response, response.status);
-    const httpError = new Error(errorMessage);
+    const httpError = new ApiHttpError(errorMessage, response.status);
     recorder?.recordApiCall({
       method,
       path_pattern: safePath,

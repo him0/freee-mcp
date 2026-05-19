@@ -1,6 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { isBinaryFileResponse, makeApiRequest } from '../api/client.js';
+import { ApiHttpError, isBinaryFileResponse, makeApiRequest } from '../api/client.js';
 import { makeErrorChain, serializeErrorChain } from '../server/error-serializer.js';
 import { sanitizePath } from '../server/logger.js';
 import { getCurrentRecorder } from '../server/request-context.js';
@@ -180,7 +180,14 @@ function createMethodTool(method: string) {
         duration_ms: Date.now() - startTime,
       });
       recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
-      return createTextResponse(`APIリクエストエラー: ${formatErrorMessage(error)}`);
+      // MCP 仕様 (Tools - Error Handling): 上流 API の 400 など、ツール呼び出し自体は
+      // 成立したが操作結果が失敗したケースは `isError: true` で返し、LLM/クライアントに
+      // 成功と区別させる。
+      const isUpstream400 = error instanceof ApiHttpError && error.statusCode === 400;
+      return createTextResponse(
+        `APIリクエストエラー: ${formatErrorMessage(error)}`,
+        isUpstream400 ? { isError: true } : undefined,
+      );
     }
   };
 }

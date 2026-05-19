@@ -68,6 +68,24 @@ describe('createTextResponse', () => {
       ],
     });
   });
+
+  it('omits isError by default (success-shaped response)', () => {
+    const result = createTextResponse('ok');
+    expect('isError' in result).toBe(false);
+  });
+
+  it('sets isError: true when option is provided', () => {
+    const result = createTextResponse('boom', { isError: true });
+    expect(result).toEqual({
+      content: [{ type: 'text', text: 'boom' }],
+      isError: true,
+    });
+  });
+
+  it('omits isError when option is explicitly false', () => {
+    const result = createTextResponse('ok', { isError: false });
+    expect('isError' in result).toBe(false);
+  });
 });
 
 describe('formatErrorMessage', () => {
