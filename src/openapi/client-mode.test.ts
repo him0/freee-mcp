@@ -37,25 +37,9 @@ vi.mock('./schema-loader.js', () => ({
   listAllAvailablePaths: vi.fn(() => ''),
 }));
 
-// The mocked `../api/client.js` must also expose `ApiHttpError`, because
-// `client-mode.ts` does `instanceof ApiHttpError` and that must refer to the
-// same class the test constructs. Hoist a local class via `vi.hoisted` so
-// both the mock factory and the test bodies share one identity.
-const { MockApiHttpError } = vi.hoisted(() => ({
-  MockApiHttpError: class MockApiHttpError extends Error {
-    readonly statusCode: number;
-    constructor(message: string, statusCode: number) {
-      super(message);
-      this.name = 'ApiHttpError';
-      this.statusCode = statusCode;
-    }
-  },
-}));
-
 vi.mock('../api/client.js', () => ({
   makeApiRequest: vi.fn(() => Promise.resolve({ ok: true })),
   isBinaryFileResponse: vi.fn(() => false),
-  ApiHttpError: MockApiHttpError,
 }));
 
 vi.mock('../storage/context.js', () => ({
@@ -159,13 +143,13 @@ describe('generateClientModeTool - privacy', () => {
   // `path_pattern` now lives on `ApiCallInfo` (which is recorded inside
   // `makeApiRequest`), and that path is mocked in this test file.
 
-  it('returns isError: true when upstream API responds with 400', async () => {
-    // MCP spec recommends signalling tool execution errors (e.g., upstream 4xx)
-    // via `CallToolResult.isError: true` so LLMs and clients can distinguish
-    // them from successful responses without parsing the body.
+  it('returns isError: true when upstream API responds with 4xx', async () => {
+    // MCP spec (Tools - Error Handling) recommends signalling tool execution
+    // errors via `CallToolResult.isError: true` so LLMs and clients can
+    // distinguish them from successful responses without parsing the body.
     const clientModule = await import('../api/client.js');
     vi.mocked(clientModule.makeApiRequest).mockRejectedValueOnce(
-      new MockApiHttpError('API request failed: 400\n\nエラー詳細:\nissue_date は必須です', 400),
+      new Error('API request failed: 400\n\nエラー詳細:\nissue_date は必須です'),
     );
 
     const { generateClientModeTool } = await import('./client-mode.js');
@@ -184,12 +168,10 @@ describe('generateClientModeTool - privacy', () => {
     expect(result.content[0].text).toMatch(/issue_date は必須です/);
   });
 
-  it('does not set isError for non-400 upstream HTTP errors (e.g., 500)', async () => {
-    // Only 400 currently flips isError; 5xx etc. remain success-shaped to keep
-    // the existing LLM-mediated retry/recovery behaviour.
+  it('returns isError: true when upstream API responds with 5xx', async () => {
     const clientModule = await import('../api/client.js');
     vi.mocked(clientModule.makeApiRequest).mockRejectedValueOnce(
-      new MockApiHttpError('API request failed: 500', 500),
+      new Error('API request failed: 500'),
     );
 
     const { generateClientModeTool } = await import('./client-mode.js');
@@ -202,11 +184,12 @@ describe('generateClientModeTool - privacy', () => {
       undefined,
     )) as { isError?: boolean; content: Array<{ type: string; text: string }> };
 
-    expect(result.isError).toBeUndefined();
+    expect(result.isError).toBe(true);
     expect(result.content[0].text).toMatch(/APIリクエストエラー/);
   });
 
-  it('does not set isError for non-ApiHttpError exceptions (auth/network/etc.)', async () => {
+  it('returns isError: true for auth/network/etc. errors thrown from makeApiRequest', async () => {
+    // 401/403/429 と network/timeout エラーも catch ブロックに入るので同様に isError 扱い
     const clientModule = await import('../api/client.js');
     vi.mocked(clientModule.makeApiRequest).mockRejectedValueOnce(
       new Error('認証エラーが発生しました。'),
@@ -222,7 +205,7 @@ describe('generateClientModeTool - privacy', () => {
       undefined,
     )) as { isError?: boolean; content: Array<{ type: string; text: string }> };
 
-    expect(result.isError).toBeUndefined();
+    expect(result.isError).toBe(true);
   });
 
   it('records tool_call with error status when validation fails', async () => {

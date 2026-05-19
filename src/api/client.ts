@@ -10,22 +10,6 @@ import { type TokenContext, resolveCompanyId } from '../storage/context.js';
 import { formatApiErrorMessage, formatResponseErrorInfo } from '../utils/error.js';
 
 /**
- * Error thrown when the upstream freee API responds with an unsuccessful
- * status code that is not handled by a dedicated branch (401/403/429).
- * Carries the original HTTP status so callers can decide how to surface it
- * to MCP clients (e.g., setting `CallToolResult.isError` for 400).
- */
-export class ApiHttpError extends Error {
-  readonly statusCode: number;
-
-  constructor(message: string, statusCode: number) {
-    super(message);
-    this.name = 'ApiHttpError';
-    this.statusCode = statusCode;
-  }
-}
-
-/**
  * Response type for binary file downloads
  */
 export interface BinaryFileResponse {
@@ -280,7 +264,7 @@ export async function makeApiRequest(
 
   if (!response.ok) {
     const errorMessage = await formatApiErrorMessage(response, response.status);
-    const httpError = new ApiHttpError(errorMessage, response.status);
+    const httpError = new Error(errorMessage);
     recorder?.recordApiCall({
       method,
       path_pattern: safePath,

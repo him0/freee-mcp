@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getUserAgent } from '../server/user-agent.js';
 import {
-  ApiHttpError,
   type BinaryFileResponse,
   formatRetryAfterMessage,
   isBinaryFileResponse,
@@ -380,46 +379,6 @@ describe('client', () => {
       await expect(makeApiRequest('GET', '/api/1/users/me')).rejects.toThrow(
         'API request failed: 500',
       );
-    });
-
-    it('throws ApiHttpError with statusCode for non-auth/forbidden/rate-limit errors', async () => {
-      // The 400 case is the trigger for the catch site in client-mode.ts to set
-      // `CallToolResult.isError: true`. ApiHttpError must expose `statusCode`
-      // and be `instanceof ApiHttpError` so the catch site can distinguish 400
-      // from other thrown errors.
-      await setupAccessToken(TEST_ACCESS_TOKEN);
-      mockFetch.mockResolvedValue(
-        createErrorResponse(400, {
-          errors: [{ messages: ['date は必須です'] }],
-        }),
-      );
-
-      let caught: unknown;
-      try {
-        await makeApiRequest('POST', '/api/1/deals', undefined, { foo: 'bar' });
-      } catch (error) {
-        caught = error;
-      }
-      expect(caught).toBeInstanceOf(ApiHttpError);
-      expect((caught as ApiHttpError).statusCode).toBe(400);
-      expect((caught as ApiHttpError).message).toMatch(/API request failed: 400/);
-      expect((caught as ApiHttpError).message).toMatch(/date は必須です/);
-    });
-
-    it('throws ApiHttpError with statusCode for 5xx errors too', async () => {
-      // Same error class is reused for all non-auth/forbidden/rate-limit HTTP
-      // errors; only the catch site decides which statuses get `isError: true`.
-      await setupAccessToken(TEST_ACCESS_TOKEN);
-      mockFetch.mockResolvedValue(createErrorResponse(500, { error: 'oops' }));
-
-      let caught: unknown;
-      try {
-        await makeApiRequest('GET', '/api/1/users/me');
-      } catch (error) {
-        caught = error;
-      }
-      expect(caught).toBeInstanceOf(ApiHttpError);
-      expect((caught as ApiHttpError).statusCode).toBe(500);
     });
 
     it('should handle JSON parsing errors in error responses', async () => {
