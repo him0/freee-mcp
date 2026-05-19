@@ -174,9 +174,7 @@ export async function makeApiRequest(
   } catch (fetchError) {
     const durationMs = Date.now() - startTime;
     const errorType: 'timeout' | 'network_error' =
-      fetchError instanceof Error && fetchError.name === 'TimeoutError'
-        ? 'timeout'
-        : 'network_error';
+      fetchError instanceof Error && fetchError.name === 'TimeoutError' ? 'timeout' : 'network_error';
     recorder?.recordApiCall({
       method,
       path_pattern: safePath,
@@ -257,7 +255,9 @@ export async function makeApiRequest(
     const errorInfo = await formatResponseErrorInfo(response);
     const retryMsg = formatRetryAfterMessage(retryAfter);
     const rateLimitError = new Error(
-      `レートリミットに達しました (429): ${errorInfo}\n事業所ID: ${companyId}\n${retryMsg}`,
+      `レートリミットに達しました (429): ${errorInfo}\n` +
+        `事業所ID: ${companyId}\n` +
+        retryMsg,
     );
     recorder?.recordApiCall({
       method,

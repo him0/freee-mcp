@@ -139,9 +139,7 @@ describe('formatRetryAfterMessage', () => {
   });
 
   it('falls back when header is unparseable', () => {
-    expect(formatRetryAfterMessage('not-a-date-or-number')).toBe(
-      '数分待ってから再試行してください。',
-    );
+    expect(formatRetryAfterMessage('not-a-date-or-number')).toBe('数分待ってから再試行してください。');
   });
 });
 
@@ -526,7 +524,9 @@ describe('client', () => {
         text: (): Promise<string> => Promise.resolve(JSON.stringify({ ok: true })),
       });
 
-      const { RequestRecorder, withRequestRecorder } = await import('../server/request-context.js');
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
       const recorder = new RequestRecorder({
         request_id: 'req-api-success',
         source_ip: '127.0.0.1',
@@ -564,7 +564,9 @@ describe('client', () => {
         text: (): Promise<string> => Promise.resolve(JSON.stringify({ ok: true })),
       });
 
-      const { RequestRecorder, withRequestRecorder } = await import('../server/request-context.js');
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
       const recorder = new RequestRecorder({
         request_id: 'req-api-empty-params',
         source_ip: '127.0.0.1',
@@ -584,7 +586,9 @@ describe('client', () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
       mockFetch.mockResolvedValue(createErrorResponse(500, { error: 'oops' }));
 
-      const { RequestRecorder, withRequestRecorder } = await import('../server/request-context.js');
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
       const recorder = new RequestRecorder({
         request_id: 'req-api-500',
         source_ip: '127.0.0.1',
@@ -615,7 +619,9 @@ describe('client', () => {
       await setupAccessToken(TEST_ACCESS_TOKEN);
       mockFetch.mockResolvedValue(createErrorResponse(401, { error: 'invalid_token' }));
 
-      const { RequestRecorder, withRequestRecorder } = await import('../server/request-context.js');
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
       const recorder = new RequestRecorder({
         request_id: 'req-api-401',
         source_ip: '127.0.0.1',
@@ -644,7 +650,9 @@ describe('client', () => {
         json: () => Promise.resolve({ error: 'rate_limit_exceeded' }),
       });
 
-      const { RequestRecorder, withRequestRecorder } = await import('../server/request-context.js');
+      const { RequestRecorder, withRequestRecorder } = await import(
+        '../server/request-context.js'
+      );
       const recorder = new RequestRecorder({
         request_id: 'req-api-429',
         source_ip: '127.0.0.1',
