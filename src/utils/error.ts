@@ -26,8 +26,13 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 /**
  * Creates a standardized MCP text response.
+ *
+ * Pass `{ isError: true }` for tool execution errors (upstream API failure,
+ * business-logic validation failure, etc.). MCP spec recommends signalling
+ * such errors via `CallToolResult.isError` so the LLM and clients can
+ * distinguish them from successful responses without parsing the body.
  */
-export function createTextResponse(text: string): CallToolResult {
+export function createTextResponse(text: string, options?: { isError?: boolean }): CallToolResult {
   return {
     content: [
       {
@@ -35,6 +40,7 @@ export function createTextResponse(text: string): CallToolResult {
         text,
       },
     ],
+    ...(options?.isError ? { isError: true } : {}),
   };
 }
 

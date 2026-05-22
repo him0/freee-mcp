@@ -180,7 +180,12 @@ function createMethodTool(method: string) {
         duration_ms: Date.now() - startTime,
       });
       recorder?.recordError({ source: 'tool_handler', chain: serializeErrorChain(error) });
-      return createTextResponse(`APIリクエストエラー: ${formatErrorMessage(error)}`);
+      // MCP 仕様 (Tools - Error Handling): 上流 API への呼び出しが 2xx 以外で返ってきた
+      // ケース（4xx/5xx/network/timeout 等）はツール実行失敗として `isError: true` で
+      // 返し、LLM/クライアントに成功と区別させる。
+      return createTextResponse(`APIリクエストエラー: ${formatErrorMessage(error)}`, {
+        isError: true,
+      });
     }
   };
 }
