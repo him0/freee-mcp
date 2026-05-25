@@ -93,7 +93,7 @@ type : 原価種別 (procurement, external_procurement, other_cost) start_amount
 
 操作: 原価予算取消
 
-説明: 概要 指定されたIDの原価予算を取消します。
+説明: 概要 指定されたIDの原価予算を取り消します。
 
 ### パラメータ
 
