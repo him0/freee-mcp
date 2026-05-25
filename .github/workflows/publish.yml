@@ -47,17 +47,25 @@ jobs:
       # Phase 1: GitHub Release
       - name: Check if GitHub Release exists
         id: check-release
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
-          if gh release view v$VERSION >/dev/null 2>&1; then
-            echo "ℹ️  GitHub Release v$VERSION already exists - skipping"
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "✅ GitHub Release v$VERSION does not exist - will create"
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set +e
+          RELEASE_OUTPUT=$(gh release view "v${VERSION}" 2>&1)
+          RELEASE_STATUS=$?
+          set -e
+
+          if [ "$RELEASE_STATUS" -eq 0 ]; then
+            echo "ℹ️  GitHub Release v${VERSION} already exists - skipping"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          elif echo "$RELEASE_OUTPUT" | grep -Eiq 'not[ -]?found|404'; then
+            echo "✅ GitHub Release v${VERSION} does not exist - will create"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "$RELEASE_OUTPUT"
+            exit "$RELEASE_STATUS"
+          fi
 
       - name: Configure git for push
         run: |
@@ -69,8 +77,9 @@ jobs:
 
       - name: Create Git Tag
         if: steps.check-release.outputs.skip != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION=${{ steps.version.outputs.version }}
           if ! git rev-parse v$VERSION >/dev/null 2>&1; then
             git tag v$VERSION
             git push origin v$VERSION
@@ -130,25 +139,6 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-          # README の Contributors セクションに新しいユーザーを追加
-          if [ -n "$USERS" ]; then
-            while read -r user; do
-              if ! grep -q "github.com/${user}" README.md; then
-                sed -i "s|<!-- CONTRIBUTORS-END -->|<a href=\"https://github.com/${user}\"><img src=\"https://github.com/${user}.png\" width=\"40\" height=\"40\" alt=\"@${user}\"></a>\n<!-- CONTRIBUTORS-END -->|" README.md
-                echo "Added $user to README contributors"
-              fi
-            done <<< "$USERS"
-
-            if git diff --quiet README.md; then
-              echo "No new contributors to add to README"
-            else
-              git add README.md
-              git commit -m "docs: add new contributors to README"
-              git push
-              echo "Pushed README contributor updates"
-            fi
-          fi
-
       - name: Create GitHub Release
         if: steps.check-release.outputs.skip != 'true'
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
@@ -172,14 +162,23 @@ jobs:
       # Phase 2: npm publish
       - name: Check if npm package exists
         id: check-npm
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION=${{ steps.version.outputs.version }}
-          if npm view freee-mcp@$VERSION version 2>/dev/null; then
-            echo "ℹ️  npm package freee-mcp@$VERSION already exists - skipping"
+          set +e
+          NPM_OUTPUT=$(npm view "freee-mcp@${VERSION}" version 2>&1)
+          NPM_STATUS=$?
+          set -e
+
+          if [ "$NPM_STATUS" -eq 0 ]; then
+            echo "ℹ️  npm package freee-mcp@${VERSION} already exists - skipping"
             echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "✅ npm package freee-mcp@$VERSION does not exist - will publish"
+          elif echo "$NPM_OUTPUT" | grep -Eiq 'E404|404|not[ -]?found'; then
+            echo "✅ npm package freee-mcp@${VERSION} does not exist - will publish"
             echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "$NPM_OUTPUT"
+            exit "$NPM_STATUS"
           fi
 
       - name: Publish to npm (Trusted Publishing)
@@ -187,15 +186,3 @@ jobs:
         run: bun run release
         env:
           NPM_CONFIG_PROVENANCE: true
-
-      - name: Sync plugin.json and apm.yml version
-        if: steps.check-npm.outputs.skip != 'true'
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
-          jq --arg v "$VERSION" '.version = $v' .claude-plugin/plugin.json > tmp.json && mv tmp.json .claude-plugin/plugin.json
-          jq --arg v "$VERSION" '.plugins[0].version = $v' .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
-          sed -i "s/^version: .*/version: $VERSION/" skills/freee-api-skill/apm.yml
-          git add .claude-plugin/ skills/freee-api-skill/apm.yml
-          git commit -m "chore: sync plugin and skill version to $VERSION" || echo "No changes to commit"
-          git push
-          echo "✅ Synced plugin.json and apm.yml versions"
