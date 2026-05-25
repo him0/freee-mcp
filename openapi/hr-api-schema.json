@@ -105,6 +105,10 @@
       "description": "役職の操作"
     },
     {
+      "name": "手当",
+      "description": "手当の操作"
+    },
+    {
       "name": "月次勤怠締め申請",
       "description": "月次勤怠締め申請の操作"
     },
@@ -3476,7 +3480,7 @@
           "勤怠タグサマリ"
         ],
         "summary": "勤怠タグ月次サマリの取得",
-        "description": "<h2 id=\"\">概要</h2>\n<p>\n  指定した従業員・年月の勤怠タグサマリを更新します。<br />\n  年月は給与支払い月を指定してください。\n</p>",
+        "description": "<h2 id=\"\">概要</h2>\n<p>\n  指定した従業員・年月の勤怠タグサマリの一覧を返します。<br />\n  年月は給与支払い月を指定してください。\n</p>",
         "operationId": "get_employees_attendance_tag_summaries",
         "parameters": [
           {
@@ -5109,6 +5113,329 @@
         "responses": {
           "204": {
             "description": "successful operation"
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/accessDeniedError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/notfoundError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internalServerError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/allowances": {
+      "get": {
+        "tags": [
+          "手当"
+        ],
+        "summary": "手当一覧の取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の手当情報をリストで返します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>管理者権限を持ったユーザーのみ実行可能です。</li>\n</ul>",
+        "operationId": "get_allowances",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "description": "事業所ID",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "example": 1
+          },
+          {
+            "name": "frequency",
+            "in": "query",
+            "required": false,
+            "description": "支給頻度フィルタ（省略で全件取得）",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "salary",
+                "salary_monthly",
+                "salary_this_month",
+                "bonus"
+              ]
+            },
+            "example": "salary_monthly"
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "required": false,
+            "description": "表示状態フィルタ（省略で全件取得）",
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "取得レコードの件数 (デフォルト: 50, 最小: 1, 最大: 100)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "example": 50
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "取得レコードのオフセット (デフォルト: 0)",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            "example": 0
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiV1AllowancesIndexResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/accessDeniedError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internalServerError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "手当"
+        ],
+        "summary": "手当の作成",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の手当を新規作成します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>管理者権限を持ったユーザーのみ実行可能です。</li>\n</ul>",
+        "operationId": "create_allowance",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "description": "事業所ID",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiV1AllowancesController.create_body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiV1AllowanceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/unauthorizedError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/forbiddenError"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/accessDeniedError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/internalServerError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/allowances/{id}": {
+      "get": {
+        "tags": [
+          "手当"
+        ],
+        "summary": "手当の取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定した事業所の手当情報を返します。</p>\n\n<h2 id=\"_1\">注意点</h2>\n<ul>\n  <li>管理者権限を持ったユーザーのみ実行可能です。</li>\n</ul>",
+        "operationId": "get_allowance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "手当ID",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "example": 1
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "description": "事業所ID",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiV1AllowanceResponse"
+                }
+              }
+            }
           },
           "400": {
             "description": "",
@@ -20820,6 +21147,300 @@
             "description": "合計件数",
             "format": "int32",
             "example": 1
+          }
+        }
+      },
+      "ApiV1AllowanceSerializer": {
+        "type": "object",
+        "required": [
+          "id",
+          "company_id",
+          "name",
+          "frequency",
+          "calc_type",
+          "is_active",
+          "amount_source",
+          "is_daily_prorated",
+          "is_affect_income_tax",
+          "is_affect_employment_insurance",
+          "is_affect_labor_insurance",
+          "is_affect_overtime_wage_base",
+          "is_affect_attendance_deduction_base",
+          "is_affect_fixed_wage"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "手当ID",
+            "format": "int64"
+          },
+          "company_id": {
+            "type": "integer",
+            "description": "事業所ID",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "description": "手当名"
+          },
+          "description": {
+            "type": "string",
+            "description": "説明",
+            "nullable": true
+          },
+          "frequency": {
+            "type": "string",
+            "description": "支給タイミング",
+            "enum": [
+              "salary_this_month",
+              "salary_monthly",
+              "bonus"
+            ]
+          },
+          "calc_type": {
+            "type": "string",
+            "description": "計算タイプ",
+            "enum": [
+              "fixed",
+              "variable",
+              "custom",
+              "attendance_day_tag",
+              "attendance_time_tag"
+            ]
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "表示状態"
+          },
+          "amount": {
+            "type": "integer",
+            "description": "金額（変動手当の場合はnull）",
+            "nullable": true
+          },
+          "amount_source": {
+            "type": "string",
+            "description": "金額ソース",
+            "enum": [
+              "direct",
+              "system_overtime_charge",
+              "system_deduction_charge"
+            ]
+          },
+          "is_daily_prorated": {
+            "type": "boolean",
+            "description": "日割り計算対象フラグ（calc_typeがfixed以外の場合はfalse）"
+          },
+          "formula_element": {
+            "type": "string",
+            "description": "計算の基となる勤怠項目・カスタム項目の識別子（calc_typeがfixedの場合はnull）",
+            "enum": [
+              "num_absences",
+              "num_paid_holidays",
+              "num_total_workdays",
+              "num_work_days_with_early_leaving",
+              "num_work_days_with_lateness",
+              "total_excess_statutory_work_mins",
+              "total_holiday_work_mins",
+              "total_lateness_and_early_leaving_mins",
+              "total_latenight_work_mins",
+              "total_normal_work_mins",
+              "total_overtime_work_mins",
+              "total_prescribed_holiday_work_mins",
+              "total_work_mins",
+              "company_profile_custom_field",
+              "attendance_tag_total_count",
+              "attendance_tag_assigned_days",
+              "attendance_tag_total_excess_statutory_work_mins",
+              "attendance_tag_total_prescribed_holiday_work_mins",
+              "attendance_tag_total_holiday_work_mins",
+              "attendance_tag_total_latenight_work_mins",
+              "attendance_tag_total_normal_work_mins",
+              "attendance_tag_total_overtime_work_mins",
+              "attendance_tag_total_work_mins"
+            ],
+            "nullable": true
+          },
+          "round_type": {
+            "type": "string",
+            "description": "端数処理（calc_typeがfixedの場合はnull）",
+            "enum": [
+              "round",
+              "floor",
+              "ceil"
+            ],
+            "nullable": true
+          },
+          "rate_multiplier": {
+            "type": "number",
+            "description": "乗数（amount_sourceがsystem_deduction_charge/system_overtime_chargeの場合のみ）",
+            "nullable": true
+          },
+          "company_profile_custom_field_id": {
+            "type": "integer",
+            "description": "カスタム項目ID（calc_typeがcustomの場合のみ）",
+            "format": "int64",
+            "nullable": true
+          },
+          "attendance_tag_id": {
+            "type": "integer",
+            "description": "勤怠タグID（calc_typeがattendance_day_tag/attendance_time_tagの場合のみ）",
+            "format": "int64",
+            "nullable": true
+          },
+          "is_affect_income_tax": {
+            "type": "boolean",
+            "description": "所得税の計算に含める"
+          },
+          "is_affect_employment_insurance": {
+            "type": "boolean",
+            "description": "社会保険料の計算に含める"
+          },
+          "is_affect_labor_insurance": {
+            "type": "boolean",
+            "description": "労働保険料の計算に含める"
+          },
+          "is_affect_overtime_wage_base": {
+            "type": "boolean",
+            "description": "割増賃金の計算に含める（frequencyがbonusの場合は常にfalse）"
+          },
+          "is_affect_attendance_deduction_base": {
+            "type": "boolean",
+            "description": "勤怠控除の基礎に含める（frequencyがbonusの場合は常にfalse）"
+          },
+          "is_affect_fixed_wage": {
+            "type": "boolean",
+            "description": "固定的賃金の計算に含める（frequencyがbonusの場合は常にfalse）"
+          }
+        }
+      },
+      "ApiV1AllowancesIndexResponse": {
+        "type": "object",
+        "required": [
+          "allowances",
+          "total_count"
+        ],
+        "properties": {
+          "allowances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiV1AllowanceSerializer"
+            }
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "合計件数",
+            "format": "int32",
+            "minimum": 0,
+            "maximum": 2147483647,
+            "example": 1
+          }
+        }
+      },
+      "ApiV1AllowanceResponse": {
+        "type": "object",
+        "required": [
+          "allowance"
+        ],
+        "properties": {
+          "allowance": {
+            "$ref": "#/components/schemas/ApiV1AllowanceSerializer"
+          }
+        }
+      },
+      "ApiV1AllowanceCreateRequestSerializer": {
+        "type": "object",
+        "required": [
+          "name",
+          "frequency",
+          "calc_type",
+          "amount_source",
+          "amount"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "手当名。最大240文字、同一 frequency 内（salary_this_month/salary_monthly または bonus）で重複不可",
+            "maxLength": 240
+          },
+          "description": {
+            "type": "string",
+            "description": "説明",
+            "nullable": true
+          },
+          "frequency": {
+            "type": "string",
+            "description": "支給タイミング（bonus は指定不可）",
+            "enum": [
+              "salary_this_month",
+              "salary_monthly"
+            ]
+          },
+          "calc_type": {
+            "type": "string",
+            "description": "計算タイプ（fixed のみ対応）",
+            "enum": [
+              "fixed"
+            ]
+          },
+          "amount_source": {
+            "type": "string",
+            "description": "金額ソース（direct のみ対応）",
+            "enum": [
+              "direct"
+            ]
+          },
+          "amount": {
+            "type": "integer",
+            "description": "金額。-100,000,000 より大きく 100,000,000 未満",
+            "minimum": -99999999,
+            "maximum": 99999999
+          },
+          "is_daily_prorated": {
+            "type": "boolean",
+            "description": "日割り計算対象フラグ（デフォルト false）"
+          },
+          "is_affect_income_tax": {
+            "type": "boolean",
+            "description": "所得税の計算に含める（デフォルト true）"
+          },
+          "is_affect_employment_insurance": {
+            "type": "boolean",
+            "description": "社会保険料の計算に含める（デフォルト true）"
+          },
+          "is_affect_labor_insurance": {
+            "type": "boolean",
+            "description": "労働保険料の計算に含める（デフォルト true）"
+          },
+          "is_affect_overtime_wage_base": {
+            "type": "boolean",
+            "description": "割増賃金の計算に含める（デフォルト true）"
+          },
+          "is_affect_attendance_deduction_base": {
+            "type": "boolean",
+            "description": "勤怠控除の基礎に含める（デフォルト true）"
+          },
+          "is_affect_fixed_wage": {
+            "type": "boolean",
+            "description": "固定的賃金の計算に含める（デフォルト true）"
+          }
+        }
+      },
+      "ApiV1AllowancesController.create_body": {
+        "type": "object",
+        "required": [
+          "company_id",
+          "allowance"
+        ],
+        "properties": {
+          "company_id": {
+            "type": "integer",
+            "description": "事業所ID",
+            "format": "int32",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "allowance": {
+            "$ref": "#/components/schemas/ApiV1AllowanceCreateRequestSerializer"
           }
         }
       },

@@ -36,6 +36,10 @@
       "description": "原価予算"
     },
     {
+      "name": "quotations",
+      "description": "見積"
+    },
+    {
       "name": "sales_orders",
       "description": "受注"
     },
@@ -511,7 +515,7 @@
           "cost_budgets"
         ],
         "summary": "原価予算取消",
-        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの原価予算を取消します。\n</p>",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの原価予算を取り消します。\n</p>",
         "operationId": "cancel_cost_budget",
         "parameters": [
           {
@@ -844,6 +848,366 @@
         }
       }
     },
+    "/quotations": {
+      "get": {
+        "tags": [
+          "quotations"
+        ],
+        "summary": "見積一覧",
+        "description": "<h2 id=\"\">概要</h2>\n<p>見積の一覧を取得します。\n登録されている見積情報を一覧形式で取得できます。\n各種フィルタ条件を指定することで、特定の条件に合致する見積のみを取得することが可能です。\n</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>start_registered_date : 見積登録日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_registered_date : 見積登録日(絞り込み終了)</p>\n</li>\n<li>\n<p>start_last_updated_date : 見積更新日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_last_updated_date : 見積更新日(絞り込み終了)</p>\n</li>\n<li>\n<p>start_quotation_date : 見積日(絞り込み開始)</p>\n</li>\n<li>\n<p>end_quotation_date : 見積日(絞り込み終了)</p>\n</li>\n<li>\n<p>charge_employee_ids : 社内担当者の従業員ID(複数指定可)</p>\n</li>\n<li>\n<p>customer_ids : 顧客の取引先ID(複数指定可)</p>\n</li>\n<li>\n<p>business_ids : 案件ID(複数指定可)</p>\n</li>\n<li>\n<p>quotation_status : 見積ステータス</p>\n</li>\n<li>\n<p>billing_status : 請求書送付ステータス</p>\n</li>\n<li>\n<p>canceled : 取消状態(デフォルト:false)</p>\n</li>\n</ul>\n<p>\n`limit`と`offset`パラメータを使用してページネーションが可能です。\nデフォルトでは20件ずつ取得され、最大100件まで一度に取得できます。\n</p>",
+        "operationId": "get_quotations",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "$ref": "#/components/parameters/start_registered_date"
+          },
+          {
+            "$ref": "#/components/parameters/end_registered_date"
+          },
+          {
+            "$ref": "#/components/parameters/start_last_updated_date"
+          },
+          {
+            "$ref": "#/components/parameters/end_last_updated_date"
+          },
+          {
+            "$ref": "#/components/parameters/start_quotation_date"
+          },
+          {
+            "$ref": "#/components/parameters/end_quotation_date"
+          },
+          {
+            "$ref": "#/components/parameters/charge_employee_ids"
+          },
+          {
+            "$ref": "#/components/parameters/customer_ids"
+          },
+          {
+            "name": "business_ids[]",
+            "description": "案件ID",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 26,
+                "maxLength": 26,
+                "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/parameters/quotation_status"
+          },
+          {
+            "$ref": "#/components/parameters/billing_status"
+          },
+          {
+            "$ref": "#/components/parameters/canceled"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QuotationIndexResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "quotations"
+        ],
+        "summary": "見積登録",
+        "description": "<h2 id=\"\">概要</h2>\n<p>新しい見積を登録します。\n顧客への見積情報を登録し、見積書の発行や受注への引き継ぎに利用できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>必須項目</h3>\n<ul>\n<li>\n<p>quotation_date : 見積日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>lines : 明細リスト</p>\n</li>\n</ul>\n<h3>任意項目</h3>\n<ul>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>internal_subject : 見積タイトル</p>\n</li>\n<li>\n<p>expires_on : 有効期限日</p>\n</li>\n<li>\n<p>delivery_deadline : 納品期限日</p>\n</li>\n<li>\n<p>delivery_location : 納品場所</p>\n</li>\n<li>\n<p>quotation_template_id : 見積書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n<li>\n<p>quotation_subject : 見積書件名</p>\n</li>\n<li>\n<p>quotation_note : 見積書の備考欄に記載する内容</p>\n</li>\n<li>\n<p>recipient_address : 宛先情報 ※Web画面とは異なり、顧客マスタからの自動補完は行われません。指定しない場合は全ての項目がnullとして登録されます。</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n</ul>",
+        "operationId": "create_quotation",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/QuotationCreateRequest"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/QuotationCreateResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/quotations/{id}": {
+      "get": {
+        "tags": [
+          "quotations"
+        ],
+        "summary": "見積詳細取得",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの見積の詳細情報を取得します。\n見積の基本情報に加えて、明細情報や各種ステータスなどの詳細な情報も取得できます。\n</p>",
+        "operationId": "get_quotation",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/company_id"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "見積ID",
+            "schema": {
+              "type": "string",
+              "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+              "maxLength": 26,
+              "minLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "見積詳細取得のレスポンス",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "quotations"
+        ],
+        "summary": "見積更新",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの見積を更新します。\n見積の基本情報を部分的に更新できます。\n送信したフィールドのみが更新され、送信しなかったフィールドは変更されません。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>更新可能項目</h3>\n<ul>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>internal_subject : 見積タイトル</p>\n</li>\n<li>\n<p>quotation_date : 見積日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>expires_on : 有効期限日</p>\n</li>\n<li>\n<p>delivery_deadline : 納品期限日</p>\n</li>\n<li>\n<p>delivery_location : 納品場所</p>\n</li>\n<li>\n<p>quotation_template_id : 見積書テンプレートID</p>\n</li>\n<li>\n<p>quotation_subject : 見積書件名</p>\n</li>\n<li>\n<p>quotation_note : 見積書の備考欄に記載する内容</p>\n</li>\n<li>\n<p>recipient_address : 宛先情報（指定した場合、既存の宛先情報は全て削除され、新しい宛先情報に置き換えられます）</p>\n</li>\n<li>\n<p>charge_employee_id : 社内担当者の従業員ID</p>\n</li>\n<li>\n<p>reporting_section_id : 担当部門ID</p>\n</li>\n<li>\n<p>internal_memo : 社内メモ</p>\n</li>\n<li>\n<p>branch_no : 枝番</p>\n</li>\n<li>\n<p>lines : 明細リスト（指定した場合、既存の明細は全て削除され、新しい明細に置き換えられます）</p>\n</li>\n</ul>\n<p>※全ての項目は任意です。更新したい項目のみを送信してください。</p>\n<p>※recipient_addressを指定した場合、リクエストに含まれない項目はnullとして扱われます。</p>\n<h2 id=\"_3\">注意点</h2>\n<h3>明細行の金額再計算について</h3>\n<p>見積を更新する際、登録後に下記の設定変更が行われていた場合は、明細行の金額が再計算されます。</p>\n<ul>\n<li><p>事業所(自社)の設定が変更された場合：freee会計の「設定」で変更可能な\"消費税の経理処理\"、\"消費税の端数処理\"の設定値</p></li>\n<li><p>取引先の設定が変更された場合：freeeの「取引先」で変更可能な\"内税/外税\"の設定値</p></li>\n</ul>\n<h3>見積書への反映について</h3>\n<p>発行済みの見積書がある場合、見積情報を更新しても見積書の内容には自動で反映されません。見積書の内容を更新するには、再発行が必要です。</p>",
+        "operationId": "update_quotation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "見積ID",
+            "schema": {
+              "type": "string",
+              "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+              "maxLength": 26,
+              "minLength": 26
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/QuotationUpdateRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QuotationUpdateResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/quotations/{id}/quotation_status": {
+      "put": {
+        "tags": [
+          "quotations"
+        ],
+        "summary": "見積ステータス変更",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの見積のステータスを変更します。\n見積のステータス（未受注/失注）を更新できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<ul>\n<li>\n<p>quotation_status : 見積ステータス (未受注: unanswered, 失注: order_lost)</p>\n</li>\n</ul>\n<p>※ステータス変更は取り消されていない見積に対してのみ可能です。</p>\n<p>※受注済（order_received）への変更は本APIでは行えません。受注登録APIで対象の見積を指定して受注登録することで、見積ステータスが自動的に受注済へ更新されます。</p>",
+        "operationId": "update_quotation_status",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "見積ID",
+            "schema": {
+              "type": "string",
+              "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+              "maxLength": 26,
+              "minLength": 26
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "見積ステータス変更リクエスト",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuotationStatusChangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "見積ステータス変更のレスポンス",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotationMinimalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
+    "/quotations/{id}/cancellation": {
+      "post": {
+        "tags": [
+          "quotations"
+        ],
+        "summary": "見積取消",
+        "description": "<h2 id=\"\">概要</h2>\n<p>指定されたIDの見積を取り消します。\n</p>",
+        "operationId": "cancel_quotation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "見積ID",
+            "schema": {
+              "type": "string",
+              "example": "01JPP4FD1CVQWCDSWA90VE1ZTM",
+              "maxLength": 26,
+              "minLength": 26
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/QuotationCancellationRequest"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QuotationCancellationResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestErrorResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedErrorResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundErrorResponse"
+          },
+          "409": {
+            "$ref": "#/components/responses/ConflictErrorResponse"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequestsErrorResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerErrorResponse"
+          }
+        }
+      }
+    },
     "/sales_orders": {
       "get": {
         "tags": [
@@ -907,7 +1271,7 @@
           "sales_orders"
         ],
         "summary": "受注登録",
-        "description": "<h2 id=\"\">概要</h2>\n<p>新しい受注を登録します。\n顧客からの注文情報を登録し、納品・請求・入金の予定情報を管理できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>必須項目</h3>\n<ul>\n<li>\n<p>sales_order_date : 受注日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>lines : 明細リスト</p>\n</li>\n</ul>\n<h3>任意項目</h3>\n<ul>\n<li>\n<p>sales_order_subject : 受注タイトル</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>deliveries_on : 納品予定日</p>\n</li>\n<li>\n<p>accepts_on : 検収予定日</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n</ul>",
+        "description": "<h2 id=\"\">概要</h2>\n<p>新しい受注を登録します。\n顧客からの注文情報を登録し、納品・請求・入金の予定情報を管理できます。\n</p>\n<h2 id=\"_2\">定義</h2>\n<h3>必須項目</h3>\n<ul>\n<li>\n<p>sales_order_date : 受注日</p>\n</li>\n<li>\n<p>customer_id : 顧客の取引先ID</p>\n</li>\n<li>\n<p>billing_partner_id : 請求先の取引先ID</p>\n</li>\n<li>\n<p>collecting_partner_id : 入金元の取引先ID</p>\n</li>\n<li>\n<p>lines : 明細リスト</p>\n</li>\n</ul>\n<h3>任意項目</h3>\n<ul>\n<li>\n<p>quotation_id : 見積ID（見積に紐づける場合）</p>\n</li>\n<li>\n<p>sales_order_subject : 受注タイトル</p>\n</li>\n<li>\n<p>customer_order_no : 顧客注文No.</p>\n</li>\n<li>\n<p>deliveries_on : 納品予定日</p>\n</li>\n<li>\n<p>accepts_on : 検収予定日</p>\n</li>\n<li>\n<p>bills_on : 請求予定日</p>\n</li>\n<li>\n<p>collects_on : 入金予定日</p>\n</li>\n<li>\n<p>business_id : 案件ID</p>\n</li>\n<li>\n<p>delivery_template_id : 納品書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n<li>\n<p>invoice_template_id : 請求書テンプレートID ※指定しない場合はデフォルトのテンプレートが適用されます。</p>\n</li>\n</ul>",
         "operationId": "create_sales_order",
         "requestBody": {
           "$ref": "#/components/requestBodies/SalesOrderCreateRequest"
@@ -1061,10 +1425,10 @@
             "$ref": "#/components/parameters/company_id"
           },
           {
-            "$ref": "#/components/parameters/start_registered_date"
+            "$ref": "#/components/parameters/parameters-start_registered_date"
           },
           {
-            "$ref": "#/components/parameters/end_registered_date"
+            "$ref": "#/components/parameters/parameters-end_registered_date"
           },
           {
             "$ref": "#/components/parameters/start_delivery_date"
@@ -1280,10 +1644,10 @@
             "$ref": "#/components/parameters/company_id"
           },
           {
-            "$ref": "#/components/parameters/parameters-start_registered_date"
+            "$ref": "#/components/parameters/components-parameters-start_registered_date"
           },
           {
-            "$ref": "#/components/parameters/parameters-end_registered_date"
+            "$ref": "#/components/parameters/components-parameters-end_registered_date"
           },
           {
             "$ref": "#/components/parameters/start_revenue_recognition_date"
@@ -1298,7 +1662,7 @@
             "$ref": "#/components/parameters/customer_ids"
           },
           {
-            "$ref": "#/components/parameters/billing_status"
+            "$ref": "#/components/parameters/parameters-billing_status"
           },
           {
             "$ref": "#/components/parameters/collection_status"
@@ -2294,6 +2658,103 @@
           }
         }
       },
+      "start_registered_date": {
+        "name": "start_registered_date",
+        "description": "見積登録日で絞込：開始日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-01-01"
+        }
+      },
+      "end_registered_date": {
+        "name": "end_registered_date",
+        "description": "見積登録日で絞込：終了日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-05-01"
+        }
+      },
+      "start_last_updated_date": {
+        "name": "start_last_updated_date",
+        "description": "見積更新日で絞込：開始日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-01-01"
+        }
+      },
+      "end_last_updated_date": {
+        "name": "end_last_updated_date",
+        "description": "見積更新日で絞込：終了日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-05-01"
+        }
+      },
+      "start_quotation_date": {
+        "name": "start_quotation_date",
+        "description": "見積日で絞込：開始日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-01-01"
+        }
+      },
+      "end_quotation_date": {
+        "name": "end_quotation_date",
+        "description": "見積日で絞込：終了日(yyyy-mm-dd)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date",
+          "example": "2025-05-01"
+        }
+      },
+      "quotation_status": {
+        "name": "quotation_status",
+        "description": "見積ステータス (未受注: unanswered, 受注済: order_received, 失注: order_lost)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "unanswered",
+            "order_received",
+            "order_lost"
+          ],
+          "example": "unanswered"
+        }
+      },
+      "billing_status": {
+        "name": "billing_status",
+        "description": "請求書送付ステータス (未請求: not_billed, 一部請求済: partially_billed, 請求済: billed, なし: none)",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "not_billed",
+            "partially_billed",
+            "billed",
+            "none"
+          ],
+          "example": "not_billed"
+        }
+      },
       "start_sales_order_date": {
         "name": "start_sales_order_date",
         "description": "受注日で絞込：開始日(yyyy-mm-dd)",
@@ -2316,7 +2777,7 @@
           "example": "2024-12-31"
         }
       },
-      "start_registered_date": {
+      "parameters-start_registered_date": {
         "name": "start_registered_date",
         "description": "登録日で絞込：開始日(yyyy-mm-dd)",
         "in": "query",
@@ -2327,7 +2788,7 @@
           "example": "2025-01-01"
         }
       },
-      "end_registered_date": {
+      "parameters-end_registered_date": {
         "name": "end_registered_date",
         "description": "登録日で絞込：終了日(yyyy-mm-dd)",
         "in": "query",
@@ -2396,7 +2857,7 @@
           "example": "not_delivered"
         }
       },
-      "parameters-start_registered_date": {
+      "components-parameters-start_registered_date": {
         "name": "start_registered_date",
         "description": "売上登録日で絞込：開始日(yyyy-mm-dd)",
         "in": "query",
@@ -2407,7 +2868,7 @@
           "example": "2024-01-01"
         }
       },
-      "parameters-end_registered_date": {
+      "components-parameters-end_registered_date": {
         "name": "end_registered_date",
         "description": "売上登録日で絞込：終了日(yyyy-mm-dd)",
         "in": "query",
@@ -2440,7 +2901,7 @@
           "example": "2024-12-31"
         }
       },
-      "billing_status": {
+      "parameters-billing_status": {
         "name": "billing_status",
         "description": "請求書送付ステータス (未送付: not_billed, 送付済: billed, 対象外: none)",
         "in": "query",
@@ -4958,6 +5419,16 @@
         "description": "金額セット",
         "additionalProperties": false
       },
+      "QuotationStatus": {
+        "description": "見積ステータス (未受注: unanswered, 受注済: order_received, 失注: order_lost)",
+        "enum": [
+          "unanswered",
+          "order_received",
+          "order_lost"
+        ],
+        "type": "string",
+        "example": "unanswered"
+      },
       "DeliveryProgress": {
         "description": "納品進捗 (未納品: not_delivered, 一部納品済: partially_delivered, 納品済: delivered)",
         "enum": [
@@ -4967,6 +5438,16 @@
         ],
         "type": "string",
         "example": "not_delivered"
+      },
+      "DeliveryIssueProgress": {
+        "description": "納品書発行進捗 (未発行: not_issued, 一部発行済: partially_issued, 発行済: issued)",
+        "enum": [
+          "not_issued",
+          "partially_issued",
+          "issued"
+        ],
+        "type": "string",
+        "example": "not_issued"
       },
       "SalesStatus": {
         "description": "売上ステータス (未計上: not_sold, 一部計上済: partially_sold, 計上済: sold)",
@@ -4989,157 +5470,262 @@
         "type": "string",
         "example": "not_billed"
       },
-      "CollectionStatus": {
-        "description": "決済ステータス (未決済: not_settled, 一部決済済: partially_settled, 決済済: settled, 無効: invalidated, 対象外: none)\n※invalidated（無効）は請求でのみ発生します。売上・納品では発生しません。",
-        "enum": [
-          "not_settled",
-          "partially_settled",
-          "settled",
-          "invalidated",
-          "none"
-        ],
-        "type": "string",
-        "example": "not_settled"
-      },
-      "SalesOrderDigest": {
+      "QuotationDigest": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "description": "受注ID",
+            "description": "見積ID",
             "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
           },
-          "sales_order_no": {
-            "type": "string",
-            "description": "受注No.",
-            "nullable": true,
-            "example": "S211212-00001"
+          "canceled": {
+            "type": "boolean",
+            "description": "取消状態",
+            "example": false
           },
-          "sales_order_subject": {
-            "description": "受注タイトル",
-            "type": "string",
-            "nullable": true,
-            "example": "サンプル案件受注の件"
+          "registered_by": {
+            "description": "登録者",
+            "$ref": "#/components/schemas/Employee"
           },
-          "sales_order_date": {
-            "description": "受注日",
+          "quotation_no": {
+            "type": "string",
+            "description": "見積No.",
+            "example": "Q211212-00001"
+          },
+          "branch_no": {
+            "type": "integer",
+            "format": "int32",
+            "description": "枝番",
+            "nullable": true,
+            "example": 1
+          },
+          "quotation_date": {
+            "description": "見積日",
             "type": "string",
             "format": "date",
             "example": "2025-04-01"
           },
-          "customer_order_no": {
-            "description": "顧客注文No.",
+          "quotation_subject": {
+            "description": "見積書件名",
             "type": "string",
             "nullable": true,
-            "example": "C-PO-20250401-001"
+            "maxLength": 100,
+            "example": "サンプル案件見積の件"
           },
-          "amount_set": {
-            "$ref": "#/components/schemas/AmountSet",
-            "nullable": true
+          "internal_subject": {
+            "description": "見積タイトル",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件見積の件"
           },
-          "amount_of_withholding_tax": {
-            "description": "源泉徴収税額",
-            "format": "int64",
-            "type": "integer",
-            "example": 10000,
-            "nullable": true
+          "expires_on": {
+            "description": "有効期限日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2025-05-01"
+          },
+          "delivery_deadline": {
+            "description": "納品期限日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2025-06-01"
+          },
+          "delivery_location": {
+            "description": "納品場所",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "東京都渋谷区"
+          },
+          "issued": {
+            "type": "boolean",
+            "description": "送付ステータス",
+            "example": false
+          },
+          "issued_on": {
+            "type": "string",
+            "format": "date",
+            "description": "送付日",
+            "nullable": true,
+            "example": "2025-04-01"
           },
           "registered_at": {
             "type": "string",
             "format": "date-time",
             "description": "登録日時",
-            "nullable": true,
             "example": "2025-01-15T10:30:00+09:00"
-          },
-          "registered_by": {
-            "description": "登録者",
-            "$ref": "#/components/schemas/Employee",
-            "nullable": true
           },
           "last_updated_at": {
             "type": "string",
             "format": "date-time",
             "description": "変更日時",
-            "nullable": true,
             "example": "2025-01-16T14:45:00+09:00"
-          },
-          "last_updated_by": {
-            "description": "変更者",
-            "$ref": "#/components/schemas/Employee",
-            "nullable": true
-          },
-          "customer": {
-            "$ref": "#/components/schemas/Customer"
-          },
-          "sales_on": {
-            "description": "売上予定日",
-            "type": "string",
-            "format": "date",
-            "example": "2025-04-01",
-            "nullable": true
-          },
-          "delivery_progress": {
-            "$ref": "#/components/schemas/DeliveryProgress",
-            "nullable": true
-          },
-          "sales_status": {
-            "$ref": "#/components/schemas/SalesStatus",
-            "nullable": true
-          },
-          "billing_status": {
-            "$ref": "#/components/schemas/BillingStatus",
-            "nullable": true
-          },
-          "collection_status": {
-            "$ref": "#/components/schemas/CollectionStatus",
-            "nullable": true
-          },
-          "business": {
-            "$ref": "#/components/schemas/Business"
           },
           "total_amount": {
             "description": "源泉徴収税額を除いた合計金額",
             "type": "integer",
             "format": "int64",
             "maximum": 9223372036854776000,
-            "example": 10000,
-            "nullable": true
+            "example": 10000
           },
-          "canceled": {
-            "description": "取消状態",
-            "type": "boolean",
-            "example": false
+          "amount_set": {
+            "$ref": "#/components/schemas/AmountSet"
+          },
+          "amount_of_withholding_tax": {
+            "description": "源泉徴収税額",
+            "type": "integer",
+            "format": "int64",
+            "example": 10000
+          },
+          "quotation_status": {
+            "$ref": "#/components/schemas/QuotationStatus"
+          },
+          "delivery_progress": {
+            "$ref": "#/components/schemas/DeliveryProgress"
+          },
+          "delivery_issue_progress": {
+            "$ref": "#/components/schemas/DeliveryIssueProgress"
+          },
+          "sales_status": {
+            "$ref": "#/components/schemas/SalesStatus"
+          },
+          "billing_status": {
+            "$ref": "#/components/schemas/BillingStatus"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "charge_employee": {
+            "description": "社内担当者",
+            "$ref": "#/components/schemas/Employee"
+          },
+          "reporting_section": {
+            "description": "担当部門",
+            "$ref": "#/components/schemas/ReportingSection"
+          },
+          "business": {
+            "$ref": "#/components/schemas/Business"
+          },
+          "internal_memo": {
+            "$ref": "#/components/schemas/InternalMemo"
+          },
+          "quotation_note": {
+            "description": "見積書の備考欄に記載する内容",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000,
+            "example": "見積書備考"
+          },
+          "last_updated_by": {
+            "description": "最終更新者",
+            "$ref": "#/components/schemas/Employee"
           }
         },
         "required": [
           "id",
-          "sales_order_date",
-          "customer",
+          "canceled",
+          "registered_by",
+          "quotation_no",
+          "branch_no",
+          "quotation_date",
+          "quotation_subject",
+          "internal_subject",
+          "expires_on",
+          "delivery_deadline",
+          "delivery_location",
+          "issued",
+          "issued_on",
           "registered_at",
           "last_updated_at",
-          "canceled"
+          "total_amount",
+          "amount_set",
+          "amount_of_withholding_tax",
+          "quotation_status",
+          "delivery_progress",
+          "delivery_issue_progress",
+          "sales_status",
+          "billing_status",
+          "customer",
+          "charge_employee",
+          "reporting_section",
+          "business",
+          "internal_memo",
+          "quotation_note",
+          "last_updated_by"
         ],
         "additionalProperties": false
       },
-      "BillingCreatingMethodType": {
-        "description": "請求作成方法区分 (自動作成: automatically, 手動作成: manually)",
-        "enum": [
-          "automatically",
-          "manually"
-        ],
+      "DefaultTitle": {
+        "description": "敬称区分 (なし: none, 様: to_person, 御中: to_organization)",
         "type": "string",
-        "example": "automatically"
+        "enum": [
+          "none",
+          "to_person",
+          "to_organization"
+        ],
+        "nullable": true
       },
-      "CollectionMethodType": {
-        "description": "入金方法 (振込: transfer, 現金: cash, 手形: bill_payable, 振替: direct_debit)",
-        "type": "string",
-        "enum": [
-          "transfer",
-          "cash",
-          "bill_payable",
-          "direct_debit"
-        ],
-        "example": "transfer"
+      "RecipientAddress": {
+        "description": "宛先",
+        "type": "object",
+        "properties": {
+          "official_name": {
+            "type": "string",
+            "description": "正式名称",
+            "nullable": true,
+            "example": "株式会社サンプル"
+          },
+          "default_title": {
+            "description": "敬称",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DefaultTitle"
+              }
+            ]
+          },
+          "zipcode": {
+            "type": "string",
+            "description": "郵便番号",
+            "nullable": true,
+            "example": "150-0001"
+          },
+          "prefecture_code": {
+            "type": "integer",
+            "format": "int64",
+            "description": "都道府県コード（-1: 設定しない、0: 北海道、1:青森、2:岩手、3:宮城、4:秋田、5:山形、6:福島、7:茨城、8:栃木、9:群馬、10:埼玉、11:千葉、12:東京、13:神奈川、14:新潟、15:富山、16:石川、17:福井、18:山梨、19:長野、20:岐阜、21:静岡、22:愛知、23:三重、24:滋賀、25:京都、26:大阪、27:兵庫、28:奈良、29:和歌山、30:鳥取、31:島根、32:岡山、33:広島、34:山口、35:徳島、36:香川、37:愛媛、38:高知、39:福岡、40:佐賀、41:長崎、42:熊本、43:大分、44:宮崎、45:鹿児島、46:沖縄）",
+            "nullable": true,
+            "example": 12
+          },
+          "street_name1": {
+            "type": "string",
+            "description": "住所1",
+            "nullable": true,
+            "example": "渋谷区神宮前1-1-1"
+          },
+          "street_name2": {
+            "type": "string",
+            "description": "住所2",
+            "nullable": true,
+            "example": "サンプルビル3F"
+          },
+          "contact_department": {
+            "type": "string",
+            "description": "連絡先部署",
+            "nullable": true,
+            "example": "営業部"
+          },
+          "contact_name": {
+            "type": "string",
+            "description": "連絡先名",
+            "nullable": true,
+            "example": "山田太郎"
+          }
+        },
+        "additionalProperties": false
       },
       "LineType": {
         "description": "明細種別",
@@ -5280,6 +5866,505 @@
           "text"
         ],
         "additionalProperties": false
+      },
+      "QuotationLineParams": {
+        "description": "明細パラメータ",
+        "discriminator": {
+          "propertyName": "line_type",
+          "mapping": {
+            "basic": "#/components/schemas/BasicLineParams",
+            "text": "#/components/schemas/TextLineParams"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BasicLineParams"
+          },
+          {
+            "$ref": "#/components/schemas/TextLineParams"
+          }
+        ]
+      },
+      "QuotationRequestBase": {
+        "type": "object",
+        "properties": {
+          "business_id": {
+            "description": "案件ID",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 26,
+            "minLength": 26,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "internal_subject": {
+            "description": "見積タイトル",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件見積の件"
+          },
+          "quotation_date": {
+            "description": "見積日",
+            "type": "string",
+            "format": "date",
+            "example": "2025-04-01"
+          },
+          "customer_id": {
+            "description": "顧客の取引先ID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 1001
+          },
+          "expires_on": {
+            "description": "有効期限日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2025-04-30"
+          },
+          "delivery_deadline": {
+            "description": "納品期限日",
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2025-05-15"
+          },
+          "delivery_location": {
+            "description": "納品場所",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "東京都渋谷区"
+          },
+          "quotation_template_id": {
+            "description": "見積書テンプレートID",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "nullable": true,
+            "example": 10001
+          },
+          "quotation_subject": {
+            "description": "見積書件名",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100,
+            "example": "サンプル案件見積の件"
+          },
+          "quotation_note": {
+            "description": "見積書の備考欄に記載する内容",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000,
+            "example": "有効期限内にご回答ください"
+          },
+          "recipient_address": {
+            "$ref": "#/components/schemas/RecipientAddress"
+          },
+          "charge_employee_id": {
+            "$ref": "#/components/schemas/ChargeEmployeeId"
+          },
+          "reporting_section_id": {
+            "$ref": "#/components/schemas/ReportingSectionId"
+          },
+          "internal_memo": {
+            "$ref": "#/components/schemas/InternalMemo"
+          },
+          "lines": {
+            "description": "明細リスト",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuotationLineParams"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuotationMinimalResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "見積ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "registered_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "登録日時",
+            "example": "2025-01-15T10:30:00+09:00"
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "変更日時",
+            "example": "2025-01-16T14:45:00+09:00"
+          }
+        },
+        "required": [
+          "id",
+          "registered_at",
+          "last_updated_at"
+        ],
+        "additionalProperties": false
+      },
+      "BasicLineDetail": {
+        "description": "通常明細詳細",
+        "type": "object",
+        "properties": {
+          "line_no": {
+            "description": "明細行番号",
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "example": 1
+          },
+          "line_type": {
+            "$ref": "#/components/schemas/LineType"
+          },
+          "master_item": {
+            "$ref": "#/components/schemas/MasterItemDetail"
+          },
+          "deal_line_type": {
+            "$ref": "#/components/schemas/DealLineTypeDetail"
+          },
+          "description": {
+            "description": "摘要",
+            "type": "string",
+            "nullable": true,
+            "example": "パンフレットデザイン料"
+          },
+          "quantity": {
+            "description": "数量",
+            "format": "double",
+            "type": "number",
+            "example": 100,
+            "nullable": true
+          },
+          "uom_name": {
+            "description": "単位",
+            "type": "string",
+            "nullable": true,
+            "example": "個"
+          },
+          "unit_price": {
+            "description": "単価",
+            "format": "double",
+            "type": "number",
+            "example": 1000,
+            "nullable": true
+          },
+          "amount_set": {
+            "description": "受注金額",
+            "$ref": "#/components/schemas/AmountSet",
+            "nullable": true
+          },
+          "tax_type": {
+            "$ref": "#/components/schemas/TaxTypeDetail"
+          },
+          "accounting_reporting_section": {
+            "$ref": "#/components/schemas/AccountingReportingSectionDetail"
+          },
+          "item_tag": {
+            "$ref": "#/components/schemas/ItemTagDetail"
+          },
+          "memo_tags": {
+            "description": "メモタグ",
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/MemoTagDetail"
+            }
+          },
+          "withholding_enabled": {
+            "description": "源泉徴収税対象明細かどうか",
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "line_no",
+          "line_type",
+          "deal_line_type",
+          "quantity",
+          "unit_price",
+          "withholding_enabled"
+        ],
+        "additionalProperties": false
+      },
+      "TextLineDetail": {
+        "description": "テキスト明細詳細",
+        "type": "object",
+        "properties": {
+          "line_no": {
+            "description": "明細行番号",
+            "type": "integer",
+            "format": "int32",
+            "maximum": 2147483647,
+            "example": 1
+          },
+          "line_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LineType"
+              }
+            ],
+            "example": "text"
+          },
+          "text": {
+            "description": "テキスト行",
+            "type": "string",
+            "example": "備考：特急料金が含まれます"
+          }
+        },
+        "required": [
+          "line_no",
+          "line_type",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "LineDetail": {
+        "description": "明細詳細",
+        "discriminator": {
+          "propertyName": "line_type",
+          "mapping": {
+            "basic": "#/components/schemas/BasicLineDetail",
+            "text": "#/components/schemas/TextLineDetail"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BasicLineDetail"
+          },
+          {
+            "$ref": "#/components/schemas/TextLineDetail"
+          }
+        ]
+      },
+      "QuotationDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/QuotationDigest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "quotation_template_name": {
+                "type": "string",
+                "description": "見積書テンプレート名称",
+                "example": "デフォルトテンプレート"
+              },
+              "recipient_address": {
+                "$ref": "#/components/schemas/RecipientAddress",
+                "nullable": true
+              },
+              "lines": {
+                "description": "明細リスト",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/LineDetail"
+                }
+              }
+            },
+            "required": [
+              "quotation_template_name",
+              "recipient_address",
+              "lines"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "QuotationStatusForUpdate": {
+        "description": "更新可能な見積ステータス (未受注: unanswered, 失注: order_lost)",
+        "enum": [
+          "unanswered",
+          "order_lost"
+        ],
+        "type": "string",
+        "example": "unanswered"
+      },
+      "QuotationStatusChangeRequest": {
+        "description": "見積ステータス変更リクエスト",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WithCompanyId"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "quotation_status": {
+                "$ref": "#/components/schemas/QuotationStatusForUpdate"
+              }
+            },
+            "required": [
+              "quotation_status"
+            ]
+          }
+        ]
+      },
+      "CollectionStatus": {
+        "description": "決済ステータス (未決済: not_settled, 一部決済済: partially_settled, 決済済: settled, 無効: invalidated, 対象外: none)\n※invalidated（無効）は請求でのみ発生します。売上・納品では発生しません。",
+        "enum": [
+          "not_settled",
+          "partially_settled",
+          "settled",
+          "invalidated",
+          "none"
+        ],
+        "type": "string",
+        "example": "not_settled"
+      },
+      "SalesOrderDigest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "受注ID",
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "sales_order_no": {
+            "type": "string",
+            "description": "受注No.",
+            "nullable": true,
+            "example": "S211212-00001"
+          },
+          "sales_order_subject": {
+            "description": "受注タイトル",
+            "type": "string",
+            "nullable": true,
+            "example": "サンプル案件受注の件"
+          },
+          "sales_order_date": {
+            "description": "受注日",
+            "type": "string",
+            "format": "date",
+            "example": "2025-04-01"
+          },
+          "customer_order_no": {
+            "description": "顧客注文No.",
+            "type": "string",
+            "nullable": true,
+            "example": "C-PO-20250401-001"
+          },
+          "amount_set": {
+            "$ref": "#/components/schemas/AmountSet",
+            "nullable": true
+          },
+          "amount_of_withholding_tax": {
+            "description": "源泉徴収税額",
+            "format": "int64",
+            "type": "integer",
+            "example": 10000,
+            "nullable": true
+          },
+          "registered_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "登録日時",
+            "nullable": true,
+            "example": "2025-01-15T10:30:00+09:00"
+          },
+          "registered_by": {
+            "description": "登録者",
+            "$ref": "#/components/schemas/Employee",
+            "nullable": true
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "変更日時",
+            "nullable": true,
+            "example": "2025-01-16T14:45:00+09:00"
+          },
+          "last_updated_by": {
+            "description": "変更者",
+            "$ref": "#/components/schemas/Employee",
+            "nullable": true
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "sales_on": {
+            "description": "売上予定日",
+            "type": "string",
+            "format": "date",
+            "example": "2025-04-01",
+            "nullable": true
+          },
+          "delivery_progress": {
+            "$ref": "#/components/schemas/DeliveryProgress",
+            "nullable": true
+          },
+          "sales_status": {
+            "$ref": "#/components/schemas/SalesStatus",
+            "nullable": true
+          },
+          "billing_status": {
+            "$ref": "#/components/schemas/BillingStatus",
+            "nullable": true
+          },
+          "collection_status": {
+            "$ref": "#/components/schemas/CollectionStatus",
+            "nullable": true
+          },
+          "business": {
+            "$ref": "#/components/schemas/Business"
+          },
+          "quotation_id": {
+            "description": "紐づく見積ID",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 26,
+            "minLength": 26,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
+          "total_amount": {
+            "description": "源泉徴収税額を除いた合計金額",
+            "type": "integer",
+            "format": "int64",
+            "maximum": 9223372036854776000,
+            "example": 10000,
+            "nullable": true
+          },
+          "canceled": {
+            "description": "取消状態",
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "id",
+          "sales_order_date",
+          "customer",
+          "registered_at",
+          "last_updated_at",
+          "canceled"
+        ],
+        "additionalProperties": false
+      },
+      "BillingCreatingMethodType": {
+        "description": "請求作成方法区分 (自動作成: automatically, 手動作成: manually)",
+        "enum": [
+          "automatically",
+          "manually"
+        ],
+        "type": "string",
+        "example": "automatically"
+      },
+      "CollectionMethodType": {
+        "description": "入金方法 (振込: transfer, 現金: cash, 手形: bill_payable, 振替: direct_debit)",
+        "type": "string",
+        "enum": [
+          "transfer",
+          "cash",
+          "bill_payable",
+          "direct_debit"
+        ],
+        "example": "transfer"
       },
       "LineParams": {
         "description": "明細パラメータ",
@@ -5447,6 +6532,14 @@
             "minLength": 26,
             "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
           },
+          "quotation_id": {
+            "description": "見積ID",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 26,
+            "minLength": 26,
+            "example": "01JPP4FD1CVQWCDSWA90VE1ZTM"
+          },
           "lines": {
             "description": "明細リスト",
             "type": "array",
@@ -5578,140 +6671,6 @@
         ],
         "nullable": true,
         "additionalProperties": false
-      },
-      "BasicLineDetail": {
-        "description": "通常明細詳細",
-        "type": "object",
-        "properties": {
-          "line_no": {
-            "description": "明細行番号",
-            "type": "integer",
-            "format": "int32",
-            "maximum": 2147483647,
-            "example": 1
-          },
-          "line_type": {
-            "$ref": "#/components/schemas/LineType"
-          },
-          "master_item": {
-            "$ref": "#/components/schemas/MasterItemDetail"
-          },
-          "deal_line_type": {
-            "$ref": "#/components/schemas/DealLineTypeDetail"
-          },
-          "description": {
-            "description": "摘要",
-            "type": "string",
-            "nullable": true,
-            "example": "パンフレットデザイン料"
-          },
-          "quantity": {
-            "description": "数量",
-            "format": "double",
-            "type": "number",
-            "example": 100,
-            "nullable": true
-          },
-          "uom_name": {
-            "description": "単位",
-            "type": "string",
-            "nullable": true,
-            "example": "個"
-          },
-          "unit_price": {
-            "description": "単価",
-            "format": "double",
-            "type": "number",
-            "example": 1000,
-            "nullable": true
-          },
-          "amount_set": {
-            "description": "受注金額",
-            "$ref": "#/components/schemas/AmountSet",
-            "nullable": true
-          },
-          "tax_type": {
-            "$ref": "#/components/schemas/TaxTypeDetail"
-          },
-          "accounting_reporting_section": {
-            "$ref": "#/components/schemas/AccountingReportingSectionDetail"
-          },
-          "item_tag": {
-            "$ref": "#/components/schemas/ItemTagDetail"
-          },
-          "memo_tags": {
-            "description": "メモタグ",
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/MemoTagDetail"
-            }
-          },
-          "withholding_enabled": {
-            "description": "源泉徴収税対象明細かどうか",
-            "type": "boolean",
-            "example": false
-          }
-        },
-        "required": [
-          "line_no",
-          "line_type",
-          "deal_line_type",
-          "quantity",
-          "unit_price",
-          "withholding_enabled"
-        ],
-        "additionalProperties": false
-      },
-      "TextLineDetail": {
-        "description": "テキスト明細詳細",
-        "type": "object",
-        "properties": {
-          "line_no": {
-            "description": "明細行番号",
-            "type": "integer",
-            "format": "int32",
-            "maximum": 2147483647,
-            "example": 1
-          },
-          "line_type": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LineType"
-              }
-            ],
-            "example": "text"
-          },
-          "text": {
-            "description": "テキスト行",
-            "type": "string",
-            "example": "備考：特急料金が含まれます"
-          }
-        },
-        "required": [
-          "line_no",
-          "line_type",
-          "text"
-        ],
-        "additionalProperties": false
-      },
-      "LineDetail": {
-        "description": "明細詳細",
-        "discriminator": {
-          "propertyName": "line_type",
-          "mapping": {
-            "basic": "#/components/schemas/BasicLineDetail",
-            "text": "#/components/schemas/TextLineDetail"
-          }
-        },
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/BasicLineDetail"
-          },
-          {
-            "$ref": "#/components/schemas/TextLineDetail"
-          }
-        ]
       },
       "SalesOrderDetail": {
         "allOf": [
@@ -6042,75 +7001,6 @@
           "registered_at",
           "last_updated_at"
         ],
-        "additionalProperties": false
-      },
-      "DefaultTitle": {
-        "description": "敬称区分 (なし: none, 様: to_person, 御中: to_organization)",
-        "type": "string",
-        "enum": [
-          "none",
-          "to_person",
-          "to_organization"
-        ],
-        "nullable": true
-      },
-      "RecipientAddress": {
-        "description": "宛先",
-        "type": "object",
-        "properties": {
-          "official_name": {
-            "type": "string",
-            "description": "正式名称",
-            "nullable": true,
-            "example": "株式会社サンプル"
-          },
-          "default_title": {
-            "description": "敬称",
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DefaultTitle"
-              }
-            ]
-          },
-          "zipcode": {
-            "type": "string",
-            "description": "郵便番号",
-            "nullable": true,
-            "example": "150-0001"
-          },
-          "prefecture_code": {
-            "type": "integer",
-            "format": "int64",
-            "description": "都道府県コード（-1: 設定しない、0: 北海道、1:青森、2:岩手、3:宮城、4:秋田、5:山形、6:福島、7:茨城、8:栃木、9:群馬、10:埼玉、11:千葉、12:東京、13:神奈川、14:新潟、15:富山、16:石川、17:福井、18:山梨、19:長野、20:岐阜、21:静岡、22:愛知、23:三重、24:滋賀、25:京都、26:大阪、27:兵庫、28:奈良、29:和歌山、30:鳥取、31:島根、32:岡山、33:広島、34:山口、35:徳島、36:香川、37:愛媛、38:高知、39:福岡、40:佐賀、41:長崎、42:熊本、43:大分、44:宮崎、45:鹿児島、46:沖縄）",
-            "nullable": true,
-            "example": 12
-          },
-          "street_name1": {
-            "type": "string",
-            "description": "住所1",
-            "nullable": true,
-            "example": "渋谷区神宮前1-1-1"
-          },
-          "street_name2": {
-            "type": "string",
-            "description": "住所2",
-            "nullable": true,
-            "example": "サンプルビル3F"
-          },
-          "contact_department": {
-            "type": "string",
-            "description": "連絡先部署",
-            "nullable": true,
-            "example": "営業部"
-          },
-          "contact_name": {
-            "type": "string",
-            "description": "連絡先名",
-            "nullable": true,
-            "example": "山田太郎"
-          }
-        },
         "additionalProperties": false
       },
       "DeliveryLineParams": {
@@ -7691,6 +8581,62 @@
           }
         }
       },
+      "QuotationIndexResponse": {
+        "description": "見積一覧のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "quotations": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuotationDigest"
+                  }
+                },
+                "meta": {
+                  "$ref": "#/components/schemas/PaginationMeta"
+                }
+              },
+              "required": [
+                "quotations",
+                "meta"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "QuotationCreateResponse": {
+        "description": "見積登録のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QuotationMinimalResponse"
+            }
+          }
+        }
+      },
+      "QuotationUpdateResponse": {
+        "description": "見積更新のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QuotationMinimalResponse"
+            }
+          }
+        }
+      },
+      "QuotationCancellationResponse": {
+        "description": "見積取消のレスポンス",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QuotationMinimalResponse"
+            }
+          }
+        }
+      },
       "SalesOrderIndexResponse": {
         "description": "受注一覧のレスポンス",
         "content": {
@@ -8007,6 +8953,73 @@
             },
             "example": {
               "company_id": 1
+            }
+          }
+        }
+      },
+      "QuotationCreateRequest": {
+        "description": "見積登録リクエスト",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/WithCompanyId"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {},
+                  "required": [
+                    "quotation_date",
+                    "customer_id",
+                    "lines"
+                  ]
+                },
+                {
+                  "$ref": "#/components/schemas/QuotationRequestBase"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "QuotationUpdateRequest": {
+        "description": "見積更新リクエスト",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/WithCompanyId"
+                },
+                {
+                  "$ref": "#/components/schemas/QuotationRequestBase"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "branch_no": {
+                      "description": "枝番",
+                      "type": "integer",
+                      "format": "int32",
+                      "nullable": true,
+                      "example": 1
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "QuotationCancellationRequest": {
+        "description": "見積取消リクエスト",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WithCompanyId"
             }
           }
         }

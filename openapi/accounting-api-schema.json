@@ -34266,12 +34266,14 @@
                   "properties": {
                     "sending_method": {
                       "type": "string",
-                      "description": "請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、null:設定しない)",
+                      "description": "請求書送付方法(email:メール、posting:郵送、email_and_posting:メールと郵送、pdf_delivery:メール（PDFファイル添付）、pdf_delivery_and_posting:メール（PDFファイル添付）と郵送、null:設定しない)\nただし、pdf_delivery および pdf_delivery_and_posting は2026年5月末頃に利用可能となる予定です。",
                       "example": "posting",
                       "enum": [
                         "email",
                         "posting",
-                        "email_and_posting"
+                        "email_and_posting",
+                        "pdf_delivery",
+                        "pdf_delivery_and_posting"
                       ],
                       "nullable": true
                     }
