@@ -4,7 +4,7 @@ import type {
 } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CIMDFetcher } from './cimd-fetcher.js';
-import { RedisClientStore } from './client-store.js';
+import { RedisClientStore, computeClientFingerprint } from './client-store.js';
 import { RedisUnavailableError } from './errors.js';
 
 function createMockRedis() {
@@ -201,5 +201,112 @@ describe('RedisClientStore', () => {
         RedisUnavailableError,
       );
     });
+  });
+
+  describe('Fingerprint dedup', () => {
+    it('writes a client-fp index alongside the primary client key on register', async () => {
+      const store = new RedisClientStore({ redis: redis as never });
+
+      await store.registerClient({
+        client_id: 'cid-1',
+        client_id_issued_at: 1700000000,
+        redirect_uris: ['https://app.example.com/cb'],
+        client_name: 'Example',
+      } as OAuthClientInformationFull);
+
+      const fp = computeClientFingerprint({
+        redirect_uris: ['https://app.example.com/cb'],
+        client_name: 'Example',
+      });
+      expect(redis._store.get(`freee-mcp:oauth:client-fp:${fp}`)).toBe('cid-1');
+    });
+
+    it('findClientByFingerprint returns the registered client', async () => {
+      const store = new RedisClientStore({ redis: redis as never });
+
+      const client = {
+        client_id: 'cid-1',
+        client_id_issued_at: 1700000000,
+        redirect_uris: ['https://app.example.com/cb'],
+        client_name: 'Example',
+      } as OAuthClientInformationFull;
+      await store.registerClient(client);
+
+      const fp = computeClientFingerprint(client);
+      const found = await store.findClientByFingerprint(fp);
+      expect(found?.client_id).toBe('cid-1');
+      expect(found?.client_name).toBe('Example');
+    });
+
+    it('findClientByFingerprint returns undefined for unknown fingerprint', async () => {
+      const store = new RedisClientStore({ redis: redis as never });
+      const found = await store.findClientByFingerprint('deadbeef'.repeat(8));
+      expect(found).toBeUndefined();
+    });
+  });
+});
+
+describe('computeClientFingerprint', () => {
+  it('produces the same hash for identical metadata', () => {
+    const a = computeClientFingerprint({
+      software_id: 'sw-1',
+      redirect_uris: ['https://app.example.com/cb'],
+      client_name: 'Example',
+      scope: 'mcp:read mcp:write',
+      grant_types: ['authorization_code'],
+      response_types: ['code'],
+    });
+    const b = computeClientFingerprint({
+      software_id: 'sw-1',
+      redirect_uris: ['https://app.example.com/cb'],
+      client_name: 'Example',
+      scope: 'mcp:read mcp:write',
+      grant_types: ['authorization_code'],
+      response_types: ['code'],
+    });
+    expect(a).toBe(b);
+  });
+
+  it('is order-insensitive for redirect_uris, grant_types, response_types', () => {
+    const a = computeClientFingerprint({
+      redirect_uris: ['https://a.example.com/cb', 'https://b.example.com/cb'],
+      grant_types: ['authorization_code', 'refresh_token'],
+      response_types: ['code', 'token'],
+    });
+    const b = computeClientFingerprint({
+      redirect_uris: ['https://b.example.com/cb', 'https://a.example.com/cb'],
+      grant_types: ['refresh_token', 'authorization_code'],
+      response_types: ['token', 'code'],
+    });
+    expect(a).toBe(b);
+  });
+
+  it('normalizes missing optional fields to defaults', () => {
+    const a = computeClientFingerprint({
+      redirect_uris: ['https://app.example.com/cb'],
+    });
+    const b = computeClientFingerprint({
+      software_id: '',
+      redirect_uris: ['https://app.example.com/cb'],
+      client_name: '',
+      client_uri: '',
+      scope: '',
+      token_endpoint_auth_method: '',
+      grant_types: [],
+      response_types: [],
+    });
+    expect(a).toBe(b);
+  });
+
+  it('produces different hashes for different metadata', () => {
+    const a = computeClientFingerprint({
+      redirect_uris: ['https://a.example.com/cb'],
+      client_name: 'A',
+    });
+    const b = computeClientFingerprint({
+      redirect_uris: ['https://a.example.com/cb'],
+      client_name: 'B',
+    });
+    expect(a).not.toBe(b);
   });
 });

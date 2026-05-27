@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { OAuthClientInformationFullSchema } from '@modelcontextprotocol/sdk/shared/auth.js';
@@ -9,6 +10,26 @@ import { getLogger } from './logger.js';
 
 const CIMD_CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 const CLIENT_TTL_SECONDS = 365 * 24 * 60 * 60; // 1 year
+
+// Stable fingerprint over RFC 7591 client metadata fields. Vendor-fronted
+// clients (e.g. claude.ai) repeat the same metadata for every user, so a
+// content fingerprint lets us reuse a single registration instead of
+// minting a new client_id per request and exhausting the /register limit.
+export function computeClientFingerprint(
+  metadata: Partial<OAuthClientInformationFull>,
+): string {
+  const normalized = {
+    software_id: metadata.software_id ?? '',
+    redirect_uris: [...(metadata.redirect_uris ?? [])].sort(),
+    client_name: metadata.client_name ?? '',
+    client_uri: metadata.client_uri ?? '',
+    scope: metadata.scope ?? '',
+    token_endpoint_auth_method: metadata.token_endpoint_auth_method ?? '',
+    grant_types: [...(metadata.grant_types ?? [])].sort(),
+    response_types: [...(metadata.response_types ?? [])].sort(),
+  };
+  return createHash('sha256').update(JSON.stringify(normalized)).digest('hex');
+}
 
 export interface ClientStoreOptions {
   redis: Redis;
@@ -51,6 +72,7 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
   }
 
   async registerClient(client: OAuthClientInformationFull): Promise<OAuthClientInformationFull> {
+    const fp = computeClientFingerprint(client);
     await withRedis('registerClient', () =>
       this.redis.set(
         `${this.prefix}:client:${client.client_id}`,
@@ -59,7 +81,29 @@ export class RedisClientStore implements OAuthRegisteredClientsStore {
         CLIENT_TTL_SECONDS,
       ),
     );
+    await withRedis('registerClient:fp-write', () =>
+      this.redis.set(
+        `${this.prefix}:client-fp:${fp}`,
+        client.client_id,
+        'EX',
+        CLIENT_TTL_SECONDS,
+      ),
+    );
     return client;
+  }
+
+  // Look up an existing DCR client by metadata fingerprint. Used by the
+  // /register dedup middleware to skip rate-limit accounting when an
+  // identical metadata payload arrives again from the same vendor.
+  async findClientByFingerprint(
+    fingerprint: string,
+  ): Promise<OAuthClientInformationFull | undefined> {
+    const fpKey = `${this.prefix}:client-fp:${fingerprint}`;
+    const clientId = await withRedis('findClientByFingerprint:lookup', () =>
+      this.redis.get(fpKey),
+    );
+    if (!clientId) return undefined;
+    return this.getDcrClient(clientId);
   }
 
   private async getCimdClient(

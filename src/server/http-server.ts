@@ -1,5 +1,6 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import type { Request, Response } from 'express';
+import type { Request, RequestHandler, Response } from 'express';
+import { ipKeyGenerator } from 'express-rate-limit';
 import {
   getConfig,
   initRemoteConfig,
@@ -12,7 +13,7 @@ import type { Redis } from '../storage/redis-client.js';
 import { closeRedisClient, getRedisClient } from '../storage/redis-client.js';
 import { RedisTokenStore } from '../storage/redis-token-store.js';
 import { createTracingMiddleware } from '../telemetry/middleware.js';
-import { RedisClientStore } from './client-store.js';
+import { RedisClientStore, computeClientFingerprint } from './client-store.js';
 import { makeErrorChain, serializeErrorChain } from './error-serializer.js';
 import { RedisUnavailableError } from './errors.js';
 import { createFreeeCallbackHandler } from './freee-callback.js';
@@ -24,6 +25,19 @@ import { getCurrentRecorder } from './request-context.js';
 import { initUserAgentTransportMode } from './user-agent.js';
 
 const BODY_SIZE_LIMIT = 1_048_576; // 1 MB
+const REGISTER_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const REGISTER_RATE_LIMIT_MAX = 3;
+const AUTHORIZE_RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
+const AUTHORIZE_RATE_LIMIT_MAX = 10;
+const AUTHORIZE_IP_RATE_LIMIT_MAX = 1000;
+const TOKEN_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const TOKEN_RATE_LIMIT_MAX = 10;
+const FREEE_CALLBACK_RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
+const FREEE_CALLBACK_RATE_LIMIT_MAX = 10;
+const MCP_PRE_AUTH_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const MCP_PRE_AUTH_RATE_LIMIT_MAX = 1000;
+const MCP_VERIFIED_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const MCP_VERIFIED_RATE_LIMIT_MAX = 100;
 
 // Extend Express Request with request ID
 declare module 'express' {
@@ -157,9 +171,9 @@ export async function startHttpServer(options?: {
   });
 
   // --- Rate limiting (opt-in) ---
-  if (remoteConfig.rateLimitEnabled) {
-    await setupRateLimiting(app, redis, logger);
-  }
+  const rateLimiters = remoteConfig.rateLimitEnabled
+    ? await setupRateLimiting(app, redis, clientStore, logger)
+    : {};
 
   // Liveness probe (no auth required, no external dependencies).
   app.get('/livez', createLivenessHandler());
@@ -206,6 +220,10 @@ export async function startHttpServer(options?: {
       resourceServerUrl: mcpResourceUrl,
       scopesSupported: ['mcp:read', 'mcp:write'],
       resourceName: 'freee MCP Server',
+      // Disable the SDK's built-in /register limiter (1h/20, in-memory). The
+      // freee-mcp Redis-backed limiter mounted in setupRateLimiting() is the
+      // single source of truth for /register throttling.
+      clientRegistrationOptions: { rateLimit: false },
     }),
   );
 
@@ -285,10 +303,13 @@ export async function startHttpServer(options?: {
     });
   }
 
-  app.post('/mcp', bearerAuth, mcpHandler);
-  app.get('/mcp', bearerAuth, mcpHandler);
+  const mcpMiddlewares = rateLimiters.mcpVerified
+    ? [bearerAuth, rateLimiters.mcpVerified, mcpHandler]
+    : [bearerAuth, mcpHandler];
+  app.post('/mcp', ...mcpMiddlewares);
+  app.get('/mcp', ...mcpMiddlewares);
 
-  app.delete('/mcp', bearerAuth, mcpHandler);
+  app.delete('/mcp', ...mcpMiddlewares);
 
   // Express error handler (must be after all routes)
   app.use((err: unknown, _req: Request, res: Response, next: (err?: unknown) => void) => {
@@ -360,33 +381,133 @@ export async function startHttpServer(options?: {
   process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
+interface RateLimiters {
+  mcpVerified?: RequestHandler;
+}
+
+export function rateLimitIpKey(req: Request): string {
+  return req.ip ? `ip:${ipKeyGenerator(req.ip)}` : 'ip:unknown';
+}
+
+export function verifiedMcpRateLimitKey(req: Request): string {
+  const auth = (req as unknown as Record<string, unknown>).auth as
+    | { clientId?: unknown; extra?: Record<string, unknown> }
+    | undefined;
+  const userId = auth?.extra?.userId;
+  if (typeof userId === 'string' && userId.length > 0) return `user:${userId}`;
+  if (typeof auth?.clientId === 'string' && auth.clientId.length > 0) {
+    return `client:${auth.clientId}`;
+  }
+  return rateLimitIpKey(req);
+}
+
 async function setupRateLimiting(
   app: import('express').Express,
   redis: Redis,
+  clientStore: RedisClientStore,
   logger: ReturnType<typeof initLogger>,
-): Promise<void> {
+): Promise<RateLimiters> {
   const rateLimitModule = await import('express-rate-limit');
   const rateLimit = rateLimitModule.rateLimit ?? rateLimitModule.default;
   const redisStoreModule = await import('rate-limit-redis');
   const RedisStore = redisStoreModule.RedisStore ?? redisStoreModule.default;
+  const express = (await import('express')).default;
 
-  const createLimiter = (windowMs: number, max: number, prefix: string) =>
+  const createLimiter = (
+    windowMs: number,
+    max: number,
+    prefix: string,
+    keyGenerator?: (req: Request) => string,
+  ) =>
     rateLimit({
       windowMs,
       max,
       standardHeaders: true,
       legacyHeaders: false,
+      keyGenerator,
       store: new RedisStore({
         sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as never,
         prefix: `rl:${prefix}:`,
       }),
     });
 
-  app.use('/authorize', createLimiter(5 * 60 * 1000, 10, 'authorize'));
-  app.use('/token', createLimiter(60 * 1000, 10, 'token'));
-  app.use('/register', createLimiter(60 * 60 * 1000, 3, 'register'));
-  app.use(FREEE_CALLBACK_PATH, createLimiter(5 * 60 * 1000, 10, 'freee-cb'));
-  app.use('/mcp', createLimiter(60 * 1000, 100, 'mcp'));
+  // /register: dedup middleware mounted BEFORE the rate limiter so duplicate
+  // vendor traffic with identical client metadata reuses an existing
+  // registration without consuming the IP counter. Express matches mount
+  // order, so the limiter only sees requests the dedup step did not
+  // short-circuit. Per RFC 7591 §3.2.1 a server may return an existing
+  // registration for an equivalent metadata payload.
+  app.use(
+    '/register',
+    express.json(),
+    async (req: Request, res: Response, next: (err?: unknown) => void) => {
+      try {
+        const fp = computeClientFingerprint(
+          (req.body ?? {}) as Parameters<typeof computeClientFingerprint>[0],
+        );
+        const existing = await clientStore.findClientByFingerprint(fp);
+        if (existing) {
+          res.status(201).json(existing);
+          return;
+        }
+      } catch (err) {
+        logger.warn({ err }, 'register dedup lookup failed; falling through');
+      }
+      next();
+    },
+    createLimiter(REGISTER_RATE_LIMIT_WINDOW_MS, REGISTER_RATE_LIMIT_MAX, 'register'),
+  );
+
+  // /authorize: PKCE state is unique per attempt, so it isolates concurrent
+  // sessions sharing a single vendor egress IP. A coarse IP guard remains to
+  // stop abuse that rotates state values indefinitely.
+  app.use(
+    '/authorize',
+    createLimiter(
+      AUTHORIZE_RATE_LIMIT_WINDOW_MS,
+      AUTHORIZE_IP_RATE_LIMIT_MAX,
+      'authorize-ip',
+      rateLimitIpKey,
+    ),
+  );
+  app.use(
+    '/authorize',
+    createLimiter(AUTHORIZE_RATE_LIMIT_WINDOW_MS, AUTHORIZE_RATE_LIMIT_MAX, 'authorize', (req) => {
+      const state = req.query.state;
+      if (typeof state === 'string' && state.length > 0) return `state:${state}`;
+      return rateLimitIpKey(req);
+    }),
+  );
+
+  app.use('/token', createLimiter(TOKEN_RATE_LIMIT_WINDOW_MS, TOKEN_RATE_LIMIT_MAX, 'token'));
+  app.use(
+    FREEE_CALLBACK_PATH,
+    createLimiter(
+      FREEE_CALLBACK_RATE_LIMIT_WINDOW_MS,
+      FREEE_CALLBACK_RATE_LIMIT_MAX,
+      'freee-cb',
+    ),
+  );
+
+  // /mcp pre-auth: keep a coarse IP guard before bearer auth. Per-user limits
+  // are applied after requireBearerAuth has verified the token.
+  app.use(
+    '/mcp',
+    createLimiter(
+      MCP_PRE_AUTH_RATE_LIMIT_WINDOW_MS,
+      MCP_PRE_AUTH_RATE_LIMIT_MAX,
+      'mcp-ip',
+      rateLimitIpKey,
+    ),
+  );
 
   logger.info('Rate limiting enabled');
+  return {
+    mcpVerified: createLimiter(
+      MCP_VERIFIED_RATE_LIMIT_WINDOW_MS,
+      MCP_VERIFIED_RATE_LIMIT_MAX,
+      'mcp-user',
+      verifiedMcpRateLimitKey,
+    ),
+  };
 }
