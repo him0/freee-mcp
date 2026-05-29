@@ -151,6 +151,7 @@ export async function makeApiRequest(
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
         'User-Agent': getUserAgent(),
+        'freee-using-beta': 'true',
       },
       body: body ? JSON.stringify(typeof body === 'string' ? JSON.parse(body) : body) : undefined,
       signal: AbortSignal.timeout(FETCH_TIMEOUT_API_MS),
