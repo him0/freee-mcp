@@ -1,5 +1,31 @@
 # freee-mcp
 
+## 0.27.0
+
+### Minor Changes
+
+- [`f7182b3`](https://github.com/freee/freee-mcp/commit/f7182b39358e9f42d5220745a1fa27bdd413035f): vendor 経由のトラフィック (claude.ai 等) で OAuth/MCP エンドポイントの rate limit が誤って発火する問題を修正 (#439)。 ([#140](https://github.com/freee/freee-mcp/pull/140))
+
+  - `/register`: クライアント metadata から fingerprint を計算し、同一 fingerprint の重複登録は既存の client_id を返す (RFC 7591 §3.2.1)。rate limit カウンタも消費しない
+  - `/authorize`: PKCE `state` ベースの制限と緩い IP ベースの安全網を併用し、同一 vendor IP から並行する異なるユーザーセッションを分離
+  - `/mcp`: 認証前は緩い IP ベースの安全網、認証後は検証済み user ID ベースの制限に分離し、署名検証前の JWT payload は rate limit key に使わない
+  - SDK 内蔵の `/register` rate limit (1h/20) を無効化し、freee-mcp 側の Redis ベースの limit に一本化
+
+### Patch Changes
+
+- [`e513e28`](https://github.com/freee/freee-mcp/commit/e513e28bab5e6fe2cbcf6122ade62d3db33c3905): freee*api*\* の全 API リクエストにヘッダー `freee-using-beta: true` を常時付与するようにしました。 ([#156](https://github.com/freee/freee-mcp/pull/156))
+
+  - 今後提供予定の OpenBeta 区分 API はこのヘッダーがないと呼び出せない仕様になります
+  - OpenBeta API はスキーマに破壊的変更が告知なく入る可能性がありますが、MCP 経由の利用は呼び出し時にスキーマを参照するため影響を受けにくく、無条件で有効化します
+  - 対象: `makeApiRequest` 経由の全リクエスト（stdio / remote 両モードから共通利用される）
+
+- [`82a517e`](https://github.com/freee/freee-mcp/commit/82a517ee5345ca7db0e84274de60c8aedaef3c2d): 上流 freee API への呼び出しが 2xx 以外で返ってきたとき、MCP ツール応答に `isError: true` を立てるようにしました。 ([#472](https://github.com/freee/freee-mcp/pull/472))
+
+  - MCP 仕様 (Tools - Error Handling) ではツール実行に伴う失敗は `CallToolResult.isError` で報告することが推奨されています
+  - これまでは 4xx/5xx もテキスト応答のみで返していたため、LLM やクライアントが成功応答と区別できませんでした
+  - 対象: 4xx/5xx 応答に加え、ネットワークエラー・タイムアウト等 `makeApiRequest` から例外が投げられる全ケース
+  - canonical log の `api_calls[].status_code` / `errors[]` 側は変更ありません
+
 ## 0.26.7
 
 ### Patch Changes
