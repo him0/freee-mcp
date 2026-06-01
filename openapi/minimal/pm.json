@@ -260,6 +260,42 @@
         "hasJsonBody": true
       }
     },
+    "/workloads/{id}": {
+      "delete": {
+        "summary": "工数削除",
+        "description": "指定した工数を削除します。",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer",
+            "required": true,
+            "description": "工数ID"
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "type": "integer",
+            "required": true,
+            "description": "事業所ID"
+          }
+        ]
+      },
+      "patch": {
+        "summary": "工数編集",
+        "description": "指定した工数の情報を更新します。リクエストに含まれていないフィールドは更新されません。memo と workload_tags は null（または空）で削除できます。",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "integer",
+            "required": true,
+            "description": "工数ID"
+          }
+        ],
+        "hasJsonBody": true
+      }
+    },
     "/workload_summaries": {
       "get": {
         "summary": "工数実績の取得",

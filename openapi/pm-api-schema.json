@@ -1040,6 +1040,209 @@
         }
       }
     },
+    "/workloads/{id}": {
+      "patch": {
+        "operationId": "/workloads/partial_update",
+        "summary": "工数編集",
+        "description": "指定した工数の情報を更新します。リクエストに含まれていないフィールドは更新されません。memo と workload_tags は null（または空）で削除できます。",
+        "tags": [
+          "Workloads"
+        ],
+        "parameters": [
+          {
+            "description": "工数ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/partial_update_workload_param"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功時",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workload": {
+                      "$ref": "#/paths/~1workloads/post/responses/200/content/application~1json/schema/properties/workload"
+                    }
+                  },
+                  "required": [
+                    "workload"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads~1%7Bid%7D/patch/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads~1%7Bid%7D/patch/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads~1%7Bid%7D/patch/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads~1%7Bid%7D/patch/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads~1%7Bid%7D/patch/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "/workloads/destroy",
+        "summary": "工数削除",
+        "description": "指定した工数を削除します。",
+        "tags": [
+          "Workloads"
+        ],
+        "parameters": [
+          {
+            "description": "工数ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "事業所ID",
+            "in": "query",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "成功時"
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1users~1me/get/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads~1%7Bid%7D/delete/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads~1%7Bid%7D/delete/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads~1%7Bid%7D/delete/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads~1%7Bid%7D/delete/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/paths/~1workloads~1%7Bid%7D/delete/responses/400/content/application~1json/schema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/workload_summaries": {
       "get": {
         "summary": "工数実績の取得",
@@ -2352,6 +2555,74 @@
           "project_id",
           "date",
           "minutes"
+        ]
+      },
+      "partial_update_workload_param": {
+        "type": "object",
+        "description": "工数更新情報。リクエストに含まれていないフィールドは更新されません。",
+        "properties": {
+          "company_id": {
+            "description": "事業所ID",
+            "format": "int32",
+            "type": "integer",
+            "example": 1
+          },
+          "project_id": {
+            "description": "対象プロジェクトID",
+            "format": "int32",
+            "type": "integer",
+            "example": 100
+          },
+          "date": {
+            "description": "対象日",
+            "type": "string",
+            "format": "date",
+            "example": "2020-12-15"
+          },
+          "minutes": {
+            "description": "記録時間（分）",
+            "format": "int32",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440,
+            "example": 120
+          },
+          "memo": {
+            "description": "業務内容。null または空文字を指定すると削除されます。",
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "example": "コーディング"
+          },
+          "workload_tags": {
+            "description": "工数タグ。配列全体が指定内容で置き換えられます。null または空配列を指定すると削除されます。",
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag_group_id": {
+                  "description": "工数タググループID",
+                  "format": "int32",
+                  "type": "integer",
+                  "example": 11
+                },
+                "tag_id": {
+                  "description": "工数タグID",
+                  "format": "int32",
+                  "type": "integer",
+                  "example": 12
+                }
+              },
+              "required": [
+                "tag_group_id",
+                "tag_id"
+              ]
+            }
+          }
+        },
+        "required": [
+          "company_id"
         ]
       },
       "workload_summary": {

@@ -489,6 +489,14 @@
                         "minLength": 1,
                         "example": "文書 忍者太郎様"
                       },
+                      "password": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "文書へのアクセスパスワード。\n設定すると受領者はパスワード入力が必要になる。\nnull を渡すと既存パスワードを削除する。\n4文字以上72文字以下。使用可能文字は英数字および記号（!\"#$%&'()*+,-./:;<=>?@¥[\\]^_`{|}~）。\nレスポンスにはパスワード文字列は含まれず has_password フィールドで設定有無のみ返却する。\nTeamSetting.document_password が true の場合、パスワード設定が必須となる（未設定で署名依頼送信時に 422 エラー）。",
+                        "minLength": 4,
+                        "maxLength": 72,
+                        "pattern": "^[a-zA-Z0-9!-/:-@\\[-`{-~¥]+$"
+                      },
                       "items": {
                         "type": "array",
                         "description": "入力項目",
@@ -977,15 +985,20 @@
                 "properties": {
                   "document": {
                     "type": "object",
-                    "required": [
-                      "title"
-                    ],
                     "properties": {
                       "title": {
                         "type": "string",
                         "description": "文書のタイトル",
                         "minLength": 1,
                         "example": "文書 忍者太郎様"
+                      },
+                      "password": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "文書へのアクセスパスワード。\n設定すると受領者はパスワード入力が必要になる。\nnull を渡すと既存パスワードを削除する。\n4文字以上72文字以下。使用可能文字は英数字および記号（!\"#$%&'()*+,-./:;<=>?@¥[\\]^_`{|}~）。\nレスポンスにはパスワード文字列は含まれず has_password フィールドで設定有無のみ返却する。\nTeamSetting.document_password が true の場合、パスワード設定が必須となる（未設定で署名依頼送信時に 422 エラー）。",
+                        "minLength": 4,
+                        "maxLength": 72,
+                        "pattern": "^[a-zA-Z0-9!-/:-@\\[-`{-~¥]+$"
                       }
                     }
                   },
@@ -1474,10 +1487,11 @@
                     "enum": [
                       "email",
                       "sms",
-                      "url"
+                      "url",
+                      "face_to_face"
                     ],
                     "default": "email",
-                    "description": "締結の種類\nメール送信の場合は `email` 、SMS送信の場合は `sms`、署名者用URL発行の場合は `url`。 指定しない場合はメール送信として扱われます。\n送り先情報はメール送信、SMS送信のいずれか選択した締結の種類のパラメータを含めてください。 文書配付の場合は、受領者に署名を求めないため、反映されない項目がありますのでご注意ください。\nurl を指定した場合はAPI実行時点で送信処理はされず、署名者用URLの発行が行われます。 発行されたURLを相手に伝え、署名依頼の手続きを進めてください。"
+                    "description": "締結の種類\n\nメール送信の場合は `email`、SMS送信の場合は `sms`、署名者用URL発行の場合は `url`、対面契約の場合は `face_to_face`。\n指定しない場合はメール送信として扱われます。\n\n送り先情報はメール送信、SMS送信のいずれか選択した締結の種類のパラメータを含めてください。\n文書配付の場合は、受領者に署名を求めないため、反映されない項目がありますのでご注意ください。\n\nurl を指定した場合はAPI実行時点で送信処理はされず、署名者用URLの発行が行われます。\n発行されたURLを相手に伝え、署名依頼の手続きを進めてください。\n\nface_to_face を指定した場合、対面契約として処理されます。以下の値が自動的に強制されます。\n- es_type: timestamp_only\n- password_required: false\n- remind_about_expiry: false\n- CC宛先は全削除\n\nface_to_face を指定した場合、レスポンスの `face_to_face_url` フィールドに対面署名画面のURLが返ります。\nこのURLを署名者の端末で開くことで対面契約フローを開始してください。"
                   },
                   "sender_id": {
                     "allOf": [
@@ -1566,6 +1580,35 @@
                               "description": "相手方の電話番号確認を必須とするかどうか\n\n指定しない場合は `false` が指定されたものとして扱います。\nチーム設定で`相手方の電話番号確認`が必須となっている場合はそちらが優先されます。"
                             }
                           },
+                          "additionalProperties": false
+                        }
+                      },
+                      {
+                        "type": "array",
+                        "description": "送り先情報（対面契約）\n\n文書・テンプレートに設定された相手方の人数分、過不足無く指定してください。",
+                        "minItems": 1,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "order": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "署名者のスロット番号（1始まり）。文書の入力項目の order と一致させ、どの署名者の position に対面署名が紐づくかを決める\n\n※order は署名時の順位で、復路合意側の順番とは独立"
+                            },
+                            "label_name": {
+                              "type": "string",
+                              "nullable": true,
+                              "maxLength": 10,
+                              "description": "受領者の呼称（任意）"
+                            },
+                            "telephone_number_verification_required": {
+                              "type": "boolean",
+                              "description": "相手方の電話番号確認を必須とするかどうか\n\n指定しない場合は `false` が指定されたものとして扱います。\nチーム設定で`相手方の電話番号確認`が必須となっている場合はそちらが優先されます。"
+                            }
+                          },
+                          "required": [
+                            "order"
+                          ],
                           "additionalProperties": false
                         }
                       }
@@ -1718,6 +1761,18 @@
                     ],
                     "master_document_expiry_id": 1,
                     "remind_about_expiry": true
+                  }
+                },
+                "FaceToFace": {
+                  "value": {
+                    "notification_type": "face_to_face",
+                    "sender_id": 1,
+                    "to": [
+                      {
+                        "order": 1,
+                        "label_name": "忍者太郎"
+                      }
+                    ]
                   }
                 }
               }
@@ -4256,6 +4311,18 @@
             "type": "boolean",
             "title": "署名と合意を同時に行う設定が有効かどうか",
             "description": "署名と合意を同時に行う設定が有効かどうか。\n三者間以上の契約で署名完了後の復路合意ステップを省略する。"
+          },
+          "face_to_face_url": {
+            "type": "string",
+            "format": "uri",
+            "title": "対面契約URL",
+            "description": "対面契約モード（notification_type=face_to_face）で送信された文書について、対面署名画面のURLが返る。\n対面契約でない文書ではレスポンスに含まれない。",
+            "example": "https://example.com/documents/1/face_to_face?token=xxxxxxxxxxxxxxxx"
+          },
+          "has_password": {
+            "type": "boolean",
+            "title": "パスワードが設定されているかどうか",
+            "description": "文書にパスワードが設定されている場合は true。"
           }
         },
         "required": [

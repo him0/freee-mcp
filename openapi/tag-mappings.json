@@ -85,7 +85,8 @@
     "deliveries": "deliveries",
     "sales": "sales",
     "cost_budgets": "cost-budgets",
-    "other_costs": "other-costs"
+    "other_costs": "other-costs",
+    "quotations": "quotations"
   },
   "sign-api": {
     "文書": "documents",
